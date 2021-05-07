@@ -8,10 +8,9 @@ that can be easily re-implemented to run on the actual PS system
 
 - ps.cpp: portable host program, can run in cosim or on PL, controls accelerator
 
-- bp_zynq_pl.h: cosim-implementation of bp_zynq_pl API
-                another implementation will be created for PS (mostly design independent)
+- bp_zynq_pl.h: mostly design-independent cosim-implementation of bp_zynq_pl API (another implementation will be created for PS)
 
-- example_axi_v1_0_S00_AXI.v: example accelerator to live in PL, uses Xilinx IPI tooling
+- example_axi_v1_0_S00_AXI.v: example accelerator to live in PL, suitable for Xilinx IPI integration
 
 - top.v:  wrapper for Xilinx IPI block
 
