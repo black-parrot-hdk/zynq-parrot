@@ -9,6 +9,9 @@
 //#define NAME s00_axi
 //#define CLOCK _aclk
 //#define RESETN _aresetn
+//#define ADDR_BASE 0x4000_0000
+//#define ADDR_SIZE_BYTES 0x1000
+
 #define TOP_MODULE Vtop
 
 #ifndef NAME
@@ -110,14 +113,16 @@ class bp_zynq_pl {
     return Verilated::gotFinish();
   }
 
-  void axil_write(int address, int data, int wstrb)
+  void axil_write(unsigned int address, int data, int wstrb)
   {
     printf("AXI writing [%x]=%8.8x mask %x\n", address, data, wstrb);
     int done = 0;
 
+    assert(address >= ADDR_BASE && (address - ADDR_BASE < ADDR_SIZE_BYTES)); // "address is not in the correct range?"
+    
     tb->CONCAT(NAME, _awvalid) = 1;
     tb->CONCAT(NAME, _wvalid)  = 1;
-    tb->CONCAT(NAME, _awaddr)  = address;
+    tb->CONCAT(NAME, _awaddr)  = address - ADDR_BASE;
     tb->CONCAT(NAME, _wdata)   = data;
     tb->CONCAT(NAME, _wstrb)   = wstrb;
 
@@ -144,12 +149,14 @@ class bp_zynq_pl {
     return;
   }
 
-  int axil_read(int address) {
+  int axil_read(unsigned int address) {
     int data;
 
+    assert(address >= ADDR_BASE && (address - ADDR_BASE < ADDR_SIZE_BYTES)); // "address is not in the correct range?"
+    
     // assert these signals "late in the cycle"
     tb->CONCAT(NAME, _arvalid) = 1;
-    tb->CONCAT(NAME, _araddr)  = address;
+    tb->CONCAT(NAME, _araddr)  = address - ADDR_BASE;
 
     // stall while ready is not asserted    
     while  (tb->CONCAT(NAME, _arready) == 0)

@@ -5,7 +5,9 @@ export AXI_NAME ?= s00_axi
 
 TRACE=--trace-fst
 
-THE_FLAGS = -DNAME=s00_axi -DCLOCK=_aclk -DRESETN=_aresetn
+# You need to configure these parameters for your particular accelerator!
+
+THE_FLAGS = -DNAME=s00_axi -DCLOCK=_aclk -DRESETN=_aresetn -DADDR_BASE=0x40000000 -DADDR_SIZE_BYTES=4096
 
 top: all
 
