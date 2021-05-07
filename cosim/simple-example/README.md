@@ -1,5 +1,5 @@
 This directory contains a simple example of cosimulation of a
-a host program (which would run in the Zynq PS system)
+host program (which would run in the Zynq PS system)
 communicating with an AXI-lite block that would run 
 in the FPGA logic (aka PL=programmable logic).
 
