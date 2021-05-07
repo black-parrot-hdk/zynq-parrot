@@ -20,3 +20,4 @@ that can be easily re-implemented to run on the actual PS system
 
 
 
+Tested with Verilator 4.202 2021-04-24 and GTKWave Analyzer v3.3.86 
