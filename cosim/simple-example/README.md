@@ -1,15 +1,19 @@
 This directory contains a simple example of cosimulation of a
-AXI-lite block in the FPGA logic (aka PL=programmable logic).
+a host program (which would run in the Zynq PS system)
+communicating with an AXI-lite block that would run 
+in the FPGA logic (aka PL=programmable logic).
+
 It employs verilator, and a simple AXI-Lite Read and Write API
-that can be easily reproduced when running on the actual PS.
+that can be easily re-implemented to run on the actual PS system
 
-
-- ps.cpp: portable host code, can run in cosim or on PL
+- ps.cpp: portable host program, can run in cosim or on PL, controls accelerator
 
 - bp_zynq_pl.h: cosim-implementation of bp_zynq_pl API
-                another implementation will be created for PS 
+                another implementation will be created for PS (mostly design independent)
+
+- example_axi_v1_0_S00_AXI.v: example accelerator to live in PL, uses Xilinx IPI tooling
 
 - top.v:  wrapper for Xilinx IPI block
 
-- example_axi_v1_0_S00_AXI: example accelerator to live in PL
+
 
