@@ -35,28 +35,7 @@ class bp_zynq_pl {
   int period = 1000; // ps
   TOP_MODULE *tb;
   
- public:
-
   
-  bp_zynq_pl(int argc, char *argv[]) {
-    // Initialize Verilators variables
-    Verilated::commandArgs(argc, argv);
-    
-    // turn on tracing
-    Verilated::traceEverOn(true);
-
-    tb = new TOP_MODULE;
-
-    printf("bp_zynq_pl: Entering reset\n");
-    reset();
-    printf("bp_zynq_pl: Exiting reset\n");
-  }
-  
-  ~bp_zynq_pl(void) {
-    delete tb;
-    tb = NULL;
-  }
-
   // reset is low true
   void reset(void) {
     this->tick(period);
@@ -102,6 +81,30 @@ class bp_zynq_pl {
     tb->CONCAT(NAME, CLOCK) = 1; 
     tb->eval(); */
   }
+  
+  
+ public:
+
+  
+  bp_zynq_pl(int argc, char *argv[]) {
+    // Initialize Verilators variables
+    Verilated::commandArgs(argc, argv);
+    
+    // turn on tracing
+    Verilated::traceEverOn(true);
+
+    tb = new TOP_MODULE;
+
+    printf("bp_zynq_pl: Entering reset\n");
+    reset();
+    printf("bp_zynq_pl: Exiting reset\n");
+  }
+  
+  ~bp_zynq_pl(void) {
+    delete tb;
+    tb = NULL;
+  }
+
   
   bool done(void) {
     return Verilated::gotFinish();
