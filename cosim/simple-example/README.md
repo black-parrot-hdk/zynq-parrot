@@ -1,6 +1,6 @@
 This directory contains a simple example of cosimulation of a
 host program (which would run in the Zynq PS system)
-communicating with an AXI-lite block that would run 
+communicating with an AXI-lite accelerator that would run 
 in the FPGA logic (aka PL=programmable logic).
 
 It employs verilator, and a simple AXI-Lite Read and Write API
