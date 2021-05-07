@@ -26,6 +26,14 @@
 #ERROR RESETN must be defined
 #endif
 
+#ifndef ADDR_BASE
+#ERROR ADDR_BASE must be defined
+#endif
+
+#ifndef ADDR_SIZE_BYTES
+#ERROR ADDR_SIZE_BYTES must be defined
+#endif
+
 
 #define CONCAT(a, b) CONCAT_(a, b)
 #define CONCAT_(a, b) a ## b
