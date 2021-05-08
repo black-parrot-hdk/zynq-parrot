@@ -1,7 +1,8 @@
 //
 // this is an example of "host code" that can either run in cosim or on the PS
-//
-//
+// we can use the same C host code and
+// the AXI lite reads and write API we
+// provide abstracts away the communication plumbing differences.
 
 
 #include <stdlib.h>
