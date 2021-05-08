@@ -1,6 +1,6 @@
 //
 // this is an example of "host code" that can either run in cosim or on the PS
-// (currently we have only implemented this for cosim!)
+//
 //
 
 
