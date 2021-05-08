@@ -1,3 +1,7 @@
-- ps.cpp: user-written host code that interacts with accelerator device, both in FPGA emulation and verilator cosimulation.
-- fpga: for running on the Zynq chip, using the ARM core (PS) talking to the PL (FPGA logic)
-- verilator: for simulating.
+- ps.cpp: user-written host code that interacts with accelerator device, both on FPGA and verilator cosimulation. 
+  - interacts with both using a standard API:
+    - void axil_write(int address, int data, int wstrb);
+    - int axil_read(int address);
+    - bool done(void);
+- fpga: for running on the Zynq chip, using the ARM core (PS) talking to the PL (FPGA logic), which has the bit stream downloaded
+- verilator: for simulating, uses the same AXI-lite verilog code as you use for the FPGA. Use this to debug and view waveforms with GTKWave before you run on FPGA!
