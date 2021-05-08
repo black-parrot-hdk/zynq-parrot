@@ -1,3 +1,3 @@
-- ps.cpp: common host code between both FPGA emulation and verilator cosimulation.
+- ps.cpp: user-written host code that interacts with accelerator device, both in FPGA emulation and verilator cosimulation.
 - fpga: for running on the Zynq chip, using the ARM core (PS) talking to the PL (FPGA logic)
 - verilator: for simulating.
