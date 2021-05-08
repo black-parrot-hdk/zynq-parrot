@@ -44,10 +44,10 @@ class bp_zynq_pl {
       int *addr = (int *) ADDR_BASE; // e.g. 0x43c00000;
 
       // map in first AXI region of physical addresses to virtual addresses
-      volatile int *ptr = mmap(addr,ADDR_SIZE_BYTES,PROT_READ | PROT_WRITE, MAP_SHARED, fd,(int) ptr);
+      volatile int *ptr = (int *) mmap(addr,ADDR_SIZE_BYTES,PROT_READ | PROT_WRITE, MAP_SHARED, fd,(int) ptr);
       printf("// bp_zynq: mmap returned %p errno=%x\n",ptr,errno);
       assert(ptr == addr);
-      close(fd)
+      close(fd);
     }
 
   ~bp_zynq_pl(void) {
