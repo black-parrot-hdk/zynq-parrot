@@ -4,4 +4,4 @@
     - int axil_read(int address);
     - bool done(void);
 - fpga: for running on the Zynq chip, using the ARM core (PS) talking to the PL (FPGA logic), which has the bit stream downloaded
-- verilator: for simulating, uses the same AXI-lite verilog code as you use for the FPGA. Use this to debug and view waveforms with GTKWave before you run on FPGA!
+- verilator: for simulating, uses the same AXI-lite verilog code as you use for the FPGA. Use this to debug and view waveforms with GTKWave before you run on FPGA and can't see what's going on easily!
