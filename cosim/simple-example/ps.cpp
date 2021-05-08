@@ -17,13 +17,13 @@ int main(int argc, char **argv) {
 	int val1 = 0xDEADBEEF;
 	int val2 = 0xCAFEBABE;
 	int mask1 = 0xf;
-	int mask2 = 0x7;
+	int mask2 = 0xf;
 	
 	zpl->axil_write(0x0 + ADDR_BASE, val1, mask1);
 	zpl->axil_write(0x4 + ADDR_BASE, val2, mask2);
 
-	assert( (zpl->axil_read(0x0 + ADDR_BASE) == (val1 & BSG_expand_byte_mask(mask1))));
-	assert( (zpl->axil_read(0x4 + ADDR_BASE) == (val2 & BSG_expand_byte_mask(mask2))));
+	assert( (zpl->axil_read(0x0 + ADDR_BASE) == (val1)));
+	assert( (zpl->axil_read(0x4 + ADDR_BASE) == (val2)));
 	
 	zpl->done();
 

@@ -12,6 +12,10 @@
 //#define ADDR_BASE 0x4000_0000
 //#define ADDR_SIZE_BYTES 0x1000
 
+#ifndef PERIOD
+#define PERIOD 25000
+#endif
+
 #define TOP_MODULE Vtop
 
 #ifndef NAME
@@ -41,11 +45,12 @@
 #define BSG_move_bit(q,x,y) ((((q) >> (x)) & 1) << y)
 #define BSG_expand_byte_mask(x) ((BSG_move_bit(x,0,0) | BSG_move_bit(x,1,8) | BSG_move_bit(x,2,16) | BSG_move_bit(x,3,24))*0xFF)
 
+#define BP_ZYNQ_PL_DEBUG 1 
+
 class bp_zynq_pl {
 
-  int period = 1000; // ps
+  int period = PERIOD; // ps
   TOP_MODULE *tb;
-  
   
   // reset is low true
   void reset(void) {
@@ -79,23 +84,9 @@ class bp_zynq_pl {
     Verilated::timeInc(time_period>>1);
     tb->CONCAT(NAME, CLOCK) = 1;
     tb->eval();
-    /*
-    while (i_period != 1) {
-      Verilated::timeInc(1);
-      i_period--;
-      if (i_period == (time_period/2)) {
-        tb->CONCAT(NAME, CLOCK) = 0;
-      }
-      tb->eval();
-    }
-    Verilated::timeInc(1);
-    tb->CONCAT(NAME, CLOCK) = 1; 
-    tb->eval(); */
   }
-  
-  
- public:
 
+ public:
   
   bp_zynq_pl(int argc, char *argv[]) {
     // Initialize Verilators variables
@@ -115,17 +106,19 @@ class bp_zynq_pl {
     delete tb;
     tb = NULL;
   }
-
   
   bool done(void) {
+    printf("bp_zynq: done() called, exiting\n");
     return Verilated::gotFinish();
   }
 
   void axil_write(unsigned int address, int data, int wstrb)
   {
-    printf("AXI writing [%x]=%8.8x mask %x\n", address, data, wstrb);
-    int done = 0;
+    if (BP_ZYNQ_PL_DEBUG)
+       printf("bp_zynq: AXI writing [%x]=%8.8x mask %x\n", address, data, wstrb);
 
+    assert(wstrb==0xf); // we only support full int writes right now
+    
     assert(address >= ADDR_BASE && (address - ADDR_BASE < ADDR_SIZE_BYTES)); // "address is not in the correct range?"
     
     tb->CONCAT(NAME, _awvalid) = 1;
@@ -192,7 +185,8 @@ class bp_zynq_pl {
     // drop the ready signal on the following cycle
     tb->CONCAT(NAME, _rready)  = 0;
 
-    printf("AXI reading [%x]->%8.8x\n", address, data);
+    if (BP_ZYNQ_PL_DEBUG)    
+      printf("bp_zynq: AXI reading [%x]->%8.8x\n", address, data);
     
     return data;
   }
