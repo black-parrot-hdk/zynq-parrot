@@ -3,6 +3,8 @@ This shows a simple example of the proposed [BSG](http://bsg.ai) methodology for
 - void axil_write(int address, int data, int wstrb);
 - int axil_read(int address);
 - bool done(void);
+- void *allocate_dram(uint32_t len_in_bytes, unsigned long *physical_ptr);
+- void free_dram(void *virtual_ptr);
 
 If you restrict your interaction with the core to this interface, then you can debug your design in simulation, using waveforms, etc, and when it works, and easily move it to FPGA for speed. If you still have an issue with the FPGA, you can look at the waveforms in simulation to see what things should look like using the FPGA ILA (integrated logic analyzer.)
 
