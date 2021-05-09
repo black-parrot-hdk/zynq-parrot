@@ -80,7 +80,7 @@ class bp_zynq_pl {
     // for now, we do uncacheable to keep things simple, memory accesses go straight to DRAM and
     // thus would be coherent with the PL
     
-    void *virtual_ptr = cma_alloc(len_in_bytes,0); // 0 = cacheable, 1 = uncacheable
+    void *virtual_ptr = cma_alloc(len_in_bytes,0); // 1 = cacheable, 0 = uncacheable
     assert(virtual_ptr!=NULL);
     *physical_ptr = cma_get_phy_addr(virtual_ptr);
     printf("bp_zynq: allocate_dram() called with size %d bytes --> virtual ptr=%p, physical ptr=0x%8.8lx\n",len_in_bytes, virtual_ptr,*physical_ptr);
