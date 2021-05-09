@@ -1,0 +1,3 @@
+[submodule "cosim/import/basejump_stl"]
+	path = cosim/import/basejump_stl
+	url = https://github.com/bespoke-silicon-group/basejump_stl
