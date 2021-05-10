@@ -1,4 +1,6 @@
-This shows a simple example of the proposed [BSG](http://bsg.ai) methodology for accelerating BlackParrot (or other accelerators) simulation on FPGA. There is a unified interface for a control program (implemented as "host code") to interact with the hardware device; which has both Verilator and Zynq PS (== ARM core) support:
+This directory shows a more full-featured example of the proposed [BSG](http://bsg.ai) methodology for accelerating BlackParrot (or other accelerators) simulation on FPGA.  The interface provides a configurable number of read/write user CSRs, FIFOs for going from PS to PL (out) and from PL to PS (in). Each FIFO has a corresponding read-only CSR that tells you how many elements are available to read (in) or how many free slots are available to write (out).
+
+There is a unified interface for a control program (implemented as "host code") to interact with the hardware device; which has both Verilator and Zynq PS (== ARM core) support:
 
 - void axil_write(int address, int data, int wstrb);
 - int axil_read(int address);
