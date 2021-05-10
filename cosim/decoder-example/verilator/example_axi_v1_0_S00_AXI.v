@@ -101,16 +101,24 @@
 	// ADDR_LSB = 3 for 64 bits (n downto 3)
 	localparam integer ADDR_LSB = (C_S_AXI_DATA_WIDTH/32) + 1;
 
-	//----------------------------------------------
-	//-- Signals for user logic register space example
-	//------------------------------------------------
-	//-- Number of Slave Registers 4
-        localparam num_regs_lp = 4;
-        localparam num_fifo_in_lp = 4;
-        localparam num_fifo_out_lp = 2;
+	//--------------------------------------------------------------------------------
+	// USER MODIFY -- Configure your accelerator interface by setting these parameters
+	//--------------------------------------------------------------------------------
+	//
+	// Change these parameters to change the number of CSRs, input FIFOs and output FIFOs.
+	//
+	// note: we automatically create a "elements avail" CSR for the input FIFO
+	//       and a "free space avail" csr for each output FIFO
+	//	
+	// if the PS reads from the FIFO and it is empty, it will return bogus data.
+	// if the PS writes to a FIFO and it is full, it will be dropped.
+		
+	localparam num_regs_lp = 4;         // number of user CSRs
+	localparam num_fifo_in_lp = 4;      // number of input FIFOs (from PL to PS)
+	localparam num_fifo_out_lp = 2;     // number of output FIFOs (from PS to PL)
 
-   localparam integer 	   OPT_MEM_ADDR_BITS = `BSG_SAFE_CLOG2(num_regs_lp+num_fifo_in_lp+2*num_fifo_out_lp)-1;
-   
+        localparam integer 	   OPT_MEM_ADDR_BITS = `BSG_SAFE_CLOG2(num_regs_lp+num_fifo_in_lp+2*num_fifo_out_lp)-1;
+		
 	wire	 slv_reg_rden;
 	wire	 slv_reg_wren;
 	reg [C_S_AXI_DATA_WIDTH-1:0]	 reg_data_out;
@@ -221,7 +229,10 @@
 
    genvar k;
 
+   // this correspond to the number of word addresses that can be read by PS				
    localparam read_addr_bit_width_lp = num_regs_lp+num_fifo_out_lp+num_fifo_in_lp+num_fifo_out_lp;
+		
+   // this corresponds to the number of addresses that can be written by PS		
    localparam write_addr_bit_width_lp = num_regs_lp+num_fifo_in_lp;
    
    wire [read_addr_bit_width_lp-1:0] slv_rd_sel_one_hot;
@@ -233,7 +244,7 @@
       ,.o(slv_rd_sel_one_hot)
       );
 
-   // the write memory map is essentially
+   // for num_regs_lp=4 and num_fifo_in_lp=4, the write memory map is essentially:
    //
    // 0,4,8,C: registers
    // 10,14,18,1C: input fifo 
@@ -246,6 +257,7 @@
    
    logic [num_regs_lp-1:0][C_S_AXI_DATA_WIDTH-1:0] slv_r;
 
+   // instantiate user read/write CSRs		
    for (k=0; k < num_regs_lp; k++)
      begin: rof
 	bsg_dff_reset_en #(.width_p(C_S_AXI_DATA_WIDTH)) slv_reg
@@ -262,7 +274,7 @@
    wire [num_fifo_in_lp-1:0][`BSG_WIDTH(4)-1:0]    in_fifo_ctrs;
    wire [num_fifo_in_lp-1:0][C_S_AXI_DATA_WIDTH-1:0]    in_fifo_ctrs_full;
    
-      
+   // instantiate in (PL to PS) FIFOs  
    for (k=0; k < num_fifo_in_lp; k++)
      begin: rof2
 	assign in_fifo_ctrs_full[k] = (C_S_AXI_DATA_WIDTH) ' (in_fifo_ctrs[k]);
@@ -322,7 +334,7 @@
 
    // END
 
-   // this logic instantiates the outgoing fifos
+   // instantiate out (PS to PL) FIFOs   
    
    for (k=0; k < num_fifo_out_lp; k++)
      begin: rof3
@@ -464,15 +476,14 @@
 	// and the slave is ready to accept the read address.
 	assign slv_reg_rden = axi_arready & S_AXI_ARVALID & ~axi_rvalid;
 
-
-   // the read memory map is essentially
-   //
-   // 0,4,8,C: registers
-   // 10, 14: output fifo heads
-   // 18, 1C: output fifo counts
-   // 20,24,28,2C: input fifo counts 
-
-
+        // the order of items in the input to this one-hot mux determines the order of the
+	// address map for PS reads. the default is user csrs, output fifos, output fifo counters, input fifo counters
+        // e.g., for 4 regs, 4 input fifos, and 2 output fifos, the read memory map is essentially
+        //
+        // 0,4,8,C: registers
+        // 10, 14: output fifo heads
+        // 18, 1C: output fifo counts
+        // 20,24,28,2C: input fifo counts 
    
         bsg_mux_one_hot #(.width_p(C_S_AXI_DATA_WIDTH),.els_p(read_addr_bit_width_lp)) muxoh
 	  (.data_i({in_fifo_ctrs_full, out_fifo_ctrs_full, out_fifo_data_r, slv_r})
