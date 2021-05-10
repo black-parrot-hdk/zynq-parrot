@@ -12,7 +12,7 @@
 		// Width of S_AXI data bus
 		parameter integer C_S_AXI_DATA_WIDTH	= 32,
 		// Width of S_AXI address bus
-		parameter integer C_S_AXI_ADDR_WIDTH	= 5 //4
+		parameter integer C_S_AXI_ADDR_WIDTH	= 6 //4
 	)
 	(
 		// Users to add ports here
@@ -109,7 +109,7 @@
         localparam num_fifo_in_lp = 4;
         localparam num_fifo_out_lp = 2;
 
-   localparam integer 	   OPT_MEM_ADDR_BITS = `BSG_SAFE_CLOG2(num_regs_lp+`BSG_MAX(num_fifo_in_lp,num_fifo_out_lp))-1;
+   localparam integer 	   OPT_MEM_ADDR_BITS = `BSG_SAFE_CLOG2(num_regs_lp+num_fifo_in_lp+2*num_fifo_out_lp)-1;
    
 	wire	 slv_reg_rden;
 	wire	 slv_reg_wren;
@@ -221,17 +221,24 @@
 
    genvar k;
 
-   wire [num_regs_lp+num_fifo_out_lp-1:0] slv_rd_sel_one_hot;
-   wire [num_regs_lp+num_fifo_in_lp-1:0]  slv_wr_sel_one_hot;
+   localparam read_addr_bit_width_lp = num_regs_lp+num_fifo_out_lp+num_fifo_in_lp+num_fifo_out_lp;
+   localparam write_addr_bit_width_lp = num_regs_lp+num_fifo_in_lp;
    
-   bsg_decode_with_v #(.num_out_p(num_regs_lp+num_fifo_out_lp)) decode_rd
+   wire [read_addr_bit_width_lp-1:0] slv_rd_sel_one_hot;
+   wire [write_addr_bit_width_lp-1:0]  slv_wr_sel_one_hot;
+   
+   bsg_decode_with_v #(.num_out_p(read_addr_bit_width_lp)) decode_rd
      (.i(axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB])
       ,.v_i(slv_reg_rden)
       ,.o(slv_rd_sel_one_hot)
       );
-   
 
-   bsg_decode_with_v #(.num_out_p(num_regs_lp+num_fifo_in_lp)) decode_wr
+   // the write memory map is essentially
+   //
+   // 0,4,8,C: registers
+   // 10,14,18,1C: input fifo 
+
+   bsg_decode_with_v #(.num_out_p(write_addr_bit_width_lp)) decode_wr
      (.i(axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB])
       ,.v_i(slv_reg_wren)
       ,.o(slv_wr_sel_one_hot)
@@ -250,15 +257,22 @@
 	 );
      end
 
-   wire [num_fifo_in_lp-1:0] in_fifo_ready_lo, in_fifo_valid_lo, in_fifo_yumi_li;
+   wire [num_fifo_in_lp-1:0] in_fifo_ready_lo, in_fifo_valid_lo, in_fifo_yumi_li, in_fifo_valid_li;
    wire [num_fifo_in_lp-1:0][C_S_AXI_DATA_WIDTH-1:0] in_fifo_data_lo;
+   wire [num_fifo_in_lp-1:0][`BSG_WIDTH(4)-1:0]    in_fifo_ctrs;
+   wire [num_fifo_in_lp-1:0][C_S_AXI_DATA_WIDTH-1:0]    in_fifo_ctrs_full;
+   
       
    for (k=0; k < num_fifo_in_lp; k++)
      begin: rof2
+	assign in_fifo_ctrs_full[k] = (C_S_AXI_DATA_WIDTH) ' (in_fifo_ctrs[k]);
+	
+	assign in_fifo_valid_li[k] = in_fifo_ready_lo[k] & slv_wr_sel_one_hot[num_regs_lp+k];
+	
 	bsg_fifo_1r1w_small #(.width_p(C_S_AXI_DATA_WIDTH), .els_p(4)) fifo
 	  (.clk_i(S_AXI_ACLK)
 	   ,.reset_i(~S_AXI_ARESETN)
-	   ,.v_i(in_fifo_ready_lo[k] & slv_wr_sel_one_hot[num_regs_lp+k])
+	   ,.v_i(in_fifo_valid_li[k])
 	   ,.ready_o(in_fifo_ready_lo[k])
 	   ,.data_i(S_AXI_WDATA)
 	   
@@ -272,14 +286,31 @@
 	     assert(~S_AXI_ARESETN | ~slv_wr_sel_one_hot[num_regs_lp+k] | in_fifo_ready_lo[k])
 	       else $error("write to full fifo");
 	  end
+
+       bsg_flow_counter #(.els_p(4)
+			  ,.count_free_p(1)
+			  ) bfc
+	 (.clk_i(S_AXI_ACLK)
+	  ,.reset_i(~S_AXI_ARESETN)
+	  ,.v_i(in_fifo_valid_li[k])
+	  ,.ready_i(in_fifo_ready_lo[k])
+	  ,.yumi_i(in_fifo_yumi_li[k])
+	  ,.count_o(in_fifo_ctrs[k])
+	  );
+   
      end // block: rof2
    
 
    logic [num_fifo_out_lp-1:0][C_S_AXI_DATA_WIDTH-1:0] out_fifo_data_r, out_fifo_data_li;
-   logic [num_fifo_out_lp-1:0] 			       out_fifo_valid_lo, out_fifo_ready_lo, out_fifo_valid_li;
+   logic [num_fifo_out_lp-1:0] 			       out_fifo_valid_lo, out_fifo_ready_lo, out_fifo_valid_li, out_fifo_yumi_li;
+   logic [num_fifo_out_lp-1:0][`BSG_WIDTH(4)-1:0]      out_fifo_ctrs;
+   logic [num_fifo_out_lp-1:0][C_S_AXI_DATA_WIDTH-1:0] out_fifo_ctrs_full;
    
    for (k=0; k < num_fifo_out_lp; k++)
      begin: rof3
+
+	assign out_fifo_ctrs_full[k] = (C_S_AXI_DATA_WIDTH) ' (out_fifo_ctrs[k]);
+	
 	// just for fun, we add together two inputs fifos, if they are both valid
 	// and the destination fifo has space
 	
@@ -288,7 +319,9 @@
 
 	assign in_fifo_yumi_li[k*2] = out_fifo_valid_li[k] & out_fifo_ready_lo[k];
 	assign in_fifo_yumi_li[k*2+1] = out_fifo_valid_li[k] & out_fifo_ready_lo[k];
-	
+
+	assign out_fifo_yumi_li[k] = out_fifo_valid_lo[k] & slv_rd_sel_one_hot[num_regs_lp+k];
+				    
 	bsg_fifo_1r1w_small #(.width_p(C_S_AXI_DATA_WIDTH), .els_p(4)) fifo
 	  (.clk_i(S_AXI_ACLK)
 	   ,.reset_i(~S_AXI_ARESETN)
@@ -296,13 +329,24 @@
 	   ,.ready_o(out_fifo_ready_lo[k])
 	   
 	   ,.data_i(out_fifo_data_li[k])
-	   
+ 	   
 	   ,.v_o(out_fifo_valid_lo[k])
 	   ,.data_o(out_fifo_data_r[k])
 	   // only deque if it is not empty =)
 	   ,.yumi_i(out_fifo_valid_lo[k] & slv_rd_sel_one_hot[num_regs_lp+k])
 	   );
 
+       bsg_flow_counter #(.els_p(4)
+			  ,.count_free_p(0)
+			  ) bfc
+	 (.clk_i(S_AXI_ACLK)
+	  ,.reset_i(~S_AXI_ARESETN)
+	  ,.v_i(out_fifo_valid_li[k])
+	  ,.ready_i(out_fifo_ready_lo[k])
+	  ,.yumi_i(out_fifo_yumi_li[k])
+	  ,.count_o(out_fifo_ctrs[k])
+	  );
+	
 	always @(negedge S_AXI_ACLK)
 	  begin
 	     assert(~S_AXI_ARESETN | ~slv_rd_sel_one_hot[num_regs_lp+k] | out_fifo_valid_lo[k])
@@ -410,8 +454,18 @@
 	// and the slave is ready to accept the read address.
 	assign slv_reg_rden = axi_arready & S_AXI_ARVALID & ~axi_rvalid;
 
-        bsg_mux_one_hot #(.width_p(C_S_AXI_DATA_WIDTH),.els_p(num_regs_lp+num_fifo_out_lp)) muxoh
-	  (.data_i({out_fifo_data_r, slv_r})
+
+   // the read memory map is essentially
+   //
+   // 0,4,8,C: registers
+   // 10, 14: output fifo heads
+   // 18, 1C: output fifo counts
+   // 20,24,28,2C: input fifo counts 
+
+
+   
+        bsg_mux_one_hot #(.width_p(C_S_AXI_DATA_WIDTH),.els_p(read_addr_bit_width_lp)) muxoh
+	  (.data_i({in_fifo_ctrs_full, out_fifo_ctrs_full, out_fifo_data_r, slv_r})
 	   ,.sel_one_hot_i(slv_rd_sel_one_hot)
 	   ,.data_o(reg_data_out)
 	   );
