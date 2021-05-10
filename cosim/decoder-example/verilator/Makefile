@@ -4,7 +4,7 @@ export HOST-PROGRAM ?= ps.cpp
 export AXI_NAME ?= s00_axi
 
 INCLUDES=-I../../include/verilator -I../../../include/verilator
-VERILOG-INCLUDES= -I../../import/basejump_stl/bsg_misc -I../../../import/basejump_stl/bsg_misc
+VERILOG-INCLUDES= -I../../import/basejump_stl/bsg_misc -I../../../import/basejump_stl/bsg_misc -I../../import/basejump_stl/bsg_dataflow -I../../../import/basejump_stl/bsg_dataflow  -I../../import/basejump_stl/bsg_mem -I../../../import/basejump_stl/bsg_mem
 VPATH=../ .
 
 TRACE=--trace-fst

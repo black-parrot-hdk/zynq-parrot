@@ -1,3 +1,4 @@
+`include "bsg_defines.v"
 
 `timescale 1 ns / 1 ps
 
@@ -11,7 +12,7 @@
 		// Width of S_AXI data bus
 		parameter integer C_S_AXI_DATA_WIDTH	= 32,
 		// Width of S_AXI address bus
-		parameter integer C_S_AXI_ADDR_WIDTH	= 4
+		parameter integer C_S_AXI_ADDR_WIDTH	= 5 //4
 	)
 	(
 		// Users to add ports here
@@ -99,15 +100,17 @@
 	// ADDR_LSB = 2 for 32 bits (n downto 2)
 	// ADDR_LSB = 3 for 64 bits (n downto 3)
 	localparam integer ADDR_LSB = (C_S_AXI_DATA_WIDTH/32) + 1;
-	localparam integer OPT_MEM_ADDR_BITS = 1;
+
 	//----------------------------------------------
 	//-- Signals for user logic register space example
 	//------------------------------------------------
 	//-- Number of Slave Registers 4
         localparam num_regs_lp = 4;
+        localparam num_fifo_in_lp = 4;
+        localparam num_fifo_out_lp = 2;
+
+   localparam integer 	   OPT_MEM_ADDR_BITS = `BSG_SAFE_CLOG2(num_regs_lp+`BSG_MAX(num_fifo_in_lp,num_fifo_out_lp))-1;
    
-   
-   logic [num_regs_lp-1:0][C_S_AXI_DATA_WIDTH-1:0] slv_r;
 	wire	 slv_reg_rden;
 	wire	 slv_reg_wren;
 	reg [C_S_AXI_DATA_WIDTH-1:0]	 reg_data_out;
@@ -218,25 +221,24 @@
 
    genvar k;
 
-   wire [num_regs_lp-1:0] slv_rd_sel_one_hot;
-   wire [num_regs_lp-1:0] slv_wr_sel_one_hot;
+   wire [num_regs_lp+num_fifo_out_lp-1:0] slv_rd_sel_one_hot;
+   wire [num_regs_lp+num_fifo_in_lp-1:0]  slv_wr_sel_one_hot;
    
-   
-   bsg_decode_with_v #(.num_out_p(num_regs_lp)) decode_rd
+   bsg_decode_with_v #(.num_out_p(num_regs_lp+num_fifo_out_lp)) decode_rd
      (.i(axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB])
       ,.v_i(slv_reg_rden)
       ,.o(slv_rd_sel_one_hot)
       );
    
 
-   bsg_decode_with_v #(.num_out_p(num_regs_lp)) decode_wr
+   bsg_decode_with_v #(.num_out_p(num_regs_lp+num_fifo_in_lp)) decode_wr
      (.i(axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB])
       ,.v_i(slv_reg_wren)
       ,.o(slv_wr_sel_one_hot)
       );
    
+   logic [num_regs_lp-1:0][C_S_AXI_DATA_WIDTH-1:0] slv_r;
 
-   
    for (k=0; k < num_regs_lp; k++)
      begin: rof
 	bsg_dff_reset_en #(.width_p(C_S_AXI_DATA_WIDTH)) slv_reg
@@ -247,7 +249,67 @@
 	 ,.data_o(slv_r[k])
 	 );
      end
+
+   wire [num_fifo_in_lp-1:0] in_fifo_ready_lo, in_fifo_valid_lo, in_fifo_yumi_li;
+   wire [num_fifo_in_lp-1:0][C_S_AXI_DATA_WIDTH-1:0] in_fifo_data_lo;
+      
+   for (k=0; k < num_fifo_in_lp; k++)
+     begin: rof2
+	bsg_fifo_1r1w_small #(.width_p(C_S_AXI_DATA_WIDTH), .els_p(4)) fifo
+	  (.clk_i(S_AXI_ACLK)
+	   ,.reset_i(~S_AXI_ARESETN)
+	   ,.v_i(in_fifo_ready_lo[k] & slv_wr_sel_one_hot[num_regs_lp+k])
+	   ,.ready_o(in_fifo_ready_lo[k])
+	   ,.data_i(S_AXI_WDATA)
+	   
+	   ,.v_o(in_fifo_valid_lo[k])
+	   ,.data_o(in_fifo_data_lo[k])
+	   ,.yumi_i(in_fifo_yumi_li[k])
+	   );
+
+	always @(negedge S_AXI_ACLK)
+	  begin
+	     assert(~S_AXI_ARESETN | ~slv_wr_sel_one_hot[num_regs_lp+k] | in_fifo_ready_lo[k])
+	       else $error("write to full fifo");
+	  end
+     end // block: rof2
    
+
+   logic [num_fifo_out_lp-1:0][C_S_AXI_DATA_WIDTH-1:0] out_fifo_data_r, out_fifo_data_li;
+   logic [num_fifo_out_lp-1:0] 			       out_fifo_valid_lo, out_fifo_ready_lo, out_fifo_valid_li;
+   
+   for (k=0; k < num_fifo_out_lp; k++)
+     begin: rof3
+	// just for fun, we add together two inputs fifos, if they are both valid
+	// and the destination fifo has space
+	
+	assign out_fifo_data_li[k] = in_fifo_data_lo[k*2] + in_fifo_data_lo[k*2+1];
+	assign out_fifo_valid_li[k] = in_fifo_valid_lo[k*2] & in_fifo_valid_lo[k*2+1];
+
+	assign in_fifo_yumi_li[k*2] = out_fifo_valid_li[k] & out_fifo_ready_lo[k];
+	assign in_fifo_yumi_li[k*2+1] = out_fifo_valid_li[k] & out_fifo_ready_lo[k];
+	
+	bsg_fifo_1r1w_small #(.width_p(C_S_AXI_DATA_WIDTH), .els_p(4)) fifo
+	  (.clk_i(S_AXI_ACLK)
+	   ,.reset_i(~S_AXI_ARESETN)
+	   ,.v_i(out_fifo_valid_li[k])
+	   ,.ready_o(out_fifo_ready_lo[k])
+	   
+	   ,.data_i(out_fifo_data_li[k])
+	   
+	   ,.v_o(out_fifo_valid_lo[k])
+	   ,.data_o(out_fifo_data_r[k])
+	   // only deque if it is not empty =)
+	   ,.yumi_i(out_fifo_valid_lo[k] & slv_rd_sel_one_hot[num_regs_lp+k])
+	   );
+
+	always @(negedge S_AXI_ACLK)
+	  begin
+	     assert(~S_AXI_ARESETN | ~slv_rd_sel_one_hot[num_regs_lp+k] | out_fifo_valid_lo[k])
+	       else $error("read from empty fifo");
+
+	  end
+     end
 	// Implement write response logic generation
 	// The write response and response valid signals are asserted by the slave 
 	// when axi_wready, S_AXI_WVALID, axi_wready and S_AXI_WVALID are asserted.  
@@ -348,8 +410,8 @@
 	// and the slave is ready to accept the read address.
 	assign slv_reg_rden = axi_arready & S_AXI_ARVALID & ~axi_rvalid;
 
-        bsg_mux_one_hot #(.width_p(C_S_AXI_DATA_WIDTH),.els_p(num_regs_lp)) muxoh
-	  (.data_i(slv_r)
+        bsg_mux_one_hot #(.width_p(C_S_AXI_DATA_WIDTH),.els_p(num_regs_lp+num_fifo_out_lp)) muxoh
+	  (.data_i({out_fifo_data_r, slv_r})
 	   ,.sel_one_hot_i(slv_rd_sel_one_hot)
 	   ,.data_o(reg_data_out)
 	   );
