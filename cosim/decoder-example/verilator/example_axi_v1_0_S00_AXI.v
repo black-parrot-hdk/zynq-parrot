@@ -112,6 +112,9 @@
 	//	
 	// if the PS reads from the FIFO and it is empty, it will return bogus data.
 	// if the PS writes to a FIFO and it is full, it will be dropped.
+	//
+	// reading the FIFO csrs tells you how many consecutive words you can read/write before
+	// checking the csr again/
 		
 	localparam num_regs_lp = 4;         // number of user CSRs
 	localparam num_fifo_in_lp = 4;      // number of input FIFOs (from PL to PS)
