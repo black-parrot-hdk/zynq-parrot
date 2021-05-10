@@ -318,7 +318,11 @@
    logic [num_fifo_out_lp-1:0][`BSG_WIDTH(4)-1:0]      out_fifo_ctrs;
    logic [num_fifo_out_lp-1:0][C_S_AXI_DATA_WIDTH-1:0] out_fifo_ctrs_full;
 
-
+   //-------------------------------------------------------------------------------- 
+   // USER MODIFY -- Configure your accelerator interface by wiring these signals to
+   //                your accelerator.
+   //--------------------------------------------------------------------------------
+   //
    // BEGIN logic is replaced with connections to the accelerator core
    // as a stand-in, we loopback the input fifos to the output fifos,
    // adding a pair of input fifos to get the output fifo
