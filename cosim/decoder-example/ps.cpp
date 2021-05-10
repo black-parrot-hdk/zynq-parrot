@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 	assert ( (zpl->axil_read(0x1C + ADDR_BASE) == 0) );
 
 	// check input fifo counters
-	printf("%x\n",zpl->axil_read(0x20 + ADDR_BASE));
+	//	printf("%x\n",zpl->axil_read(0x20 + ADDR_BASE));
 	assert ( (zpl->axil_read(0x20 + ADDR_BASE) == 4) );
 	assert ( (zpl->axil_read(0x24 + ADDR_BASE) == 4) );
 	assert ( (zpl->axil_read(0x28 + ADDR_BASE) == 4) );

@@ -305,20 +305,30 @@
    logic [num_fifo_out_lp-1:0] 			       out_fifo_valid_lo, out_fifo_ready_lo, out_fifo_valid_li, out_fifo_yumi_li;
    logic [num_fifo_out_lp-1:0][`BSG_WIDTH(4)-1:0]      out_fifo_ctrs;
    logic [num_fifo_out_lp-1:0][C_S_AXI_DATA_WIDTH-1:0] out_fifo_ctrs_full;
+
+
+   // BEGIN logic is replaced with connections to the accelerator core
+   // as a stand-in, we loopback the input fifos to the output fifos,
+   // adding a pair of input fifos to get the output fifo
+   
+   for (k=0; k < num_fifo_out_lp; k++)
+     begin: rof4
+	assign out_fifo_data_li[k] = in_fifo_data_lo[k*2] + in_fifo_data_lo[k*2+1];
+	assign out_fifo_valid_li[k] = in_fifo_valid_lo[k*2] & in_fifo_valid_lo[k*2+1];
+
+	assign in_fifo_yumi_li[k*2] = out_fifo_valid_li[k] & out_fifo_ready_lo[k];
+	assign in_fifo_yumi_li[k*2+1] = out_fifo_valid_li[k] & out_fifo_ready_lo[k];
+     end
+
+   // END
+
+   // this logic instantiates the outgoing fifos
    
    for (k=0; k < num_fifo_out_lp; k++)
      begin: rof3
 
 	assign out_fifo_ctrs_full[k] = (C_S_AXI_DATA_WIDTH) ' (out_fifo_ctrs[k]);
 	
-	// just for fun, we add together two inputs fifos, if they are both valid
-	// and the destination fifo has space
-	
-	assign out_fifo_data_li[k] = in_fifo_data_lo[k*2] + in_fifo_data_lo[k*2+1];
-	assign out_fifo_valid_li[k] = in_fifo_valid_lo[k*2] & in_fifo_valid_lo[k*2+1];
-
-	assign in_fifo_yumi_li[k*2] = out_fifo_valid_li[k] & out_fifo_ready_lo[k];
-	assign in_fifo_yumi_li[k*2+1] = out_fifo_valid_li[k] & out_fifo_ready_lo[k];
 
 	assign out_fifo_yumi_li[k] = out_fifo_valid_lo[k] & slv_rd_sel_one_hot[num_regs_lp+k];
 				    
