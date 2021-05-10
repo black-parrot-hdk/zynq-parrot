@@ -8,7 +8,7 @@ that can be easily re-implemented to run on the actual PS system
 
 - ps.cpp: portable host program, can run in cosim or on PL, controls accelerator
 
-- bp_zynq_pl.h: mostly design-independent cosim-implementation of bp_zynq_pl API (another implementation will be created for PS)
+- cosim/include/verilator/bp_zynq_pl.h: mostly design-independent cosim-implementation of bp_zynq_pl API (another implementation will be created for PS)
   - Current API: 
     -   void axil_write(int address, int data, int wstrb);
     -    int axil_read(int address);
