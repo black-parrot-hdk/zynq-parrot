@@ -21,21 +21,29 @@ int main(int argc, char **argv) {
 	int val4 = 0xC0DE0000;
 	int mask1 = 0xf;
 	int mask2 = 0xf;
-	
+
+	// write to two registers
 	zpl->axil_write(0x0 + ADDR_BASE, val1, mask1);
 	zpl->axil_write(0x4 + ADDR_BASE, val2, mask2);
 	// 8,12
-	
+
+	// write to two fifos
 	zpl->axil_write(0x10 + ADDR_BASE, val3, mask1);
 	zpl->axil_write(0x14 + ADDR_BASE, val4, mask2);
 
-	assert( (zpl->axil_read(0x0 + ADDR_BASE) == (val1)));
+	// write to two fifos
+	zpl->axil_write(0x10 + ADDR_BASE, val1, mask1);
+	zpl->axil_write(0x14 + ADDR_BASE, val2, mask2);
 
+	// check register writes
+	assert( (zpl->axil_read(0x0 + ADDR_BASE) == (val1)));
 	assert( (zpl->axil_read(0x4 + ADDR_BASE) == (val2)));
 	
-
+	// check that the output fifo has the sum of the input fifos
 	assert( (zpl->axil_read(0x10 + ADDR_BASE) == (val3+val4)));
+	assert( (zpl->axil_read(0x10 + ADDR_BASE) == (val1+val2)));
 
+	// try a different set of input and output fifos
 	zpl->axil_write(0x18 + ADDR_BASE, val1, mask1);
 	zpl->axil_write(0x1C + ADDR_BASE, val2, mask2);
 
