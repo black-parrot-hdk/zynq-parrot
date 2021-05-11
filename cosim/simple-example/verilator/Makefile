@@ -10,7 +10,7 @@ TRACE=--trace-fst
 
 # You need to configure these parameters for your particular accelerator!
 
-THE_FLAGS = -DADDR_BASE=0x43C00000 -DADDR_SIZE_BYTES=4096 $(INCLUDES)
+THE_FLAGS = -DGP0_ADDR_BASE=0x43C00000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_SIZE_BYTES=4096 $(INCLUDES)
 
 top: all
 

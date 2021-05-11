@@ -9,21 +9,26 @@
 #include "verilated.h"
 using namespace std;
 
-//#define ADDR_BASE 0x4000_0000
-//#define ADDR_SIZE_BYTES 0x1000
-
 #ifndef PERIOD
 #define PERIOD 25000
 #endif
 
 #define TOP_MODULE Vtop
 
-#ifndef ADDR_BASE
-#ERROR ADDR_BASE must be defined
+#ifndef GP0_ADDR_BASE
+#ERROR GP0_ADDR_BASE must be defined
 #endif
 
-#ifndef ADDR_SIZE_BYTES
-#ERROR ADDR_SIZE_BYTES must be defined
+#ifndef GP0_ADDR_SIZE_BYTES
+#ERROR GP0_ADDR_SIZE_BYTES must be defined
+#endif
+
+#ifndef GP1_ADDR_BASE
+#ERROR GP1_ADDR_BASE must be defined
+#endif
+
+#ifndef GP1_ADDR_SIZE_BYTES
+#ERROR GP1_ADDR_SIZE_BYTES must be defined
 #endif
 
 #define BSG_move_bit(q,x,y) ((((q) >> (x)) & 1) << y)
@@ -93,26 +98,47 @@ class bp_zynq_pl {
     tb->eval();
   }
 
-	void axi_assign(int index) {
-		axi_int[index].awaddr  = &(tb->s00_axi_awaddr);
-		axi_int[index].awprot  = &(tb->s00_axi_awprot);
-		axi_int[index].awvalid = &(tb->s00_axi_awvalid);
-		axi_int[index].awready = &(tb->s00_axi_awready);
-		axi_int[index].wdata   = &(tb->s00_axi_wdata);
-		axi_int[index].wstrb   = &(tb->s00_axi_wstrb);
-		axi_int[index].wvalid  = &(tb->s00_axi_wvalid);
-		axi_int[index].wready  = &(tb->s00_axi_wready);
-		axi_int[index].bresp   = &(tb->s00_axi_bresp);
-		axi_int[index].bvalid  = &(tb->s00_axi_bvalid);
-		axi_int[index].bready  = &(tb->s00_axi_bready);
-		axi_int[index].araddr  = &(tb->s00_axi_araddr);
-		axi_int[index].arprot  = &(tb->s00_axi_arprot);
-		axi_int[index].arvalid = &(tb->s00_axi_arvalid);
-		axi_int[index].arready = &(tb->s00_axi_arready);
-		axi_int[index].rdata   = &(tb->s00_axi_rdata);
-		axi_int[index].rresp   = &(tb->s00_axi_rresp);
-		axi_int[index].rvalid  = &(tb->s00_axi_rvalid);
-		axi_int[index].rready  = &(tb->s00_axi_rready);
+	void axi_assign() {
+		axi_int[0].awaddr  = &(tb->s00_axi_awaddr);
+		axi_int[0].awprot  = &(tb->s00_axi_awprot);
+		axi_int[0].awvalid = &(tb->s00_axi_awvalid);
+		axi_int[0].awready = &(tb->s00_axi_awready);
+		axi_int[0].wdata   = &(tb->s00_axi_wdata);
+		axi_int[0].wstrb   = &(tb->s00_axi_wstrb);
+		axi_int[0].wvalid  = &(tb->s00_axi_wvalid);
+		axi_int[0].wready  = &(tb->s00_axi_wready);
+		axi_int[0].bresp   = &(tb->s00_axi_bresp);
+		axi_int[0].bvalid  = &(tb->s00_axi_bvalid);
+		axi_int[0].bready  = &(tb->s00_axi_bready);
+		axi_int[0].araddr  = &(tb->s00_axi_araddr);
+		axi_int[0].arprot  = &(tb->s00_axi_arprot);
+		axi_int[0].arvalid = &(tb->s00_axi_arvalid);
+		axi_int[0].arready = &(tb->s00_axi_arready);
+		axi_int[0].rdata   = &(tb->s00_axi_rdata);
+		axi_int[0].rresp   = &(tb->s00_axi_rresp);
+		axi_int[0].rvalid  = &(tb->s00_axi_rvalid);
+		axi_int[0].rready  = &(tb->s00_axi_rready);
+
+		// TODO: Need to change s00 in all the signals below
+		axi_int[1].awaddr  = &(tb->s00_axi_awaddr);
+		axi_int[1].awprot  = &(tb->s00_axi_awprot);
+		axi_int[1].awvalid = &(tb->s00_axi_awvalid);
+		axi_int[1].awready = &(tb->s00_axi_awready);
+		axi_int[1].wdata   = &(tb->s00_axi_wdata);
+		axi_int[1].wstrb   = &(tb->s00_axi_wstrb);
+		axi_int[1].wvalid  = &(tb->s00_axi_wvalid);
+		axi_int[1].wready  = &(tb->s00_axi_wready);
+		axi_int[1].bresp   = &(tb->s00_axi_bresp);
+		axi_int[1].bvalid  = &(tb->s00_axi_bvalid);
+		axi_int[1].bready  = &(tb->s00_axi_bready);
+		axi_int[1].araddr  = &(tb->s00_axi_araddr);
+		axi_int[1].arprot  = &(tb->s00_axi_arprot);
+		axi_int[1].arvalid = &(tb->s00_axi_arvalid);
+		axi_int[1].arready = &(tb->s00_axi_arready);
+		axi_int[1].rdata   = &(tb->s00_axi_rdata);
+		axi_int[1].rresp   = &(tb->s00_axi_rresp);
+		axi_int[1].rvalid  = &(tb->s00_axi_rvalid);
+		axi_int[1].rready  = &(tb->s00_axi_rready);
 	}
 
  public:
@@ -126,8 +152,7 @@ class bp_zynq_pl {
 
     tb = new TOP_MODULE;
 		printf("About to assign values\n");
-		axi_assign(0);
-		axi_assign(1);
+		axi_assign();
 
     printf("bp_zynq_pl: Entering reset\n");
     reset();
@@ -159,8 +184,11 @@ class bp_zynq_pl {
        printf("bp_zynq: AXI writing [%x]=%8.8x mask %x\n", address, data, wstrb);
 
     assert(wstrb==0xf); // we only support full int writes right now
-    
-    assert(address >= ADDR_BASE && (address - ADDR_BASE < ADDR_SIZE_BYTES)); // "address is not in the correct range?"
+
+		if (index == 0)
+    	assert(address - GP0_ADDR_BASE < GP0_ADDR_SIZE_BYTES); // "address is not in the correct range?"
+		else
+			assert(address - GP1_ADDR_BASE < GP1_ADDR_SIZE_BYTES);
     
 		*(axi_int[index].awvalid) = 1;
 		*(axi_int[index].wvalid)  = 1;
@@ -203,7 +231,10 @@ class bp_zynq_pl {
   int axil_read_helper(unsigned int address, int index) {
     int data;
 
-    assert(address >= ADDR_BASE && (address - ADDR_BASE < ADDR_SIZE_BYTES)); // "address is not in the correct range?"
+		if (index == 0)
+    	assert(address - GP0_ADDR_BASE < GP0_ADDR_SIZE_BYTES); // "address is not in the correct range?"
+		else
+			assert(address - GP1_ADDR_BASE < GP1_ADDR_SIZE_BYTES);
     
     // assert these signals "late in the cycle"
     *(axi_int[index].arvalid) = 1;
