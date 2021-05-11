@@ -10,7 +10,7 @@ TRACE=--trace-fst
 
 # You need to configure these parameters for your particular accelerator!
 
-THE_FLAGS = -DNAME=s00_axi -DCLOCK=_aclk -DRESETN=_aresetn -DADDR_BASE=0x43C00000 -DADDR_SIZE_BYTES=4096 $(INCLUDES)
+THE_FLAGS = -DADDR_BASE=0x43C00000 -DADDR_SIZE_BYTES=4096 $(INCLUDES)
 
 top: all
 
