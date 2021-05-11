@@ -171,14 +171,14 @@ class bp_zynq_pl {
 
 	void axil_write(unsigned int address, int data, int wstrb) {
 		if (address >=0x40000000 && address <= 0x7fffffff)
-			axil_write_helper(address, data, wstrb, 0);
+			axil_write_helper(0, address, data, wstrb);
 		else if (address >= 80000000 && address <= 0xbfffffff)
-			axil_write_helper(address, data, wstrb, 1);
+			axil_write_helper(1, address, data, wstrb);
 		else
 			assert(0);
 	}
 
-  void axil_write_helper(unsigned int address, int data, int wstrb, int index)
+  void axil_write_helper(int index, unsigned int address, int data, int wstrb)
   {
     if (BP_ZYNQ_PL_DEBUG)
        printf("bp_zynq: AXI writing [%x]=%8.8x mask %x\n", address, data, wstrb);
@@ -221,14 +221,14 @@ class bp_zynq_pl {
 
 	int axil_read(unsigned int address) {
 		if (address >=0x40000000 && address <= 0x7fffffff)
-			return axil_read_helper(address, 0);
+			return axil_read_helper(0, address);
 		else if (address >= 80000000 && address <= 0xbfffffff)
-			return axil_read_helper(address, 1);
+			return axil_read_helper(1, address);
 		else
 			assert(0);
 	}
 
-  int axil_read_helper(unsigned int address, int index) {
+  int axil_read_helper(int index, unsigned int address) {
     int data;
 
 		if (index == 0)
@@ -318,5 +318,19 @@ class bp_zynq_pl {
 				return;
 			}
 		}
+	}
+
+	void decode_bp_output(int data) {
+		int rd_wr = data >> 31;
+		int address = (data >> 15) & 0xFFFF;
+		if (rd_wr) {
+			if (address == 0x101000) {
+				printf("%c\n", data);
+			}
+			else if (address == 0x102000) {
+				done();
+			}
+		}
+		else return;
 	}
 };
