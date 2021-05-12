@@ -17,7 +17,6 @@ export BP_HDK_DIR       = $(BLACKPARROT_DIR)/hdk
 export TEST_DIR ?= .
 export TOP  ?= top
 export HOST-PROGRAM ?= ps.cpp
-export AXI_NAME ?= s00_axi
 
 VV_OPTS  = --cc
 VV_OPTS += -O1
@@ -30,10 +29,9 @@ VV_OPTS += -Wno-timescalemod
 VV_OPTS += --Wno-fatal --Wno-lint --Wno-unoptflat --Wno-widthconcat --Wno-style
 VV_OPTS += -I$(BP_SDK_DIR)/install/include
 VV_OPTS += -I$(BP_TOOLS_DIR)/install/share/verilator/include/vltstd/
-VV_OPTS += -I$(BASEJUMP_STL_DIR)/bsg_cache
 
 INCLUDES=-I../../include/verilator -I../../../include/verilator
-VERILOG-INCLUDES= -I../../import/basejump_stl/bsg_misc -I../../../import/basejump_stl/bsg_misc -I../../import/basejump_stl/bsg_cache -I../../import/basejump_stl/bsg_dataflow -I../../../import/basejump_stl/bsg_dataflow  -I../../import/basejump_stl/bsg_mem -I../../../import/basejump_stl/bsg_mem -I$(BP_FE_DIR)/src/include -I$(BP_COMMON_DIR)/src/include -I$(BP_TOP_DIR)/src/include -I$(BP_BE_DIR)/src/include -I$(BP_ME_DIR)/include
+#VERILOG-INCLUDES= -I../../import/basejump_stl/bsg_misc -I../../../import/basejump_stl/bsg_misc -I../../import/basejump_stl/bsg_cache -I../../import/basejump_stl/bsg_dataflow -I../../../import/basejump_stl/bsg_dataflow  -I../../import/basejump_stl/bsg_mem -I../../../import/basejump_stl/bsg_mem -I$(BP_FE_DIR)/src/include -I$(BP_COMMON_DIR)/src/include -I$(BP_TOP_DIR)/src/include -I$(BP_BE_DIR)/src/include -I$(BP_ME_DIR)/include
 VPATH=../ .
 
 TRACE=--trace-fst
@@ -45,7 +43,7 @@ THE_FLAGS = -DGP0_ADDR_BASE=0x40000000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BAS
 top: all
 
 verilate: $(HOST-PROGRAM)
-	verilator $(VV_OPTS) $(VERILOG_INCLUDES) -sv -CFLAGS "$(THE_FLAGS)" $(TRACE)  -exe $< 2>&1 | tee build.log
+	verilator $(VV_OPTS) -sv -CFLAGS "$(THE_FLAGS)" $(TRACE)  -exe $< 2>&1 | tee build.log
 
 recursive: verilate
 	make -j -C obj_dir/ -f V$(TOP).mk V$(TOP)

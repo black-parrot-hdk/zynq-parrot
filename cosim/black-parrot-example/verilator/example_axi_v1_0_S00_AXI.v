@@ -351,7 +351,7 @@
      end
 
 	 for (k=0; k < num_regs_lp; k++)
-		 begin: rof1
+		 begin: rof5
 			assign csr_data_o[k] = slv_r[k];
 		 end
 
