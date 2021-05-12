@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string>
 #include <fstream>
+#include <iostream>
 #include "Vtop.h"
 #include "verilated.h"
 using namespace std;
@@ -34,10 +35,10 @@ using namespace std;
 #define BSG_move_bit(q,x,y) ((((q) >> (x)) & 1) << y)
 #define BSG_expand_byte_mask(x) ((BSG_move_bit(x,0,0) | BSG_move_bit(x,1,8) | BSG_move_bit(x,2,16) | BSG_move_bit(x,3,24))*0xFF)
 
-#define BP_ZYNQ_PL_DEBUG 1
+#define BP_ZYNQ_PL_DEBUG 0
 
 struct axil {
-	unsigned char *awaddr;
+	unsigned int  *awaddr;
 	unsigned char *awprot;
 	unsigned char *awvalid;
 	unsigned char *awready;
@@ -48,7 +49,7 @@ struct axil {
 	unsigned char *bresp;
 	unsigned char *bvalid;
 	unsigned char *bready;
-	unsigned char *araddr;
+	unsigned int  *araddr;
 	unsigned char *arprot;
 	unsigned char *arvalid;
 	unsigned char *arready;
@@ -68,8 +69,10 @@ class bp_zynq_pl {
   void reset(void) {
     this->tick(period);
     tb->s00_axi_aresetn = 0;
+    tb->s01_axi_aresetn = 0;
     this->tick(period);
     tb->s00_axi_aresetn = 1;
+    tb->s01_axi_aresetn = 1;
   }
 
   // structure of a verilator clock cycle
@@ -92,9 +95,11 @@ class bp_zynq_pl {
   void tick(int time_period) {
     Verilated::timeInc(time_period>>1);
     tb->s00_axi_aclk = 0;
+    tb->s01_axi_aclk = 0;
     tb->eval();
     Verilated::timeInc(time_period>>1);
     tb->s00_axi_aclk = 1;
+    tb->s01_axi_aclk = 1;
     tb->eval();
   }
 
@@ -119,26 +124,25 @@ class bp_zynq_pl {
 		axi_int[0].rvalid  = &(tb->s00_axi_rvalid);
 		axi_int[0].rready  = &(tb->s00_axi_rready);
 
-		// TODO: Need to change s00 in all the signals below
-		axi_int[1].awaddr  = &(tb->s00_axi_awaddr);
-		axi_int[1].awprot  = &(tb->s00_axi_awprot);
-		axi_int[1].awvalid = &(tb->s00_axi_awvalid);
-		axi_int[1].awready = &(tb->s00_axi_awready);
-		axi_int[1].wdata   = &(tb->s00_axi_wdata);
-		axi_int[1].wstrb   = &(tb->s00_axi_wstrb);
-		axi_int[1].wvalid  = &(tb->s00_axi_wvalid);
-		axi_int[1].wready  = &(tb->s00_axi_wready);
-		axi_int[1].bresp   = &(tb->s00_axi_bresp);
-		axi_int[1].bvalid  = &(tb->s00_axi_bvalid);
-		axi_int[1].bready  = &(tb->s00_axi_bready);
-		axi_int[1].araddr  = &(tb->s00_axi_araddr);
-		axi_int[1].arprot  = &(tb->s00_axi_arprot);
-		axi_int[1].arvalid = &(tb->s00_axi_arvalid);
-		axi_int[1].arready = &(tb->s00_axi_arready);
-		axi_int[1].rdata   = &(tb->s00_axi_rdata);
-		axi_int[1].rresp   = &(tb->s00_axi_rresp);
-		axi_int[1].rvalid  = &(tb->s00_axi_rvalid);
-		axi_int[1].rready  = &(tb->s00_axi_rready);
+		axi_int[1].awaddr  = &(tb->s01_axi_awaddr);
+		axi_int[1].awprot  = &(tb->s01_axi_awprot);
+		axi_int[1].awvalid = &(tb->s01_axi_awvalid);
+		axi_int[1].awready = &(tb->s01_axi_awready);
+		axi_int[1].wdata   = &(tb->s01_axi_wdata);
+		axi_int[1].wstrb   = &(tb->s01_axi_wstrb);
+		axi_int[1].wvalid  = &(tb->s01_axi_wvalid);
+		axi_int[1].wready  = &(tb->s01_axi_wready);
+		axi_int[1].bresp   = &(tb->s01_axi_bresp);
+		axi_int[1].bvalid  = &(tb->s01_axi_bvalid);
+		axi_int[1].bready  = &(tb->s01_axi_bready);
+		axi_int[1].araddr  = &(tb->s01_axi_araddr);
+		axi_int[1].arprot  = &(tb->s01_axi_arprot);
+		axi_int[1].arvalid = &(tb->s01_axi_arvalid);
+		axi_int[1].arready = &(tb->s01_axi_arready);
+		axi_int[1].rdata   = &(tb->s01_axi_rdata);
+		axi_int[1].rresp   = &(tb->s01_axi_rresp);
+		axi_int[1].rvalid  = &(tb->s01_axi_rvalid);
+		axi_int[1].rready  = &(tb->s01_axi_rready);
 	}
 
  public:
@@ -295,19 +299,18 @@ class bp_zynq_pl {
 			if (nbf[0] == 0x3) {
 				if (nbf[1] >= 0x80000000) {
 					address = nbf[1];
+					address = address + 0x20000000;
 					data = nbf[2];
 					nbf[2] = nbf[2] >> 32;
-					//cout << "Address: " << std::hex << address << " Data: " << std::hex << data << "\n";
 					axil_write(address, data, 0xf);
-					address = nbf[1] + 4;
+					address = address + 4;
 					data = nbf[2];
-					//cout << "Address: " << std::hex << address << " Data: " << std::hex << data << "\n";
 					axil_write(address, data, 0xf);
 				}
 				else {
 					address = nbf[1];
+					address = address + 0x80000000;
 					data = nbf[2];
-					//cout << "Address: " << std::hex << address << " Data: " << std::hex << data << "\n";
 					axil_write(address, data, 0xf);
 				}
 			}
@@ -320,17 +323,24 @@ class bp_zynq_pl {
 		}
 	}
 
-	void decode_bp_output(int data) {
+	bool decode_bp_output(int data) {
 		int rd_wr = data >> 31;
-		int address = (data >> 15) & 0xFFFF;
+		int address = (data >> 8) & 0x7FFFFF;
+		int print_data = data & 0xFF;
 		if (rd_wr) {
 			if (address == 0x101000) {
-				printf("%c\n", data);
+				printf("%c", print_data);
+				return false;
 			}
 			else if (address == 0x102000) {
-				done();
+				if (print_data == 0)
+					printf("\nPASS\n");
+				else
+					printf("\nFAIL\n");
+				return true;
 			}
 		}
-		else return;
+		// TODO: Need to implement logic for bp io_read
+		else return false;
 	}
 };
