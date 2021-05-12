@@ -8,7 +8,7 @@ export BP_BE_DIR        = $(BLACKPARROT_DIR)/bp_be
 export BP_ME_DIR        = $(BLACKPARROT_DIR)/bp_me
 export BP_TOP_DIR       = $(BLACKPARROT_DIR)/bp_top
 export BP_EXTERNAL_DIR  = $(BLACKPARROT_DIR)/external
-export BASEJUMP_STL_DIR = $(BP_EXTERNAL_DIR)/basejump-stl
+export BASEJUMP_STL_DIR = $(BP_EXTERNAL_DIR)/basejump_stl
 export HARDFLOAT_DIR    = $(BP_EXTERNAL_DIR)/HardFloat
 export BP_TOOLS_DIR     = $(BLACKPARROT_DIR)/tools
 export BP_SDK_DIR       = $(BLACKPARROT_DIR)/sdk
@@ -27,6 +27,7 @@ VV_OPTS += -top-module $(TOP)
 VV_OPTS += -f flist.vcs
 VV_OPTS += --build
 VV_OPTS += -Wno-timescalemod
+VV_OPTS += --Wno-fatal --Wno-lint --Wno-unoptflat --Wno-widthconcat --Wno-style
 VV_OPTS += -I$(BP_SDK_DIR)/install/include
 VV_OPTS += -I$(BP_TOOLS_DIR)/install/share/verilator/include/vltstd/
 VV_OPTS += -I$(BASEJUMP_STL_DIR)/bsg_cache
@@ -44,7 +45,7 @@ THE_FLAGS = -DGP0_ADDR_BASE=0x40000000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BAS
 top: all
 
 verilate: $(HOST-PROGRAM)
-	verilator $(VV_OPTS) $(VERILOG_INCLUDES) -sv -CFLAGS "$(THE_FLAGS)" $(TRACE) $(TOP).v  -exe $<
+	verilator $(VV_OPTS) $(VERILOG_INCLUDES) -sv -CFLAGS "$(THE_FLAGS)" $(TRACE)  -exe $< 2>&1 | tee build.log
 
 recursive: verilate
 	make -j -C obj_dir/ -f V$(TOP).mk V$(TOP)
