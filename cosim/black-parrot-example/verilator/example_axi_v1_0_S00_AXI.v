@@ -12,7 +12,7 @@
 		// Width of S_AXI data bus
 		parameter integer C_S_AXI_DATA_WIDTH	= 32,
 		// Width of S_AXI address bus
-		parameter integer C_S_AXI_ADDR_WIDTH	= 6 //4
+		parameter integer C_S_AXI_ADDR_WIDTH	= 6
 	)
 	(
 		// Users to add ports here
@@ -126,7 +126,7 @@
 	localparam num_fifo_in_lp = 1;      // number of input FIFOs (from PL to PS)
 	localparam num_fifo_out_lp = 1;     // number of output FIFOs (from PS to PL)
 
-        localparam integer 	   OPT_MEM_ADDR_BITS = `BSG_SAFE_CLOG2(num_regs_lp+num_fifo_in_lp+2*num_fifo_out_lp)-1;
+  localparam integer 	   OPT_MEM_ADDR_BITS = `BSG_SAFE_CLOG2(num_regs_lp+num_fifo_in_lp+2*num_fifo_out_lp)-1;
 		
 	wire	 slv_reg_rden;
 	wire	 slv_reg_wren;

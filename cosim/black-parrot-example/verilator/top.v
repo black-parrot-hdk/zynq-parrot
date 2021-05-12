@@ -14,14 +14,14 @@
 		`declare_bp_proc_params(bp_params_p)
 
 		, localparam uce_mem_data_width_lp = `BSG_MAX(icache_fill_width_p, dcache_fill_width_p)
-		`declare_bedrock_mem_if_widths(paddr_width_p, uce_mem_data_width_lp, lce_id_width_p, lce_assoc_p, uce)
+		`declare_bp_bedrock_mem_if_widths(paddr_width_p, uce_mem_data_width_lp, lce_id_width_p, lce_assoc_p, uce)
 		// User parameters ends
 		// Do not modify the parameters beyond this line
 
 
 		// Parameters of Axi Slave Bus Interface S00_AXI
-		parameter integer C_S00_AXI_DATA_WIDTH	= 32,
-		parameter integer C_S00_AXI_ADDR_WIDTH	= 4
+		, parameter integer C_S00_AXI_DATA_WIDTH	= 32
+		, parameter integer C_S00_AXI_ADDR_WIDTH	= 32
 	)
 	(
 		// Users to add ports here
@@ -141,7 +141,7 @@
 			if (s01_axi_awaddr < 32'hA0000000)
 				waddr_translated_lo = s01_axi_awaddr - 32'h80000000;
 			else
-				waddr_translated_lo = s01_axi_awaddr - 32'h40000000;
+				waddr_translated_lo = s01_axi_awaddr - 32'h20000000;
 		end
 
 	always_comb
@@ -149,14 +149,14 @@
 			if (s01_axi_araddr < 32'hA0000000)
 				raddr_translated_lo = s01_axi_araddr - 32'h80000000;
 			else
-				raddr_translated_lo = s01_axi_araddr - 32'h40000000;
+				raddr_translated_lo = s01_axi_araddr - 32'h20000000;
 		end
 
 	bp_to_axi_decoder
 	 #(.bp_params_p(bp_params_p))
 	 bp_out_data
-		(.clk_i(clk_i)
-		 ,.reset_i(reset_i)
+		(.clk_i(s01_axi_aclk)
+		 ,.reset_i(~s01_axi_aresetn)
 
 		 ,.io_cmd_i(io_cmd_lo)
 		 ,.io_cmd_v_i(io_cmd_v_lo)
@@ -223,7 +223,7 @@
     );
 
 	bp_nonsynth_dram
-	 #(.bp_params_p(bp_params_p))
+	 #(.bp_params_p(bp_params_p)
 		 ,.num_dma_p(1)
 		 ,.preload_mem_p(0)
 		 ,.dram_type_p("axi")
@@ -231,7 +231,7 @@
 		 )
 	 dram
 		(.clk_i(s01_axi_aclk)
-		 ,.reset_i(~s01_axi_resetn)
+		 ,.reset_i(~s01_axi_aresetn)
 
 		 ,.dma_pkt_i(dma_pkt_lo)
 		 ,.dma_pkt_v_i(dma_pkt_v_lo)
