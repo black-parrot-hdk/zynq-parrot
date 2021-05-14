@@ -71,12 +71,12 @@ class bp_zynq_pl {
       int *addr1 = (int *) GP1_ADDR_BASE; // e.g. 0x43c00000;
 
       // map in first PLAXI region of physical addresses to virtual addresses
-      volatile int *ptr0 = (int *) mmap(addr0,GP0_ADDR_SIZE_BYTES,PROT_READ | PROT_WRITE, MAP_SHARED, fd,(int) ptr0);
+      volatile int *ptr0 = (int *) mmap(addr0,GP0_ADDR_SIZE_BYTES,PROT_READ | PROT_WRITE, MAP_SHARED, fd,(int)addr0);
       printf("// bp_zynq: mmap returned %p errno=%x\n",ptr0,errno);
       assert(ptr0 == addr0);
 
       // map in second PLAXI region of physical addresses to virtual addresses
-      volatile int *ptr1 = (int *) mmap(addr1,GP1_ADDR_SIZE_BYTES,PROT_READ | PROT_WRITE, MAP_SHARED, fd,(int) ptr1);
+      volatile int *ptr1 = (int *) mmap(addr1,GP1_ADDR_SIZE_BYTES,PROT_READ | PROT_WRITE, MAP_SHARED, fd,(int) addr1);
       printf("// bp_zynq: mmap returned %p errno=%x\n",ptr1,errno);
       //assert(ptr1 == addr1);
 
