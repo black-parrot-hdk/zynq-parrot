@@ -25,17 +25,21 @@ extern "C" {
     void _xlnk_reset();
 };
 
-//#define ADDR_BASE 0x4000_0000
-//#define ADDR_SIZE_BYTES 0x1000
-
-#ifndef ADDR_BASE
-#error ADDR_BASE must be defined
+#ifndef GP0_ADDR_BASE
+#error GP0_ADDR_BASE must be defined
 #endif
 
-#ifndef ADDR_SIZE_BYTES
-#error ADDR_SIZE_BYTES must be defined
+#ifndef GP0_ADDR_SIZE_BYTES
+#error GP0_ADDR_SIZE_BYTES must be defined
 #endif
 
+#ifndef GP1_ADDR_BASE
+#error GP1_ADDR_BASE must be defined
+#endif
+
+#ifndef GP1_ADDR_SIZE_BYTES
+#error GP1_ADDR_SIZE_BYTES must be defined
+#endif
 
 #define BP_ZYNQ_PL_DEBUG 1 
 
@@ -47,6 +51,10 @@ extern "C" {
 #include <fcntl.h>
 #include <errno.h>
 #include <assert.h>
+#include <string>
+#include <fstream>
+#include <iostream>
+using namespace std;
 
 class bp_zynq_pl {
  public:
@@ -59,12 +67,19 @@ class bp_zynq_pl {
       int fd = open("/dev/mem",O_RDWR | O_SYNC);
       assert(fd!=0);
 
-      int *addr = (int *) ADDR_BASE; // e.g. 0x43c00000;
+      int *addr0 = (int *) GP0_ADDR_BASE; // e.g. 0x43c00000;
+      int *addr1 = (int *) GP1_ADDR_BASE; // e.g. 0x43c00000;
 
       // map in first PLAXI region of physical addresses to virtual addresses
-      volatile int *ptr = (int *) mmap(addr,ADDR_SIZE_BYTES,PROT_READ | PROT_WRITE, MAP_SHARED, fd,(int) ptr);
-      printf("// bp_zynq: mmap returned %p errno=%x\n",ptr,errno);
-      assert(ptr == addr);
+      volatile int *ptr0 = (int *) mmap(addr0,GP0_ADDR_SIZE_BYTES,PROT_READ | PROT_WRITE, MAP_SHARED, fd,(int) ptr0);
+      printf("// bp_zynq: mmap returned %p errno=%x\n",ptr0,errno);
+      assert(ptr0 == addr0);
+
+      // map in second PLAXI region of physical addresses to virtual addresses
+      volatile int *ptr1 = (int *) mmap(addr1,GP1_ADDR_SIZE_BYTES,PROT_READ | PROT_WRITE, MAP_SHARED, fd,(int) ptr1);
+      printf("// bp_zynq: mmap returned %p errno=%x\n",ptr1,errno);
+      //assert(ptr1 == addr1);
+
       close(fd);
     }
 
@@ -101,7 +116,7 @@ class bp_zynq_pl {
     if (BP_ZYNQ_PL_DEBUG)
        printf("bp_zynq: AXI writing [%x]=%8.8x mask %x\n", address, data, wstrb);
 
-    assert(address >= ADDR_BASE && (address - ADDR_BASE < ADDR_SIZE_BYTES)); // "address is not in the correct range?"
+    //assert(address >= ADDR_BASE && (address - ADDR_BASE < ADDR_SIZE_BYTES)); // "address is not in the correct range?"
 
     // for now we don't support alternate write strobes
     assert(wstrb == 0XF);
@@ -119,4 +134,80 @@ class bp_zynq_pl {
 
     return data;
   }
+
+void nbf_load() {
+	string nbf_command;
+	string tmp;
+	string delimiter = "_";
+
+	long long int nbf[3];
+	int pos = 0;
+	unsigned long int address;
+	int data;
+	int data_read;
+	ifstream nbf_file("prog.nbf");
+
+	while (getline(nbf_file, nbf_command)) {
+		int i = 0;
+		while ((pos = nbf_command.find(delimiter)) != std::string::npos) {
+			tmp = nbf_command.substr(0, pos);
+			nbf[i] = std::stoull(tmp, nullptr, 16);
+			nbf_command.erase(0, pos + 1);
+			i++;
+		}
+		nbf[i] = std::stoull(nbf_command, nullptr, 16);
+		if (nbf[0] == 0x3) {
+			if (nbf[1] >= 0x80000000) {
+				address = nbf[1];
+				address = address + 0x20000000;
+				data = nbf[2];
+				nbf[2] = nbf[2] >> 32;
+				printf("Address: %lx, Data: %lx\n", address, data);
+				axil_write(address, data, 0xf);
+				data_read = axil_read(address);
+				assert(data_read == data);
+				address = address + 4;
+				data = nbf[2];
+				printf("Address: %lx, Data: %x\n", address, data);
+				axil_write(address, data, 0xf);
+				data_read = axil_read(address);
+				assert(data_read == data);
+			}
+			else {
+				address = nbf[1];
+				address = address + 0x80000000;
+				data = nbf[2];
+				printf("Address: %lx, Data: %x\n", address, data);
+				axil_write(address, data, 0xf);
+			}
+		}
+		else if (nbf[0] == 0xfe) {
+			continue;
+		}
+		else {
+			return;
+		}
+	}
+}
+
+	bool decode_bp_output(int data) {
+		int rd_wr = data >> 31;
+		int address = (data >> 8) & 0x7FFFFF;
+		int print_data = data & 0xFF;
+		if (rd_wr) {
+			if (address == 0x101000) {
+				printf("%c", print_data);
+				return false;
+			}
+			else if (address == 0x102000) {
+				if (print_data == 0)
+					printf("\nPASS\n");
+				else
+					printf("\nFAIL\n");
+				return true;
+			}
+		}
+		// TODO: Need to implement logic for bp io_read
+		else return false;
+	}
 };
