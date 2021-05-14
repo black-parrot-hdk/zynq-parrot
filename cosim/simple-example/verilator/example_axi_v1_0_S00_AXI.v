@@ -130,9 +130,11 @@
 	// de-asserted when reset is low.
 
 	always @( posedge S_AXI_ACLK )
-	begin
+	  begin
+	     //$display("verilator: posedge ACLK\n");
 	  if ( S_AXI_ARESETN == 1'b0 )
 	    begin
+	       //$display("verilator: entering reset\n");
 	      axi_awready <= 1'b0;
 	      aw_en <= 1'b1;
 	    end 
