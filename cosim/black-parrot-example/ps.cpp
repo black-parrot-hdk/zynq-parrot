@@ -32,32 +32,43 @@ int main(int argc, char **argv) {
 	int mask1 = 0xf;
 	int mask2 = 0xf;
 	bool done = false;
+#ifdef FPGA
 	unsigned long phys_ptr;
 	volatile int *buf;
+#endif
 
 	// write to two registers
 	zpl->axil_write(0x0 + GP0_ADDR_BASE, val1, mask1);
 	zpl->axil_write(0x4 + GP0_ADDR_BASE, val2, mask2);
+#ifdef FPGA
 	buf = (volatile int*) zpl->allocate_dram(67108864, &phys_ptr);
 	zpl->axil_write(0x8 + GP0_ADDR_BASE, phys_ptr, mask1);
+#else
+	zpl->axil_write(0x8+GP0_ADDR_BASE, val1, mask1);
+#endif
 
 	assert( (zpl->axil_read(0x0 + GP0_ADDR_BASE) == (val1)));
 	assert( (zpl->axil_read(0x4 + GP0_ADDR_BASE) == (val2)));
+#ifdef FPGA
 	assert( (zpl->axil_read(0x8 + GP0_ADDR_BASE) == (phys_ptr)));
+#else
+	assert( (zpl->axil_read(0x8 + GP0_ADDR_BASE) == (val1)));
+#endif
 
 	zpl->nbf_load();
 	
-	//while(!done) {
-	//	data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
-	//	if (data != 0) {
-	//		data = zpl->axil_read(0xC + GP0_ADDR_BASE);
-	//		done = zpl->decode_bp_output(data);
-	//	}
-	//}
-	
+	while(!done) {
+		data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
+		if (data != 0) {
+			data = zpl->axil_read(0xC + GP0_ADDR_BASE);
+			done = zpl->decode_bp_output(data);
+		}
+	}
+
+#ifdef FPGA
 	zpl->free_dram((void *)buf);
+#endif
 	
-	//data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
 	zpl->done();
 
 	delete zpl;

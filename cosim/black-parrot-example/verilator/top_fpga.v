@@ -21,7 +21,9 @@
 
 		// Parameters of Axi Slave Bus Interface S00_AXI
 		, parameter integer C_S00_AXI_DATA_WIDTH	= 32
-		, parameter integer C_S00_AXI_ADDR_WIDTH	= 32
+		, parameter integer C_S00_AXI_ADDR_WIDTH	= 6
+		, parameter integer C_S01_AXI_DATA_WIDTH	= 32
+		, parameter integer C_S01_AXI_ADDR_WIDTH	= 32
 		, parameter integer C_M00_AXI_DATA_WIDTH	= 64
 		, parameter integer C_M00_AXI_ADDR_WIDTH	= 32
 	)
@@ -57,22 +59,22 @@
 
 		input wire  s01_axi_aclk,
 		input wire  s01_axi_aresetn,
-		input wire [C_S00_AXI_ADDR_WIDTH-1 : 0] s01_axi_awaddr,
+		input wire [C_S01_AXI_ADDR_WIDTH-1 : 0] s01_axi_awaddr,
 		input wire [2 : 0] s01_axi_awprot,
 		input wire  s01_axi_awvalid,
 		output wire  s01_axi_awready,
-		input wire [C_S00_AXI_DATA_WIDTH-1 : 0] s01_axi_wdata,
-		input wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s01_axi_wstrb,
+		input wire [C_S01_AXI_DATA_WIDTH-1 : 0] s01_axi_wdata,
+		input wire [(C_S01_AXI_DATA_WIDTH/8)-1 : 0] s01_axi_wstrb,
 		input wire  s01_axi_wvalid,
 		output wire  s01_axi_wready,
 		output wire [1 : 0] s01_axi_bresp,
 		output wire  s01_axi_bvalid,
 		input wire  s01_axi_bready,
-		input wire [C_S00_AXI_ADDR_WIDTH-1 : 0] s01_axi_araddr,
+		input wire [C_S01_AXI_ADDR_WIDTH-1 : 0] s01_axi_araddr,
 		input wire [2 : 0] s01_axi_arprot,
 		input wire  s01_axi_arvalid,
 		output wire  s01_axi_arready,
-		output wire [C_S00_AXI_DATA_WIDTH-1 : 0] s01_axi_rdata,
+		output wire [C_S01_AXI_DATA_WIDTH-1 : 0] s01_axi_rdata,
 		output wire [1 : 0] s01_axi_rresp,
 		output wire  s01_axi_rvalid,
 		input wire  s01_axi_rready
@@ -137,13 +139,13 @@
 	) example_axi_v1_0_S00_AXI_inst (
 		.csr_data_o(csr_data_lo),
 
-		.out_fifo_data_i(out_fifo_data_li),
-		.out_fifo_v_i(out_fifo_v_li),
-		.out_fifo_ready_o(out_fifo_ready_lo),
+		.pl_to_ps_fifo_data_i(out_fifo_data_li),
+		.pl_to_ps_fifo_v_i(out_fifo_v_li),
+		.pl_to_ps_fifo_ready_o(out_fifo_ready_lo),
 
-		.in_fifo_data_o(in_fifo_data_lo),
-		.in_fifo_v_o(in_fifo_v_lo),
-		.in_fifo_yumi_i(in_fifo_yumi_li),
+		.ps_to_pl_fifo_data_o(in_fifo_data_lo),
+		.ps_to_pl_fifo_v_o(in_fifo_v_lo),
+		.ps_to_pl_fifo_yumi_i(in_fifo_yumi_li),
 		.S_AXI_ACLK(s00_axi_aclk),
 		.S_AXI_ARESETN(s00_axi_aresetn),
 		.S_AXI_AWADDR(s00_axi_awaddr),
@@ -182,7 +184,7 @@
 	logic [l2_fill_width_p-1:0] dma_data_li;
 	logic dma_data_v_li, dma_data_ready_and_lo;
 
-	logic [C_S00_AXI_ADDR_WIDTH-1:0] waddr_translated_lo, raddr_translated_lo;
+	logic [C_S01_AXI_ADDR_WIDTH-1:0] waddr_translated_lo, raddr_translated_lo;
 	always_comb
 		begin
 			if (s01_axi_awaddr < 32'hA0000000)

@@ -90,13 +90,13 @@
 	) example_axi_v1_0_S00_AXI_inst (
 		.csr_data_o(csr_data_lo),
 
-		.out_fifo_data_i(out_fifo_data_li),
-		.out_fifo_v_i(out_fifo_v_li),
-		.out_fifo_ready_o(out_fifo_ready_lo),
+		.pl_to_ps_fifo_data_i(out_fifo_data_li),
+		.pl_to_ps_fifo_v_i(out_fifo_v_li),
+		.pl_to_ps_fifo_ready_o(out_fifo_ready_lo),
 
-		.in_fifo_data_o(in_fifo_data_lo),
-		.in_fifo_v_o(in_fifo_v_lo),
-		.in_fifo_yumi_i(in_fifo_yumi_li),
+		.ps_to_pl_fifo_data_o(in_fifo_data_lo),
+		.ps_to_pl_fifo_v_o(in_fifo_v_lo),
+		.ps_to_pl_fifo_yumi_i(in_fifo_yumi_li),
 		.S_AXI_ACLK(s00_axi_aclk),
 		.S_AXI_ARESETN(s00_axi_aresetn),
 		.S_AXI_AWADDR(s00_axi_awaddr),
