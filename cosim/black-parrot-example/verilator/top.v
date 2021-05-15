@@ -21,7 +21,9 @@
 
 		// Parameters of Axi Slave Bus Interface S00_AXI
 		, parameter integer C_S00_AXI_DATA_WIDTH	= 32
-		, parameter integer C_S00_AXI_ADDR_WIDTH	= 32
+		, parameter integer C_S00_AXI_ADDR_WIDTH	= 5
+		, parameter integer C_S01_AXI_DATA_WIDTH	= 32
+		, parameter integer C_S01_AXI_ADDR_WIDTH	= 32
 	)
 	(
 		// Users to add ports here
@@ -55,22 +57,22 @@
 
 		input wire  s01_axi_aclk,
 		input wire  s01_axi_aresetn,
-		input wire [C_S00_AXI_ADDR_WIDTH-1 : 0] s01_axi_awaddr,
+		input wire [C_S01_AXI_ADDR_WIDTH-1 : 0] s01_axi_awaddr,
 		input wire [2 : 0] s01_axi_awprot,
 		input wire  s01_axi_awvalid,
 		output wire  s01_axi_awready,
-		input wire [C_S00_AXI_DATA_WIDTH-1 : 0] s01_axi_wdata,
-		input wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s01_axi_wstrb,
+		input wire [C_S01_AXI_DATA_WIDTH-1 : 0] s01_axi_wdata,
+		input wire [(C_S01_AXI_DATA_WIDTH/8)-1 : 0] s01_axi_wstrb,
 		input wire  s01_axi_wvalid,
 		output wire  s01_axi_wready,
 		output wire [1 : 0] s01_axi_bresp,
 		output wire  s01_axi_bvalid,
 		input wire  s01_axi_bready,
-		input wire [C_S00_AXI_ADDR_WIDTH-1 : 0] s01_axi_araddr,
+		input wire [C_S01_AXI_ADDR_WIDTH-1 : 0] s01_axi_araddr,
 		input wire [2 : 0] s01_axi_arprot,
 		input wire  s01_axi_arvalid,
 		output wire  s01_axi_arready,
-		output wire [C_S00_AXI_DATA_WIDTH-1 : 0] s01_axi_rdata,
+		output wire [C_S01_AXI_DATA_WIDTH-1 : 0] s01_axi_rdata,
 		output wire [1 : 0] s01_axi_rresp,
 		output wire  s01_axi_rvalid,
 		input wire  s01_axi_rready
@@ -135,7 +137,7 @@
 	logic [l2_fill_width_p-1:0] dma_data_li;
 	logic dma_data_v_li, dma_data_ready_and_lo;
 
-	logic [C_S00_AXI_ADDR_WIDTH-1:0] waddr_translated_lo, raddr_translated_lo;
+	logic [C_S01_AXI_ADDR_WIDTH-1:0] waddr_translated_lo, raddr_translated_lo;
 	always_comb
 		begin
 			if (s01_axi_awaddr < 32'hA0000000)
@@ -210,8 +212,8 @@
   wire [1:0] axi_rresp;
   wire axi_rlast, axi_rvalid, axi_rready;
 
-	wire [C_S00_AXI_ADDR_WIDTH-1:0] waddr_dram_translated_lo = axi_awaddr -32'h80000000 + csr_data_lo[2];
-	wire [C_S00_AXI_ADDR_WIDTH-1:0] raddr_dram_translated_lo = axi_araddr -32'h80000000 + csr_data_lo[2];
+	wire [C_S01_AXI_ADDR_WIDTH-1:0] waddr_dram_translated_lo = axi_awaddr -32'h80000000 + csr_data_lo[2];
+	wire [C_S01_AXI_ADDR_WIDTH-1:0] raddr_dram_translated_lo = axi_araddr -32'h80000000 + csr_data_lo[2];
 
 	bp_unicore_axi_sim
 	 #(.bp_params_p(bp_params_p))
