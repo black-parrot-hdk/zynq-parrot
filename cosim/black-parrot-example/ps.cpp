@@ -13,17 +13,19 @@ int main(int argc, char **argv) {
    bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
 
 
+
    // the read memory map is essentially
    //
    // 0,4,8: registers
-   // C: output fifo
-   // 10: output fifo count
-   // 14: input fifo count
+   // C: pl to ps fifo
+   // 10: pl to ps fifo count
+   // 14: ps to pl fifo count
 
    // the write memory map is essentially
    //
    // 0,4,8: registers
-   // 10: input fifo 
+   // 10: ps to pl fifo 
+
 	
 	int data;
 	data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
