@@ -4,3 +4,4 @@
 [submodule "cosim/import/black-parrot"]
 	path = cosim/import/black-parrot
 	url = https://github.com/black-parrot/black-parrot.git
+  branch = zynqparrot_axi
