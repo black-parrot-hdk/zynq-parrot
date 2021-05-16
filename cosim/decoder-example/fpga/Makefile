@@ -29,3 +29,9 @@ pack_bitstream:
 	cp decode_bd_proj.srcs/sources_1/bd/decode_bd_1/hw_handoff/decode_bd_1* .
 	cp decode_bd_proj.runs/impl_1/decode_bd_1_wrapper.bit decode_bd_1.bit
 	tar -Jc decode_bd_1* | base64 > decode_bd_1.tar.xz.b64
+
+unpack_bitstream:
+	base64 -d decode_bd_1.tar.xz.b64 | tar xvJ
+
+load_bitstream:
+	 echo 'from pynq import Overlay; overlay=Overlay("decode_bd_1.bit");' | sudo python3
