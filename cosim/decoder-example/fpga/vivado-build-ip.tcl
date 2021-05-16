@@ -40,9 +40,9 @@ set_property top ${project_top_module} [current_fileset]
 
 update_compile_order -fileset sources_1
 
-ipx::package_project -root_dir /home/profmbt/zp4/zynq-parrot/cosim/decoder-example/fpga/fpga_build -vendor user.org -library user -taxonomy /UserIP -import_files -set_current false
-ipx::unload_core /home/profmbt/zp4/zynq-parrot/cosim/decoder-example/fpga/fpga_build/component.xml
-ipx::edit_ip_in_project -upgrade true -name tmp_edit_project -directory /home/profmbt/zp4/zynq-parrot/cosim/decoder-example/fpga/fpga_build /home/profmbt/zp4/zynq-parrot/cosim/decoder-example/fpga/fpga_build/component.xml
+ipx::package_project -root_dir fpga_build -vendor user.org -library user -taxonomy /UserIP -import_files -set_current false
+ipx::unload_core fpga_build/component.xml
+ipx::edit_ip_in_project -upgrade true -name tmp_edit_project -directory fpga_build fpga_build/component.xml
 update_compile_order -fileset sources_1
 set_property previous_version_for_upgrade user.org:user:top:1.0 [ipx::current_core]
 set_property core_revision 1 [ipx::current_core]
@@ -51,7 +51,7 @@ ipx::update_checksums [ipx::current_core]
 ipx::save_core [ipx::current_core]
 ipx::move_temp_component_back -component [ipx::current_core]
 close_project -delete
-set_property  ip_repo_paths  /home/profmbt/zp4/zynq-parrot/cosim/decoder-example/fpga/fpga_build [current_project]
+set_property  ip_repo_paths fpga_build [current_project]
 update_ip_catalog
 
 puts "Type start_gui to enter Vivado GUI; quit to exit"
