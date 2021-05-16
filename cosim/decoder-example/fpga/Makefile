@@ -24,9 +24,11 @@ clean_fpga_build:
 	-rm $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.hwh $(BASENAME)_bd_1_bd.tcl
 	-rm -rf sds_trace_data.dat
 
-fpga_build: clean_fpga_build
+fpga_build_ip: clean_fpga_build
 	mkdir fpga_build
-	vivado -source vivado-build-ip.tcl -mode tcl
+	vivado -source vivado-build-ip.tcl -mode tcl	
+
+fpga_build: fpga_build_ip
 	vivado -source vivado-create-block.tcl -mode tcl
 
 pack_bitstream:

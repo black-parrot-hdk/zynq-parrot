@@ -7,7 +7,7 @@ set basejump_list { bsg_misc/bsg_dff_reset_en.v bsg_dataflow/bsg_fifo_1r1w_small
 
 set basejump_headers {  bsg_misc/bsg_defines.v }
 
-set project_list { ../verilator/example_axi_v1_0_S00_AXI.v ../verilator/top.v}
+set project_list { ../../common/v/bsg_zynq_pl_shell.v ../verilator/top.v}
 
 set project_top_module top
 
