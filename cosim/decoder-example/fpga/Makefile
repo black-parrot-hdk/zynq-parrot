@@ -16,11 +16,16 @@ clean: clean_fpga_build
 clean_fpga_build:
 	-rm *.log
 	#-rm *.jou
-	-rm -rf fartcloud*
+	-rm -rf decode_ip_proj*
 	-rm -rf fpga_build
-	-rm -rf poopcloud*
+	-rm -rf decode_bd_proj*
 
 fpga_build: clean_fpga_build
 	mkdir fpga_build
 	vivado -source vivado-build-ip.tcl -mode tcl
 	vivado -source vivado-create-block.tcl -mode tcl
+
+pack_bitstream:
+	cp decode_bd_proj.srcs/sources_1/bd/decode_bd_1/hw_handoff/decode_bd_1* .
+	cp decode_bd_proj.runs/impl_1/decode_bd_1_wrapper.bit decode_bd_1.bit
+	tar -Jc decode_bd_1* | base64 > decode_bd_1.tar.xz.b64

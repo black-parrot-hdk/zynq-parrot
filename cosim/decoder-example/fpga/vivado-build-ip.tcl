@@ -11,7 +11,7 @@ set project_list { ../verilator/example_axi_v1_0_S00_AXI.v ../verilator/top.v}
 
 set project_top_module top
 
-set project_name fartcloud
+set project_name decode_ip_proj
 
 puts ${basejump_list}
 
@@ -53,38 +53,6 @@ ipx::move_temp_component_back -component [ipx::current_core]
 close_project -delete
 set_property  ip_repo_paths  /home/profmbt/zp4/zynq-parrot/cosim/decoder-example/fpga/fpga_build [current_project]
 update_ip_catalog
-
-
-#
-# this will package the source code into an "IP block"
-# (matches "Create and Package IP" menu item in the GUI)
-#
-
-#ipx::package_project -root_dir fpga_build/ -vendor bsg.ai -library user -taxonomy /UserIP -import_files -set_current false
-
-#ipx::unload_core fpga_build/component.xml
-#ipx::edit_ip_in_project -upgrade true -name tmp_edit_project -directory fpga_build fpga_build/component.xml
-
-#current_project fartcloud
-#set_property core_revision 2 [ipx::current_core]
-#ipx::update_source_project_archive -component [ipx::current_core]
-#ipx::create_xgui_files [ipx::current_core]
-#ipx::update_checksums [ipx::current_core]
-#ipx::save_core [ipx::current_core]
-
-#create_bd_design "design_1"
-#startgroup
-#create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0
-#endgroup
-
-#apply_bd_automation -rule xilinx.com:bd_rule:processing_system7 -config {make_external "FIXED_IO, DDR" Master "Disable" Slave "Disable" }  [get_bd_cells processing_system7_0]
-
-
-# launch synthesis
-#launch_runs synth_1 -jobs 4
-
-# wait for synthesis to complete
-#wait_on_run synth_1
 
 puts "Type start_gui to enter Vivado GUI; quit to exit"
 

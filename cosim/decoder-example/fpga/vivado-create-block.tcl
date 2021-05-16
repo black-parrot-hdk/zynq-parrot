@@ -1,4 +1,4 @@
-set project_name poopcloud
+set project_name decode_bd_proj
 
 create_project -force ${project_name} [pwd] -part xc7z020clg400-1
 create_bd_design "decode_bd_1"
@@ -7,7 +7,7 @@ startgroup
 create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0
 endgroup
 apply_bd_automation -rule xilinx.com:bd_rule:processing_system7 -config {make_external "FIXED_IO, DDR" Master "Disable" Slave "Disable" }  [get_bd_cells processing_system7_0]
-open_bd_design {poopcloud.srcs/sources_1/bd/decode_bd_1/decode_bd_1.bd}
+open_bd_design ${project_name}.srcs/sources_1/bd/decode_bd_1/decode_bd_1.bd}
 set_property  ip_repo_paths  fpga_build [current_project]
 update_ip_catalog
 startgroup
@@ -33,8 +33,8 @@ connect_bd_net [get_bd_pins top_0/s00_axi_aclk] [get_bd_pins processing_system7_
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins smartconnect_0/aresetn]
 assign_bd_address
 validate_bd_design
-make_wrapper -files [get_files poopcloud.srcs/sources_1/bd/decode_bd_1/decode_bd_1.bd] -top
-add_files -norecurse poopcloud.srcs/sources_1/bd/decode_bd_1/hdl/decode_bd_1_wrapper.v
+make_wrapper -files [get_files ${project_name}.srcs/sources_1/bd/decode_bd_1/decode_bd_1.bd] -top
+add_files -norecurse ${project_name}.srcs/sources_1/bd/decode_bd_1/hdl/decode_bd_1_wrapper.v
 delete_bd_objs [get_bd_nets reset_rtl_0_1] [get_bd_ports reset_rtl_0]
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins proc_sys_reset_0/ext_reset_in]
 save_bd_design
