@@ -58,6 +58,8 @@ using namespace std;
 
 class bp_zynq_pl {
  public:
+  unsigned int gp0_base_offset = 0;
+  unsigned int gp1_base_offset = 0;
   
   bp_zynq_pl(int argc, char *argv[])
     {
@@ -68,17 +70,25 @@ class bp_zynq_pl {
       assert(fd!=0);
 
       int *addr0 = (int *) GP0_ADDR_BASE; // e.g. 0x43c00000;
-      int *addr1 = (int *) GP1_ADDR_BASE; // e.g. 0x43c00000;
+      int *addr1 = (int *) GP1_ADDR_BASE; // e.g. 0x83c00000;
 
       // map in first PLAXI region of physical addresses to virtual addresses
       volatile int *ptr0 = (int *) mmap(addr0,GP0_ADDR_SIZE_BYTES,PROT_READ | PROT_WRITE, MAP_SHARED, fd,(int)addr0);
-      printf("// bp_zynq: mmap returned %p errno=%x\n",ptr0,errno);
       assert(ptr0 == addr0);
+      //assert(ptr0 != ((void *) -1));
+      //if (ptr0 != addr0)
+      //  gp0_base_offset = ( (unsigned int) ptr0 - GP0_ADDR_BASE);
+      printf("// bp_zynq: mmap returned %p (offset %x) errno=%x\n",ptr0,gp0_base_offset,errno);
 
+      
       // map in second PLAXI region of physical addresses to virtual addresses
       volatile int *ptr1 = (int *) mmap(addr1,GP1_ADDR_SIZE_BYTES,PROT_READ | PROT_WRITE, MAP_SHARED, fd,(int) addr1);
-      printf("// bp_zynq: mmap returned %p errno=%x\n",ptr1,errno);
-      //assert(ptr1 == addr1);
+      assert(ptr1 == addr1);
+      //assert(ptr1 != ((void *) -1));
+      //if (ptr1 != addr1)
+      //  gp1_base_offset = ( (unsigned int) ptr1 - GP1_ADDR_BASE);
+
+      printf("// bp_zynq: mmap returned %p (offset %x) errno=%x\n",ptr1,gp1_base_offset,errno);      
 
       close(fd);
     }
@@ -120,13 +130,22 @@ class bp_zynq_pl {
 
     // for now we don't support alternate write strobes
     assert(wstrb == 0XF);
-    volatile int *ptr = (int *) address;
+    volatile int *ptr;
+    if (address >= GP1_ADDR_BASE)
+      ptr = (int *) address + gp1_base_offset;
+    else
+	ptr = (int *) address + gp0_base_offset;
     ptr[0] = data;
   }
 
   int axil_read(unsigned int address)
   {
-    volatile int *ptr = (int *) address;
+    volatile int *ptr;
+    if (address >= GP1_ADDR_BASE)
+      ptr = (int *) address + gp1_base_offset;
+    else
+      ptr = (int *) address + gp0_base_offset;
+
     int data = ptr[0];
     
     if (BP_ZYNQ_PL_DEBUG)    
