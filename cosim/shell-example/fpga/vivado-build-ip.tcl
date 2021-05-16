@@ -11,7 +11,7 @@ set project_list { ../../common/v/bsg_zynq_pl_shell.v ../verilator/top.v}
 
 set project_top_module top
 
-set project_name decode_ip_proj
+set project_name shell_ip_proj
 
 puts ${basejump_list}
 
