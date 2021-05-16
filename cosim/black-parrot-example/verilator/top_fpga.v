@@ -262,17 +262,17 @@ module top_fpga
       ,.s_axi_lite_rvalid_o (s01_axi_rvalid)
       ,.s_axi_lite_rready_i (s01_axi_rready)
 
-      ,.dma_pkt_o     (dma_pkt_lo)
-      ,.dma_pkt_v_o   (dma_pkt_v_lo)
-      ,.dma_pkt_yumi_i(dma_pkt_yumi_li)
+      ,.dma_pkt_o           (dma_pkt_lo)
+      ,.dma_pkt_v_o         (dma_pkt_v_lo)
+      ,.dma_pkt_yumi_i      (dma_pkt_yumi_li)
 
       ,.dma_data_i          (dma_data_li)
       ,.dma_data_v_i        (dma_data_v_li)
       ,.dma_data_ready_and_o(dma_data_ready_and_lo)
 
-      ,.dma_data_o     (dma_data_lo)
-      ,.dma_data_v_o   (dma_data_v_lo)
-      ,.dma_data_yumi_i(dma_data_yumi_li)
+      ,.dma_data_o          (dma_data_lo)
+      ,.dma_data_v_o        (dma_data_v_lo)
+      ,.dma_data_yumi_i     (dma_data_yumi_li)
       );
 
    assign m00_axi_awqos = '0;
