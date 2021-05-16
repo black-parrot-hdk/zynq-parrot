@@ -2,7 +2,7 @@
 .PHONY: load_bitstream
 
 PS_FILE=../ps.cpp
-BASENAME=decode
+BASENAME=shell
 
 # you must set these for the accelerator to work
 
@@ -25,6 +25,7 @@ clean_fpga_build:
 	-rm -rf sds_trace_data.dat
 
 fpga_build_ip: clean_fpga_build
+	@echo "reminder:  source /tools/Xilinx/Vivado/2019.1/settings64.sh to init xilinx tools"
 	mkdir fpga_build
 	vivado -source vivado-build-ip.tcl -mode tcl	
 
