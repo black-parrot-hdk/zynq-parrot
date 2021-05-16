@@ -1,7 +1,8 @@
 ## Set environment variables
 TOPLEVEL ?= $(shell git rev-parse --show-toplevel)
 
-export BLACKPARROT_DIR  = /home/svijay97/black-parrot
+#export BLACKPARROT_DIR  = /home/svijay97/black-parrot
+export BLACKPARROT_DIR:= $(abspath ../../import/black-parrot)
 export BP_FE_DIR        = $(BLACKPARROT_DIR)/bp_fe
 export BP_COMMON_DIR    = $(BLACKPARROT_DIR)/bp_common
 export BP_BE_DIR        = $(BLACKPARROT_DIR)/bp_be
