@@ -322,5 +322,5 @@ $BP_TOP_DIR/test/common/bp_nonsynth_branch_profiler.sv
 $BP_TOP_DIR/test/common/bp_nonsynth_perf.sv
 $BP_ME_DIR/test/common/bp_nonsynth_dram.sv
 bp_to_axi_decoder.sv
-example_axi_v1_0_S00_AXI.v
+$BSG_ZYNQ_PL_SHELL_DIR/bsg_zynq_pl_shell.v
 top.v
