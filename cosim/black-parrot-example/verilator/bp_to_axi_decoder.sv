@@ -9,42 +9,42 @@ module bp_to_axi_decoder
    , localparam uce_mem_data_width_lp = `BSG_MAX(icache_fill_width_p, dcache_fill_width_p)
    `declare_bp_bedrock_mem_if_widths(paddr_width_p, uce_mem_data_width_lp, lce_id_width_p, lce_assoc_p, uce)
    )
-   ( input clk_i
-     , input reset_i
+   (input clk_i
+    ,input reset_i
 
-     , input [uce_mem_msg_width_lp-1:0]        io_cmd_i
-     , input                                   io_cmd_v_i
-     , output logic                            io_cmd_ready_and_o
+    ,input [uce_mem_msg_width_lp-1:0]        io_cmd_i
+    ,input                                   io_cmd_v_i
+    ,output logic                            io_cmd_ready_and_o
 
-     , output logic [uce_mem_msg_width_lp-1:0] io_resp_o
-     , output logic                            io_resp_v_o
-     , input                                   io_resp_yumi_i
+    ,output logic [uce_mem_msg_width_lp-1:0] io_resp_o
+    ,output logic                            io_resp_v_o
+    ,input                                   io_resp_yumi_i
 
-     , output [31:0]                           data_o
-     , output                                  v_o
-     , input                                   ready_i
-     );
+    ,output [31:0]                           data_o
+    ,output                                  v_o
+    ,input                                   ready_i
+    );
 
    `declare_bp_bedrock_mem_if(paddr_width_p, uce_mem_data_width_lp, lce_id_width_p, lce_assoc_p, uce);
 
-  // io cmd and resp structure cast
-  bp_bedrock_uce_mem_msg_s io_cmd_cast_i, io_resp_cast_o;
+   // io cmd and resp structure cast
+   bp_bedrock_uce_mem_msg_s io_cmd_cast_i, io_resp_cast_o;
 
-  assign io_cmd_cast_i = io_cmd_i;
-  assign io_resp_o     = io_resp_cast_o;
+   assign io_cmd_cast_i = io_cmd_i;
+   assign io_resp_o     = io_resp_cast_o;
 
-  // storing io cmd header
-  bp_bedrock_uce_mem_msg_header_s io_cmd_header_r;
+   // storing io cmd header
+   bp_bedrock_uce_mem_msg_header_s io_cmd_header_r;
 
-  bsg_dff_reset_en
-   #(.width_p(uce_mem_msg_header_width_lp))
+   bsg_dff_reset_en
+     #(.width_p(uce_mem_msg_header_width_lp))
    mem_header_reg
-    (.clk_i(clk_i)
-    ,.reset_i(reset_i)
-    ,.en_i  (io_cmd_v_i)
-    ,.data_i(io_cmd_cast_i.header)
-    ,.data_o(io_cmd_header_r)
-    );
+     (.clk_i(clk_i)
+      ,.reset_i(reset_i)
+      ,.en_i  (io_cmd_v_i)
+      ,.data_i(io_cmd_cast_i.header)
+      ,.data_o(io_cmd_header_r)
+      );
 
    // io cmd read/write validity
    wire io_cmd_w_v = io_cmd_v_i & (io_cmd_cast_i.header.msg_type == e_bedrock_mem_uc_wr);
