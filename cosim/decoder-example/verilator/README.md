@@ -14,9 +14,11 @@ that can be easily re-implemented to run on the actual PS system
     -    int axil_read(int address);
     -    bool done(void);
 
-- example_axi_v1_0_S00_AXI.v: example accelerator to live in PL, suitable for Xilinx IPI integration (see this [class lab](https://docs.google.com/document/d/1U9XIxLkjbI1vQR5hxjk8SzqqQ3sM2hCMUXfoK3tGwBU/edit#heading=h.4f0hegamev6v) for instructions on how to generate this): 
+- cosim/common/v/bsg_zynq_pl_shell.v: BSG standardized shell for interfacing PS to PL
 
-- top.v:  wrapper for Xilinx IPI block
+- top.v:  example accelerator to live in PL, suitable for Xilinx IPI integration
+          (see this [class lab](https://docs.google.com/document/d/1U9XIxLkjbI1vQR5hxjk8SzqqQ3sM2hCMUXfoK3tGwBU/edit#heading=h.4f0hegamev6v)
+	  for instructions on how to generate this); wrapper for Xilinx IPI block
 
 - Makefile: you need to set a number of parameters, like the base address of your accelerator (from the IPI tool)
 
