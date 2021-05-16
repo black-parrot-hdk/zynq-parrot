@@ -73,7 +73,7 @@ module top #
    genvar                                       k;
 
 
-   localparam num_regs_lp = 2;
+   localparam num_regs_ps_to_pl_lp = 2;
 
    // this module currently only valid if these are equal
    localparam num_fifo_ps_to_pl_lp = 1;
@@ -87,12 +87,12 @@ module top #
    wire [1:0][num_fifo_ps_to_pl_lp-1:0]                           ps_to_pl_fifo_v_lo;
    wire [1:0][num_fifo_ps_to_pl_lp-1:0]                           ps_to_pl_fifo_yumi_li;
 
-   wire [1:0][num_regs_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0]          csr_data_lo;
+   wire [1:0][num_regs_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0]          csr_data_lo;
 
 
    bsg_zynq_pl_shell
      #(
-       .num_regs_p(num_regs_lp)
+       .num_regs_ps_to_pl_p(num_regs_ps_to_pl_lp)
        ,.num_fifo_ps_to_pl_p(num_fifo_ps_to_pl_lp)
        ,.num_fifo_pl_to_ps_p(num_fifo_pl_to_ps_lp)
        ,.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH)
@@ -108,6 +108,7 @@ module top #
         ,.ps_to_pl_fifo_yumi_i (ps_to_pl_fifo_yumi_li [0])
 
         ,.csr_data_o(csr_data_lo[0])
+        ,.csr_data_i()
 
         ,.S_AXI_ACLK   (s00_axi_aclk   )
         ,.S_AXI_ARESETN(s00_axi_aresetn)
@@ -134,7 +135,7 @@ module top #
 
    bsg_zynq_pl_shell
      #(
-       .num_regs_p(num_regs_lp)
+       .num_regs_ps_to_pl_p(num_regs_ps_to_pl_lp)
        ,.num_fifo_ps_to_pl_p(num_fifo_ps_to_pl_lp)
        ,.num_fifo_pl_to_ps_p(num_fifo_pl_to_ps_lp)
        ,.C_S_AXI_DATA_WIDTH(C_S01_AXI_DATA_WIDTH)

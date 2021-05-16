@@ -124,44 +124,6 @@
 		.S_AXI_RREADY(s00_axi_rready)
 	);
    
-// Instantiation of Axi Bus Interface S00_AXI
-     /*
-	example_axi_v1_0_S00_AXI # ( 
-		.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
-		.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
-	) example_axi_v1_0_S00_AXI_inst (
-		.csr_data_o(csr_data_lo),
-
-		.pl_to_ps_fifo_data_i(out_fifo_data_li),
-		.pl_to_ps_fifo_v_i(out_fifo_v_li),
-		.pl_to_ps_fifo_ready_o(out_fifo_ready_lo),
-
-		.ps_to_pl_fifo_data_o(in_fifo_data_lo),
-		.ps_to_pl_fifo_v_o(in_fifo_v_lo),
-		.ps_to_pl_fifo_yumi_i(in_fifo_yumi_li),
-		.S_AXI_ACLK(s00_axi_aclk),
-		.S_AXI_ARESETN(s00_axi_aresetn),
-		.S_AXI_AWADDR(s00_axi_awaddr),
-		.S_AXI_AWPROT(s00_axi_awprot),
-		.S_AXI_AWVALID(s00_axi_awvalid),
-		.S_AXI_AWREADY(s00_axi_awready),
-		.S_AXI_WDATA(s00_axi_wdata),
-		.S_AXI_WSTRB(s00_axi_wstrb),
-		.S_AXI_WVALID(s00_axi_wvalid),
-		.S_AXI_WREADY(s00_axi_wready),
-		.S_AXI_BRESP(s00_axi_bresp),
-		.S_AXI_BVALID(s00_axi_bvalid),
-		.S_AXI_BREADY(s00_axi_bready),
-		.S_AXI_ARADDR(s00_axi_araddr),
-		.S_AXI_ARPROT(s00_axi_arprot),
-		.S_AXI_ARVALID(s00_axi_arvalid),
-		.S_AXI_ARREADY(s00_axi_arready),
-		.S_AXI_RDATA(s00_axi_rdata),
-		.S_AXI_RRESP(s00_axi_rresp),
-		.S_AXI_RVALID(s00_axi_rvalid),
-		.S_AXI_RREADY(s00_axi_rready)
-	);
-*/
 	// Add user logic here
 
 	`declare_bp_bedrock_mem_if(paddr_width_p, uce_mem_data_width_lp, lce_id_width_p, lce_assoc_p, uce);
