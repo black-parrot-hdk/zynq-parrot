@@ -19,6 +19,7 @@ int main(int argc, char **argv) {
    // 10, 14: output fifo heads
    // 18, 1C: output fifo counts
    // 20,24,28,2C: input fifo counts
+   // 30: last address of write
 
    // the write memory map is essentially
    //
@@ -32,9 +33,12 @@ int main(int argc, char **argv) {
         int mask1 = 0xf;
         int mask2 = 0xf;
 
-        // write to two registers
+        // write to two registers, checking our address snoop to see
+        // actual address that was received over the AXI bus
         zpl->axil_write(0x0 + GP0_ADDR_BASE, val1, mask1);
+        assert(zpl->axil_read(0x30 + GP0_ADDR_BASE) == 0x0);
         zpl->axil_write(0x4 + GP0_ADDR_BASE, val2, mask2);
+        assert(zpl->axil_read(0x30 + GP0_ADDR_BASE) == 0x4);
         // 8,12
 
         // check output fifo counters
@@ -84,7 +88,6 @@ int main(int argc, char **argv) {
         // checker output counters
         assert( (zpl->axil_read(0x18 + GP0_ADDR_BASE) == (0)));
         assert( (zpl->axil_read(0x1C + GP0_ADDR_BASE) == (0)));
-
 
         // try a different set of input and output fifos
         zpl->axil_write(0x18 + GP0_ADDR_BASE, val1, mask1);
