@@ -230,6 +230,9 @@ module top_fpga
      (.clk_i(s01_axi_aclk)
       ,.reset_i(~s01_axi_aresetn)
 
+
+      // these are I/O requests from BlackParrot that
+      // are handled by a program running on the Zynq PS ARM core
       ,.io_cmd_o          (io_cmd_lo)
       ,.io_cmd_v_o        (io_cmd_v_lo)
       ,.io_cmd_ready_and_i(io_cmd_ready_and_li)
@@ -238,6 +241,8 @@ module top_fpga
       ,.io_resp_v_i       (io_resp_v_li)
       ,.io_resp_yumi_o    (io_resp_yumi_lo)
 
+      // these are reads/writes into BlackParrot
+      // from the Zynq PS ARM core
       ,.s_axi_lite_awaddr_i (waddr_translated_lo)
       ,.s_axi_lite_awprot_i (s01_axi_awprot)
       ,.s_axi_lite_awvalid_i(s01_axi_awvalid)
@@ -262,7 +267,9 @@ module top_fpga
       ,.s_axi_lite_rvalid_o (s01_axi_rvalid)
       ,.s_axi_lite_rready_i (s01_axi_rready)
 
-      ,.dma_pkt_o           (dma_pkt_lo)
+
+      // these are caches misses coming from BP L2 
+     ,.dma_pkt_o           (dma_pkt_lo)
       ,.dma_pkt_v_o         (dma_pkt_v_lo)
       ,.dma_pkt_yumi_i      (dma_pkt_yumi_li)
 
