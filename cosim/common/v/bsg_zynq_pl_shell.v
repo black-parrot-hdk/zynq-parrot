@@ -19,19 +19,20 @@ module bsg_zynq_pl_shell #
    // reading the FIFO csrs tells you how many consecutive words you can read/write before
    // checking the csr again
 
-   parameter num_regs_p = 4,               // number of user CSRs
-   parameter num_fifo_ps_to_pl_p = 4,      // number of input FIFOs (from PS to PL)
-   parameter num_fifo_pl_to_ps_p = 2,      // number of output FIFOs (from PL to PS)
+   parameter  num_regs_ps_to_pl_p = 1      // number of user CSRs read-only by PL, r/w by PS
+   ,parameter num_regs_pl_to_ps_p = 1      // number of user CSRs read-only by PS, r/w by PL
+   ,parameter num_fifo_ps_to_pl_p = 1      // number of input FIFOs (from PS to PL)
+   ,parameter num_fifo_pl_to_ps_p = 1      // number of output FIFOs (from PL to PS)
 
    // this correspond to the number of word addresses that can be read by PS
-   parameter read_locs_lp = num_regs_p+num_fifo_pl_to_ps_p+num_fifo_ps_to_pl_p+num_fifo_pl_to_ps_p,
+   ,parameter read_locs_lp = num_regs_ps_to_pl_p+num_fifo_pl_to_ps_p+num_fifo_ps_to_pl_p+num_fifo_pl_to_ps_p+num_regs_pl_to_ps_p
 
    // this corresponds to the number of addresses that can be written by PS
-   parameter write_locs_lp = num_regs_p+num_fifo_ps_to_pl_p,
+   ,parameter write_locs_lp = num_regs_ps_to_pl_p+num_fifo_ps_to_pl_p
 
    // Width of S_AXI data bus
 
-   parameter integer C_S_AXI_DATA_WIDTH   = 32,
+   ,parameter integer C_S_AXI_DATA_WIDTH   = 32
 
    // Width of S_AXI address bus
 
@@ -40,8 +41,8 @@ module bsg_zynq_pl_shell #
    // ADDR_LSB = 2 for 32 bits (n downto 2)
    // ADDR_LSB = 3 for 64 bits (n downto 3)
 
-   localparam integer ADDR_LSB_lp = (C_S_AXI_DATA_WIDTH/32) + 1,
-   parameter integer C_S_AXI_ADDR_WIDTH   = `BSG_SAFE_CLOG2(read_locs_lp)+ADDR_LSB_lp
+   ,localparam integer ADDR_LSB_lp = (C_S_AXI_DATA_WIDTH/32) + 1
+   ,parameter integer C_S_AXI_ADDR_WIDTH   = `BSG_SAFE_CLOG2(read_locs_lp)+ADDR_LSB_lp
    )
    (
     input wire [num_fifo_pl_to_ps_p-1:0][C_S_AXI_DATA_WIDTH-1:0]  pl_to_ps_fifo_data_i,
@@ -52,7 +53,10 @@ module bsg_zynq_pl_shell #
     output wire [num_fifo_ps_to_pl_p-1:0]                         ps_to_pl_fifo_v_o,
     input wire [num_fifo_ps_to_pl_p-1:0]                          ps_to_pl_fifo_yumi_i,
 
-    output wire [num_regs_p-1:0][C_S_AXI_DATA_WIDTH-1:0]          csr_data_o,
+    output wire [num_regs_ps_to_pl_p-1:0][C_S_AXI_DATA_WIDTH-1:0] csr_data_o,
+
+    // note: this does not create registers, they are implemented in client PL
+    input wire [num_regs_pl_to_ps_p-1:0][C_S_AXI_DATA_WIDTH-1:0]  csr_data_i,
 
                 // Global Clock Signal
     input wire                                                    S_AXI_ACLK,
@@ -255,7 +259,7 @@ module bsg_zynq_pl_shell #
       ,.o(slv_rd_sel_one_hot)
       );
 
-   // for num_regs_p=4 and num_fifo_ps_to_pl_p=4, the write memory map is essentially:
+   // for num_regs_ps_to_pl_p=4 and num_fifo_ps_to_pl_p=4, the write memory map is essentially:
    //
    // 0,4,8,C: registers
    // 10,14,18,1C: input fifo
@@ -266,10 +270,10 @@ module bsg_zynq_pl_shell #
       ,.o(slv_wr_sel_one_hot)
       );
 
-   logic [num_regs_p-1:0][C_S_AXI_DATA_WIDTH-1:0] slv_r;
+   logic [num_regs_ps_to_pl_p-1:0][C_S_AXI_DATA_WIDTH-1:0] slv_r;
 
    // instantiate user read/write CSRs
-   for (k=0; k < num_regs_p; k++)
+   for (k=0; k < num_regs_ps_to_pl_p; k++)
      begin: rof
         bsg_dff_reset_en #(.width_p(C_S_AXI_DATA_WIDTH)) slv_reg
           (.clk_i(S_AXI_ACLK)
@@ -290,7 +294,7 @@ module bsg_zynq_pl_shell #
      begin: rof2
         assign ps_to_pl_fifo_ctrs_full[k] = (C_S_AXI_DATA_WIDTH) ' (ps_to_pl_fifo_ctrs[k]);
 
-        assign ps_to_pl_fifo_valid_li[k] = ps_to_pl_fifo_ready_lo[k] & slv_wr_sel_one_hot[num_regs_p+k];
+        assign ps_to_pl_fifo_valid_li[k] = ps_to_pl_fifo_ready_lo[k] & slv_wr_sel_one_hot[num_regs_ps_to_pl_p+k];
 
         bsg_fifo_1r1w_small #(.width_p(C_S_AXI_DATA_WIDTH), .els_p(4)) fifo
           (.clk_i(S_AXI_ACLK)
@@ -306,7 +310,7 @@ module bsg_zynq_pl_shell #
 
         always @(negedge S_AXI_ACLK)
           begin
-             assert(~S_AXI_ARESETN | ~slv_wr_sel_one_hot[num_regs_p+k] | ps_to_pl_fifo_ready_lo[k])
+             assert(~S_AXI_ARESETN | ~slv_wr_sel_one_hot[num_regs_ps_to_pl_p+k] | ps_to_pl_fifo_ready_lo[k])
                else $error("write to full fifo");
           end
 
@@ -335,19 +339,19 @@ module bsg_zynq_pl_shell #
 
    for (k=0; k < num_fifo_pl_to_ps_p; k++)
      begin: rof4
-        assign pl_to_ps_fifo_data_li[k]  = pl_to_ps_fifo_data_i[k];
-        assign pl_to_ps_fifo_valid_li[k] = pl_to_ps_fifo_v_i[k];
+        assign pl_to_ps_fifo_data_li[k]  = pl_to_ps_fifo_data_i  [k];
+        assign pl_to_ps_fifo_valid_li[k] = pl_to_ps_fifo_v_i     [k];
         assign pl_to_ps_fifo_ready_o[k]  = pl_to_ps_fifo_ready_lo[k];
      end
 
    for (k=0; k < num_fifo_ps_to_pl_p; k++)
      begin: rof1
-        assign ps_to_pl_fifo_yumi_li[k] = ps_to_pl_fifo_yumi_i[k];
-        assign ps_to_pl_fifo_data_o[k]  = ps_to_pl_fifo_data_lo[k];
+        assign ps_to_pl_fifo_yumi_li[k] = ps_to_pl_fifo_yumi_i  [k];
+        assign ps_to_pl_fifo_data_o[k]  = ps_to_pl_fifo_data_lo [k];
         assign ps_to_pl_fifo_v_o[k]     = ps_to_pl_fifo_valid_lo[k];
      end
 
-   for (k=0; k < num_regs_p; k++)
+   for (k=0; k < num_regs_ps_to_pl_p; k++)
      begin: rof5
         assign csr_data_o[k] = slv_r[k];
      end
@@ -361,7 +365,7 @@ module bsg_zynq_pl_shell #
 
         assign pl_to_ps_fifo_ctrs_full[k] = (C_S_AXI_DATA_WIDTH) ' (pl_to_ps_fifo_ctrs[k]);
 
-        assign pl_to_ps_fifo_yumi_li[k] = pl_to_ps_fifo_valid_lo[k] & slv_rd_sel_one_hot[num_regs_p+k];
+        assign pl_to_ps_fifo_yumi_li[k] = pl_to_ps_fifo_valid_lo[k] & slv_rd_sel_one_hot[num_regs_ps_to_pl_p+k];
 
         bsg_fifo_1r1w_small #(.width_p(C_S_AXI_DATA_WIDTH), .els_p(4)) fifo
           (.clk_i(S_AXI_ACLK)
@@ -374,7 +378,7 @@ module bsg_zynq_pl_shell #
            ,.v_o(   pl_to_ps_fifo_valid_lo[k])
            ,.data_o(pl_to_ps_fifo_data_r  [k])
            // only deque if it is not empty =)
-           ,.yumi_i(pl_to_ps_fifo_valid_lo[k] & slv_rd_sel_one_hot[num_regs_p+k])
+           ,.yumi_i(pl_to_ps_fifo_valid_lo[k] & slv_rd_sel_one_hot[num_regs_ps_to_pl_p+k])
            );
 
        bsg_flow_counter #(.els_p(4)
@@ -390,7 +394,7 @@ module bsg_zynq_pl_shell #
 
         always @(negedge S_AXI_ACLK)
           begin
-             assert(~S_AXI_ARESETN | ~slv_rd_sel_one_hot[num_regs_p+k] | pl_to_ps_fifo_valid_lo[k])
+             assert(~S_AXI_ARESETN | ~slv_rd_sel_one_hot[num_regs_ps_to_pl_p+k] | pl_to_ps_fifo_valid_lo[k])
                else $error("read from empty fifo");
           end
      end
@@ -511,31 +515,35 @@ module bsg_zynq_pl_shell #
         $display("-------------------------------");
         $display("BSG: Zynq Shell PL Read Offsets (%m)");
 
-        for (k = 0; k < num_regs_p; k++)
-          $display("%3h: register %2d",k << 2, k);
+        for (k = 0; k < num_regs_ps_to_pl_p; k++)
+          $display("%3h: ps_to_pl register %2d",k << 2, k);
 
         for (k = 0; k < num_fifo_pl_to_ps_p; k++)
-          $display("%3h: pl_to_ps fifo #%2d data",(num_regs_p << 2)+(k<<2),k);
+          $display("%3h: pl_to_ps fifo #%2d data",(num_regs_ps_to_pl_p << 2)+(k<<2),k);
 
         for (k = 0; k < num_fifo_pl_to_ps_p; k++)
-          $display("%3h: pl_to_ps fifo #%2d count",((num_fifo_pl_to_ps_p+num_regs_p) << 2)+(k<<2),k);
+          $display("%3h: pl_to_ps fifo #%2d count",((num_fifo_pl_to_ps_p+num_regs_ps_to_pl_p) << 2)+(k<<2),k);
 
         for (k = 0; k < num_fifo_ps_to_pl_p; k++)
-          $display("%3h: ps_to_pl fifo #%2d count",((num_fifo_pl_to_ps_p*2+num_regs_p) << 2)+(k<<2),k);
+          $display("%3h: ps_to_pl fifo #%2d count",((num_fifo_pl_to_ps_p*2+num_regs_ps_to_pl_p) << 2)+(k<<2),k);
+
+        for (k = 0; k < num_regs_pl_to_ps_p; k++)
+          $display("%3h: pl_to_ps register %2d"
+                   ,((num_fifo_pl_to_ps_p*2+num_regs_ps_to_pl_p+num_fifo_ps_to_pl_p) << 2)+(k<<2),k);
 
         $display("-------------------------------");
         $display("BSG: Zynq Shell PL Write Offsets (%m)");
 
-        for (k = 0; k < num_regs_p; k++)
+        for (k = 0; k < num_regs_ps_to_pl_p; k++)
           $display("%3h: register %2d",k << 2, k);
 
         for (k = 0; k < num_fifo_ps_to_pl_p; k++)
-          $display("%3h: ps_to_pl fifo #%2d data",((num_regs_p) << 2)+(k<<2),k);
+          $display("%3h: ps_to_pl fifo #%2d data",((num_regs_ps_to_pl_p) << 2)+(k<<2),k);
      end
 
 
    bsg_mux_one_hot #(.width_p(C_S_AXI_DATA_WIDTH),.els_p(read_locs_lp)) muxoh
-     (.data_i({ps_to_pl_fifo_ctrs_full, pl_to_ps_fifo_ctrs_full, pl_to_ps_fifo_data_r, slv_r})
+     (.data_i({csr_data_i, ps_to_pl_fifo_ctrs_full, pl_to_ps_fifo_ctrs_full, pl_to_ps_fifo_data_r, slv_r})
       ,.sel_one_hot_i(slv_rd_sel_one_hot)
       ,.data_o(reg_data_out)
       );

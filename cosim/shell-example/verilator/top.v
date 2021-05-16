@@ -46,10 +46,10 @@ module top #
 
    genvar                                       k;
 
-
-   localparam num_regs_lp = 4;
+   localparam num_regs_ps_to_pl_lp = 4;
    localparam num_fifo_ps_to_pl_lp = 4;
    localparam num_fifo_pl_to_ps_lp = 2;
+   localparam num_regs_pl_to_ps_lp = 1;
 
    wire [num_fifo_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] pl_to_ps_fifo_data_li;
    wire [num_fifo_pl_to_ps_lp-1:0]                           pl_to_ps_fifo_v_li;
@@ -59,16 +59,25 @@ module top #
    wire [num_fifo_ps_to_pl_lp-1:0]                           ps_to_pl_fifo_v_lo;
    wire [num_fifo_ps_to_pl_lp-1:0]                           ps_to_pl_fifo_yumi_li;
 
-   wire [num_regs_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0]          csr_data_lo;
+   wire [num_regs_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_lo;
 
+   logic [C_S00_AXI_ADDR_WIDTH-1:0]                          last_write_addr_r;
+
+   always @(posedge s00_axi_aclk)
+     if (~s00_axi_aresetn)
+       last_write_addr_r <= '0;
+     else
+       if (s00_axi_awvalid & s00_axi_awready)
+         last_write_addr_r <= s00_axi_awaddr;
 
    bsg_zynq_pl_shell
      #(
-       .num_regs_p(num_regs_lp)
+       .num_regs_ps_to_pl_p (num_regs_ps_to_pl_lp)
        ,.num_fifo_ps_to_pl_p(num_fifo_ps_to_pl_lp)
        ,.num_fifo_pl_to_ps_p(num_fifo_pl_to_ps_lp)
-       ,.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH)
-       ,.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
+       ,.num_regs_pl_to_ps_p(num_regs_pl_to_ps_lp)
+       ,.C_S_AXI_DATA_WIDTH (C_S00_AXI_DATA_WIDTH)
+       ,.C_S_AXI_ADDR_WIDTH (C_S00_AXI_ADDR_WIDTH)
        ) bzps
        (
         .pl_to_ps_fifo_data_i  (pl_to_ps_fifo_data_li)
@@ -80,7 +89,7 @@ module top #
         ,.ps_to_pl_fifo_yumi_i (ps_to_pl_fifo_yumi_li)
 
         ,.csr_data_o(csr_data_lo)
-
+        ,.csr_data_i(C_S00_AXI_DATA_WIDTH ' (last_write_addr_r))
         ,.S_AXI_ACLK   (s00_axi_aclk   )
         ,.S_AXI_ARESETN(s00_axi_aresetn)
         ,.S_AXI_AWADDR (s00_axi_awaddr )
