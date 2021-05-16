@@ -69,19 +69,19 @@ module top_fpga
     ,output wire                                 s01_axi_rvalid
     ,input wire                                  s01_axi_rready
 
-    ,input wire                             m00_axi_aclk
-    ,input wire                             m00_axi_aresetn
-    ,output wire [C_M00_AXI_ADDR_WIDTH-1:0] m00_axi_awaddr
-    ,output wire                            m00_axi_awvalid
-    ,input wire                             m00_axi_awready
-    ,output wire [5:0]                      m00_axi_awid
-    ,output wire [1:0]                      m00_axi_awlock
-    ,output wire [3:0]                      m00_axi_awcache
-    ,output wire [2:0]                      m00_axi_awprot
-    ,output wire [3:0]                      m00_axi_awlen
-    ,output wire [2:0]                      m00_axi_awsize
-    ,output wire [1:0]                      m00_axi_awburst
-    ,output wire [3:0]                      m00_axi_awqos
+    ,input wire                                 m00_axi_aclk
+    ,input wire                                 m00_axi_aresetn
+    ,output wire [C_M00_AXI_ADDR_WIDTH-1:0]     m00_axi_awaddr
+    ,output wire                                m00_axi_awvalid
+    ,input wire                                 m00_axi_awready
+    ,output wire [5:0]                          m00_axi_awid
+    ,output wire [1:0]                          m00_axi_awlock
+    ,output wire [3:0]                          m00_axi_awcache
+    ,output wire [2:0]                          m00_axi_awprot
+    ,output wire [3:0]                          m00_axi_awlen
+    ,output wire [2:0]                          m00_axi_awsize
+    ,output wire [1:0]                          m00_axi_awburst
+    ,output wire [3:0]                          m00_axi_awqos
 
     ,output wire [C_M00_AXI_DATA_WIDTH-1:0]     m00_axi_wdata
     ,output wire                                m00_axi_wvalid
@@ -90,29 +90,29 @@ module top_fpga
     ,output wire                                m00_axi_wlast
     ,output wire [(C_M00_AXI_DATA_WIDTH/8)-1:0] m00_axi_wstrb
 
-    ,input wire       m00_axi_bvalid
-    ,output wire      m00_axi_bready
-    ,input wire [5:0] m00_axi_bid
-    ,input wire [1:0] m00_axi_bresp
+    ,input wire                                 m00_axi_bvalid
+    ,output wire                                m00_axi_bready
+    ,input wire [5:0]                           m00_axi_bid
+    ,input wire [1:0]                           m00_axi_bresp
 
-    ,output wire [C_M00_AXI_ADDR_WIDTH-1:0] m00_axi_araddr
-    ,output wire       m00_axi_arvalid
-    ,input wire        m00_axi_arready
-    ,output wire [5:0] m00_axi_arid
-    ,output wire [1:0] m00_axi_arlock
-    ,output wire [3:0] m00_axi_arcache
-    ,output wire [2:0] m00_axi_arprot
-    ,output wire [3:0] m00_axi_arlen
-    ,output wire [2:0] m00_axi_arsize
-    ,output wire [1:0] m00_axi_arburst
-    ,output wire [3:0] m00_axi_arqos
+    ,output wire [C_M00_AXI_ADDR_WIDTH-1:0]     m00_axi_araddr
+    ,output wire                                m00_axi_arvalid
+    ,input wire                                 m00_axi_arready
+    ,output wire [5:0]                          m00_axi_arid
+    ,output wire [1:0]                          m00_axi_arlock
+    ,output wire [3:0]                          m00_axi_arcache
+    ,output wire [2:0]                          m00_axi_arprot
+    ,output wire [3:0]                          m00_axi_arlen
+    ,output wire [2:0]                          m00_axi_arsize
+    ,output wire [1:0]                          m00_axi_arburst
+    ,output wire [3:0]                          m00_axi_arqos
 
-    ,input wire [C_M00_AXI_DATA_WIDTH-1:0] m00_axi_rdata
-    ,input wire                            m00_axi_rvalid
-    ,output wire                           m00_axi_rready
-    ,input wire [5:0]                      m00_axi_rid
-    ,input wire                            m00_axi_rlast
-    ,input wire [2:0]                      m00_axi_rresp
+    ,input wire [C_M00_AXI_DATA_WIDTH-1:0]      m00_axi_rdata
+    ,input wire                                 m00_axi_rvalid
+    ,output wire                                m00_axi_rready
+    ,input wire [5:0]                           m00_axi_rid
+    ,input wire                                 m00_axi_rlast
+    ,input wire [2:0]                           m00_axi_rresp
     );
 
    logic [2:0][C_S00_AXI_DATA_WIDTH-1:0]        csr_data_lo;
