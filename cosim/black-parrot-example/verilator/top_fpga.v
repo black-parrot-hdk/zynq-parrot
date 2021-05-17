@@ -121,11 +121,15 @@ module top_fpga
    logic                                        ps_to_pl_fifo_v_lo, ps_to_pl_fifo_yumi_li;
 
    // Instantiation of Axi Bus Interface S00_AXI
-   bp_zynq_pl_shell #
+   bsg_zynq_pl_shell #
      (
-      .C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
-      .C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
-      ) example_axi_v1_0_S00_AXI_inst
+      .num_regs_ps_to_pl_p (3)
+      ,.num_fifo_ps_to_pl_p(1)
+      ,.num_fifo_pl_to_ps_p(1)
+      ,.num_regs_pl_to_ps_p(1)
+      ,.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH)
+      ,.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
+      ) zps
        (
         .csr_data_o(csr_data_lo)
         ,.csr_data_i()
