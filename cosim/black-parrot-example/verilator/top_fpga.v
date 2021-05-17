@@ -19,7 +19,7 @@ module top_fpga
      , parameter integer C_S00_AXI_DATA_WIDTH   = 32
      , parameter integer C_S00_AXI_ADDR_WIDTH   = 5
      , parameter integer C_S01_AXI_DATA_WIDTH   = 32
-     , parameter integer C_S01_AXI_ADDR_WIDTH   = 32
+     , parameter integer C_S01_AXI_ADDR_WIDTH   = 31 // the ARM AXI S01 interface drops the top bit
      , parameter integer C_M00_AXI_DATA_WIDTH   = 64
      , parameter integer C_M00_AXI_ADDR_WIDTH   = 32
      )
@@ -120,7 +120,7 @@ module top_fpga
    logic                                        pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
    logic                                        ps_to_pl_fifo_v_lo, ps_to_pl_fifo_yumi_li;
 
-   // Instantiation of Axi Bus Interface S00_AXI
+   // Connect Shell to AXI Bus Interface S00_AXI
    bsg_zynq_pl_shell #
      (
       .num_regs_ps_to_pl_p (3)
@@ -181,22 +181,100 @@ module top_fpga
    logic [l2_fill_width_p-1:0] dma_data_li;
    logic                       dma_data_v_li, dma_data_ready_and_lo;
 
-   logic [C_S01_AXI_ADDR_WIDTH-1:0] waddr_translated_lo, raddr_translated_lo;
+   localparam bp_axi_lite_addr_width_lp = 32;
+
+   logic [bp_axi_lite_addr_width_lp-1:0] waddr_translated_lo, raddr_translated_lo;
+
+   // Address Translation (MBT):
+   //
+   // The Zynq PS Physical address space looks like this:
+   //
+   // 0x0000_0000 - 0x0003_FFFF  +256 KB On-chip memory (optional), else DDR DRAM
+   // 0x0004_0000 - 0x1FFF_FFFF  +512 MB DDR DRAM for Zynq P2 board
+   // 0x2000_0000 - 0x3FFF_FFFF  Another 512 MB DDR DRAM, if the board had it, it does not
+   // 0x4000_0000 - 0x7FFF_FFFF  1 GB Mapped to PL via M_AXI_GP0
+   // 0x8000_0000 - 0xBFFF_FFFF  1 GB Mapped to PL via M_AXI_GP1
+   // 0xFFFC_0000 - 0xFFFF_FFFF  Alternate location for OCM
+   //
+   // BlackParrot's Physical address space looks like this:
+   //    (see github.com/black-parrot/black-parrot/blob/master/docs/platform_guide.md)
+   //
+   // 0x00_0000_0000 - 0x00_7FFF_FFFF local addresses; 2GB: < 9'b0, 7b tile, 4b device, 20b 1MB space>
+   // 0x00_8000_0000 - 0x00_9FFF_FFFF cached dram (up to 512 MB, mapped to Zynq)
+   // 0x00_A000_0000 - 0x00_FFFF_FFFF cached dram that does not exist on Zynq board (another 1.5 GB)
+   // 0x01_0000_0000 - 0x0F_FFFF_FFFF cached dram that does not exist on Zynq board (another 60 GB)
+   // 0x10_0000_0000 - 0x1F_FFFF_FFFF on-chip address space for streaming accelerators
+   // 0x20_0000_0000 - 0xFF_FFFF_FFFF off-chip address space
+   //
+   // Currently, we allocate the Zynq M_AXI_GP0 address space to handle management of the shell
+   // that interfaces Zynq to external "accelerators" like BP.
+   //
+   // So the M_AXI_GP1 address space remains to map BP. A straight-forward translation is to
+   // map 0x8000_0000 - 0x8FFF_FFFF of Zynq Physical Address Space (PA) to the same addresses in BP, providing 256 MB of DRAM,
+   // leaving 256 MB for the Zynq PS system.
+   //
+   // Then we can map 0xA000_0000-0xAFFF_FFFF of ARM PA to 0x00_0000_0000 - 0x00_0FFF_FFFF of BP,
+   // handling up to tiles 0..15. (This is 256 MB of address space.)
+   //
+   // since these addresses are going to pop out of the M_AXI_GP1 port, they will already have
+   // 0x8000_0000 subtracted, it will ironically have to be added back in by this module
+   //
+   // M_AXI_GP1: 0x0000_0000 - 0x1000_0000 -> add      0x8000_0000.
+   //            0x2000_0000 - 0x3000_0000 -> subtract 0x2000_0000.
+
+   // Life of an address (FPGA):
+   //
+   //                NBF Loader                 mmap                  Xilinx IPI Switch         This Module
+   //  NBF (0x8000_0000) -> ARM VA (0x8000_0000) -> ARM PA (0x8000_0000) -> M_AXI_GP1 (0x0000_0000) -> BP (0x8000_0000)
+   //  NBF (0x0000_0000) -> ARM VA (0xA000_0000) -> ARM PA (0xA000_0000) -> M_AXI_GP1 (0x2000_0000) -> BP (0x0000_0000)
+   //
+   // Life of an address (Verilator):
+   //                  NBF Loader              bp_zynq_pl          Verilator Bit Truncation     This Module
+   //  NBF (0x8000_0000) -> ARM VA (x8000_0000) ->  ARM PA (0x8000_0000) -> M_AXI_GP1 (0x0000_0000) -> BP (0x8000_0000)
+   //  NBF (0x0000_0000) -> ARM VA (xA000_0000) ->  ARM PA (0xA000_0000) -> M_AXI_GP1 (0x2000_0000) -> BP (0x0000_0000)
+   //
+   //
+
+   logic [31:0] waddr_offset, raddr_offset;
+
    always_comb
      begin
-        if (s01_axi_awaddr < 32'hA0000000)
-          waddr_translated_lo = s01_axi_awaddr - csr_data_lo[0];
-        else
-          waddr_translated_lo = s01_axi_awaddr - csr_data_lo[1];
+        // Zynq PA 0x8000_0000 .. 0x8FFF_FFFF -> AXI 0x0000_0000 .. 0x0FFF_FFFF -> BP 0x8000_0000 - 0x8FFF_FFFF
+        // Zynq PA 0xA000_0000 .. 0xAFFF_FFFF -> AXI 0x2000_0000 .. 0x2FFF_FFFF -> BP 0x0000_0000 - 0x0FFF_FFFF
+
+        waddr_offset = 32'h8000_0000;
+
+        if (s01_axi_awaddr > 31'h2000_0000)
+          waddr_offset = 32'h2000_0000;
+
+        waddr_translated_lo = s01_axi_awaddr ^ waddr_offset;
      end
 
    always_comb
      begin
-        if (s01_axi_araddr < 32'hA0000000)
-          raddr_translated_lo = s01_axi_araddr - csr_data_lo[0];
-        else
-          raddr_translated_lo = s01_axi_araddr - csr_data_lo[1];
+        // Zynq PA 0x8000_0000 .. 0x8FFF_FFFF -> AXI 0x0000_0000 .. 0x0FFF_FFFF -> BP 0x8000_0000 - 0x8FFF_FFFF
+        // Zynq PA 0xA000_0000 .. 0xAFFF_FFFF -> AXI 0x2000_0000 .. 0x2FFF_FFFF -> BP 0x0000_0000 - 0x0FFF_FFFF
+
+        raddr_offset = 32'h8000_0000;
+
+        if (s01_axi_araddr > 31'h2000_0000)
+          raddr_offset = 32'h2000_0000;
+
+        raddr_translated_lo = s01_axi_araddr ^ raddr_offset;
      end
+
+   // synopsys translate_off
+
+   always @(negedge s01_axi_aclk)
+     if (s01_axi_awvalid & s01_axi_awready)
+       $display("bp_zynq: AXI Write Addr %x -> %x (BP)\n",s01_axi_awaddr,waddr_translated_lo);
+
+   always @(negedge s01_axi_aclk)
+     if (s01_axi_arvalid & s01_axi_arready)
+       $display("bp_zynq: AXI Read Addr %x -> %x (BP)\n",s01_axi_araddr,raddr_translated_lo);
+
+   // synopsys translate_on
+
 
    bp_to_axi_decoder #
      (.bp_params_p(bp_params_p))
@@ -208,9 +286,9 @@ module top_fpga
       ,.io_cmd_v_i        (io_cmd_v_lo)
       ,.io_cmd_ready_and_o(io_cmd_ready_and_li)
 
-      ,.io_resp_o     (io_resp_li)
-      ,.io_resp_v_o   (io_resp_v_li)
-      ,.io_resp_yumi_i(io_resp_yumi_lo)
+      ,.io_resp_o         (io_resp_li)
+      ,.io_resp_v_o       (io_resp_v_li)
+      ,.io_resp_yumi_i    (io_resp_yumi_lo)
 
       ,.data_o (pl_to_ps_fifo_data_li)
       ,.v_o    (pl_to_ps_fifo_v_li)
@@ -223,13 +301,20 @@ module top_fpga
    localparam axi_strb_width_p = axi_data_width_p >> 3;
    localparam axi_burst_len_p = 8;
 
-   wire [32:0] axi_awaddr;
-   wire [32:0] axi_araddr;
-   assign m00_axi_awaddr = axi_awaddr - 32'h80000000 + csr_data_lo[2];
-   assign m00_axi_araddr = axi_araddr - 32'h80000000 + csr_data_lo[2];
+   wire [axi_addr_width_p-1:0] axi_awaddr;
+   wire [axi_addr_width_p-1:0] axi_araddr;
+
+   // to translate from BP DRAM space to ARM PS DRAM space
+   // we subtract the BP DRAM base address (32'h8000_0000) and add the
+   // ARM PS allocated memory space physical address.
+
+   assign m00_axi_awaddr = axi_awaddr - 32'h8000_0000 + csr_data_lo[2];
+   assign m00_axi_araddr = axi_araddr - 32'h8000_0000 + csr_data_lo[2];
 
    bp_unicore_axi_sim #
-     (.bp_params_p(bp_params_p))
+     (.bp_params_p(bp_params_p)
+      ,.axi_lite_addr_width_p(bp_axi_lite_addr_width_lp)
+      )
    blackparrot
      (.clk_i(s01_axi_aclk)
       ,.reset_i(~s01_axi_aresetn)
@@ -272,8 +357,8 @@ module top_fpga
       ,.s_axi_lite_rready_i (s01_axi_rready)
 
 
-      // these are caches misses coming from BP L2 
-     ,.dma_pkt_o           (dma_pkt_lo)
+      // these are caches misses coming from BP L2
+     ,.dma_pkt_o            (dma_pkt_lo)
       ,.dma_pkt_v_o         (dma_pkt_v_lo)
       ,.dma_pkt_yumi_i      (dma_pkt_yumi_li)
 

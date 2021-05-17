@@ -153,7 +153,7 @@ class bp_zynq_pl {
 
     return data;
   }
-
+/*
 void nbf_load() {
 	string nbf_command;
 	string tmp;
@@ -229,4 +229,6 @@ void nbf_load() {
 		// TODO: Need to implement logic for bp io_read
 		else return false;
 	}
+
+*/
 };
