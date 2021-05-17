@@ -1,8 +1,8 @@
 # vivado -mode tcl
 
-source vivado-parse-vcs-flist.tcl
+source vivado_parse_bp_vcs_flist.tcl
 
-set flist_path [parse_bp_vcs_flist ../verilator/flist.vcs ../../import/black-parrot ../../import/black-parrot/external/basejump_stl ../../import/black-parrot/external/HardFloat ../../common/v]
+set flist_path [vivado_parse_bp_vcs_flist ../flist.vcs ../../import/black-parrot ../../import/black-parrot/external/basejump_stl ../../import/black-parrot/external/HardFloat ../../common/v]
 
 
 set flist    [lindex $flist_path 0]

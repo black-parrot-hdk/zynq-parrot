@@ -57,7 +57,7 @@ all: recursive
 	obj_dir/V$(TOP) +bsg_trace
 
 clean:
-	-rm -rf obj_dir/ *~ trace.fst
+	-rm -rf obj_dir/ *~ trace.fst build.log
 
 view:
 	gtkwave -f trace.fst
