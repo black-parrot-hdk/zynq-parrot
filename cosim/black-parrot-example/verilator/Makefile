@@ -28,7 +28,7 @@ VV_OPTS += -O1
 VV_OPTS += --x-assign fast --x-initial fast
 VV_OPTS += --threads 1
 VV_OPTS += -top-module $(TOP)
-VV_OPTS += -f flist.vcs
+VV_OPTS += -f ../flist.vcs
 VV_OPTS += --build
 VV_OPTS += -Wno-timescalemod
 VV_OPTS += --Wno-fatal --Wno-lint --Wno-unoptflat --Wno-widthconcat --Wno-style
@@ -43,7 +43,7 @@ TRACE=--trace-fst
 
 # You need to configure these parameters for your particular accelerator!
 
-THE_FLAGS = -DGP0_ADDR_BASE=0x40000000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_SIZE_BYTES=0x40000000 $(INCLUDES) -DBSG_ENABLE_S01
+THE_FLAGS = -DGP0_ADDR_BASE=0x40000000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_SIZE_BYTES=0x30000000 $(INCLUDES) -DBSG_ENABLE_S01
 
 top: all
 

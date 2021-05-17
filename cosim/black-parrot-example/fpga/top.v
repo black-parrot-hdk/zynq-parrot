@@ -1,7 +1,7 @@
 
 `timescale 1 ns / 1 ps
 
-module main_top
+module top
   #(
     // Parameters of Axi Slave Bus Interface S00_AXI
     parameter integer C_S00_AXI_DATA_WIDTH = 32
