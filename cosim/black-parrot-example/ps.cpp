@@ -69,12 +69,24 @@ int main(int argc, char **argv) {
 	    //	    printf("%d%c",z,(q % 8) == 7 ? '\n' : ' ');
 	  }
 
-	printf ("mis-aligned read of mtime reg in BP CFG space\n");	
+	printf ("mis-aligned read of mtime reg in BP CFG space\n");
 	for (int q = 0; q < 10; q++)
 	  {
 	    int z = zpl->axil_read(0xA0000000+0x30bff9);
 	  }
 
+        printf ("attempting to write and read L2\n");
+        zpl->axil_write(0x80000000,0x12345678,mask1);
+        zpl->axil_write(0x80000004,0xDADACACA,mask1);
+        zpl->axil_write(0x80000008,0xBABEBABE,mask1);
+        zpl->axil_write(0x80000010,0xBEEFBEEF,mask1);
+
+        assert (zpl->axil_read (0x80000000) == 0x12345678);
+        assert (zpl->axil_read (0x80000004) == 0xDADACACA);
+        assert (zpl->axil_read (0x80000008) == 0xBABEBABE);
+        assert (zpl->axil_read (0x80000010) == 0xBEEFBEEF);
+        printf("L2 write/read succeeded!\n");
+        
 	printf("reading mtimecmp\n");
 	int y = zpl->axil_read(0xA0000000+0x304000);
 

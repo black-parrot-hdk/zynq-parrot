@@ -36,7 +36,7 @@ set_property top ${project_top_module} [current_fileset]
 
 # I killed this after it ran for 20 mins and took 28G of memory -- MBT
 #update_compile_order -fileset sources_1
-synth_design -include_dirs $includelist -flatten_hierarchy none
+#synth_design -include_dirs $includelist -flatten_hierarchy none
 
 ipx::package_project -root_dir fpga_build -vendor user.org -library user -taxonomy /UserIP -import_files -set_current false
 ipx::unload_core fpga_build/component.xml

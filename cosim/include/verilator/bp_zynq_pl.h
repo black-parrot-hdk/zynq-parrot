@@ -301,7 +301,7 @@ class bp_zynq_pl {
     axil_write_helper(index,address,data,wstrb);
   }
 
-#define AXI_TIMEOUT 1000
+#define AXI_TIMEOUT 8000
 
   void axil_write_helper(int index, unsigned int address, int data, int wstrb)
   {
@@ -321,6 +321,8 @@ class bp_zynq_pl {
       if (timeout_counter++ > AXI_TIMEOUT) {
         printf("bp_zynq: AXI write timeout\n");
         done();
+        delete tb;
+        exit(0);
         assert(0);
       }
 
@@ -340,7 +342,8 @@ class bp_zynq_pl {
       if (timeout_counter++ > AXI_TIMEOUT) {
         printf("bp_zynq: AXI bvalid timeout\n");
         done();
-        assert(0);
+        delete tb;
+        exit(0);
       }
 
       this->tick(period);
@@ -395,7 +398,8 @@ class bp_zynq_pl {
         if (timeout_counter++ > AXI_TIMEOUT) {
           printf("bp_zynq: AXI read arready timeout\n");
           done();
-          assert(0);
+          delete tb;
+          exit(0);
         }
 
         this->tick(period);
@@ -418,7 +422,8 @@ class bp_zynq_pl {
         if (timeout_counter++ > AXI_TIMEOUT) {
           printf("bp_zynq: AXI read rvalid timeout\n");
           done();
-          assert(0);
+          delete tb;
+          exit(0);
         }
 
         this->tick(period);
