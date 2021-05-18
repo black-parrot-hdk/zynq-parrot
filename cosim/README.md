@@ -10,3 +10,5 @@ For this repo to work, make sure to submodule init/update:
 - imports/black_parrot
 - imports/black_parrot/external/basejump_stl
 - imports/black_parrot/external/HardFloat
+
+All of the FPGA versions here build automatically from script.
