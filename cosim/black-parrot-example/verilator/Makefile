@@ -17,6 +17,8 @@ export BP_TOOLS_DIR     = $(BLACKPARROT_DIR)/tools
 export BP_SDK_DIR       = $(BLACKPARROT_DIR)/sdk
 export BP_HDK_DIR       = $(BLACKPARROT_DIR)/hdk
 
+export PATH := $(BP_TOOLS_DIR)/install/bin:$(PATH)
+
 export TEST_DIR ?= .
 export TOP  ?= top
 export HOST-PROGRAM ?= ps.cpp
