@@ -1,3 +1,4 @@
+
 ## Set environment variables
 TOPLEVEL ?= $(shell git rev-parse --show-toplevel)
 
@@ -19,6 +20,7 @@ export BP_HDK_DIR       = $(BLACKPARROT_DIR)/hdk
 export TEST_DIR ?= .
 export TOP  ?= top
 export HOST-PROGRAM ?= ps.cpp
+NBF_FILE=../prog.nbf
 
 $(warning Using BSG_ZYNQ_PL_SHELL_DIR=$(BSG_ZYNQ_PL_SHELL_DIR))
 $(warning Using BLACKPARROT_DIR=$(BLACKPARROT_DIR))
@@ -54,7 +56,7 @@ recursive: verilate
 	make -j -C obj_dir/ -f V$(TOP).mk V$(TOP)
 
 all: recursive
-	obj_dir/V$(TOP) +bsg_trace
+	obj_dir/V$(TOP) $(NBF_FILE) +bsg_trace
 
 clean:
 	-rm -rf obj_dir/ *~ trace.fst build.log
