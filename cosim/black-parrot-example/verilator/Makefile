@@ -67,7 +67,7 @@ all: recursive
 	obj_dir/V$(TOP) $(NBF_FILE) +bsg_trace
 
 clean:
-	-rm -rf obj_dir/ *~ trace.fst build.log
+	-rm -rf obj_dir/ *~ trace.fst build.log flist.vcs
 
 view:
 	gtkwave -f trace.fst
