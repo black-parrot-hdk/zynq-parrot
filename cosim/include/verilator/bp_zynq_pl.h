@@ -35,7 +35,7 @@ using namespace std;
 #define BSG_move_bit(q,x,y) ((((q) >> (x)) & 1) << y)
 #define BSG_expand_byte_mask(x) ((BSG_move_bit(x,0,0) | BSG_move_bit(x,1,8) | BSG_move_bit(x,2,16) | BSG_move_bit(x,3,24))*0xFF)
 
-#define BP_ZYNQ_PL_DEBUG 1
+
 
 struct axil {
         unsigned char *aresetn;
@@ -248,7 +248,8 @@ class bp_zynq_pl {
 
 
  public:
-
+  int BP_ZYNQ_PL_DEBUG=1;
+  
   bp_zynq_pl(int argc, char *argv[]) {
     // Initialize Verilators variables
     Verilated::commandArgs(argc, argv);

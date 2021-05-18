@@ -41,8 +41,6 @@ extern "C" {
 #error GP1_ADDR_SIZE_BYTES must be defined
 #endif
 
-#define BP_ZYNQ_PL_DEBUG 1 
-
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -58,6 +56,7 @@ using namespace std;
 
 class bp_zynq_pl {
  public:
+  unsigned int BP_ZYNQ_PL_DEBUG = 1;
   unsigned int gp0_base_offset = 0;
   unsigned int gp1_base_offset = 0;
   
