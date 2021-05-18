@@ -7,7 +7,7 @@ module top
     parameter integer C_S00_AXI_DATA_WIDTH = 32
     , parameter integer C_S00_AXI_ADDR_WIDTH = 6
     , parameter integer C_S01_AXI_DATA_WIDTH = 32
-    , parameter integer C_S01_AXI_ADDR_WIDTH = 32
+    , parameter integer C_S01_AXI_ADDR_WIDTH = 30
     , parameter integer C_M00_AXI_DATA_WIDTH = 64
     , parameter integer C_M00_AXI_ADDR_WIDTH = 32
     )
@@ -63,10 +63,10 @@ module top
     ,output wire                            m00_axi_awvalid
     ,input wire                             m00_axi_awready
     ,output wire [5:0]                      m00_axi_awid
-    ,output wire [1:0]                      m00_axi_awlock
+    ,output wire [1:0]                      m00_axi_awlock  // 1 bit bsg_cache_to_axi (AXI4); 2 bit (AXI3)
     ,output wire [3:0]                      m00_axi_awcache
     ,output wire [2:0]                      m00_axi_awprot
-    ,output wire [3:0]                      m00_axi_awlen
+    ,output wire [3:0]                      m00_axi_awlen   // 8 bits bsg_cache_to_axi
     ,output wire [2:0]                      m00_axi_awsize
     ,output wire [1:0]                      m00_axi_awburst
     ,output wire [3:0]                      m00_axi_awqos
@@ -100,10 +100,10 @@ module top
     ,output wire                                m00_axi_rready
     ,input wire [5:0]                           m00_axi_rid
     ,input wire                                 m00_axi_rlast
-    ,input wire [2:0]                           m00_axi_rresp
+    ,input wire [1:0]                           m00_axi_rresp
     );
 
-   top_fpga top_fpga_inst
+   top_zynq top_zynq_inst
      (.s00_axi_aclk    (s00_axi_aclk)
       ,.s00_axi_aresetn(s00_axi_aresetn)
       ,.s00_axi_awaddr (s00_axi_awaddr)

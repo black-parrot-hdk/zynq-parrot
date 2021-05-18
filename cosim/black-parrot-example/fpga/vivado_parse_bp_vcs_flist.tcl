@@ -12,7 +12,9 @@ proc vivado_parse_bp_vcs_flist {flist_path BP_DIR BASEJUMP_STL_DIR HARDFLOAT_DIR
     foreach x $f {
         if {![string match "" $x]} {
             # If the item starts with +incdir+, directory files need to be added
-            if {[string match "+" [string index $x 0]]} {
+            if {[string match "#" [string index $x 0]]} {
+                # get rid of comment line
+            } elseif {[string match "+" [string index $x 0]]} {
                 set trimchars "+incdir+"
                 set temp [string trimleft $x $trimchars]
                 set expanded [subst $temp]

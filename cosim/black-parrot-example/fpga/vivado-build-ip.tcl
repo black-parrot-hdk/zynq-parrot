@@ -2,14 +2,15 @@
 
 source vivado_parse_bp_vcs_flist.tcl
 
-set flist_path [vivado_parse_bp_vcs_flist ../flist.vcs ../../import/black-parrot ../../import/black-parrot/external/basejump_stl ../../import/black-parrot/external/HardFloat ../../common/v]
+set flist_filename  flist.vcs
 
+set flist_includelist [vivado_parse_bp_vcs_flist $flist_filename ../../import/black-parrot ../../import/black-parrot/external/basejump_stl ../../import/black-parrot/external/HardFloat ../../common/v]
 
-set flist    [lindex $flist_path 0]
-set dirlist  [lindex $flist_path 1]
+set flist    [lindex $flist_includelist 0]
+set includelist  [lindex $flist_includelist 1]
 
 puts $flist
-puts $dirlist
+puts $includelist
 
 set project_top_module top
 
@@ -30,22 +31,12 @@ foreach {i} ${flist} {
     set_property file_type SystemVerilog [get_files ${i}]
 }
 
-quit
-
-foreach {i} ${basejump_list} {
-    add_files -norecurse ${basejump_path}${i}
-    set_property file_type SystemVerilog [get_files ${basejump_path}${i}]
-
-}
-
-foreach {i} ${project_list} {
-    add_files -norecurse ${i}
-    set_property file_type SystemVerilog [get_files ${i}]
-}
-
+set_property include_dirs ${includelist} [current_fileset]
 set_property top ${project_top_module} [current_fileset]
 
-update_compile_order -fileset sources_1
+# I killed this after it ran for 20 mins and took 28G of memory -- MBT
+#update_compile_order -fileset sources_1
+synth_design -include_dirs $includelist -flatten_hierarchy none
 
 ipx::package_project -root_dir fpga_build -vendor user.org -library user -taxonomy /UserIP -import_files -set_current false
 ipx::unload_core fpga_build/component.xml

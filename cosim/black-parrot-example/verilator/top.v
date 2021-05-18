@@ -7,7 +7,7 @@ module top
     parameter integer C_S00_AXI_DATA_WIDTH = 32
     , parameter integer C_S00_AXI_ADDR_WIDTH = 6
     , parameter integer C_S01_AXI_DATA_WIDTH = 32
-    , parameter integer C_S01_AXI_ADDR_WIDTH = 32
+    , parameter integer C_S01_AXI_ADDR_WIDTH = 30
     , parameter integer C_M00_AXI_DATA_WIDTH = 64
     , parameter integer C_M00_AXI_ADDR_WIDTH = 32
     )
@@ -99,7 +99,7 @@ module top
    wire                                 m00_axi_rlast;
    wire [2:0]                           m00_axi_rresp;
 
-   top_fpga #
+   top_zynq #
      (.C_S00_AXI_DATA_WIDTH (C_S00_AXI_DATA_WIDTH)
       ,.C_S00_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
       ,.C_S01_AXI_DATA_WIDTH(C_S01_AXI_DATA_WIDTH)

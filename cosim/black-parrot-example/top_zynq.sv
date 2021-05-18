@@ -3,7 +3,7 @@
 
 `include "bp_common_defines.svh"
 
-module top_fpga
+module top_zynq
   import bp_common_pkg::*;
    import bp_be_pkg::*;
    import bp_me_pkg::*;
@@ -19,7 +19,7 @@ module top_fpga
      , parameter integer C_S00_AXI_DATA_WIDTH   = 32
      , parameter integer C_S00_AXI_ADDR_WIDTH   = 5
      , parameter integer C_S01_AXI_DATA_WIDTH   = 32
-     , parameter integer C_S01_AXI_ADDR_WIDTH   = 31 // the ARM AXI S01 interface drops the top bit
+     , parameter integer C_S01_AXI_ADDR_WIDTH   = 30 // the ARM AXI S01 interface drops the top two bits
      , parameter integer C_M00_AXI_DATA_WIDTH   = 64
      , parameter integer C_M00_AXI_ADDR_WIDTH   = 32
      )
@@ -112,7 +112,7 @@ module top_fpga
     ,output wire                                m00_axi_rready
     ,input wire [5:0]                           m00_axi_rid
     ,input wire                                 m00_axi_rlast
-    ,input wire [2:0]                           m00_axi_rresp
+    ,input wire [1:0]                           m00_axi_rresp
     );
 
    logic [2:0][C_S00_AXI_DATA_WIDTH-1:0]        csr_data_lo;
@@ -210,8 +210,8 @@ module top_fpga
    // that interfaces Zynq to external "accelerators" like BP.
    //
    // So the M_AXI_GP1 address space remains to map BP. A straight-forward translation is to
-   // map 0x8000_0000 - 0x8FFF_FFFF of Zynq Physical Address Space (PA) to the same addresses in BP, providing 256 MB of DRAM,
-   // leaving 256 MB for the Zynq PS system.
+   // map 0x8000_0000 - 0x8FFF_FFFF of Zynq Physical Address Space (PA) to the same addresses in BP
+   //  providing 256 MB of DRAM, leaving 256 MB for the Zynq PS system.
    //
    // Then we can map 0xA000_0000-0xAFFF_FFFF of ARM PA to 0x00_0000_0000 - 0x00_0FFF_FFFF of BP,
    // handling up to tiles 0..15. (This is 256 MB of address space.)
@@ -403,7 +403,8 @@ module top_fpga
 
       ,.axi_awid_o   (m00_axi_awid)
       ,.axi_awaddr_o (axi_awaddr)
-      ,.axi_awlen_o  (m00_axi_awlen)
+      ,.axi_awlen_o  (m00_axi_awlen) // this is an 8-bit output, connected to 4-bit output??
+                                     // as long as the max burst length bits in 4-bits, we are okay
       ,.axi_awsize_o (m00_axi_awsize)
       ,.axi_awburst_o(m00_axi_awburst)
       ,.axi_awcache_o(m00_axi_awcache)
@@ -425,7 +426,7 @@ module top_fpga
 
       ,.axi_arid_o   (m00_axi_arid)
       ,.axi_araddr_o (axi_araddr)
-      ,.axi_arlen_o  (m00_axi_arlen)
+      ,.axi_arlen_o  (m00_axi_arlen) // 8-bit output connect to 4-bit output?
       ,.axi_arsize_o (m00_axi_arsize)
       ,.axi_arburst_o(m00_axi_arburst)
       ,.axi_arcache_o(m00_axi_arcache)

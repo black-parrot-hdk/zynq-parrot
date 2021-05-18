@@ -22,12 +22,20 @@ clean_fpga_build:
 	-rm -rf fpga_build
 	-rm -rf $(BASENAME)_bd_proj*
 	-rm $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.hwh $(BASENAME)_bd_1_bd.tcl
-	-rm -rf sds_trace_data.dat
+	-rm -rf sds_trace_data.dat flist.vcs
 
-fpga_build_ip: clean_fpga_build
+fpga_build_ip: clean_fpga_build flist.vcs
 	@echo "reminder:  source /tools/Xilinx/Vivado/2019.1/settings64.sh to init xilinx tools"
 	mkdir fpga_build
 	vivado -source vivado-build-ip.tcl -mode tcl	
+
+flist.vcs: ../../import/black-parrot/bp_top/syn/flist.vcs Makefile
+	cp $< $@
+	echo "\$$BP_TOP_DIR/src/v/bp_unicore_axi_sim.sv" >> flist.vcs
+	echo "../bp_to_axi_decoder.sv" >> flist.vcs
+	echo "\$$BSG_ZYNQ_PL_SHELL_DIR/bsg_zynq_pl_shell.v" >> flist.vcs
+	echo "../top_zynq.sv" >> flist.vcs
+	echo "top.v" >> flist.vcs
 
 fpga_build: fpga_build_ip
 	vivado -source vivado-create-block.tcl -mode tcl
