@@ -77,9 +77,9 @@ int main(int argc, char **argv) {
 	  }
 	*/
 
-	int outer = 32768/4;
-	//int outer = 256/4;
-		
+	//int outer = 32768/4;
+	int outer = 8/4;
+
 	int num_times = allocated_dram/32768;
         printf ("attempting to write L2 %d times over %d MB\n",num_times*outer,(allocated_dram)>>20);
         zpl->axil_write(0x80000000,0x12345678,mask1);
@@ -95,31 +95,31 @@ int main(int argc, char **argv) {
 	zpl->BP_ZYNQ_PL_DEBUG=tmp;
 	printf ("finished write L2 %d times over %d MB\n",num_times*outer,(allocated_dram)>>20);
 
+#ifdef FPGA
 	printf ("verifying the writes via direct ARM access to DRAM\n");
+#else
+	printf ("attempting to read L2\n");
+#endif
 
 	int mismatches = 0;
 	int matches = 0;
 	for (int s = 0 ; s < outer; s++)
 	for (int t = 0 ; t < num_times; t++)
 	  {
+#ifdef FPGA
 	    if  (buf[(32768*t+s*4)/4] == 0x1ADACACA+t+s)
 	      matches++;
 	    else
 	      mismatches++;
+#else
+            if (zpl->axil_read(0x80000000+32768*t+s*4) == 0x1ADACACA+t+s)
+              matches++;
+            else
+              mismatches++;
+#endif
 	  }
 	printf ("%d matches, %d mismatches, %f\n",matches,mismatches,((float) matches)/(float) (mismatches+matches));
-	
-	if (0) {
-	printf ("attempting to read L2\n");
-	
-	for (int t = 0 ; t < 2048; t++)
-	  {
-	    assert(zpl->axil_read(0x80000000+32768*t) == 0x1ADACACA+t);
-	  }
-	
-        printf("L2 write/read succeeded!\n");
-        }
-	
+
 	printf("reading mtimecmp\n");
 	int y = zpl->axil_read(0xA0000000+0x304000);
 
