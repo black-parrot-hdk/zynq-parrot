@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
 
 	printf ("attempting to read mtime reg in BP CFG space\n");
 
-	for (int q = 0; q < 1000; q++)
+	for (int q = 0; q < 10; q++)
 	  {
 	    int z = zpl->axil_read(0xA0000000+0x30bff8);
 	    //	    printf("%d%c",z,(q % 8) == 7 ? '\n' : ' ');
@@ -74,9 +74,18 @@ int main(int argc, char **argv) {
 	  {
 	    int z = zpl->axil_read(0xA0000000+0x30bff9);
 	  }
+
+	printf("reading mtimecmp\n");
+	int y = zpl->axil_read(0xA0000000+0x304000);
+
+	printf("writing mtimecmp\n");
+	zpl->axil_write(0xA0000000+0x304000,y+1,mask1);
+
+	printf("reading mtimecmp\n");
+	y = zpl->axil_read(0xA0000000+0x304000);
 	
 	printf ("attempting to read odd address in BP CFG space\n");
-	int y = zpl->axil_read(0xA0000000+0x200005);
+	y = zpl->axil_read(0xA0000000+0x200005);
 
   	printf ("attempting to read even address in BP CFG space\n");
 	int x = zpl->axil_read(0xA0000000+0x200004);
