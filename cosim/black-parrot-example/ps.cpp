@@ -9,14 +9,12 @@
 #include <stdio.h>
 #include "bp_zynq_pl.h"
 
-void nbf_load(bp_zynq_pl *zpl);
+void nbf_load(bp_zynq_pl *zpl, char *);
 bool decode_bp_output(bp_zynq_pl *zpl, int data);
 
 int main(int argc, char **argv) {
    bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
-
-
-
+   assert(argc > 1);
    // the read memory map is essentially
    //
    // 0,4,8: registers
@@ -28,15 +26,17 @@ int main(int argc, char **argv) {
    //
    // 0,4,8: registers
    // 10: ps to pl fifo 
-
 	
-	int data;
-	data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
-	int val1 = 0x80000000;
-	int val2 = 0x20000000;
-	int mask1 = 0xf;
-	int mask2 = 0xf;
-	bool done = false;
+   int data;
+   printf("about to read\n",data);
+   data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
+   printf("read %x\n",data);
+   int val1 = 0x80000000;
+   int val2 = 0x20000000;
+   int mask1 = 0xf;
+   int mask2 = 0xf;
+   bool done = false;
+
 #ifdef FPGA
 	unsigned long phys_ptr;
 	volatile int *buf;
@@ -45,22 +45,45 @@ int main(int argc, char **argv) {
 	// write to two registers
 	zpl->axil_write(0x0 + GP0_ADDR_BASE, val1, mask1); // these are ignored
 	zpl->axil_write(0x4 + GP0_ADDR_BASE, val2, mask2); // these are ignored
-#ifdef FPGA
-	buf = (volatile int*) zpl->allocate_dram(67108864, &phys_ptr);
-	zpl->axil_write(0x8 + GP0_ADDR_BASE, phys_ptr, mask1);
-#else
-	zpl->axil_write(0x8+GP0_ADDR_BASE, val1, mask1);
-#endif
-
 	assert( (zpl->axil_read(0x0 + GP0_ADDR_BASE) == (val1)));
 	assert( (zpl->axil_read(0x4 + GP0_ADDR_BASE) == (val2)));
+	printf("successfully wrote and read two registers in bsg_zynq_shell\n");
 #ifdef FPGA
+	printf("calling allocate dram\n");
+	buf = (volatile int*) zpl->allocate_dram(67108864, &phys_ptr);
+	printf("received %p (phys = %lx)\n",buf, phys_ptr);	
+	zpl->axil_write(0x8 + GP0_ADDR_BASE, phys_ptr, mask1);
 	assert( (zpl->axil_read(0x8 + GP0_ADDR_BASE) == (phys_ptr)));
+	printf("wrote and verified base register\n");
 #else
+	zpl->axil_write(0x8+GP0_ADDR_BASE, val1, mask1);
 	assert( (zpl->axil_read(0x8 + GP0_ADDR_BASE) == (val1)));
+	printf("wrote and verified base register\n");
 #endif
 
-	nbf_load(zpl);
+	printf ("attempting to read mtime reg in BP CFG space\n");
+
+	for (int q = 0; q < 1000; q++)
+	  {
+	    int z = zpl->axil_read(0xA0000000+0x30bff8);
+	    //	    printf("%d%c",z,(q % 8) == 7 ? '\n' : ' ');
+	  }
+
+	printf ("mis-aligned read of mtime reg in BP CFG space\n");	
+	for (int q = 0; q < 10; q++)
+	  {
+	    int z = zpl->axil_read(0xA0000000+0x30bff9);
+	  }
+	
+	printf ("attempting to read odd address in BP CFG space\n");
+	int y = zpl->axil_read(0xA0000000+0x200005);
+
+  	printf ("attempting to read even address in BP CFG space\n");
+	int x = zpl->axil_read(0xA0000000+0x200004);
+
+	printf ("core_id %x %x\n",x, y);
+	
+	nbf_load(zpl, argv[1]);
 	
 	while(!done) {
 		data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
@@ -80,7 +103,7 @@ int main(int argc, char **argv) {
 	exit(EXIT_SUCCESS);
 }
 
-  void nbf_load(bp_zynq_pl *zpl) {
+void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
     string nbf_command;
     string tmp;
     string delimiter = "_";
@@ -89,8 +112,14 @@ int main(int argc, char **argv) {
     int pos = 0;
     long unsigned int address;
     int data;
-    ifstream nbf_file("prog.nbf");
+    ifstream nbf_file(nbf_filename);
 
+    if (!nbf_file.is_open())
+      {
+	printf("error opening nbf file.\n");
+	exit(-1);
+      }
+    
     while (getline(nbf_file, nbf_command)) {
       int i = 0;
       while ((pos = nbf_command.find(delimiter)) != std::string::npos) {
