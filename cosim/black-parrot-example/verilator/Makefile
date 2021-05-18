@@ -57,7 +57,7 @@ flist.vcs: ../../import/black-parrot/bp_top/syn/flist.vcs Makefile
 	echo "../top_zynq.sv" >> flist.vcs
 	echo "top.v" >> flist.vcs
 
-verilate: $(HOST-PROGRAM)
+verilate: $(HOST-PROGRAM) flist.vcs
 	verilator $(VV_OPTS) -sv -CFLAGS "$(THE_FLAGS)" $(TRACE)  -exe $< 2>&1 | tee build.log
 
 recursive: verilate
