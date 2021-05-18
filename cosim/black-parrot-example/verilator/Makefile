@@ -30,7 +30,7 @@ VV_OPTS += -O1
 VV_OPTS += --x-assign fast --x-initial fast
 VV_OPTS += --threads 1
 VV_OPTS += -top-module $(TOP)
-VV_OPTS += -f ../flist.vcs
+VV_OPTS += -f flist.vcs
 VV_OPTS += --build
 VV_OPTS += -Wno-timescalemod
 VV_OPTS += --Wno-fatal --Wno-lint --Wno-unoptflat --Wno-widthconcat --Wno-style
@@ -48,6 +48,14 @@ TRACE=--trace-fst
 THE_FLAGS = -DGP0_ADDR_BASE=0x40000000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_SIZE_BYTES=0x30000000 $(INCLUDES) -DBSG_ENABLE_S01
 
 top: all
+
+flist.vcs: ../../import/black-parrot/bp_top/syn/flist.vcs Makefile
+	cp $< $@
+	echo "\$$BP_TOP_DIR/src/v/bp_unicore_axi_sim.sv" >> flist.vcs
+	echo "../bp_to_axi_decoder.sv" >> flist.vcs
+	echo "\$$BSG_ZYNQ_PL_SHELL_DIR/bsg_zynq_pl_shell.v" >> flist.vcs
+	echo "../top_zynq.sv" >> flist.vcs
+	echo "top.v" >> flist.vcs
 
 verilate: $(HOST-PROGRAM)
 	verilator $(VV_OPTS) -sv -CFLAGS "$(THE_FLAGS)" $(TRACE)  -exe $< 2>&1 | tee build.log
