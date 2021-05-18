@@ -11,4 +11,6 @@ For this repo to work, make sure to submodule init/update:
 - imports/black_parrot/external/basejump_stl
 - imports/black_parrot/external/HardFloat
 
-All of the FPGA versions here build automatically from script.
+See (this document)[https://docs.google.com/document/d/1U9XIxLkjbI1vQR5hxjk8SzqqQ3sM2hCMUXfoK3tGwBU/edit#heading=h.souq55b38m0y] for an introduction to using Zynq and Vivado.
+
+All of the FPGA versions here build automatically from script, and do not require any other repos excpet the submodules above.
