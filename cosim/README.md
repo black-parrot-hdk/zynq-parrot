@@ -11,6 +11,6 @@ For this repo to work, make sure to submodule init/update:
 - imports/black-parrot/external/basejump\_stl
 - imports/black-parrot/external/HardFloat
 
-See (this document)[https://docs.google.com/document/d/1U9XIxLkjbI1vQR5hxjk8SzqqQ3sM2hCMUXfoK3tGwBU/edit#heading=h.souq55b38m0y] for an introduction to using Zynq and Vivado.
+See (this document)[https://docs.google.com/document/d/1U9XIxLkjbI1vQR5hxjk8SzqqQ3sM2hCMUXfoK3tGwBU/edit#heading=h.souq55b38m0y] for an introduction to using Zynq and Vivado. We highly suggest that you use the ethernet connection to the board.
 
 All of the FPGA versions here build automatically from script, and do not require any other repos excpet the submodules above.
