@@ -2,3 +2,5 @@ Make sure to update the makefile to point at wherever you have mapped the addres
 ).)
 
 Note: you still use the Python3 Pynq environment and code to load the .bit file.
+
+Read the Makefile comments to see what you can do in this directory!
