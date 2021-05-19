@@ -1,2 +1,4 @@
 flist.vcs
 obj_dir/
+build.log
+trace.fst

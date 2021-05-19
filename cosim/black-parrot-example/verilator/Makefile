@@ -43,7 +43,7 @@ INCLUDES=-I../../include/verilator -I../../../include/verilator
 #VERILOG-INCLUDES= -I../../import/basejump_stl/bsg_misc -I../../../import/basejump_stl/bsg_misc -I../../import/basejump_stl/bsg_cache -I../../import/basejump_stl/bsg_dataflow -I../../../import/basejump_stl/bsg_dataflow  -I../../import/basejump_stl/bsg_mem -I../../../import/basejump_stl/bsg_mem -I$(BP_FE_DIR)/src/include -I$(BP_COMMON_DIR)/src/include -I$(BP_TOP_DIR)/src/include -I$(BP_BE_DIR)/src/include -I$(BP_ME_DIR)/include
 VPATH=../ . 
 
-TRACE=--trace-fst
+TRACE=--trace-fst --trace-structs
 
 # You need to configure these parameters for your particular accelerator!
 
