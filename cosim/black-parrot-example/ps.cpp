@@ -235,6 +235,9 @@ bool decode_bp_output(bp_zynq_pl *zpl, int data) {
           printf("\nFAIL\n");
         return true;
       }
+
+      printf("Errant write to %x", address);
+      return false;
     }
     // TODO: Need to implement logic for bp io_read
     else return false;

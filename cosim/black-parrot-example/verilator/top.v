@@ -58,8 +58,8 @@ module top
     ,input wire                                  s01_axi_rready
     );
 
-   wire                                 m00_axi_aclk;
-   wire                                 m00_axi_aresetn;
+   wire                                 m00_axi_aclk = s00_axi_aclk;
+   wire                                 m00_axi_aresetn = s00_axi_aresetn;
    wire [C_M00_AXI_ADDR_WIDTH-1:0]      m00_axi_awaddr;
    wire                                 m00_axi_awvalid;
    wire                                 m00_axi_awready;
