@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
     */
 
     //int outer = 32768/4;
-    int outer = 8/4;
+    int outer = (FPGA) ? (1024/4) : (8/4);
 
     int num_times = allocated_dram/32768;
         printf ("attempting to write L2 %d times over %d MB\n",num_times*outer,(allocated_dram)>>20);
@@ -103,22 +103,28 @@ int main(int argc, char **argv) {
 
     int mismatches = 0;
     int matches = 0;
-    for (int s = 0 ; s < outer; s++)
-    for (int t = 0 ; t < num_times; t++)
-      {
+
 #ifdef FPGA
+    for (int s = 0 ; s < outer; s++)
+      for (int t = 0 ; t < num_times; t++)
         if  (buf[(32768*t+s*4)/4] == 0x1ADACACA+t+s)
           matches++;
         else
           mismatches++;
-#else
-            if (zpl->axil_read(0x80000000+32768*t+s*4) == 0x1ADACACA+t+s)
-              matches++;
-            else
-              mismatches++;
+
+    printf ("DIRECT access from ARM to DDR (some L1/L2 coherence mismatches expected) %d matches, %d mismatches, %f\n",matches,mismatches,((float) matches)/(float) (mismatches+matches));
 #endif
-      }
-    printf ("%d matches, %d mismatches, %f\n",matches,mismatches,((float) matches)/(float) (mismatches+matches));
+    
+    zpl->BP_ZYNQ_PL_DEBUG=0;
+    for (int s = 0 ; s < outer; s++)
+      for (int t = 0 ; t < num_times; t++)
+	if (zpl->axil_read(0x80000000+32768*t+s*4) == 0x1ADACACA+t+s)
+	  matches++;
+	else
+	  mismatches++;
+    zpl->BP_ZYNQ_PL_DEBUG=tmp;
+    
+    printf ("READ access through BP (some L1 coherence mismatch expected): %d matches, %d mismatches, %f\n",matches,mismatches,((float) matches)/(float) (mismatches+matches));
 
     printf("reading mtimecmp\n");
     int y = zpl->axil_read(0xA0000000+0x304000);
