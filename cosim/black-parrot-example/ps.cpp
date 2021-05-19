@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
    //
    // 0,4,8: registers
    // 10: ps to pl fifo 
-	
+    
    int data;
    printf("about to read\n",data);
    data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
@@ -39,125 +39,119 @@ int main(int argc, char **argv) {
 
    int allocated_dram = 64*1024*1024;
 #ifdef FPGA
-	unsigned long phys_ptr;
-	volatile int *buf;
+    unsigned long phys_ptr;
+    volatile int *buf;
 #endif
 
-	// write to two registers
-	zpl->axil_write(0x0 + GP0_ADDR_BASE, val1, mask1); // these are ignored
-	zpl->axil_write(0x4 + GP0_ADDR_BASE, val2, mask2); // these are ignored
-	assert( (zpl->axil_read(0x0 + GP0_ADDR_BASE) == (val1)));
-	assert( (zpl->axil_read(0x4 + GP0_ADDR_BASE) == (val2)));
-	printf("successfully wrote and read two registers in bsg_zynq_shell\n");
+    // write to two registers
+    zpl->axil_write(0x0 + GP0_ADDR_BASE, val1, mask1); // these are ignored
+    zpl->axil_write(0x4 + GP0_ADDR_BASE, val2, mask2); // these are ignored
+    assert( (zpl->axil_read(0x0 + GP0_ADDR_BASE) == (val1)));
+    assert( (zpl->axil_read(0x4 + GP0_ADDR_BASE) == (val2)));
+    printf("successfully wrote and read two registers in bsg_zynq_shell\n");
 #ifdef FPGA
-	printf("calling allocate dram\n");
-	buf = (volatile int*) zpl->allocate_dram(allocated_dram, &phys_ptr);
-	printf("received %p (phys = %lx)\n",buf, phys_ptr);	
-	zpl->axil_write(0x8 + GP0_ADDR_BASE, phys_ptr, mask1);
-	assert( (zpl->axil_read(0x8 + GP0_ADDR_BASE) == (phys_ptr)));
-	printf("wrote and verified base register\n");
+    printf("calling allocate dram\n");
+    buf = (volatile int*) zpl->allocate_dram(allocated_dram, &phys_ptr);
+    printf("received %p (phys = %lx)\n",buf, phys_ptr);    
+    zpl->axil_write(0x8 + GP0_ADDR_BASE, phys_ptr, mask1);
+    assert( (zpl->axil_read(0x8 + GP0_ADDR_BASE) == (phys_ptr)));
+    printf("wrote and verified base register\n");
 #else
-	zpl->axil_write(0x8+GP0_ADDR_BASE, val1, mask1);
-	assert( (zpl->axil_read(0x8 + GP0_ADDR_BASE) == (val1)));
-	printf("wrote and verified base register\n");
+    zpl->axil_write(0x8+GP0_ADDR_BASE, val1, mask1);
+    assert( (zpl->axil_read(0x8 + GP0_ADDR_BASE) == (val1)));
+    printf("wrote and verified base register\n");
 #endif
 
-	printf ("attempting to read mtime reg in BP CFG space\n");
+    printf ("attempting to read mtime reg in BP CFG space\n");
 
-	for (int q = 0; q < 10; q++)
-	  {
-	    int z = zpl->axil_read(0xA0000000+0x30bff8);
-	    //	    printf("%d%c",z,(q % 8) == 7 ? '\n' : ' ');
-	  }
-	/*
-	printf ("mis-aligned read of mtime reg in BP CFG space\n");
-	for (int q = 0; q < 10; q++)
-	  {
-	    int z = zpl->axil_read(0xA0000000+0x30bff9);
-	  }
-	*/
+    for (int q = 0; q < 10; q++)
+      {
+        int z = zpl->axil_read(0xA0000000+0x30bff8);
+        //        printf("%d%c",z,(q % 8) == 7 ? '\n' : ' ');
+      }
+    /*
+    printf ("mis-aligned read of mtime reg in BP CFG space\n");
+    for (int q = 0; q < 10; q++)
+      {
+        int z = zpl->axil_read(0xA0000000+0x30bff9);
+      }
+    */
 
-	//int outer = 32768/4;
-	int outer = 8/4;
+    //int outer = 32768/4;
+    int outer = 8/4;
 
-	int num_times = allocated_dram/32768;
+    int num_times = allocated_dram/32768;
         printf ("attempting to write L2 %d times over %d MB\n",num_times*outer,(allocated_dram)>>20);
         zpl->axil_write(0x80000000,0x12345678,mask1);
 
-	int tmp = zpl->BP_ZYNQ_PL_DEBUG;
-	zpl->BP_ZYNQ_PL_DEBUG=0;
-	for (int s = 0 ; s < outer; s++)
-	for (int t = 0 ; t < num_times; t++)
-	  {
-	    zpl->axil_write(0x80000000+32768*t+s*4,0x1ADACACA+t+s
-			    ,mask1);
-	  }
-	zpl->BP_ZYNQ_PL_DEBUG=tmp;
-	printf ("finished write L2 %d times over %d MB\n",num_times*outer,(allocated_dram)>>20);
+    int tmp = zpl->BP_ZYNQ_PL_DEBUG;
+    zpl->BP_ZYNQ_PL_DEBUG=0;
+    for (int s = 0 ; s < outer; s++)
+    for (int t = 0 ; t < num_times; t++)
+      {
+        zpl->axil_write(0x80000000+32768*t+s*4,0x1ADACACA+t+s
+                ,mask1);
+      }
+    zpl->BP_ZYNQ_PL_DEBUG=tmp;
+    printf ("finished write L2 %d times over %d MB\n",num_times*outer,(allocated_dram)>>20);
 
 #ifdef FPGA
-	printf ("verifying the writes via direct ARM access to DRAM\n");
+    printf ("verifying the writes via direct ARM access to DRAM\n");
 #else
-	printf ("attempting to read L2\n");
+    printf ("attempting to read L2\n");
 #endif
 
-	int mismatches = 0;
-	int matches = 0;
-	for (int s = 0 ; s < outer; s++)
-	for (int t = 0 ; t < num_times; t++)
-	  {
+    int mismatches = 0;
+    int matches = 0;
+    for (int s = 0 ; s < outer; s++)
+    for (int t = 0 ; t < num_times; t++)
+      {
 #ifdef FPGA
-	    if  (buf[(32768*t+s*4)/4] == 0x1ADACACA+t+s)
-	      matches++;
-	    else
-	      mismatches++;
+        if  (buf[(32768*t+s*4)/4] == 0x1ADACACA+t+s)
+          matches++;
+        else
+          mismatches++;
 #else
             if (zpl->axil_read(0x80000000+32768*t+s*4) == 0x1ADACACA+t+s)
               matches++;
             else
               mismatches++;
 #endif
-	  }
-	printf ("%d matches, %d mismatches, %f\n",matches,mismatches,((float) matches)/(float) (mismatches+matches));
+      }
+    printf ("%d matches, %d mismatches, %f\n",matches,mismatches,((float) matches)/(float) (mismatches+matches));
 
-	printf("reading mtimecmp\n");
-	int y = zpl->axil_read(0xA0000000+0x304000);
+    printf("reading mtimecmp\n");
+    int y = zpl->axil_read(0xA0000000+0x304000);
 
-	printf("writing mtimecmp\n");
-	zpl->axil_write(0xA0000000+0x304000,y+1,mask1);
+    printf("writing mtimecmp\n");
+    zpl->axil_write(0xA0000000+0x304000,y+1,mask1);
 
-	printf("reading mtimecmp\n");
-	y = zpl->axil_read(0xA0000000+0x304000);
+    printf("reading mtimecmp\n");
+    y = zpl->axil_read(0xA0000000+0x304000);
 
-	if (0)
-	  {
-	    printf ("attempting to read odd address in BP CFG space\n");
-	    y = zpl->axil_read(0xA0000000+0x200005);
+    printf ("attempting to read even address in BP CFG space\n");
+    int x = zpl->axil_read(0xA0000000+0x20000c);
 
-	    printf ("attempting to read even address in BP CFG space\n");
-	    int x = zpl->axil_read(0xA0000000+0x200004);
-
-	    printf ("core_id %x %x\n",x, y);
-	
-	    nbf_load(zpl, argv[1]);
-	
-	    while(!done) {
-	      data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
-	      if (data != 0) {
-		data = zpl->axil_read(0xC + GP0_ADDR_BASE);
-		done = decode_bp_output(zpl, data);
-	      }
-	    }
-	  }
+    printf ("core_id %x %x\n",x, y);
+    
+    nbf_load(zpl, argv[1]);
+    
+    while(!done) {
+      data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
+      if (data != 0) {
+        data = zpl->axil_read(0xC + GP0_ADDR_BASE);
+        done = decode_bp_output(zpl, data);
+      }
+    }
 
 #ifdef FPGA
-	zpl->free_dram((void *)buf);
+    zpl->free_dram((void *)buf);
 #endif
-	
-	zpl->done();
+    
+    zpl->done();
 
-	delete zpl;
-	exit(EXIT_SUCCESS);
+    delete zpl;
+    exit(EXIT_SUCCESS);
 }
 
 void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
@@ -173,8 +167,8 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
 
     if (!nbf_file.is_open())
       {
-	printf("error opening nbf file.\n");
-	exit(-1);
+        printf("error opening nbf file.\n");
+        exit(-1);
       }
     
     while (getline(nbf_file, nbf_command)) {

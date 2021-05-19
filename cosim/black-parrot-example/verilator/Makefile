@@ -2,7 +2,6 @@
 ## Set environment variables
 TOPLEVEL ?= $(shell git rev-parse --show-toplevel)
 
-#export BLACKPARROT_DIR  = /home/svijay97/black-parrot
 export BLACKPARROT_DIR:= $(abspath ../../import/black-parrot)
 export BSG_ZYNQ_PL_SHELL_DIR:= $(abspath ../../common/v)
 export BP_FE_DIR        = $(BLACKPARROT_DIR)/bp_fe
@@ -14,8 +13,7 @@ export BP_EXTERNAL_DIR  = $(BLACKPARROT_DIR)/external
 export BASEJUMP_STL_DIR = $(BP_EXTERNAL_DIR)/basejump_stl
 export HARDFLOAT_DIR    = $(BP_EXTERNAL_DIR)/HardFloat
 export BP_TOOLS_DIR     = $(BLACKPARROT_DIR)/tools
-export BP_SDK_DIR       = $(BLACKPARROT_DIR)/sdk
-export BP_HDK_DIR       = $(BLACKPARROT_DIR)/hdk
+export BP_SDK_DIR       = $(abspath ../../import/black-parrot-sdk)
 
 export PATH := $(BP_TOOLS_DIR)/install/bin:$(PATH)
 
@@ -66,7 +64,7 @@ recursive: verilate
 	make -j -C obj_dir/ -f V$(TOP).mk V$(TOP)
 
 all: recursive
-	obj_dir/V$(TOP) $(NBF_FILE) +bsg_trace
+	obj_dir/V$(TOP) $(NBF_FILE) +bsg_trace | tee run.log
 
 clean:
 	-rm -rf obj_dir/ *~ trace.fst build.log flist.vcs
