@@ -31,7 +31,7 @@ fpga_build_ip: clean_fpga_build flist.vcs
 
 flist.vcs: ../../import/black-parrot/bp_top/syn/flist.vcs Makefile
 	cp $< $@
-	echo "\$$BP_TOP_DIR/src/v/bp_unicore_axi_sim.sv" >> flist.vcs
+	echo "../bp_unicore_axi_sim.sv" >> flist.vcs
 	echo "../bp_to_axi_decoder.sv" >> flist.vcs
 	echo "\$$BSG_ZYNQ_PL_SHELL_DIR/bsg_zynq_pl_shell.v" >> flist.vcs
 	echo "../top_zynq.sv" >> flist.vcs

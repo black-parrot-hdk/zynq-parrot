@@ -2,7 +2,8 @@
 ## Set environment variables
 TOPLEVEL ?= $(shell git rev-parse --show-toplevel)
 
-export BLACKPARROT_DIR:= $(abspath ../../import/black-parrot)
+export BLACKPARROT_DIR := $(abspath ../../import/black-parrot)
+export BP_SDK_DIR      := $(abspath ../../import/sdk)
 export BSG_ZYNQ_PL_SHELL_DIR:= $(abspath ../../common/v)
 export BP_FE_DIR        = $(BLACKPARROT_DIR)/bp_fe
 export BP_COMMON_DIR    = $(BLACKPARROT_DIR)/bp_common
@@ -13,7 +14,6 @@ export BP_EXTERNAL_DIR  = $(BLACKPARROT_DIR)/external
 export BASEJUMP_STL_DIR = $(BP_EXTERNAL_DIR)/basejump_stl
 export HARDFLOAT_DIR    = $(BP_EXTERNAL_DIR)/HardFloat
 export BP_TOOLS_DIR     = $(BLACKPARROT_DIR)/tools
-export BP_SDK_DIR       = $(abspath ../../import/black-parrot-sdk)
 
 export PATH := $(BP_TOOLS_DIR)/install/bin:$(PATH)
 
@@ -38,7 +38,6 @@ VV_OPTS += -I$(BP_SDK_DIR)/install/include
 VV_OPTS += -I$(BP_TOOLS_DIR)/install/share/verilator/include/vltstd/
 
 INCLUDES=-I../../include/verilator -I../../../include/verilator
-#VERILOG-INCLUDES= -I../../import/basejump_stl/bsg_misc -I../../../import/basejump_stl/bsg_misc -I../../import/basejump_stl/bsg_cache -I../../import/basejump_stl/bsg_dataflow -I../../../import/basejump_stl/bsg_dataflow  -I../../import/basejump_stl/bsg_mem -I../../../import/basejump_stl/bsg_mem -I$(BP_FE_DIR)/src/include -I$(BP_COMMON_DIR)/src/include -I$(BP_TOP_DIR)/src/include -I$(BP_BE_DIR)/src/include -I$(BP_ME_DIR)/include
 VPATH=../ . 
 
 TRACE=--trace-fst --trace-structs
@@ -51,7 +50,7 @@ top: all
 
 flist.vcs: ../../import/black-parrot/bp_top/syn/flist.vcs Makefile
 	cp $< $@
-	echo "\$$BP_TOP_DIR/src/v/bp_unicore_axi_sim.sv" >> flist.vcs
+	echo "../bp_unicore_axi_sim.sv" >> flist.vcs
 	echo "../bp_to_axi_decoder.sv" >> flist.vcs
 	echo "\$$BSG_ZYNQ_PL_SHELL_DIR/bsg_zynq_pl_shell.v" >> flist.vcs
 	echo "../top_zynq.sv" >> flist.vcs
