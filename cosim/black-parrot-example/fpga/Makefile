@@ -36,6 +36,9 @@ fpga_build_block:
 fpga_build_ip: clean_fpga_build flist.vcs
 	mkdir fpga_build
 	$(XILINX_ENV) && vivado -source vivado-build-ip.tcl -mode tcl
+	-@grep --color "CRITICAL WARNING" vivado.log
+	-@grep --color "ERROR" vivado.log
+	-@tail -n5 vivado.log
 
 # create the flist file incorporating zynq parrot source with the bp source
 flist.vcs: ../../import/black-parrot/bp_top/syn/flist.vcs Makefile
