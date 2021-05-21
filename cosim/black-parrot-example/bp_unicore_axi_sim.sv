@@ -5,6 +5,8 @@
 module bp_unicore_axi_sim
  import bp_common_pkg::*;
  import bp_me_pkg::*;
+// see bp_common/src/include/bp_common_aviary_pkgdef.svh for a list of configurations that you can try!
+// this design requires an L2
  #(parameter bp_params_e bp_params_p = e_bp_default_cfg
    `declare_bp_proc_params(bp_params_p)
 
@@ -77,6 +79,8 @@ module bp_unicore_axi_sim
   logic io_cmd_v_li, io_cmd_yumi_lo;
   logic io_resp_v_lo, io_resp_ready_li;
   
+// note: bp_unicore has L2 cache; (bp_unicore_lite does not, but does not have dma_* interface
+// and would need mem_cmd/mem_resp-to-axi converter to be written.)
   bp_unicore
    #(.bp_params_p(bp_params_p))
    unicore
