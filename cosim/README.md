@@ -6,7 +6,7 @@ Examples:
 - dram-example -- tests the software running on ARM that allocates DRAM space out of the ARM Linux available memory for the PL
 - simple-example -- demonstrates how to use the Vivado GUI, Zynq board, etc. Useful to know to get yourself unstuck with the other projects. =)
 
-For this repo to work, make sure to submodule init/update:
+*For this repo to work, make sure to submodule init/update:*
 
 - imports/basejump\_stl
 - imports/black-parrot
@@ -15,4 +15,4 @@ For this repo to work, make sure to submodule init/update:
 
 See (this document)[https://docs.google.com/document/d/1U9XIxLkjbI1vQR5hxjk8SzqqQ3sM2hCMUXfoK3tGwBU/edit#heading=h.souq55b38m0y] for an introduction to using Zynq and Vivado. We highly suggest that you use the ethernet connection to the board.
 
-All of the FPGA versions here build automatically from script, and do not require any other repos excpet the submodules above.
+All of the FPGA versions here build automatically from script (except simple-example), and do not require any other repos except the submodules above.
