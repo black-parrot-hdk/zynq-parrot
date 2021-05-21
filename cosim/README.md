@@ -2,7 +2,8 @@ Examples:
 
 - shell-example -- basic example of the BSG Zynq Shell. Runs in verilator and FPGA.
 - double-shell-example -- two shells that talk to each other, demonstrating both ports on the Zynq chip. Runs in verilator and FPGA.
-- blackparrot-example -- appears to be working example of BlackParrot. Runs in Verilator and FPGA.
+- blackparrot-example -- working example of BlackParrot. Runs in Verilator and FPGA.
+- dram-example -- tests the software running on ARM that allocates DRAM space out of the ARM Linux available memory for the PL
 
 For this repo to work, make sure to submodule init/update:
 
