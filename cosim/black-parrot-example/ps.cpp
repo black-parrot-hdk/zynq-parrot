@@ -28,14 +28,12 @@ int main(int argc, char **argv) {
    // 10: ps to pl fifo 
     
    int data;
-   printf("about to read\n",data);
-   data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
-   printf("read %x\n",data);
    int val1 = 0x80000000;
    int val2 = 0x20000000;
    int mask1 = 0xf;
    int mask2 = 0xf;
    bool done = false;
+   unsigned int counter_data;
 
    int allocated_dram = 64*1024*1024;
 #ifdef FPGA
@@ -62,7 +60,8 @@ int main(int argc, char **argv) {
     printf("wrote and verified base register\n");
 #endif
 
-    printf("Read minstret data %d\n", zpl->axil_read(0x18 + GP0_ADDR_BASE));
+    counter_data = zpl->axil_read(0x18 + GP0_ADDR_BASE);
+    printf("minstret: %u\n", counter_data);
     printf ("attempting to read mtime reg in BP CFG space\n");
 
     for (int q = 0; q < 10; q++)
@@ -150,7 +149,8 @@ int main(int argc, char **argv) {
         done = decode_bp_output(zpl, data);
       }
     }
-    printf("Read minstret data %d\n", zpl->axil_read(0x18 + GP0_ADDR_BASE));
+    counter_data = zpl->axil_read(0x18 + GP0_ADDR_BASE);
+    printf("minstret: %u\n", counter_data);
 
 #ifdef FPGA
     zpl->free_dram((void *)buf);
