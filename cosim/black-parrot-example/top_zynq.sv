@@ -132,7 +132,7 @@ module top_zynq
       ) zps
        (
         .csr_data_o(csr_data_lo)
-        ,.csr_data_i()
+        ,.csr_data_i(blackparrot.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo[31:0])
 
         ,.pl_to_ps_fifo_data_i (pl_to_ps_fifo_data_li)
         ,.pl_to_ps_fifo_v_i    (pl_to_ps_fifo_v_li)

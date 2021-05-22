@@ -62,6 +62,7 @@ int main(int argc, char **argv) {
     printf("wrote and verified base register\n");
 #endif
 
+    printf("Read minstret data %d\n", zpl->axil_read(0x18 + GP0_ADDR_BASE));
     printf ("attempting to read mtime reg in BP CFG space\n");
 
     for (int q = 0; q < 10; q++)
@@ -149,6 +150,7 @@ int main(int argc, char **argv) {
         done = decode_bp_output(zpl, data);
       }
     }
+    printf("Read minstret data %d\n", zpl->axil_read(0x18 + GP0_ADDR_BASE));
 
 #ifdef FPGA
     zpl->free_dram((void *)buf);
