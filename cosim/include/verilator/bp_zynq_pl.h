@@ -273,7 +273,7 @@ class bp_zynq_pl {
   }
 
   bool done(void) {
-    printf("bp_zynq: done() called, exiting\n");
+    printf("bp_zynq_pl: done() called, exiting\n");
     return Verilated::gotFinish();
   }
 
@@ -297,7 +297,7 @@ class bp_zynq_pl {
       assert(0);
 
     if (BP_ZYNQ_PL_DEBUG)
-      printf("bp_zynq: AXI writing [%x] -> port %d, [%x]<-%8.8x\n", address_orig, index, address, data);
+      printf("  bp_zynq_pl: AXI writing [%x] -> port %d, [%x]<-%8.8x\n", address_orig, index, address, data);
 
     axil_write_helper(index,address,data,wstrb);
   }
@@ -320,7 +320,7 @@ class bp_zynq_pl {
     while ((*(axi_int[index].awready) == 0) && (*(axi_int[index].wready) == 0)) {
 
       if (timeout_counter++ > AXI_TIMEOUT) {
-        printf("bp_zynq: AXI write timeout\n");
+        printf("bp_zynq_pl: AXI write timeout\n");
         done();
         delete tb;
         exit(0);
@@ -341,7 +341,7 @@ class bp_zynq_pl {
     // wait for bvalid to go high
     while (*(axi_int[index].bvalid) == 0) {
       if (timeout_counter++ > AXI_TIMEOUT) {
-        printf("bp_zynq: AXI bvalid timeout\n");
+        printf("bp_zynq_pl: AXI bvalid timeout\n");
         done();
         delete tb;
         exit(0);
@@ -379,7 +379,7 @@ class bp_zynq_pl {
     data = axil_read_helper(index, address);
 
     if (BP_ZYNQ_PL_DEBUG)
-      printf("bp_zynq: AXI reading [%x] -> port %d, [%x]->%8.8x\n", address_orig, index, address, data);
+      printf("  bp_zynq_pl: AXI reading [%x] -> port %d, [%x]->%8.8x\n", address_orig, index, address, data);
 
     return data;
   }
@@ -397,7 +397,7 @@ class bp_zynq_pl {
     while  (*(axi_int[index].arready) == 0)
       {
         if (timeout_counter++ > AXI_TIMEOUT) {
-          printf("bp_zynq: AXI read arready timeout\n");
+          printf("bp_zynq_pl: AXI read arready timeout\n");
           done();
           delete tb;
           exit(0);
@@ -421,7 +421,7 @@ class bp_zynq_pl {
     while(*(axi_int[index].rvalid) == 0)
       {
         if (timeout_counter++ > AXI_TIMEOUT) {
-          printf("bp_zynq: AXI read rvalid timeout\n");
+          printf("bp_zynq_pl: AXI read rvalid timeout\n");
           done();
           delete tb;
           exit(0);

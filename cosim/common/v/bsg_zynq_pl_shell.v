@@ -535,7 +535,7 @@ module bsg_zynq_pl_shell #
         $display("BSG: Zynq Shell PL Write Offsets (%m)");
 
         for (k = 0; k < num_regs_ps_to_pl_p; k++)
-          $display("%3h: register %2d",k << 2, k);
+          $display("%3h: ps_to_pl register %2d",k << 2, k);
 
         for (k = 0; k < num_fifo_ps_to_pl_p; k++)
           $display("%3h: ps_to_pl fifo #%2d data",((num_regs_ps_to_pl_p) << 2)+(k<<2),k);

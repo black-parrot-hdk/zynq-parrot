@@ -31,7 +31,7 @@ VV_OPTS += --x-assign fast --x-initial fast
 VV_OPTS += --threads 1
 VV_OPTS += -top-module $(TOP)
 VV_OPTS += -f flist.vcs
-VV_OPTS += --build
+VV_OPTS += --build -j 4
 VV_OPTS += -Wno-timescalemod
 VV_OPTS += --Wno-fatal --Wno-lint --Wno-unoptflat --Wno-widthconcat --Wno-style
 VV_OPTS += -I$(BP_SDK_DIR)/install/include
@@ -60,10 +60,10 @@ verilate: $(HOST-PROGRAM) flist.vcs
 	verilator $(VV_OPTS) -sv -CFLAGS "$(THE_FLAGS)" $(TRACE)  -exe $< 2>&1 | tee build.log
 
 recursive: verilate
-	make -j -C obj_dir/ -f V$(TOP).mk V$(TOP)
+	$(MAKE) -j -C obj_dir/ -f V$(TOP).mk V$(TOP)
 
 all: recursive
-	obj_dir/V$(TOP) $(NBF_FILE) +bsg_trace | tee run.log
+	obj_dir/V$(TOP) $(NBF_FILE) +bsg_trace #| tee run.log
 
 clean:
 	-rm -rf obj_dir/ *~ trace.fst build.log flist.vcs

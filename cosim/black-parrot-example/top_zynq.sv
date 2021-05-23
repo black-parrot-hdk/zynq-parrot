@@ -120,6 +120,8 @@ module top_zynq
    logic                                        pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
    logic                                        ps_to_pl_fifo_v_lo, ps_to_pl_fifo_yumi_li;
 
+   localparam debug_lp = 0;
+
    // Connect Shell to AXI Bus Interface S00_AXI
    bsg_zynq_pl_shell #
      (
@@ -281,11 +283,11 @@ module top_zynq
 
    always @(negedge s01_axi_aclk)
      if (s01_axi_awvalid & s01_axi_awready)
-       $display("bp_zynq: AXI Write Addr %x -> %x (BP)\n",s01_axi_awaddr,waddr_translated_lo);
+       if (debug_lp) $display("top_zynq: AXI Write Addr %x -> %x (BP)\n",s01_axi_awaddr,waddr_translated_lo);
 
    always @(negedge s01_axi_aclk)
      if (s01_axi_arvalid & s01_axi_arready)
-       $display("bp_zynq: AXI Read Addr %x -> %x (BP)\n",s01_axi_araddr,raddr_translated_lo);
+       if (debug_lp) $display("top_zynq: AXI Read Addr %x -> %x (BP)\n",s01_axi_araddr,raddr_translated_lo);
 
    // synopsys translate_on
 

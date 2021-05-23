@@ -50,6 +50,11 @@ endgroup
 connect_bd_net [get_bd_pins top_0/s00_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
 connect_bd_net [get_bd_pins top_0/s01_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
 assign_bd_address
+
+# with other versions of vivado, it may have different names for the slave segment
+# in the gui you can open the address editor, right click on the interface (s00_axi or s01_axi)
+# and select "Address Segment Properties..." to see what name to use in these commands.
+
 set_property offset 0x40000000 [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg0}]
 set_property offset 0x80000000 [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg03}]
 set_property range 4K [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg0}]
@@ -62,7 +67,10 @@ delete_bd_objs [get_bd_nets reset_rtl_0_1] [get_bd_ports reset_rtl_0]
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins proc_sys_reset_0/ext_reset_in]
 save_bd_design
 
-#if {0} {
+# change this to a 0 to have it stop before synthesis and implementation
+# so you can inspect the design with the GUI
+
+if {1} {
 launch_runs impl_1 -to_step write_bitstream -jobs 4
 wait_on_run impl_1
-#}
+}

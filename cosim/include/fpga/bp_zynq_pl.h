@@ -62,7 +62,7 @@ class bp_zynq_pl {
   
   bp_zynq_pl(int argc, char *argv[])
     {
-      printf("// bp_zynq: be sure to run as root\n");
+      printf("// bp_zynq_pl: be sure to run as root\n");
 
       // open memory device
       int fd = open("/dev/mem",O_RDWR | O_SYNC);
@@ -77,7 +77,7 @@ class bp_zynq_pl {
       //assert(ptr0 != ((void *) -1));
       //if (ptr0 != addr0)
       //  gp0_base_offset = ( (unsigned int) ptr0 - GP0_ADDR_BASE);
-      printf("// bp_zynq: mmap returned %p (offset %x) errno=%x\n",ptr0,gp0_base_offset,errno);
+      printf("// bp_zynq_pl: mmap returned %p (offset %x) errno=%x\n",ptr0,gp0_base_offset,errno);
 
       
       // map in second PLAXI region of physical addresses to virtual addresses
@@ -87,7 +87,7 @@ class bp_zynq_pl {
       //if (ptr1 != addr1)
       //  gp1_base_offset = ( (unsigned int) ptr1 - GP1_ADDR_BASE);
 
-      printf("// bp_zynq: mmap returned %p (offset %x) errno=%x\n",ptr1,gp1_base_offset,errno);      
+      printf("// bp_zynq_pl: mmap returned %p (offset %x) errno=%x\n",ptr1,gp1_base_offset,errno);      
 
       close(fd);
     }
@@ -107,23 +107,23 @@ class bp_zynq_pl {
     void *virtual_ptr = cma_alloc(len_in_bytes,0); // 1 = cacheable, 0 = uncacheable
     assert(virtual_ptr!=NULL);
     *physical_ptr = cma_get_phy_addr(virtual_ptr);
-    printf("bp_zynq: allocate_dram() called with size %d bytes --> virtual ptr=%p, physical ptr=0x%8.8lx\n",len_in_bytes, virtual_ptr,*physical_ptr);
+    printf("bp_zynq_pl: allocate_dram() called with size %d bytes --> virtual ptr=%p, physical ptr=0x%8.8lx\n",len_in_bytes, virtual_ptr,*physical_ptr);
     return virtual_ptr;
   }
 
   void free_dram(void *virtual_ptr) {
-    printf("bp_zynq: free_dram() called on virtual ptr=%p\n",virtual_ptr);
+    printf("bp_zynq_pl: free_dram() called on virtual ptr=%p\n",virtual_ptr);
     cma_free(virtual_ptr);
   }
   
   bool done(void) {
-    printf("bp_zynq: done() called, exiting\n");
+    printf("bp_zynq_pl: done() called, exiting\n");
   }
 
   void axil_write(unsigned int address, int data, int wstrb)
   {
     if (BP_ZYNQ_PL_DEBUG)
-       printf("bp_zynq: AXI writing [%x]=%8.8x mask %x\n", address, data, wstrb);
+       printf("  bp_zynq_pl: AXI writing [%x]=%8.8x mask %x\n", address, data, wstrb);
 
     //assert(address >= ADDR_BASE && (address - ADDR_BASE < ADDR_SIZE_BYTES)); // "address is not in the correct range?"
 
@@ -147,87 +147,9 @@ class bp_zynq_pl {
 
     int data = ptr[0];
     
-    if (BP_ZYNQ_PL_DEBUG)    
-      printf("bp_zynq: AXI reading [%x]->%8.8x\n", address, data);
+    if (BP_ZYNQ_PL_DEBUG)
+      printf(" bp_zynq_pl: AXI reading [%x]->%8.8x\n", address, data);
 
     return data;
   }
-/*
-void nbf_load() {
-	string nbf_command;
-	string tmp;
-	string delimiter = "_";
-
-	long long int nbf[3];
-	int pos = 0;
-	unsigned long int address;
-	int data;
-	int data_read;
-	ifstream nbf_file("prog.nbf");
-
-	while (getline(nbf_file, nbf_command)) {
-		int i = 0;
-		while ((pos = nbf_command.find(delimiter)) != std::string::npos) {
-			tmp = nbf_command.substr(0, pos);
-			nbf[i] = std::stoull(tmp, nullptr, 16);
-			nbf_command.erase(0, pos + 1);
-			i++;
-		}
-		nbf[i] = std::stoull(nbf_command, nullptr, 16);
-		if (nbf[0] == 0x3) {
-			if (nbf[1] >= 0x80000000) {
-				address = nbf[1];
-				address = address + 0x20000000;
-				data = nbf[2];
-				nbf[2] = nbf[2] >> 32;
-				printf("Address: %lx, Data: %lx\n", address, data);
-				axil_write(address, data, 0xf);
-				data_read = axil_read(address);
-				assert(data_read == data);
-				address = address + 4;
-				data = nbf[2];
-				printf("Address: %lx, Data: %x\n", address, data);
-				axil_write(address, data, 0xf);
-				data_read = axil_read(address);
-				assert(data_read == data);
-			}
-			else {
-				address = nbf[1];
-				address = address + 0x80000000;
-				data = nbf[2];
-				printf("Address: %lx, Data: %x\n", address, data);
-				axil_write(address, data, 0xf);
-			}
-		}
-		else if (nbf[0] == 0xfe) {
-			continue;
-		}
-		else {
-			return;
-		}
-	}
-}
-
-	bool decode_bp_output(int data) {
-		int rd_wr = data >> 31;
-		int address = (data >> 8) & 0x7FFFFF;
-		int print_data = data & 0xFF;
-		if (rd_wr) {
-			if (address == 0x101000) {
-				printf("%c", print_data);
-				return false;
-			}
-			else if (address == 0x102000) {
-				if (print_data == 0)
-					printf("\nPASS\n");
-				else
-					printf("\nFAIL\n");
-				return true;
-			}
-		}
-		// TODO: Need to implement logic for bp io_read
-		else return false;
-	}
-
-*/
 };
