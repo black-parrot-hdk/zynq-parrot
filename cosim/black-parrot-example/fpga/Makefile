@@ -31,6 +31,9 @@ fpga_build:
 # package BP IP, and then synthesize, pnr and bitfile generate
 fpga_build_block:
 	$(XILINX_ENV) && vivado -source vivado-create-block.tcl -mode tcl
+	-@grep --color "CRITICAL WARNING" vivado.log
+	-@grep --color "ERROR" vivado.log
+	-@tail -n5 vivado.log
 
 # this packages the BP IP, but does not continue to synthesis, pnr and bitfile generation
 fpga_build_ip: clean_fpga_build flist.vcs
