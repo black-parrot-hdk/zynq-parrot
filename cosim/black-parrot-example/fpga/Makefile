@@ -13,7 +13,7 @@ NBF_FILE=../prog.nbf
 
 # you must set these for the accelerator to work
 
-CFLAGS=-DGP0_ADDR_BASE=0x40000000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_SIZE_BYTES=0x30000000 -DFPGA
+CFLAGS=-DGP0_ADDR_BASE=0x40000000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_SIZE_BYTES=0x30000000 -DFPGA=1
 
 all:
 	@echo See the makefile for the fun things you can do in this directory

@@ -132,6 +132,20 @@ module top_zynq
       ) zps
        (
         .csr_data_o(csr_data_lo)
+
+        // (MBT)
+        // note: this ability to probe into the core is not supported in ASIC toolflows but
+        // is supported in Verilator, VCS, and Vivado Synthesis.
+
+        // it is very helpful for adding instrumentation to a pre-existing design that you are
+        // prototyping in FPGA, where you don't necessarily want to put the support into the ASIC version
+        // or don't know yet if you want to.
+
+        // in additional to this approach of poking down into pre-existing registers, you can also
+        // instantiate counters, and then pull control signals out of the DUT in order to figure out when
+        // to increment the counters.
+        //
+
         ,.csr_data_i(blackparrot.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo[31:0])
 
         ,.pl_to_ps_fifo_data_i (pl_to_ps_fifo_data_li)

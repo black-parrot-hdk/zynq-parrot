@@ -54,10 +54,14 @@ int main(int argc, char **argv) {
     zpl->axil_write(0x8 + GP0_ADDR_BASE, phys_ptr, mask1);
     assert( (zpl->axil_read(0x8 + GP0_ADDR_BASE) == (phys_ptr)));
     printf("wrote and verified base register\n");
+
+    int outer = 1024/4;
 #else
     zpl->axil_write(0x8+GP0_ADDR_BASE, val1, mask1);
     assert( (zpl->axil_read(0x8 + GP0_ADDR_BASE) == (val1)));
     printf("wrote and verified base register\n");
+
+    int outer = 8/4;
 #endif
 
     counter_data = zpl->axil_read(0x18 + GP0_ADDR_BASE);
@@ -77,8 +81,6 @@ int main(int argc, char **argv) {
       }
     */
 
-    //int outer = 32768/4;
-    int outer = (FPGA) ? (1024/4) : (8/4);
 
     int num_times = allocated_dram/32768;
         printf ("attempting to write L2 %d times over %d MB\n",num_times*outer,(allocated_dram)>>20);
