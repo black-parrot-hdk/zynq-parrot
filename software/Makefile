@@ -2,6 +2,7 @@ SDK_DIR=../cosim/import/sdk
 NBF_DIR=../cosim/import/black-parrot/bp_common/software/py
 
 riscv-binaries=$(shell find ../. -iname "*.riscv")
+nbf-files=$(shell find . -iname "*.nbf")
 
 $(warning $(riscv-binaries))
 
@@ -26,6 +27,7 @@ clean_software:
 	-rm -rf $(SDK_DIR)/install/touchfiles/bootrom.*
 	-rm -rf $(SDK_DIR)/install/touchfiles/perch.*
 	-rm -rf $(SDK_DIR)/install/touchfiles/beebs.*
+	make -C ../cosim/import/fpga clean
 	make -C $(SDK_DIR) prog_clean
 	make -C $(SDK_DIR) tidy_progs
 	-rm -rf nbf
@@ -39,3 +41,17 @@ packup_nbf: $(riscv-binaries:.riscv=.nbf)
 	mkdir -p nbf
 	-cp -f $^ nbf
 	tar -cJf nbf.tar.xz nbf
+
+# expects that you transfer the nbf bundle over to the Zynq board and place in the same directory
+unpack_nbf:
+	tar -xJf nbf.tar.xz
+
+%.run: %.nbf
+	make SKIP_DRAM_TESTING=1 -C ../cosim/black-parrot-example/fpga control-program NBF_FILE=$(abspath $<)
+	make -C ../cosim/black-parrot-example/fpga run
+
+# run all of the nbfs
+# note: assumes the .b64 file has been unpacked in ../cosim/black-parrot-example/fpga
+#
+run_all_nbf: $(nbf-files:.nbf=.run)
+

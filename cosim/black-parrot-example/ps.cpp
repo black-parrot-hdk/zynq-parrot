@@ -92,11 +92,15 @@ int main(int argc, char **argv) {
       }
     */
 
+    int tmp = zpl->BP_ZYNQ_PL_DEBUG;
+    
+#ifndef SKIP_DRAM_TESTING
+    
     int num_times = allocated_dram/32768;
     printf("ps.cpp: attempting to write L2 %d times over %d MB (testing ARM GP1 and HP0 connections)\n",num_times*outer,(allocated_dram)>>20);
     zpl->axil_write(0x80000000,0x12345678,mask1);
 
-    int tmp = zpl->BP_ZYNQ_PL_DEBUG;
+
     zpl->BP_ZYNQ_PL_DEBUG=0;
     for (int s = 0 ; s < outer; s++)
       for (int t = 0 ; t < num_times; t++)
@@ -134,6 +138,7 @@ int main(int argc, char **argv) {
 
     printf("ps.cpp: READ access through BP (some L1 coherence mismatch expected): %d matches, %d mismatches, %f\n",matches,mismatches,((float) matches)/(float) (mismatches+matches));
 
+#endif    
     counter_data = zpl->axil_read(0x18 + GP0_ADDR_BASE);
     printf("ps.cpp: minstret (instructions retired): %u\n", counter_data);
 

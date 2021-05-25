@@ -9,7 +9,9 @@ SHELL := /bin/bash
 
 PS_FILE=../ps.cpp
 BASENAME=black_parrot
-NBF_FILE=../prog.nbf
+NBF_FILE?=../prog.nbf
+
+SKIP_DRAM=-DSKIP_DRAM_TESTING
 
 # you must set these for the accelerator to work
 
@@ -19,9 +21,12 @@ all:
 	@echo See the makefile for the fun things you can do in this directory
 
 # you do this on the zynq board itself
-run:	load_bitstream
-	g++ -I../../include/fpga/ $(CFLAGS) -O2 $(PS_FILE) -lcma -lpthread
-	sudo ./a.out $(NBF_FILE)
+
+control-program: $(PS_FILE) Makefile
+	g++ -I../../include/fpga/ $(CFLAGS) -O2 $(PS_FILE) $(SKIP_DRAM) -lcma -lpthread -o $@
+
+run:	control-program load_bitstream
+	sudo ./control-program $(NBF_FILE)
 
 fpga_build:
 	$(MAKE) fpga_build_ip
@@ -68,7 +73,7 @@ load_bitstream:
 
 
 clean: clean_fpga_build
-	-rm a.out
+	-rm control-program
 
 clean_fpga_build:
 	-rm *.log
