@@ -28,8 +28,8 @@ int main(int argc, char **argv) {
    // 10: ps to pl fifo 
     
    int data;
-   int val1 = 0x80000000;
-   int val2 = 0x20000000;
+   int val1 = 0x1;
+   int val2 = 0x0;
    int mask1 = 0xf;
    int mask2 = 0xf;
    bool done = false;
@@ -43,18 +43,22 @@ int main(int argc, char **argv) {
 
     // write to two registers
     printf("ps.cpp: attempting to read and write two registers in bsg_zynq_shell (verifying ARM GP0 connection)\n");
-    zpl->axil_write(0x0 + GP0_ADDR_BASE, val1, mask1); // these are ignored
-    zpl->axil_write(0x4 + GP0_ADDR_BASE, val2, mask2); // these are ignored
+    zpl->axil_write(0x0 + GP0_ADDR_BASE, val1, mask1); // BP reset
+    //zpl->axil_write(0x4 + GP0_ADDR_BASE, val2, mask2); // these are ignored
     assert( (zpl->axil_read(0x0 + GP0_ADDR_BASE) == (val1)));
-    assert( (zpl->axil_read(0x4 + GP0_ADDR_BASE) == (val2)));
+    //assert( (zpl->axil_read(0x4 + GP0_ADDR_BASE) == (val2)));
     printf("ps.cpp: successfully wrote and read two registers in bsg_zynq_shell (verified ARM GP0 connection)\n");
 #ifdef FPGA
-    printf("ps.cpp: calling allocate dram\n");
-    buf = (volatile int*) zpl->allocate_dram(allocated_dram, &phys_ptr);
-    printf("ps.cpp: received %p (phys = %lx)\n",buf, phys_ptr);
-    zpl->axil_write(0x8 + GP0_ADDR_BASE, phys_ptr, mask1);
-    assert( (zpl->axil_read(0x8 + GP0_ADDR_BASE) == (phys_ptr)));
-    printf("ps.cpp: wrote and verified base register\n");
+    data = zpl->axil_read(0x4 + GP0_ADDR_BASE);
+    if (data == 0) {
+      printf("ps.cpp: calling allocate dram\n");
+      buf = (volatile int*) zpl->allocate_dram(allocated_dram, &phys_ptr);
+      printf("ps.cpp: received %p (phys = %lx)\n",buf, phys_ptr);
+      zpl->axil_write(0x8 + GP0_ADDR_BASE, phys_ptr, mask1);
+      assert( (zpl->axil_read(0x8 + GP0_ADDR_BASE) == (phys_ptr)));
+      printf("ps.cpp: wrote and verified base register\n");
+      zpl->axil_write(0x4 + GP0_ADDR_BASE, 0x1, mask2);
+    }
 
     int outer = 1024/4;
 #else
@@ -64,6 +68,12 @@ int main(int argc, char **argv) {
 
     int outer = 8/4;
 #endif
+
+    // Assert reset
+    zpl->axil_write(0x0 + GP0_ADDR_BASE, 0x0, mask1);
+    // Deassert reset
+    zpl->axil_write(0x0 + GP0_ADDR_BASE, 0x1, mask1);
+    printf("Reset asserted and deasserted\n");
 
     printf("ps.cpp: attempting to read mtime reg in BP CFG space, should increase monotonically  (testing ARM GP1 connections)\n");
 
@@ -164,7 +174,10 @@ int main(int argc, char **argv) {
     printf("ps.cpp: minstret (instructions retired): %u\n", counter_data);
 
 #ifdef FPGA
-    zpl->free_dram((void *)buf);
+    if (FREE_DRAM) {
+      zpl->free_dram((void *)buf);
+      zpl->axil_write(0x4 + GP0_ADDR_BASE, 0x0, mask2);
+    }
 #endif
     
     zpl->done();
