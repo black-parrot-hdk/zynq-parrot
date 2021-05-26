@@ -327,13 +327,18 @@ module top_zynq
    assign m00_axi_awaddr = axi_awaddr - 32'h8000_0000 + csr_data_lo[2];
    assign m00_axi_araddr = axi_araddr - 32'h8000_0000 + csr_data_lo[2];
 
+   // BlackParrot reset signal is connected to a CSR (along with
+   // the AXI interface reset) so that a regression can be launched
+   // without having to reload the bitstream
+   wire bp_reset_li = (~csr_data_lo[0][0]) || (~s01_axi_aresetn);
+
    bp_unicore_axi_sim #
      (.bp_params_p(bp_params_p)
       ,.axi_lite_addr_width_p(bp_axi_lite_addr_width_lp)
       )
    blackparrot
      (.clk_i(s01_axi_aclk)
-      ,.reset_i(~s01_axi_aresetn)
+      ,.reset_i(bp_reset_li)
 
 
       // these are I/O requests from BlackParrot that
