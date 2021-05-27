@@ -10,26 +10,26 @@ nothing:
 
 build_tools:
 	cd ../cosim/import; git submodule update --init sdk
-	make -j 4 -C $(SDK_DIR) panic_room
+	$(MAKE) -j 4 -C $(SDK_DIR) panic_room
 
 build_libs: build_tools
 	cd $(SDK_DIR); git submodule update --init bedrock
-	make -C $(SDK_DIR) -j1 bedrock
+	$(MAKE) -C $(SDK_DIR) -j1 bedrock
 	cd $(SDK_DIR); git submodule update --init perch
-	make  -C $(SDK_DIR) -j1 perch
+	$(MAKE)  -C $(SDK_DIR) -j1 perch
 	cd $(SDK_DIR); git submodule update --init bootrom
-	make  -C $(SDK_DIR) -j1 bootrom
+	$(MAKE)  -C $(SDK_DIR) -j1 bootrom
 
 build_beebs: build_libs
 	cd $(SDK_DIR); git submodule update --init beebs
-	make -C $(SDK_DIR) beebs
+	$(MAKE) -C $(SDK_DIR) beebs
 
 # needs access to spec2000-private and spec2006-private
 build_spec: build_libs
 	cd $(SDK_DIR); git submodule update --init spec2000
 	cd $(SDK_DIR); git submodule update --init spec2006
-	make -C $(SDK_DIR) -j1 spec2000
-	make -C $(SDK_DIR) -j1 spec2006
+	$(MAKE) -C $(SDK_DIR) -j1 spec2000
+	$(MAKE) -C $(SDK_DIR) -j1 spec2006
 
 clean_software:
 	-rm -rf $(SDK_DIR)/install/touchfiles/bedrock.*
@@ -38,9 +38,9 @@ clean_software:
 	-rm -rf $(SDK_DIR)/install/touchfiles/beebs.*
 	-rm -rf $(SDK_DIR)/install/touchfiles/spec2000.*
 	-rm -rf $(SDK_DIR)/install/touchfiles/spec2006.*
-	make -C ../cosim/import/fpga clean
-	make -C $(SDK_DIR) prog_clean
-	make -C $(SDK_DIR) tidy_progs
+	$(MAKE) -C ../cosim/import/fpga clean
+	$(MAKE) -C $(SDK_DIR) prog_clean
+	$(MAKE) -C $(SDK_DIR) tidy_progs
 	-rm -rf nbf
 
 %.nbf: %.riscv
@@ -58,18 +58,18 @@ unpack_nbf:
 	tar -xJf nbf.tar.xz
 
 %.run-fpga: %.nbf
-	make SKIP_DRAM_TESTING=1 FREE_DRAM=0 -C ../cosim/black-parrot-example/fpga run NBF_FILE=$(abspath $<) | tee $*.log
+	$(MAKE) SKIP_DRAM_TESTING=1 FREE_DRAM=0 -C ../cosim/black-parrot-example/fpga run NBF_FILE=$(abspath $<) | tee $*.log
 
 %.run-verilator: %.nbf
-	make SKIP_DRAM_TESTING=1 FREE_DRAM=0 -C ../cosim/black-parrot-example/verilator run NBF_FILE=$(abspath $<)
+	$(MAKE) SKIP_DRAM_TESTING=1 FREE_DRAM=0 -C ../cosim/black-parrot-example/verilator run NBF_FILE=$(abspath $<)
 
 # do this the first time you try to run after you have rebooted the Zynq, before the bitstream has been loaded
 load_bitstream:
-	make -C ../cosim/black-parrot-example/fpga load_bitstream
+	$(MAKE) -C ../cosim/black-parrot-example/fpga load_bitstream
 
 # do this if you have already used the bitstream; it transfers over the pointer to the DRAM address space
 reload_bitstream_keep_dram:
-	make -C ../cosim/black-parrot-example/fpga reload_bitstream_keep_dram
+	$(MAKE) -C ../cosim/black-parrot-example/fpga reload_bitstream_keep_dram
 
 
 # run all of the nbfs
