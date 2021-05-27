@@ -2,9 +2,9 @@ SDK_DIR=../cosim/import/sdk
 NBF_DIR=../cosim/import/black-parrot/bp_common/software/py
 
 riscv-binaries=$(shell find ../. -iname "*.riscv")
-nbf-files=$(shell find . -iname "*.nbf")
 
-$(warning $(riscv-binaries))
+$(warning $(shell find . -iname "*.nbf"))
+nbf-files=$(filter-out ./nbf/hello_world.nbf,$(shell find . -iname "*.nbf"))
 
 nothing:
 
@@ -59,6 +59,9 @@ unpack_nbf:
 
 %.run: %.nbf
 	make SKIP_DRAM_TESTING=1 FREE_DRAM=0 -C ../cosim/black-parrot-example/fpga run NBF_FILE=$(abspath $<)
+
+load_bitstream:
+	make -C ../cosim/black-parrot-example/fpga load_bitstream
 
 # run all of the nbfs
 # note: assumes the .b64 file has been unpacked in ../cosim/black-parrot-example/fpga
