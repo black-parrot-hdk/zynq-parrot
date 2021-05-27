@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
    assert(argc > 1);
    // the read memory map is essentially
    //
-   // 0,4,8: registers
+   // 0,4,8: reset, dram allocated, dram base address
    // C: pl to ps fifo
    // 10: pl to ps fifo count
    // 14: ps to pl fifo count
@@ -41,24 +41,39 @@ int main(int argc, char **argv) {
     volatile int *buf;
 #endif
 
-    // write to two registers
-    printf("ps.cpp: attempting to read and write two registers in bsg_zynq_shell (verifying ARM GP0 connection)\n");
-    zpl->axil_write(0x0 + GP0_ADDR_BASE, val1, mask1); // BP reset
-    //zpl->axil_write(0x4 + GP0_ADDR_BASE, val2, mask2); // these are ignored
-    assert( (zpl->axil_read(0x0 + GP0_ADDR_BASE) == (val1)));
-    //assert( (zpl->axil_read(0x4 + GP0_ADDR_BASE) == (val2)));
-    printf("ps.cpp: successfully wrote and read two registers in bsg_zynq_shell (verified ARM GP0 connection)\n");
+    int val;
+    printf("ps.cpp: reading three base registers\n");
+    printf("ps.cpp: reset(lo)=%d dram_init=%d, dram_base=%x\n"
+	   ,zpl->axil_read(0x0 + GP0_ADDR_BASE)
+	   ,zpl->axil_read(0x4 + GP0_ADDR_BASE)
+	   ,val = zpl->axil_read(0x8 + GP0_ADDR_BASE)
+	   );
+
+    printf("ps.cpp: putting BP into reset\n");
+    zpl->axil_write(0x0 + GP0_ADDR_BASE, 0x0, mask1); // BP reset
+    
+    printf("ps.cpp: attempting to write and read register 0x8\n");
+
+    zpl->axil_write(0x8 + GP0_ADDR_BASE, 0xDEADBEEF, mask1); // BP reset
+    assert( (zpl->axil_read(0x8 + GP0_ADDR_BASE) == (0xDEADBEEF)));
+    zpl->axil_write(0x8 + GP0_ADDR_BASE, val, mask1); // BP reset
+    assert( (zpl->axil_read(0x8 + GP0_ADDR_BASE) == (val)));
+
+    printf("ps.cpp: successfully wrote and read registers in bsg_zynq_shell (verified ARM GP0 connection)\n");
 #ifdef FPGA
     data = zpl->axil_read(0x4 + GP0_ADDR_BASE);
     if (data == 0) {
-      printf("ps.cpp: calling allocate dram\n");
+      printf("ps.cpp: CSRs do not contain a DRAM base pointer; calling allocate dram\n");
       buf = (volatile int*) zpl->allocate_dram(allocated_dram, &phys_ptr);
       printf("ps.cpp: received %p (phys = %lx)\n",buf, phys_ptr);
       zpl->axil_write(0x8 + GP0_ADDR_BASE, phys_ptr, mask1);
       assert( (zpl->axil_read(0x8 + GP0_ADDR_BASE) == (phys_ptr)));
       printf("ps.cpp: wrote and verified base register\n");
       zpl->axil_write(0x4 + GP0_ADDR_BASE, 0x1, mask2);
+      assert(zpl->axil_read(0x4 + GP0_ADDR_BASE) == 1);
     }
+    else
+      printf("ps.cpp: reusing dram base pointer %x\n",zpl->axil_read(0x8 + GP0_ADDR_BASE));
 
     int outer = 1024/4;
 #else
@@ -69,10 +84,24 @@ int main(int argc, char **argv) {
     int outer = 8/4;
 #endif
 
-    // Assert reset
+    printf("ps.cpp: asserting reset to BP\n");
+
+    // Assert reset, we do it repeatedly just to make sure that enough cycles pass
     zpl->axil_write(0x0 + GP0_ADDR_BASE, 0x0, mask1);
+    assert( (zpl->axil_read(0x0 + GP0_ADDR_BASE) == (0)));
+    zpl->axil_write(0x0 + GP0_ADDR_BASE, 0x0, mask1);
+    assert( (zpl->axil_read(0x0 + GP0_ADDR_BASE) == (0)));
+    zpl->axil_write(0x0 + GP0_ADDR_BASE, 0x0, mask1);
+    assert( (zpl->axil_read(0x0 + GP0_ADDR_BASE) == (0)));
+    zpl->axil_write(0x0 + GP0_ADDR_BASE, 0x0, mask1);
+    assert( (zpl->axil_read(0x0 + GP0_ADDR_BASE) == (0)));
+    
     // Deassert reset
+    printf("ps.cpp: deasserting reset to BP\n");
     zpl->axil_write(0x0 + GP0_ADDR_BASE, 0x1, mask1);
+    zpl->axil_write(0x0 + GP0_ADDR_BASE, 0x1, mask1);
+    zpl->axil_write(0x0 + GP0_ADDR_BASE, 0x1, mask1);
+    
     printf("Reset asserted and deasserted\n");
 
     printf("ps.cpp: attempting to read mtime reg in BP CFG space, should increase monotonically  (testing ARM GP1 connections)\n");
@@ -161,12 +190,14 @@ int main(int argc, char **argv) {
 
     zpl->BP_ZYNQ_PL_DEBUG=0;
     printf("ps.cpp: polling i/o\n");
-    while(!done) {
+    while(1) {
+      // keep reading as long as there is data
       data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
       if (data != 0) {
         data = zpl->axil_read(0xC + GP0_ADDR_BASE);
-        done = decode_bp_output(zpl, data);
-      }
+        done |= decode_bp_output(zpl, data);
+      } else if (done)
+	break;
     }
     zpl->BP_ZYNQ_PL_DEBUG=0;
     printf("ps.cpp: end polling i/o\n");
@@ -202,8 +233,10 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
         printf("ps.cpp: error opening nbf file.\n");
         exit(-1);
       }
-    
+
+    int line_count=0;
     while (getline(nbf_file, nbf_command)) {
+      line_count++;
       int i = 0;
       while ((pos = nbf_command.find(delimiter)) != std::string::npos) {
         tmp = nbf_command.substr(0, pos);
@@ -240,9 +273,11 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
         continue;
       }
       else {
+	printf("ps.cpp: unrecognized nbf command, line %d : %x\n", line_count,  nbf[0]);
         return;
       }
     }
+    printf("ps.cpp: finished loading %d lines of nbf.\n",line_count);
   }
 
 bool decode_bp_output(bp_zynq_pl *zpl, int data) {
@@ -262,7 +297,7 @@ bool decode_bp_output(bp_zynq_pl *zpl, int data) {
         return true;
       }
 
-      printf("Errant write to %x", address);
+      printf("ps.cpp: Errant write to %x", address);
       return false;
     }
     // TODO: Need to implement logic for bp io_read

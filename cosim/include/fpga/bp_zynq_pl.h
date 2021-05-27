@@ -148,7 +148,7 @@ class bp_zynq_pl {
     int data = ptr[0];
     
     if (BP_ZYNQ_PL_DEBUG)
-      printf(" bp_zynq_pl: AXI reading [%x]->%8.8x\n", address, data);
+      printf("  bp_zynq_pl: AXI reading [%x]->%8.8x\n", address, data);
 
     return data;
   }
