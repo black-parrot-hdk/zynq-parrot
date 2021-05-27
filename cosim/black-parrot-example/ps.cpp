@@ -230,8 +230,10 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
         printf("ps.cpp: error opening nbf file.\n");
         exit(-1);
       }
-    
+
+    int line_count=0;
     while (getline(nbf_file, nbf_command)) {
+      line_count++;
       int i = 0;
       while ((pos = nbf_command.find(delimiter)) != std::string::npos) {
         tmp = nbf_command.substr(0, pos);
@@ -268,9 +270,11 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
         continue;
       }
       else {
+	printf("ps.cpp: unrecognized nbf command, line %d : %x\n", line_count,  nbf[0]);
         return;
       }
     }
+    printf("ps.cpp: finished loading %d lines of nbf.\n",line_count);
   }
 
 bool decode_bp_output(bp_zynq_pl *zpl, int data) {
@@ -290,7 +294,7 @@ bool decode_bp_output(bp_zynq_pl *zpl, int data) {
         return true;
       }
 
-      printf("Errant write to %x", address);
+      printf("ps.cpp: Errant write to %x", address);
       return false;
     }
     // TODO: Need to implement logic for bp io_read
