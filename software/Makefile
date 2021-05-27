@@ -57,8 +57,11 @@ packup_nbf: $(riscv-binaries:.riscv=.nbf)
 unpack_nbf:
 	tar -xJf nbf.tar.xz
 
-%.run: %.nbf
+%.run-fpga: %.nbf
 	make SKIP_DRAM_TESTING=1 FREE_DRAM=0 -C ../cosim/black-parrot-example/fpga run NBF_FILE=$(abspath $<)
+
+%.run-verilator: %.nbf
+	make SKIP_DRAM_TESTING=1 FREE_DRAM=0 -C ../cosim/black-parrot-example/verilator run NBF_FILE=$(abspath $<)
 
 # run all of the nbfs
 # note: assumes the .b64 file has been unpacked in ../cosim/black-parrot-example/fpga
