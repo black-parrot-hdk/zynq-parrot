@@ -12,21 +12,32 @@ build_tools:
 	cd ../cosim/import; git submodule update --init sdk
 	make -j 4 -C $(SDK_DIR) panic_room
 
-build_software:
+build_libs: build_tools
 	cd $(SDK_DIR); git submodule update --init bedrock
 	make -C $(SDK_DIR) -j1 bedrock
 	cd $(SDK_DIR); git submodule update --init perch
 	make  -C $(SDK_DIR) -j1 perch
 	cd $(SDK_DIR); git submodule update --init bootrom
 	make  -C $(SDK_DIR) -j1 bootrom
+
+build_beebs: build_libs
 	cd $(SDK_DIR); git submodule update --init beebs
 	make -C $(SDK_DIR) beebs
+
+# needs access to spec2000-private and spec2006-private
+build_spec: build_libs
+	cd $(SDK_DIR); git submodule update --init spec2000
+	cd $(SDK_DIR); git submodule update --init spec2006
+	make -C $(SDK_DIR) -j1 spec2000
+	make -C $(SDK_DIR) -j1 spec2006
 
 clean_software:
 	-rm -rf $(SDK_DIR)/install/touchfiles/bedrock.*
 	-rm -rf $(SDK_DIR)/install/touchfiles/bootrom.*
 	-rm -rf $(SDK_DIR)/install/touchfiles/perch.*
 	-rm -rf $(SDK_DIR)/install/touchfiles/beebs.*
+	-rm -rf $(SDK_DIR)/install/touchfiles/spec2000.*
+	-rm -rf $(SDK_DIR)/install/touchfiles/spec2006.*
 	make -C ../cosim/import/fpga clean
 	make -C $(SDK_DIR) prog_clean
 	make -C $(SDK_DIR) tidy_progs
