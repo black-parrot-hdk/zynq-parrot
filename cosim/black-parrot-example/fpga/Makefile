@@ -29,12 +29,13 @@ control-program: $(PS_FILE) Makefile
 run:	control-program
 	sudo ./control-program $(NBF_FILE)
 
+# do this on a server that has vivado 2019.X
+
 fpga_build:
 	$(MAKE) fpga_build_ip
 	$(MAKE) fpga_build_block
 
-# do this on a server that has vivado 2019.X
-# package BP IP, and then synthesize, pnr and bitfile generate
+# combine BP IP with Zynq ARM core and then synthesize, pnr and bitfile generate
 fpga_build_block:
 	$(XILINX_ENV) && vivado -source vivado-create-block.tcl -mode tcl
 	-@grep --color "CRITICAL WARNING" vivado.log
@@ -77,7 +78,7 @@ clean: clean_fpga_build
 	-rm control-program
 
 clean_fpga_build:
-	-rm *.log
+	-rm *.log *.b64
 	#-rm *.jou
 	-rm -rf $(BASENAME)_ip_proj*
 	-rm -rf fpga_build
