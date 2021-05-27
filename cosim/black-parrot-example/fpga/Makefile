@@ -71,8 +71,13 @@ unpack_bitstream:
 	base64 -d $(BASENAME)_bd_1.tar.xz.b64 | tar xvJ
 
 load_bitstream:
-	 echo 'from pynq import Overlay; overlay=Overlay("$(BASENAME)_bd_1.bit");' | sudo python3
+	echo 'from pynq import Overlay; overlay=Overlay("$(BASENAME)_bd_1.bit");' | sudo python3
 
+# this will load the bitstream, but transfer over the physical memory pointer that was written into the accelerator before
+# this way we do not need to reallocate dram
+
+reload_bitstream_keep_dram:
+	echo 'from pynq import Overlay, MMIO; mmio=MMIO(0x40000000,0x1000); val4 = mmio.read(0x4); val8 = mmio.read(0x8);  overlay=Overlay("$(BASENAME)_bd_1.bit"); print("transferring over: ", hex(val4), hex(val8)); mmio.write(0x4,val4); mmio.write(0x8,val8);' | sudo python3
 
 clean: clean_fpga_build
 	-rm control-program

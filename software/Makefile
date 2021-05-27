@@ -58,7 +58,7 @@ unpack_nbf:
 	tar -xJf nbf.tar.xz
 
 %.run: %.nbf
-	make SKIP_DRAM_TESTING=1 FREE_DRAM=0 -C ../cosim/black-parrot-example/fpga run NBF_FILE=$(abspath $<)
+	make SKIP_DRAM_TESTING=1 FREE_DRAM=0 -C ../cosim/black-parrot-example/fpga run NBF_FILE=$(abspath $<) | tee $*.log
 
 # do this the first time you try to run after you have rebooted the Zynq, before the bitstream has been loaded
 load_bitstream:
