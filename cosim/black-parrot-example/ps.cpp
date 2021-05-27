@@ -63,16 +63,17 @@ int main(int argc, char **argv) {
 #ifdef FPGA
     data = zpl->axil_read(0x4 + GP0_ADDR_BASE);
     if (data == 0) {
-      printf("ps.cpp: calling allocate dram\n");
+      printf("ps.cpp: CSRs do not contain a DRAM base pointer; calling allocate dram\n");
       buf = (volatile int*) zpl->allocate_dram(allocated_dram, &phys_ptr);
       printf("ps.cpp: received %p (phys = %lx)\n",buf, phys_ptr);
       zpl->axil_write(0x8 + GP0_ADDR_BASE, phys_ptr, mask1);
       assert( (zpl->axil_read(0x8 + GP0_ADDR_BASE) == (phys_ptr)));
       printf("ps.cpp: wrote and verified base register\n");
       zpl->axil_write(0x4 + GP0_ADDR_BASE, 0x1, mask2);
+      assert(zpl->axil_read(0x4 + GP0_ADDR_BASE) == 1);
     }
     else
-      printf("ps.cpp: dram base already set to %x\n",zpl->axil_read(0x8 + GP0_ADDR_BASE));
+      printf("ps.cpp: reusing dram base pointer %x\n",zpl->axil_read(0x8 + GP0_ADDR_BASE));
 
     int outer = 1024/4;
 #else
@@ -189,12 +190,14 @@ int main(int argc, char **argv) {
 
     zpl->BP_ZYNQ_PL_DEBUG=0;
     printf("ps.cpp: polling i/o\n");
-    while(!done) {
+    while(1) {
+      // keep reading as long as there is data
       data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
       if (data != 0) {
         data = zpl->axil_read(0xC + GP0_ADDR_BASE);
-        done = decode_bp_output(zpl, data);
-      }
+        done |= decode_bp_output(zpl, data);
+      } else if (done)
+	break;
     }
     zpl->BP_ZYNQ_PL_DEBUG=0;
     printf("ps.cpp: end polling i/o\n");
