@@ -57,8 +57,11 @@ packup_nbf: $(riscv-binaries:.riscv=.nbf)
 unpack_nbf:
 	tar -xJf nbf.tar.xz
 
-%.run: %.nbf
+%.run-fpga: %.nbf
 	make SKIP_DRAM_TESTING=1 FREE_DRAM=0 -C ../cosim/black-parrot-example/fpga run NBF_FILE=$(abspath $<) | tee $*.log
+
+%.run-verilator: %.nbf
+	make SKIP_DRAM_TESTING=1 FREE_DRAM=0 -C ../cosim/black-parrot-example/verilator run NBF_FILE=$(abspath $<)
 
 # do this the first time you try to run after you have rebooted the Zynq, before the bitstream has been loaded
 load_bitstream:
@@ -68,8 +71,11 @@ load_bitstream:
 reload_bitstream_keep_dram:
 	make -C ../cosim/black-parrot-example/fpga reload_bitstream_keep_dram
 
+
 # run all of the nbfs
 # note: assumes the .b64 file has been unpacked in ../cosim/black-parrot-example/fpga
 #
-run_all_nbf: $(nbf-files:.nbf=.run)
+run_all_fpga_nbf: $(nbf-files:.nbf=.run-fpga)
+
+run_all_verilator_nbf: $(nbf-files:.nbf=.run-verilator)
 

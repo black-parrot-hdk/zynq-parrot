@@ -126,6 +126,14 @@ module top_zynq
    bsg_zynq_pl_shell #
      (
       .num_regs_ps_to_pl_p (3)
+      // standard memory map for all blackparrot instances should be
+      //
+      // 0: reset for bp (low true); note: it is only legal to assert reset if you are
+      //    finished with all AXI transactions (fixme: potential improvement to detect this)
+      // 4: = 1 if the DRAM has been allocated for the device in the ARM PS Linux subsystem
+      // 8: the base register for the allocated dram
+      //
+
       ,.num_fifo_ps_to_pl_p(1)
       ,.num_fifo_pl_to_ps_p(1)
       ,.num_regs_pl_to_ps_p(1)
