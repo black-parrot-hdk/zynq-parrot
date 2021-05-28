@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include "bp_zynq_pl.h"
 
+#define FREE_DRAM 0
+
 void nbf_load(bp_zynq_pl *zpl, char *);
 bool decode_bp_output(bp_zynq_pl *zpl, int data);
 
@@ -206,6 +208,10 @@ int main(int argc, char **argv) {
     printf("ps.cpp: minstret (instructions retired): %u\n", counter_data);
 
 #ifdef FPGA
+    // in general we do not want to free the dram; the Xilinx allocator has a tendency to
+    // fail after many allocate/fail cycle. instead we keep a pointer to the dram in a CSR
+    // in the accelerator, and if we reload the bitstream, we copy the pointer back in.s
+    
     if (FREE_DRAM) {
       zpl->free_dram((void *)buf);
       zpl->axil_write(0x4 + GP0_ADDR_BASE, 0x0, mask2);
