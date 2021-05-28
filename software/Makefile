@@ -10,16 +10,18 @@ nbf-files=$(filter-out ./nbf/hello_world.nbf,$(shell find . -iname "*.nbf"))
 
 nothing:
 
+#build once
 build_tools:
 	cd ../cosim/import; git submodule update --init sdk
 	$(MAKE) -j $(NCORES) -C $(SDK_DIR) panic_room
 
+#build these after you build the tools
 build_beebs: build_libs
 	cd $(SDK_DIR); git submodule update --init beebs
 	$(MAKE) -C $(SDK_DIR) beebs
 
-# run this after you build the beebs
-packup_nbf: $(riscv-binaries:.riscv=.nbf)
+# run this after you build the beebs to create nbf files
+generate_and_packup_nbf: $(riscv-binaries:.riscv=.nbf)
 	mkdir -p nbf
 	-cp -f $^ nbf
 	tar -cJf nbf.tar.xz nbf

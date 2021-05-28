@@ -5,6 +5,8 @@ TOPLEVEL ?= $(shell git rev-parse --show-toplevel)
 export BLACKPARROT_DIR := $(abspath ../../import/black-parrot)
 export BP_SDK_DIR      := $(abspath ../../import/sdk)
 export BSG_ZYNQ_PL_SHELL_DIR:= $(abspath ../../common/v)
+
+# these defines are used by the flist.vcs file
 export BP_FE_DIR        = $(BLACKPARROT_DIR)/bp_fe
 export BP_COMMON_DIR    = $(BLACKPARROT_DIR)/bp_common
 export BP_BE_DIR        = $(BLACKPARROT_DIR)/bp_be
@@ -13,6 +15,15 @@ export BP_TOP_DIR       = $(BLACKPARROT_DIR)/bp_top
 export BP_EXTERNAL_DIR  = $(BLACKPARROT_DIR)/external
 export BASEJUMP_STL_DIR = $(BP_EXTERNAL_DIR)/basejump_stl
 export HARDFLOAT_DIR    = $(BP_EXTERNAL_DIR)/HardFloat
+
+
+export VERILATOR_ROOT?=/gro/cad/verilator/v4.202/verilator/
+export VERILATOR?=$(VERILATOR_ROOT)/bin/verilator
+
+ifeq ($(wildcard $(VERILATOR)),)
+$(error "VERILATOR variable must be set!")
+endif
+
 export BP_TOOLS_DIR     = $(BLACKPARROT_DIR)/tools
 
 export PATH := $(BP_TOOLS_DIR)/install/bin:$(PATH)
@@ -60,7 +71,7 @@ flist.vcs: ../../import/black-parrot/bp_top/syn/flist.vcs Makefile
 	echo "top.v" >> flist.vcs
 
 obj_dir/V$(TOP):  $(HOST-PROGRAM) flist.vcs
-	verilator $(VV_OPTS) -sv -CFLAGS "$(THE_FLAGS)" $(TRACE)  -exe $< 2>&1 | tee build.log
+	$(VERILATOR) $(VV_OPTS) -sv -CFLAGS "$(THE_FLAGS)" $(TRACE)  -exe $< 2>&1 | tee build.log
 	$(MAKE) -j -C obj_dir/ -f V$(TOP).mk V$(TOP)
 
 # we do not log here, because we want this to be invokable by other directories, running in parallel
