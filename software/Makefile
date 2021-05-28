@@ -12,17 +12,19 @@ build_tools:
 	cd ../cosim/import; git submodule update --init sdk
 	$(MAKE) -j 4 -C $(SDK_DIR) panic_room
 
-build_libs: build_tools
-	cd $(SDK_DIR); git submodule update --init bedrock
-	$(MAKE) -C $(SDK_DIR) -j1 bedrock
-	cd $(SDK_DIR); git submodule update --init perch
-	$(MAKE)  -C $(SDK_DIR) -j1 perch
-	cd $(SDK_DIR); git submodule update --init bootrom
-	$(MAKE)  -C $(SDK_DIR) -j1 bootrom
-
 build_beebs: build_libs
 	cd $(SDK_DIR); git submodule update --init beebs
 	$(MAKE) -C $(SDK_DIR) beebs
+
+# run this after you build the beebs
+packup_nbf: $(riscv-binaries:.riscv=.nbf)
+	mkdir -p nbf
+	-cp -f $^ nbf
+	tar -cJf nbf.tar.xz nbf
+
+# expects that you transfer the nbf bundle over to the Zynq board and place in the same directory
+unpack_nbf:
+	tar -xJf nbf.tar.xz
 
 # needs access to spec2000-private and spec2006-private
 build_spec: build_libs
@@ -43,26 +45,6 @@ clean_software:
 	$(MAKE) -C $(SDK_DIR) tidy_progs
 	-rm -rf nbf
 
-%.nbf: %.riscv
-	$(SDK_DIR)/install/riscv64-unknown-elf-dramfs/bin/objcopy -O verilog $< $*.mem
-	python $(NBF_DIR)/nbf.py --config --mem $*.mem > $@
-	-rm $*.mem
-
-packup_nbf: $(riscv-binaries:.riscv=.nbf)
-	mkdir -p nbf
-	-cp -f $^ nbf
-	tar -cJf nbf.tar.xz nbf
-
-# expects that you transfer the nbf bundle over to the Zynq board and place in the same directory
-unpack_nbf:
-	tar -xJf nbf.tar.xz
-
-%.run-fpga: %.nbf
-	$(MAKE) SKIP_DRAM_TESTING=1 FREE_DRAM=0 -C ../cosim/black-parrot-example/fpga run NBF_FILE=$(abspath $<) | tee $*.log
-
-%.run-verilator: %.nbf
-	$(MAKE) SKIP_DRAM_TESTING=1 FREE_DRAM=0 -C ../cosim/black-parrot-example/verilator run NBF_FILE=$(abspath $<)
-
 # do this the first time you try to run after you have rebooted the Zynq, before the bitstream has been loaded
 load_bitstream:
 	$(MAKE) -C ../cosim/black-parrot-example/fpga load_bitstream
@@ -75,7 +57,35 @@ reload_bitstream_keep_dram:
 # run all of the nbfs
 # note: assumes the .b64 file has been unpacked in ../cosim/black-parrot-example/fpga
 #
-run_all_fpga_nbf: $(nbf-files:.nbf=.run-fpga)
 
-run_all_verilator_nbf: $(nbf-files:.nbf=.run-verilator)
+run_all_fpga_nbf: $(nbf-files:.nbf=.fpga.log)
 
+# run all of the nbfs, usually on your x86 build machine
+#
+# use -j <n cpus> to parallelize
+#
+run_all_verilator_nbf: $(nbf-files:.nbf=.verilator.log)
+
+summarize:
+	grep --files-without-match PASS nbf/*.log
+	grep FAIL nbf/*.log
+
+
+build_libs: build_tools
+	cd $(SDK_DIR); git submodule update --init bedrock
+	$(MAKE) -C $(SDK_DIR) -j1 bedrock
+	cd $(SDK_DIR); git submodule update --init perch
+	$(MAKE)  -C $(SDK_DIR) -j1 perch
+	cd $(SDK_DIR); git submodule update --init bootrom
+	$(MAKE)  -C $(SDK_DIR) -j1 bootrom
+
+%.nbf: %.riscv
+	$(SDK_DIR)/install/riscv64-unknown-elf-dramfs/bin/objcopy -O verilog $< $*.mem
+	python $(NBF_DIR)/nbf.py --config --mem $*.mem > $@
+	-rm $*.mem
+
+%.fpga.log: %.nbf
+	$(MAKE) FREE_DRAM=0 -C ../cosim/black-parrot-example/fpga run NBF_FILE=$(abspath $<) | tee $*.fpga.log
+
+%.verilator.log: %.nbf
+	$(MAKE) FREE_DRAM=0 -C ../cosim/black-parrot-example/verilator run NBF_FILE=$(abspath $<) | tee $*.verilator.log

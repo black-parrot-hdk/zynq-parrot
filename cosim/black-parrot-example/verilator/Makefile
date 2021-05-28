@@ -40,13 +40,16 @@ VV_OPTS += -I$(BP_TOOLS_DIR)/install/share/verilator/include/vltstd/
 INCLUDES=-I../../include/verilator -I../../../include/verilator
 VPATH=../ . 
 
+SKIP_DRAM=-DSKIP_DRAM_TESTING
+
 TRACE=--trace-fst --trace-structs
+
 
 # You need to configure these parameters for your particular accelerator!
 
-THE_FLAGS = -DGP0_ADDR_BASE=0x40000000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_SIZE_BYTES=0x30000000 $(INCLUDES) -DBSG_ENABLE_S01
+THE_FLAGS = -DGP0_ADDR_BASE=0x40000000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_SIZE_BYTES=0x30000000 $(INCLUDES) -DBSG_ENABLE_S01  $(SKIP_DRAM)
 
-top: all
+top: run
 
 flist.vcs: ../../import/black-parrot/bp_top/syn/flist.vcs Makefile
 	cp $< $@
@@ -56,14 +59,14 @@ flist.vcs: ../../import/black-parrot/bp_top/syn/flist.vcs Makefile
 	echo "../top_zynq.sv" >> flist.vcs
 	echo "top.v" >> flist.vcs
 
-verilate: $(HOST-PROGRAM) flist.vcs
+obj_dir/V$(TOP):  $(HOST-PROGRAM) flist.vcs
 	verilator $(VV_OPTS) -sv -CFLAGS "$(THE_FLAGS)" $(TRACE)  -exe $< 2>&1 | tee build.log
-
-recursive: verilate
 	$(MAKE) -j -C obj_dir/ -f V$(TOP).mk V$(TOP)
 
-all: recursive
-	obj_dir/V$(TOP) $(NBF_FILE) +bsg_trace #| tee run.log
+# we do not log here, because we want this to be invokable by other directories, running in parallel
+
+run: obj_dir/V$(TOP)
+	$< $(NBF_FILE) +bsg_trace
 
 clean:
 	-rm -rf obj_dir/ *~ trace.fst build.log flist.vcs
