@@ -1,6 +1,8 @@
 SDK_DIR=../cosim/import/sdk
 NBF_DIR=../cosim/import/black-parrot/bp_common/software/py
 
+NCORES=4
+
 riscv-binaries=$(shell find ../. -iname "*.riscv")
 
 $(warning $(shell find . -iname "*.nbf"))
@@ -10,7 +12,7 @@ nothing:
 
 build_tools:
 	cd ../cosim/import; git submodule update --init sdk
-	$(MAKE) -j 4 -C $(SDK_DIR) panic_room
+	$(MAKE) -j $(NCORES) -C $(SDK_DIR) panic_room
 
 build_beebs: build_libs
 	cd $(SDK_DIR); git submodule update --init beebs
