@@ -6,10 +6,11 @@ Examples:
 - **blackparrot-example**: working example of BlackParrot. Runs in Verilator and FPGA.
 - **dram-example**: tests the software running on ARM that allocates DRAM space out of the ARM Linux available memory for the PL
 
-*For this repo to work, make sure to submodule init/update:*
+*For this repo to work, make sure to git submodule --init:*
 
 - imports/basejump\_stl
 - imports/black-parrot
+- imports/sdk
 - imports/black-parrot/external/basejump\_stl
 - imports/black-parrot/external/HardFloat
 
