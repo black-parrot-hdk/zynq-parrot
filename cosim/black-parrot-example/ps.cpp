@@ -177,7 +177,8 @@ int main(int argc, char **argv) {
 
     printf("ps.cpp: READ access through BP (some L1 coherence mismatch expected): %d matches, %d mismatches, %f\n",matches,mismatches,((float) matches)/(float) (mismatches+matches));
 
-#endif    
+#endif     // SKIP_DRAM_TESTING
+
     counter_data = zpl->axil_read(0x18 + GP0_ADDR_BASE);
     printf("ps.cpp: minstret (instructions retired): %u\n", counter_data);
 
