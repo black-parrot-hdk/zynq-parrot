@@ -12,11 +12,10 @@ BASENAME=black_parrot
 NBF_FILE?=../prog.nbf
 
 SKIP_DRAM=-DSKIP_DRAM_TESTING
-FREE_DRAM ?= 1
 
 # you must set these for the accelerator to work
 
-CFLAGS=-DGP0_ADDR_BASE=0x40000000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_SIZE_BYTES=0x30000000 -DFPGA=1 -DFREE_DRAM=$(FREE_DRAM)
+CFLAGS=-DGP0_ADDR_BASE=0x40000000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_SIZE_BYTES=0x30000000 -DFPGA=1
 
 all:
 	@echo See the makefile for the fun things you can do in this directory
@@ -73,7 +72,8 @@ unpack_bitstream:
 load_bitstream:
 	echo 'from pynq import Overlay; overlay=Overlay("$(BASENAME)_bd_1.bit");' | sudo python3
 
-# this will load the bitstream, but transfer over the physical memory pointer that was written into the accelerator before
+# use this instead if you have already loaded the bitstream this will load the bitstream, but transfer
+# over the physical memory pointer that was written into the accelerator before
 # this way we do not need to reallocate dram
 
 reload_bitstream_keep_dram:

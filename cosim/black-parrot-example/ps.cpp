@@ -35,7 +35,6 @@ int main(int argc, char **argv) {
    int mask1 = 0xf;
    int mask2 = 0xf;
    bool done = false;
-   unsigned int counter_data;
 
    int allocated_dram = 64*1024*1024;
 #ifdef FPGA
@@ -181,18 +180,22 @@ int main(int argc, char **argv) {
 
 #endif     // SKIP_DRAM_TESTING
 
-    counter_data = zpl->axil_read(0x18 + GP0_ADDR_BASE);
-    printf("ps.cpp: minstret (instructions retired): %u\n", counter_data);
 
 
     zpl->BP_ZYNQ_PL_DEBUG=0;
     printf("ps.cpp: beginning nbf load\n");
     nbf_load(zpl, argv[1]);
-    printf("ps.cpp: finished nbf load\n");
-    zpl->BP_ZYNQ_PL_DEBUG=tmp;
-
+    unsigned int minstrret_start = zpl->axil_read(0x18 + GP0_ADDR_BASE);
+    unsigned int mtime_start = zpl->axil_read(0xA0000000+0x30bff8);
     zpl->BP_ZYNQ_PL_DEBUG=0;
-    printf("ps.cpp: polling i/o\n");
+
+    //    zpl->BP_ZYNQ_PL_DEBUG=tmp;
+
+    if (zpl->BP_ZYNQ_PL_DEBUG) {
+      printf("ps.cpp: finished nbf load\n");
+      printf("ps.cpp: polling i/o\n");
+    }
+    
     while(1) {
       // keep reading as long as there is data
       data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
@@ -202,11 +205,20 @@ int main(int argc, char **argv) {
       } else if (done)
 	break;
     }
-    zpl->BP_ZYNQ_PL_DEBUG=0;
+    unsigned int mtime_stop = zpl->axil_read(0xA0000000+0x30bff8);
+    unsigned int minstrret_stop = zpl->axil_read(0x18 + GP0_ADDR_BASE);
+    unsigned int counter_data = zpl->axil_read(0x18 + GP0_ADDR_BASE);
     printf("ps.cpp: end polling i/o\n");
-    counter_data = zpl->axil_read(0x18 + GP0_ADDR_BASE);
-    printf("ps.cpp: minstret (instructions retired): %u\n", counter_data);
-
+    printf("ps.cpp: minstret (instructions retired): %8u (0x%8x)\n", minstrret_start,minstrret_start);
+    printf("ps.cpp: minstret (instructions retired): %8u (0x%8x)\n", minstrret_stop,minstrret_stop);    
+    int minstrret_delta = minstrret_stop-minstrret_start;
+    printf("ps.cpp: minstret delta                 : %8u (0x%8x)\n",minstrret_delta,minstrret_delta);
+    printf("ps.cpp: MTIME start:  %8u (0x%8x)\n",mtime_start,mtime_start);
+    printf("ps.cpp: MTIME stop:   %8u (0x%8x)\n",mtime_stop,mtime_stop);
+    int mtime_delta = mtime_stop-mtime_start;
+    printf("ps.cpp: MTIME delta:  %8u (0x%8x)\n",mtime_delta,mtime_delta);
+    printf("ps.cpp: IPC        :  %f\n", ((double) minstrret_delta) / ((double) (mtime_delta))/8.0);
+    printf("ps.cpp: minstret (instructions retired): %u (0x%x)\n", counter_data,counter_data);
 #ifdef FPGA
     // in general we do not want to free the dram; the Xilinx allocator has a tendency to
     // fail after many allocate/fail cycle. instead we keep a pointer to the dram in a CSR
@@ -280,11 +292,13 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
         continue;
       }
       else {
-	printf("ps.cpp: unrecognized nbf command, line %d : %x\n", line_count,  nbf[0]);
+	if (zpl->BP_ZYNQ_PL_DEBUG)
+	  printf("ps.cpp: unrecognized nbf command, line %d : %x\n", line_count,  nbf[0]);
         return;
       }
     }
-    printf("ps.cpp: finished loading %d lines of nbf.\n",line_count);
+    if (zpl->BP_ZYNQ_PL_DEBUG)
+      printf("ps.cpp: finished loading %d lines of nbf.\n",line_count);
   }
 
 bool decode_bp_output(bp_zynq_pl *zpl, int data) {
