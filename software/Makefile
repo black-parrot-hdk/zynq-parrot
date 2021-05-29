@@ -52,6 +52,11 @@ clean_software:
 	$(MAKE) -C $(SDK_DIR) tidy_progs
 	-rm -rf nbf
 
+#
+# before you load the bitstream, be sure to copy the .b64 file to ../cosim/black-parrot-example
+# on the zynq board and run the unpack_bitstream make rule there
+#
+
 # do this the first time you try to run after you have rebooted the Zynq, before the bitstream has been loaded
 # run on Zynq
 load_bitstream:
@@ -81,7 +86,7 @@ summarize:
 	grep FAIL nbf/*.log
 
 # run on Zynq or X86
-clean-logs:
+clean_logs:
 	rm -rf nbf/*.log
 
 # run on x86
