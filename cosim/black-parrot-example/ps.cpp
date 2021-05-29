@@ -110,6 +110,7 @@ int main(int argc, char **argv) {
     for (int q = 0; q < 10; q++)
     {
       int z = zpl->axil_read(0xA0000000+0x30bff8);
+      int z2 = zpl->axil_read(0xA0000000+0x30bff8+4);
       //        printf("ps.cpp: %d%c",z,(q % 8) == 7 ? '\n' : ' ');
     }
 

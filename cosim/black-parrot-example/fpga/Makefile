@@ -21,20 +21,20 @@ all:
 	@echo See the makefile for the fun things you can do in this directory
 
 # you do this on the zynq board itself
-
 control-program: $(PS_FILE) Makefile
 	g++ -I../../include/fpga/ $(CFLAGS) -O2 $(PS_FILE) $(SKIP_DRAM) -lcma -lpthread -o $@
 
 run:	control-program
 	sudo ./control-program $(NBF_FILE)
 
-# do this on a server that has vivado 2019.X
-
+# do this on a x86 server that has vivado 2019.X
 fpga_build:
 	$(MAKE) fpga_build_ip
 	$(MAKE) fpga_build_block
 
 # combine BP IP with Zynq ARM core and then synthesize, pnr and bitfile generate
+# on the x86 server
+
 fpga_build_block:
 	$(XILINX_ENV) && vivado -source vivado-create-block.tcl -mode tcl
 	-@grep --color "CRITICAL WARNING" vivado.log
@@ -42,6 +42,8 @@ fpga_build_block:
 	-@tail -n5 vivado.log
 
 # this packages the BP IP, but does not continue to synthesis, pnr and bitfile generation
+# on the x86 server
+
 fpga_build_ip: clean_fpga_build flist.vcs
 	mkdir fpga_build
 	$(XILINX_ENV) && vivado -source vivado-build-ip.tcl -mode tcl
@@ -50,6 +52,8 @@ fpga_build_ip: clean_fpga_build flist.vcs
 	-@tail -n5 vivado.log
 
 # create the flist file incorporating zynq parrot source with the bp source
+# on the x86 server
+
 flist.vcs: ../../import/black-parrot/bp_top/syn/flist.vcs Makefile
 	cp $< $@
 	echo "../bp_unicore_axi_sim.sv" >> flist.vcs
@@ -59,6 +63,8 @@ flist.vcs: ../../import/black-parrot/bp_top/syn/flist.vcs Makefile
 	echo "top.v" >> flist.vcs
 
 # packup up bitstream for shipping to the Zynq board (.b64)
+# on the x86 server
+
 pack_bitstream:
 	cp $(BASENAME)_bd_proj.srcs/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1* .
 	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.bit $(BASENAME)_bd_1.bit
@@ -69,12 +75,16 @@ pack_bitstream:
 unpack_bitstream:
 	base64 -d $(BASENAME)_bd_1.tar.xz.b64 | tar xvJ
 
+# load the bitstream on the Zynq board (copy the .b64 file into this dir first)
+# make sure to unpack it first
+
 load_bitstream:
 	echo 'from pynq import Overlay; overlay=Overlay("$(BASENAME)_bd_1.bit");' | sudo python3
 
 # use this instead if you have already loaded the bitstream this will load the bitstream, but transfer
 # over the physical memory pointer that was written into the accelerator before
 # this way we do not need to reallocate dram
+# on the zynq board
 
 reload_bitstream_keep_dram:
 	echo 'from pynq import Overlay, MMIO; mmio=MMIO(0x40000000,0x1000); val4 = mmio.read(0x4); val8 = mmio.read(0x8);  overlay=Overlay("$(BASENAME)_bd_1.bit"); print("transferring over: ", hex(val4), hex(val8)); mmio.write(0x4,val4); mmio.write(0x8,val8);' | sudo python3

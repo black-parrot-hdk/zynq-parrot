@@ -44,7 +44,7 @@ VV_OPTS += -top-module $(TOP)
 VV_OPTS += -f flist.vcs
 VV_OPTS += --build -j 4
 VV_OPTS += -Wno-timescalemod
-VV_OPTS += --Wno-fatal --Wno-lint --Wno-unoptflat --Wno-widthconcat --Wno-style
+VV_OPTS += --Wno-fatal --Wno-unoptflat --Wno-widthconcat --Wno-width --Wno-pinmissing --Wno-style #--Wno-lint
 VV_OPTS += -I$(BP_SDK_DIR)/install/include
 VV_OPTS += -I$(BP_TOOLS_DIR)/install/share/verilator/include/vltstd/
 

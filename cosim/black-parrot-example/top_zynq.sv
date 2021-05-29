@@ -136,7 +136,7 @@ module top_zynq
 
       ,.num_fifo_ps_to_pl_p(1)
       ,.num_fifo_pl_to_ps_p(1)
-      ,.num_regs_pl_to_ps_p(1)
+      ,.num_regs_pl_to_ps_p(2)
       ,.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH)
       ,.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
       ) zps
@@ -156,7 +156,9 @@ module top_zynq
         // to increment the counters.
         //
 
-        ,.csr_data_i(blackparrot.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo[31:0])
+        ,.csr_data_i({ blackparrot.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo[63:32]
+                       , blackparrot.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo[31:0]}
+                     )
 
         ,.pl_to_ps_fifo_data_i (pl_to_ps_fifo_data_li)
         ,.pl_to_ps_fifo_v_i    (pl_to_ps_fifo_v_li)
