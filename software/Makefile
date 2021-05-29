@@ -112,10 +112,15 @@ build_libs: build_tools
 %.fpga.log: %.nbf
 	$(MAKE) FREE_DRAM=0 -C ../cosim/black-parrot-example/fpga run NBF_FILE=$(abspath $<) | tee $*.fpga.log
 
-%.fpga.run: %.nbf
-	$(MAKE) FREE_DRAM=0 -C ../cosim/black-parrot-example/fpga run NBF_FILE=$(abspath $<) | tee $*.fpga.log
+%.fpga.rerun: %.nbf
+	-rm $*.fpga.log
+	make $*.verilator.log
 
 # make nbf/<testname>.verilator.log to run on verilator (probably x86)
 
 %.verilator.log: %.nbf
 	$(MAKE) FREE_DRAM=0 -C ../cosim/black-parrot-example/verilator run NBF_FILE=$(abspath $<) | tee $*.verilator.log
+
+%.verilator.rerun: %.nbf
+	-rm $*.verilator.log
+	make $*.verilator.log
