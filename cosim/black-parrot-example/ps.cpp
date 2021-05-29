@@ -211,11 +211,11 @@ int main(int argc, char **argv) {
     printf("ps.cpp: end polling i/o\n");
     printf("ps.cpp: minstret (instructions retired): %8u (0x%8x)\n", minstrret_start,minstrret_start);
     printf("ps.cpp: minstret (instructions retired): %8u (0x%8x)\n", minstrret_stop,minstrret_stop);    
-    int minstrret_delta = minstrret_stop-minstrret_start;
+    unsigned int minstrret_delta = minstrret_stop-minstrret_start;
     printf("ps.cpp: minstret delta                 : %8u (0x%8x)\n",minstrret_delta,minstrret_delta);
     printf("ps.cpp: MTIME start:  %8u (0x%8x)\n",mtime_start,mtime_start);
     printf("ps.cpp: MTIME stop:   %8u (0x%8x)\n",mtime_stop,mtime_stop);
-    int mtime_delta = mtime_stop-mtime_start;
+    unsigned int mtime_delta = mtime_stop-mtime_start;
     printf("ps.cpp: MTIME delta:  %8u (0x%8x)\n",mtime_delta,mtime_delta);
     printf("ps.cpp: IPC        :  %f\n", ((double) minstrret_delta) / ((double) (mtime_delta))/8.0);
     printf("ps.cpp: minstret (instructions retired): %u (0x%x)\n", counter_data,counter_data);
