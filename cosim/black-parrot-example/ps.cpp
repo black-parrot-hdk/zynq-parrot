@@ -35,7 +35,12 @@ inline unsigned long long get_counter_64(bp_zynq_pl *zpl, unsigned int addr)
 }
 
 int main(int argc, char **argv) {
-   bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
+  // this ensures that even with tee, the output is line buffered
+  // so that we can see what is happening in real time
+
+  setvbuf(stdout, NULL, _IOLBF, 0);
+
+  bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
    assert(argc > 1);
    // the read memory map is essentially
    //
