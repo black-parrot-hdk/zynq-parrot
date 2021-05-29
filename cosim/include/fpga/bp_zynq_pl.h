@@ -120,7 +120,7 @@ class bp_zynq_pl {
     printf("bp_zynq_pl: done() called, exiting\n");
   }
 
-  void axil_write(unsigned int address, int data, int wstrb)
+  inline void axil_write(unsigned int address, int data, int wstrb)
   {
     if (BP_ZYNQ_PL_DEBUG)
        printf("  bp_zynq_pl: AXI writing [%x]=%8.8x mask %x\n", address, data, wstrb);
@@ -137,7 +137,7 @@ class bp_zynq_pl {
     ptr[0] = data;
   }
 
-  int axil_read(unsigned int address)
+  inline int axil_read(unsigned int address)
   {
     volatile int *ptr;
     if (address >= GP1_ADDR_BASE)

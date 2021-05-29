@@ -14,6 +14,26 @@
 void nbf_load(bp_zynq_pl *zpl, char *);
 bool decode_bp_output(bp_zynq_pl *zpl, int data);
 
+
+inline unsigned long long get_counter_64(bp_zynq_pl *zpl, unsigned int addr)
+{
+  unsigned long long val;
+  do {
+    unsigned int val_hi = zpl->axil_read(addr+4);
+    unsigned int val_lo = zpl->axil_read(addr+0);
+    unsigned int val_hi2 = zpl->axil_read(addr+4);
+    if (val_hi == val_hi2)
+    {
+      val = ((unsigned long long) val_hi) << 32;
+      val += val_lo;
+      return val;
+    }
+    else
+      printf("ps.cpp: timer wrapover!");
+  }
+  while (1);
+}
+
 int main(int argc, char **argv) {
    bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
    assert(argc > 1);
@@ -109,21 +129,22 @@ int main(int argc, char **argv) {
 
     for (int q = 0; q < 10; q++)
     {
-      int z = zpl->axil_read(0xA0000000+0x30bff8);
-      int z2 = zpl->axil_read(0xA0000000+0x30bff8+4);
+      int z = zpl->axil_read(0xA0000000U+0x30bff8);
+      // read second 32-bits
+      int z2 = zpl->axil_read(0xA0000000U+0x30bff8+4);
       //        printf("ps.cpp: %d%c",z,(q % 8) == 7 ? '\n' : ' ');
     }
 
     printf("ps.cpp: attempting to read and write mtime reg in BP CFG space (testing ARM GP1 connections)\n");
 
     printf("ps.cpp: reading mtimecmp\n");
-    int y = zpl->axil_read(0xA0000000+0x304000);
+    int y = zpl->axil_read(0xA0000000U+0x304000);
 
     printf("ps.cpp: writing mtimecmp\n");
-    zpl->axil_write(0xA0000000+0x304000,y+1,mask1);
+    zpl->axil_write(0xA0000000U+0x304000,y+1,mask1);
 
     printf("ps.cpp: reading mtimecmp\n");
-    assert(zpl->axil_read(0xA0000000+0x304000)==y+1);
+    assert(zpl->axil_read(0xA0000000U+0x304000)==y+1);
 
     /*
     printf("ps.cpp: mis-aligned read of mtime reg in BP CFG space\n");
@@ -186,8 +207,8 @@ int main(int argc, char **argv) {
     zpl->BP_ZYNQ_PL_DEBUG=0;
     printf("ps.cpp: beginning nbf load\n");
     nbf_load(zpl, argv[1]);
-    unsigned int minstrret_start = zpl->axil_read(0x18 + GP0_ADDR_BASE);
-    unsigned int mtime_start = zpl->axil_read(0xA0000000+0x30bff8);
+    unsigned long long minstrret_start = get_counter_64(zpl,0x18 + GP0_ADDR_BASE);
+    unsigned long long  mtime_start    = get_counter_64(zpl,0xA0000000+0x30bff8);
     zpl->BP_ZYNQ_PL_DEBUG=0;
 
     //    zpl->BP_ZYNQ_PL_DEBUG=tmp;
@@ -196,7 +217,7 @@ int main(int argc, char **argv) {
       printf("ps.cpp: finished nbf load\n");
       printf("ps.cpp: polling i/o\n");
     }
-    
+
     while(1) {
       // keep reading as long as there is data
       data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
@@ -206,20 +227,24 @@ int main(int argc, char **argv) {
       } else if (done)
 	break;
     }
-    unsigned int mtime_stop = zpl->axil_read(0xA0000000+0x30bff8);
-    unsigned int minstrret_stop = zpl->axil_read(0x18 + GP0_ADDR_BASE);
-    unsigned int counter_data = zpl->axil_read(0x18 + GP0_ADDR_BASE);
+
+    //zpl->BP_ZYNQ_PL_DEBUG=tmp;
+    unsigned long long mtime_stop = get_counter_64(zpl,0xA0000000+0x30bff8);
+
+    unsigned long long minstrret_stop = get_counter_64(zpl,0x18 + GP0_ADDR_BASE);
+    // test delay for reading counter
+    unsigned long long counter_data = get_counter_64(zpl,0x18 + GP0_ADDR_BASE);
     printf("ps.cpp: end polling i/o\n");
-    printf("ps.cpp: minstret (instructions retired): %8u (0x%8x)\n", minstrret_start,minstrret_start);
-    printf("ps.cpp: minstret (instructions retired): %8u (0x%8x)\n", minstrret_stop,minstrret_stop);    
-    unsigned int minstrret_delta = minstrret_stop-minstrret_start;
-    printf("ps.cpp: minstret delta                 : %8u (0x%8x)\n",minstrret_delta,minstrret_delta);
-    printf("ps.cpp: MTIME start:  %8u (0x%8x)\n",mtime_start,mtime_start);
-    printf("ps.cpp: MTIME stop:   %8u (0x%8x)\n",mtime_stop,mtime_stop);
-    unsigned int mtime_delta = mtime_stop-mtime_start;
-    printf("ps.cpp: MTIME delta:  %8u (0x%8x)\n",mtime_delta,mtime_delta);
-    printf("ps.cpp: IPC        :  %f\n", ((double) minstrret_delta) / ((double) (mtime_delta))/8.0);
-    printf("ps.cpp: minstret (instructions retired): %u (0x%x)\n", counter_data,counter_data);
+    printf("ps.cpp: minstret (instructions retired): %16llu (%16llx)\n", minstrret_start,minstrret_start);
+    printf("ps.cpp: minstret (instructions retired): %16llu (%16llx)\n", minstrret_stop,minstrret_stop);
+    unsigned long long minstrret_delta = minstrret_stop-minstrret_start;
+    printf("ps.cpp: minstret delta:                  %16llu (%16llx)\n",minstrret_delta,minstrret_delta);
+    printf("ps.cpp: MTIME start:                     %16llu (%16llx)\n",mtime_start,mtime_start);
+    printf("ps.cpp: MTIME stop:                      %16llu (%16llx)\n",mtime_stop,mtime_stop);
+    unsigned long long mtime_delta = mtime_stop-mtime_start;
+    printf("ps.cpp: MTIME delta:                     %16llu (%16llx)\n",mtime_delta,mtime_delta);
+    printf("ps.cpp: IPC        :                     %16f\n", ((double) minstrret_delta) / ((double) (mtime_delta))/8.0);
+    printf("ps.cpp: minstret (instructions retired): %16llu (%16llx)\n", counter_data,counter_data);
 #ifdef FPGA
     // in general we do not want to free the dram; the Xilinx allocator has a tendency to
     // fail after many allocate/fail cycle. instead we keep a pointer to the dram in a CSR
