@@ -17,8 +17,12 @@ export BASEJUMP_STL_DIR = $(BP_EXTERNAL_DIR)/basejump_stl
 export HARDFLOAT_DIR    = $(BP_EXTERNAL_DIR)/HardFloat
 
 
+ifeq ($(shell /usr/bin/arch),armv7l)
+export VERILATOR=/usr/local/bin/verilator
+else
 export VERILATOR_ROOT?=/gro/cad/verilator/v4.202/verilator/
 export VERILATOR?=$(VERILATOR_ROOT)/bin/verilator
+endif
 
 ifeq ($(wildcard $(VERILATOR)),)
 $(error "VERILATOR variable must be set!")

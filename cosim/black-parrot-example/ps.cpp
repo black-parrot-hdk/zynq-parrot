@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <locale.h>
 #include <time.h>
 
 #include "bp_zynq_pl.h"
@@ -257,7 +258,8 @@ int main(int argc, char **argv) {
     printf("ps.cpp: minstret (instructions retired): %16llu (%16llx)\n", counter_data,counter_data);
     unsigned long long diff_ns = 1000*1000*1000 * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
     printf("ps.cpp: wall clock time                : %16llu (%16llx) ns\n",diff_ns,diff_ns);
-    printf("ps.cpp: sim/emul speed                 : %16.2f BP cycles per minute\n", mtime_delta*8/((double) (diff_ns) / (60.0*1000.0*1000.0*1000.0)));
+    setlocale(LC_NUMERIC,"");
+    printf("ps.cpp: sim/emul speed                 : %'16.2f BP cycles per minute\n", mtime_delta*8/((double) (diff_ns) / (60.0*1000.0*1000.0*1000.0)));
 #ifdef FPGA
     // in general we do not want to free the dram; the Xilinx allocator has a tendency to
     // fail after many allocate/fail cycle. instead we keep a pointer to the dram in a CSR
