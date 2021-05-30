@@ -3,6 +3,9 @@ NBF_DIR=../cosim/import/black-parrot/bp_common/software/py
 
 NCORES=4
 
+# RISC_V DRAM starts at 0x8000_0000; this allocates 64MB
+TOP_OF_MEM_RISC_V=0x83FFF000
+
 riscv-binaries=$(shell find ../. -iname "*.riscv")
 
 $(warning $(shell find . -iname "*.nbf"))
@@ -10,9 +13,13 @@ nbf-files=$(filter-out ./nbf/hello_world.nbf,$(shell find . -iname "*.nbf"))
 
 nothing:
 
-#build once (x86 server); takes about 15 minutes
-build_tools:
+checkout_tools:
 	cd ../cosim/import; git submodule update --init sdk
+	@echo fixing up linker file for Zynq DRAM size
+	sed -i '/_sp/c\_sp = $(TOP_OF_MEM_RISC_V);' ../cosim/import/sdk/linker/riscv.ld;
+
+#build once (x86 server); takes about 15 minutes
+build_tools: checkout_tools
 	$(MAKE) -j $(NCORES) -C $(SDK_DIR) panic_room
 
 #build these after you build the tools (x86 server)
@@ -62,10 +69,12 @@ clean_software:
 load_bitstream:
 	$(MAKE) -C ../cosim/black-parrot-example/fpga load_bitstream
 
+# run on zynq
 print_clocks:
 	$(MAKE) -C ../cosim/black-parrot-example/fpga $@
 
-%.set_clocks:
+# run on zynq, suggest 20.set_clocks
+%.set_clock:
 	$(MAKE) -C ../cosim/black-parrot-example/fpga $@
 
 # do this if you have already used the bitstream; it transfers over the pointer to the DRAM address space
