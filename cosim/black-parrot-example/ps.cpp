@@ -7,6 +7,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
+
 #include "bp_zynq_pl.h"
 
 #define FREE_DRAM 0
@@ -212,6 +214,8 @@ int main(int argc, char **argv) {
     zpl->BP_ZYNQ_PL_DEBUG=0;
     printf("ps.cpp: beginning nbf load\n");
     nbf_load(zpl, argv[1]);
+    struct timespec start,end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
     unsigned long long minstrret_start = get_counter_64(zpl,0x18 + GP0_ADDR_BASE);
     unsigned long long  mtime_start    = get_counter_64(zpl,0xA0000000+0x30bff8);
     zpl->BP_ZYNQ_PL_DEBUG=0;
@@ -239,6 +243,7 @@ int main(int argc, char **argv) {
     unsigned long long minstrret_stop = get_counter_64(zpl,0x18 + GP0_ADDR_BASE);
     // test delay for reading counter
     unsigned long long counter_data = get_counter_64(zpl,0x18 + GP0_ADDR_BASE);
+    clock_gettime(CLOCK_MONOTONIC, &end);
     printf("ps.cpp: end polling i/o\n");
     printf("ps.cpp: minstret (instructions retired): %16llu (%16llx)\n", minstrret_start,minstrret_start);
     printf("ps.cpp: minstret (instructions retired): %16llu (%16llx)\n", minstrret_stop,minstrret_stop);
@@ -247,9 +252,12 @@ int main(int argc, char **argv) {
     printf("ps.cpp: MTIME start:                     %16llu (%16llx)\n",mtime_start,mtime_start);
     printf("ps.cpp: MTIME stop:                      %16llu (%16llx)\n",mtime_stop,mtime_stop);
     unsigned long long mtime_delta = mtime_stop-mtime_start;
-    printf("ps.cpp: MTIME delta:                     %16llu (%16llx)\n",mtime_delta,mtime_delta);
+    printf("ps.cpp: MTIME delta (=1/8 BP cycles):    %16llu (%16llx)\n",mtime_delta,mtime_delta);
     printf("ps.cpp: IPC        :                     %16f\n", ((double) minstrret_delta) / ((double) (mtime_delta))/8.0);
     printf("ps.cpp: minstret (instructions retired): %16llu (%16llx)\n", counter_data,counter_data);
+    unsigned long long diff_ns = 1000*1000*1000 * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
+    printf("ps.cpp: wall clock time                : %16llu (%16llx) ns\n",diff_ns,diff_ns);
+    printf("ps.cpp: sim/emul speed                 : %16.2f BP cycles per minute\n", mtime_delta*8/((double) (diff_ns) / (60.0*1000.0*1000.0*1000.0)));
 #ifdef FPGA
     // in general we do not want to free the dram; the Xilinx allocator has a tendency to
     // fail after many allocate/fail cycle. instead we keep a pointer to the dram in a CSR
