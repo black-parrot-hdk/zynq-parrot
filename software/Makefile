@@ -62,6 +62,12 @@ clean_software:
 load_bitstream:
 	$(MAKE) -C ../cosim/black-parrot-example/fpga load_bitstream
 
+print_clocks:
+	$(MAKE) -C ../cosim/black-parrot-example/fpga $@
+
+%.set_clocks:
+	$(MAKE) -C ../cosim/black-parrot-example/fpga $@
+
 # do this if you have already used the bitstream; it transfers over the pointer to the DRAM address space
 # run on Zynq
 reload_bitstream_keep_dram:
