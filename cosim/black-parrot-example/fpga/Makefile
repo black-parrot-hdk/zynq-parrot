@@ -79,7 +79,13 @@ unpack_bitstream:
 # make sure to unpack it first
 
 load_bitstream:
-	echo 'from pynq import Overlay; overlay=Overlay("$(BASENAME)_bd_1.bit");' | sudo python3
+	echo 'from pynq import Overlay; overlay=Overlay("$(BASENAME)_bd_1.bit"); print (overlay.__doc__); print(overlay.ip_dict); print(overlay.clock_dict);' | sudo python3
+
+print_clocks:
+	echo 'from pynq import Clocks; print("PL Clock: ",Clocks.fclk0_mhz,"MHz"); print("PS Clock: ",Clocks.cpu_mhz,"MHz");' | sudo python3
+
+%.set_clock:
+	echo 'from pynq import Clocks;  Clocks.fclk0_mhz = $*; print("PL Clock Set To:: ",Clocks.fclk0_mhz,"MHz"); ' | sudo python3
 
 # use this instead if you have already loaded the bitstream this will load the bitstream, but transfer
 # over the physical memory pointer that was written into the accelerator before
@@ -87,7 +93,7 @@ load_bitstream:
 # on the zynq board
 
 reload_bitstream_keep_dram:
-	echo 'from pynq import Overlay, MMIO; mmio=MMIO(0x40000000,0x1000); val4 = mmio.read(0x4); val8 = mmio.read(0x8);  overlay=Overlay("$(BASENAME)_bd_1.bit"); print("transferring over: ", hex(val4), hex(val8)); mmio.write(0x4,val4); mmio.write(0x8,val8);' | sudo python3
+	echo 'import pprint; from pynq import Overlay, MMIO; mmio=MMIO(0x40000000,0x1000); val4 = mmio.read(0x4); val8 = mmio.read(0x8);  overlay=Overlay("$(BASENAME)_bd_1.bit"); print("transferring over: ", hex(val4), hex(val8)); mmio.write(0x4,val4); mmio.write(0x8,val8);  print (overlay.__doc__); pprint.pprint(overlay.ip_dict,width=1); pprint.pprint(overlay.clock_dict,width=1)' | sudo python3
 
 clean: clean_fpga_build
 	-rm control-program

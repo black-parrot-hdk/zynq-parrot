@@ -114,7 +114,7 @@ build_libs: build_tools
 
 %.fpga.rerun: %.nbf
 	-rm $*.fpga.log
-	make $*.verilator.log
+	make $*.fpga.log
 
 # make nbf/<testname>.verilator.log to run on verilator (probably x86)
 
