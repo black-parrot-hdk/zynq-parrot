@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
    int mask2 = 0xf;
    bool done = false;
 
-   int allocated_dram = 64*1024*1024;
+   int allocated_dram = 96*1024*1024;
 #ifdef FPGA
     unsigned long phys_ptr;
     volatile int *buf;

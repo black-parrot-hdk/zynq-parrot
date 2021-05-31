@@ -79,7 +79,7 @@ unpack_bitstream:
 # make sure to unpack it first
 
 load_bitstream:
-	echo 'from pynq import Overlay; overlay=Overlay("$(BASENAME)_bd_1.bit"); print (overlay.__doc__); print(overlay.ip_dict); print(overlay.clock_dict);' | sudo python3
+	echo 'import pprint; from pynq import Overlay; overlay=Overlay("$(BASENAME)_bd_1.bit"); print (overlay.__doc__); pprint.pprint(overlay.ip_dict,width=1); pprint.pprint(overlay.clock_dict,width=1);' | sudo python3
 
 print_clocks:
 	echo 'from pynq import Clocks; print("PL Clock: ",Clocks.fclk0_mhz,"MHz"); print("PS Clock: ",Clocks.cpu_mhz,"MHz");' | sudo python3
