@@ -6,10 +6,17 @@ NCORES=4
 # RISC_V DRAM starts at 0x8000_0000; this allocates 64MB
 TOP_OF_MEM_RISC_V=0x83FFF000
 
-riscv-binaries=$(shell find ../. -iname "*.riscv")
 
-$(warning $(shell find . -iname "*.nbf"))
-nbf-files=$(filter-out ./nbf/hello_world.nbf,$(shell find . -iname "*.nbf"))
+FILTER_OUT = $(foreach v,$(2),$(if $(findstring $(1),$(v)),,$(v)))
+
+riscv-binaries:=$(shell find ../. -iname "*.riscv")
+all-nbf-binaries:=$(shell find . -iname "*.nbf")
+nbf-dont-run = bootrom 181.mcf 454.calculix 458.sjeng 471.omnetpp
+$(warning filtering $(nbf-dont-run))
+
+nbf-files=$(call FILTER_OUT,$(nbf-dont-run),$(all-nbf-binaries))
+$(warning $(nbf-files))
+
 
 nothing:
 
@@ -75,7 +82,7 @@ load_bitstream:
 print_clocks:
 	$(MAKE) -C ../cosim/black-parrot-example/fpga $@
 
-# run on zynq, suggest 20.set_clocks
+# run on zynq, suggest 20.set_clocks to set to 20 MHz. Decimal places okay too.
 %.set_clock:
 	$(MAKE) -C ../cosim/black-parrot-example/fpga $@
 
