@@ -18,7 +18,7 @@ SKIP_DRAM=-DSKIP_DRAM_TESTING
 CFLAGS=-DGP0_ADDR_BASE=0x40000000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_SIZE_BYTES=0x30000000 -DFPGA=1
 
 all:
-	@echo See the makefile for the fun things you can do in this directory
+	@echo "## See the makefile for the fun things you can do in this directory"
 
 # you do this on the zynq board itself
 control-program: $(PS_FILE) Makefile
@@ -35,11 +35,17 @@ fpga_build:
 # combine BP IP with Zynq ARM core and then synthesize, pnr and bitfile generate
 # on the x86 server
 
-fpga_build_block:
-	$(XILINX_ENV) && vivado -source vivado-create-block.tcl -mode tcl
+fpga_report_build_block:
 	-@grep --color "CRITICAL WARNING" vivado.log
 	-@grep --color "ERROR" vivado.log
 	-@tail -n5 vivado.log
+	-@grep --color "ERROR" `find . -iname "*.log"`
+	-@grep -m 1 -A 3 WNS black_parrot_bd_proj.runs/impl_1/black_parrot_bd_1_wrapper_timing_summary_routed.rpt
+	-@echo "## See black_parrot_bd_proj.runs/impl_1/black_parrot_bd_1_wrapper_timing_summary_routed.rpt for timing report."
+
+fpga_build_block:
+	-$(XILINX_ENV) && vivado -source vivado-create-block.tcl -mode tcl
+	$(MAKE) fpga_report_build_block
 
 # this packages the BP IP, but does not continue to synthesis, pnr and bitfile generation
 # on the x86 server

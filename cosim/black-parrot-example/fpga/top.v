@@ -3,7 +3,6 @@
 
 module top
   #(
-    // Parameters of Axi Slave Bus Interface S00_AXI
     parameter integer C_S00_AXI_DATA_WIDTH = 32
     , parameter integer C_S00_AXI_ADDR_WIDTH = 6
     , parameter integer C_S01_AXI_DATA_WIDTH = 32
@@ -103,7 +102,17 @@ module top
     ,input wire [1:0]                           m00_axi_rresp
     );
 
-   top_zynq top_zynq_inst
+   top_zynq
+     #(.C_S00_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH)
+       ,.C_S00_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
+
+       ,.C_S01_AXI_DATA_WIDTH(C_S01_AXI_DATA_WIDTH)
+       ,.C_S01_AXI_ADDR_WIDTH(C_S01_AXI_ADDR_WIDTH)
+
+       ,.C_M00_AXI_DATA_WIDTH(C_M00_AXI_DATA_WIDTH)
+       ,.C_M00_AXI_ADDR_WIDTH(C_M00_AXI_ADDR_WIDTH)
+       )
+     top_zynq_inst
      (.s00_axi_aclk    (s00_axi_aclk)
       ,.s00_axi_aresetn(s00_axi_aresetn)
       ,.s00_axi_awaddr (s00_axi_awaddr)

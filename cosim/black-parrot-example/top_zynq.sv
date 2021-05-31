@@ -15,11 +15,18 @@ module top_zynq
      , localparam uce_mem_data_width_lp = `BSG_MAX(icache_fill_width_p, dcache_fill_width_p)
      `declare_bp_bedrock_mem_if_widths(paddr_width_p, uce_mem_data_width_lp, lce_id_width_p, lce_assoc_p, uce)
 
+     // NOTE these parameters are usually overridden by the parent module (top.v)
+     // but we set them to make expectations consistent
+
      // Parameters of Axi Slave Bus Interface S00_AXI
      , parameter integer C_S00_AXI_DATA_WIDTH   = 32
-     , parameter integer C_S00_AXI_ADDR_WIDTH   = 5
+
+     // needs to be updated to fit all addresses used
+     // by bsg_zynq_pl_shell read_locs_lp (update in top.v as well)
+     , parameter integer C_S00_AXI_ADDR_WIDTH   = 6
      , parameter integer C_S01_AXI_DATA_WIDTH   = 32
-     , parameter integer C_S01_AXI_ADDR_WIDTH   = 30 // the ARM AXI S01 interface drops the top two bits
+     // the ARM AXI S01 interface drops the top two bits
+     , parameter integer C_S01_AXI_ADDR_WIDTH   = 30
      , parameter integer C_M00_AXI_DATA_WIDTH   = 64
      , parameter integer C_M00_AXI_ADDR_WIDTH   = 32
      )
@@ -138,6 +145,7 @@ module top_zynq
       // 8: the base register for the allocated dram
       //
 
+      // need to update C_S00_AXI_ADDR_WIDTH accordingly
       ,.num_fifo_ps_to_pl_p(1)
       ,.num_fifo_pl_to_ps_p(1)
       ,.num_regs_pl_to_ps_p(2+4)

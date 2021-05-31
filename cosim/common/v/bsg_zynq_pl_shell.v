@@ -135,9 +135,9 @@ module bsg_zynq_pl_shell #
 
    initial
      begin
-        assert(`BSG_SAFE_CLOG2(read_locs_lp)+ADDR_LSB_lp == C_S_AXI_ADDR_WIDTH)
+        assert(`BSG_SAFE_CLOG2(read_locs_lp)+ADDR_LSB_lp <= C_S_AXI_ADDR_WIDTH)
           else
-            $error("read_locs_lp (%d) + ADDR_LSB_lp (%d) != C_S_AXI_ADDR_WIDTH (%d)\n",`BSG_SAFE_CLOG2(read_locs_lp),ADDR_LSB_lp, C_S_AXI_ADDR_WIDTH);
+            $error("read_locs_lp (%d) + ADDR_LSB_lp (%d) ! <= C_S_AXI_ADDR_WIDTH (%d)\n",`BSG_SAFE_CLOG2(read_locs_lp),ADDR_LSB_lp, C_S_AXI_ADDR_WIDTH);
      end
 
    wire     slv_reg_rden;
