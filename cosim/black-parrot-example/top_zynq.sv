@@ -122,6 +122,10 @@ module top_zynq
 
    localparam debug_lp = 0;
 
+   // use this as a way of figuring out how much memory a RISC-V program is using
+   // each bit corresponds to a region of memory
+   logic [127:0] mem_profiler_r;
+
    // Connect Shell to AXI Bus Interface S00_AXI
    bsg_zynq_pl_shell #
      (
@@ -136,7 +140,7 @@ module top_zynq
 
       ,.num_fifo_ps_to_pl_p(1)
       ,.num_fifo_pl_to_ps_p(1)
-      ,.num_regs_pl_to_ps_p(2)
+      ,.num_regs_pl_to_ps_p(2+4)
       ,.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH)
       ,.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
       ) zps
@@ -156,7 +160,11 @@ module top_zynq
         // to increment the counters.
         //
 
-        ,.csr_data_i({ blackparrot.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo[63:32]
+        ,.csr_data_i({ mem_profiler_r[127:96]
+                       , mem_profiler_r[95:64]
+                       , mem_profiler_r[63:32]
+                       , mem_profiler_r[31:0]
+                       , blackparrot.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo[63:32]
                        , blackparrot.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo[31:0]}
                      )
 
@@ -293,11 +301,11 @@ module top_zynq
 
    always @(negedge s01_axi_aclk)
      if (s01_axi_awvalid & s01_axi_awready)
-       if (debug_lp) $display("top_zynq: AXI Write Addr %x -> %x (BP)\n",s01_axi_awaddr,waddr_translated_lo);
+       if (debug_lp) $display("top_zynq: AXI Write Addr %x -> %x (BP)",s01_axi_awaddr,waddr_translated_lo);
 
    always @(negedge s01_axi_aclk)
      if (s01_axi_arvalid & s01_axi_arready)
-       if (debug_lp) $display("top_zynq: AXI Read Addr %x -> %x (BP)\n",s01_axi_araddr,raddr_translated_lo);
+       if (debug_lp) $display("top_zynq: AXI Read Addr %x -> %x (BP)",s01_axi_araddr,raddr_translated_lo);
 
    // synopsys translate_on
 
@@ -331,11 +339,41 @@ module top_zynq
    wire [axi_addr_width_p-1:0] axi_araddr;
 
    // to translate from BP DRAM space to ARM PS DRAM space
-   // we subtract the BP DRAM base address (32'h8000_0000) and add the
+   // we xor-subtract the BP DRAM base address (32'h8000_0000) and add the
    // ARM PS allocated memory space physical address.
 
-   assign m00_axi_awaddr = axi_awaddr - 32'h8000_0000 + csr_data_lo[2];
-   assign m00_axi_araddr = axi_araddr - 32'h8000_0000 + csr_data_lo[2];
+   always @(negedge s01_axi_aclk)
+     begin
+        if (m00_axi_awvalid && ((axi_awaddr ^ 32'h8000_0000) > 1024*1024*64))
+          $display("top_zynq: unexpectedly high DRAM write: %x",axi_awaddr);
+        if (m00_axi_arvalid && ((axi_araddr ^ 32'h8000_0000) > 1024*1024*64))
+          $display("top_zynq: unexpectedly high DRAM read: %x",axi_araddr);
+     end
+
+   assign m00_axi_awaddr = (axi_awaddr ^ 32'h8000_0000) + csr_data_lo[2];
+   assign m00_axi_araddr = (axi_araddr ^ 32'h8000_0000) + csr_data_lo[2];
+
+   // synopsys translate_off
+
+   always @(negedge m00_axi_aclk)
+     if (m00_axi_awvalid & m00_axi_awready)
+       if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_awaddr,m00_axi_awaddr);
+
+   always @(negedge s01_axi_aclk)
+     if (m00_axi_arvalid & m00_axi_arready)
+       if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_araddr,m00_axi_araddr);
+
+   // synopsys translate_on
+
+   bsg_dff_reset #(.width_p(128)) dff
+     (.clk_i(s01_axi_aclk)
+      ,.reset_i(bp_reset_li)
+      ,.data_i(mem_profiler_r
+               | m00_axi_awvalid << (axi_awaddr[29-:7])
+               | m00_axi_arvalid << (axi_araddr[29-:7])
+               )
+      ,.data_o(mem_profiler_r)
+      );
 
    // BlackParrot reset signal is connected to a CSR (along with
    // the AXI interface reset) so that a regression can be launched

@@ -43,6 +43,8 @@ unpack_nbf:
 build_spec: build_libs
 	cd $(SDK_DIR); git submodule update --init spec2000
 	cd $(SDK_DIR); git submodule update --init spec2006
+	$(MAKE) -C $(SDK_DIR)/spec2000 spec2000
+	$(MAKE) -C $(SDK_DIR)/spec2006 spec2006
 	$(MAKE) -C $(SDK_DIR) -j1 spec2000
 	$(MAKE) -C $(SDK_DIR) -j1 spec2006
 
