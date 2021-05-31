@@ -67,9 +67,9 @@ clean_software:
 	-rm -rf $(SDK_DIR)/install/touchfiles/beebs.*
 	-rm -rf $(SDK_DIR)/install/touchfiles/spec2000.*
 	-rm -rf $(SDK_DIR)/install/touchfiles/spec2006.*
-	$(MAKE) -C ../cosim/import/fpga clean
-	$(MAKE) -C $(SDK_DIR) prog_clean
-	$(MAKE) -C $(SDK_DIR) tidy_progs
+	-$(MAKE) -C ../cosim/import/fpga clean
+	-$(MAKE) -C $(SDK_DIR) prog_clean
+	-$(MAKE) -C $(SDK_DIR) tidy_progs
 	-rm -rf nbf
 
 #
