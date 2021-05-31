@@ -3,9 +3,13 @@ NBF_DIR=../cosim/import/black-parrot/bp_common/software/py
 
 NCORES=4
 
-# RISC_V DRAM starts at 0x8000_0000; this allocates 64MB
-TOP_OF_MEM_RISC_V=0x83FFF000
+# RISC_V DRAM starts at 0x8000_0000; this sets the stack at 64MB
+# when building the RISCV binaries, bounding total used memory
 
+# 64 MB  - 4096
+# TOP_OF_MEM_RISC_V=0x83FFF000
+# 120 MB - 4096
+TOP_OF_MEM_RISC_V=0x877FF000
 
 FILTER_OUT = $(foreach v,$(2),$(if $(findstring $(1),$(v)),,$(v)))
 

@@ -13,6 +13,7 @@
 #include "bp_zynq_pl.h"
 
 #define FREE_DRAM 0
+#define DRAM_ALLOCATE_SIZE 120*1024*1024
 
 void nbf_load(bp_zynq_pl *zpl, char *);
 bool decode_bp_output(bp_zynq_pl *zpl, int data);
@@ -64,7 +65,7 @@ int main(int argc, char **argv) {
    int mask2 = 0xf;
    bool done = false;
 
-   int allocated_dram = 96*1024*1024;
+   int allocated_dram = DRAM_ALLOCATE_SIZE;
 #ifdef FPGA
     unsigned long phys_ptr;
     volatile int *buf;
@@ -92,7 +93,7 @@ int main(int argc, char **argv) {
 #ifdef FPGA
     data = zpl->axil_read(0x4 + GP0_ADDR_BASE);
     if (data == 0) {
-      printf("ps.cpp: CSRs do not contain a DRAM base pointer; calling allocate dram\n");
+      printf("ps.cpp: CSRs do not contain a DRAM base pointer; calling allocate dram with size %d\n",allocated_dram);
       buf = (volatile int*) zpl->allocate_dram(allocated_dram, &phys_ptr);
       printf("ps.cpp: received %p (phys = %lx)\n",buf, phys_ptr);
       zpl->axil_write(0x8 + GP0_ADDR_BASE, phys_ptr, mask1);
