@@ -10,7 +10,7 @@ Examples:
 
 - imports/basejump\_stl
 - imports/black-parrot
-- imports/sdk
+- imports/black-parrot-sdk
 - imports/black-parrot/external/basejump\_stl
 - imports/black-parrot/external/HardFloat
 

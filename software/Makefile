@@ -1,4 +1,4 @@
-SDK_DIR=../cosim/import/sdk
+SDK_DIR=../cosim/import/black-parrot-sdk
 NBF_DIR=../cosim/import/black-parrot/bp_common/software/py
 
 NCORES=4
@@ -14,9 +14,9 @@ nbf-files=$(filter-out ./nbf/hello_world.nbf,$(shell find . -iname "*.nbf"))
 nothing:
 
 checkout_tools:
-	cd ../cosim/import; git submodule update --init sdk
+	cd ../cosim/import; git submodule update --init black-parrot-sdk
 	@echo fixing up linker file for Zynq DRAM size
-	sed -i '/_sp/c\_sp = $(TOP_OF_MEM_RISC_V);' ../cosim/import/sdk/linker/riscv.ld;
+	sed -i '/_sp/c\_sp = $(TOP_OF_MEM_RISC_V);' $(SDK_DIR)/linker/riscv.ld;
 
 #build once (x86 server); takes about 15 minutes
 build_tools: checkout_tools

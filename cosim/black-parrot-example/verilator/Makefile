@@ -3,7 +3,7 @@
 TOPLEVEL ?= $(shell git rev-parse --show-toplevel)
 
 export BLACKPARROT_DIR := $(abspath ../../import/black-parrot)
-export BP_SDK_DIR      := $(abspath ../../import/sdk)
+export BP_SDK_DIR      := $(abspath ../../import/black-parrot-sdk)
 export BSG_ZYNQ_PL_SHELL_DIR:= $(abspath ../../common/v)
 
 # these defines are used by the flist.vcs file
