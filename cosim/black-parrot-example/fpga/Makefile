@@ -84,8 +84,10 @@ unpack_bitstream:
 # load the bitstream on the Zynq board (copy the .b64 file into this dir first)
 # make sure to unpack it first
 
-load_bitstream:
+load_bitstream: control-program
 	echo 'import pprint; from pynq import Overlay; overlay=Overlay("$(BASENAME)_bd_1.bit"); print (overlay.__doc__); pprint.pprint(overlay.ip_dict,width=1); pprint.pprint(overlay.clock_dict,width=1);' | sudo python3
+	@echo 'allocating memory and sleeping...'
+	sudo ./control-program &
 
 print_clocks:
 	echo 'from pynq import Clocks; print("PL Clock: ",Clocks.fclk0_mhz,"MHz"); print("PS Clock: ",Clocks.cpu_mhz,"MHz");' | sudo python3

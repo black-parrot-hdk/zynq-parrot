@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <locale.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "bp_zynq_pl.h"
 
@@ -45,7 +46,7 @@ int main(int argc, char **argv) {
   setvbuf(stdout, NULL, _IOLBF, 0);
 
   bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
-   assert(argc > 1);
+
    // the read memory map is essentially
    //
    // 0,4,8: reset, dram allocated, dram base address
@@ -114,6 +115,13 @@ int main(int argc, char **argv) {
     int outer = 8/4;
 #endif
 
+    if (argc == 1)
+      {
+	printf("No nbf file specified, sleeping for 2^31 seconds (this will hold onto allocated DRAM)\n");
+	sleep(1 << 31);
+	exit(0);
+      }
+    
     printf("ps.cpp: asserting reset to BP\n");
 
     // Assert reset, we do it repeatedly just to make sure that enough cycles pass
@@ -211,9 +219,8 @@ int main(int argc, char **argv) {
 
 #endif     // SKIP_DRAM_TESTING
 
-
-
     zpl->BP_ZYNQ_PL_DEBUG=0;
+    
     printf("ps.cpp: beginning nbf load\n");
     nbf_load(zpl, argv[1]);
     struct timespec start,end;
@@ -274,6 +281,7 @@ int main(int argc, char **argv) {
     // in the accelerator, and if we reload the bitstream, we copy the pointer back in.s
     
     if (FREE_DRAM) {
+      printf("ps.cpp: freeing DRAM buffer\n");
       zpl->free_dram((void *)buf);
       zpl->axil_write(0x4 + GP0_ADDR_BASE, 0x0, mask2);
     }

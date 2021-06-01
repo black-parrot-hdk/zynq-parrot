@@ -138,7 +138,7 @@ build_libs: build_tools
 
 
 %.fpga.log: %.nbf
-	$(MAKE) FREE_DRAM=0 -C ../cosim/black-parrot-example/fpga run NBF_FILE=$(abspath $<) | tee $*.fpga.log
+	$(MAKE) -C ../cosim/black-parrot-example/fpga run NBF_FILE=$(abspath $<) | tee $*.fpga.log
 
 %.fpga.rerun: %.nbf
 	-rm $*.fpga.log
