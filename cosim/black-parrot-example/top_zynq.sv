@@ -128,6 +128,7 @@ module top_zynq
    logic                                        ps_to_pl_fifo_v_lo, ps_to_pl_fifo_yumi_li;
 
    localparam debug_lp = 0;
+   localparam memory_upper_limit_lp = 120*1024*1024;
 
    // use this as a way of figuring out how much memory a RISC-V program is using
    // each bit corresponds to a region of memory
@@ -352,9 +353,9 @@ module top_zynq
 
    always @(negedge s01_axi_aclk)
      begin
-        if (m00_axi_awvalid && ((axi_awaddr ^ 32'h8000_0000) > 1024*1024*64))
+        if (m00_axi_awvalid && ((axi_awaddr ^ 32'h8000_0000) >= memory_upper_limit_lp))
           $display("top_zynq: unexpectedly high DRAM write: %x",axi_awaddr);
-        if (m00_axi_arvalid && ((axi_araddr ^ 32'h8000_0000) > 1024*1024*64))
+        if (m00_axi_arvalid && ((axi_araddr ^ 32'h8000_0000) >= memory_upper_limit_lp))
           $display("top_zynq: unexpectedly high DRAM read: %x",axi_araddr);
      end
 
