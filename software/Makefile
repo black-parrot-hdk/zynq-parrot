@@ -128,7 +128,7 @@ build_libs: build_tools
 
 # run on x86
 %.nbf: %.riscv
-	$(SDK_DIR)/install/riscv64-unknown-elf-dramfs/bin/objcopy -O verilog $< $*.mem
+	$(SDK_DIR)/install/bin/riscv64-unknown-elf-dramfs/bin/objcopy -O verilog $< $*.mem
 	python $(NBF_DIR)/nbf.py --config --mem $*.mem > $@
 	-rm $*.mem
 
