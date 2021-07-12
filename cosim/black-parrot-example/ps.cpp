@@ -375,11 +375,14 @@ bool decode_bp_output(bp_zynq_pl *zpl, int data) {
         return true;
       }
 
-      printf("ps.cpp: Errant write to %x", address);
+      printf("ps.cpp: Errant write to %x\n", address);
       return false;
     }
     // TODO: Need to implement logic for bp io_read
-    else return false;
+    else {
+	    printf("ps.cpp: Unsupported read (%x)\n",data);
+	    return false;
+    }
   }
 
 
