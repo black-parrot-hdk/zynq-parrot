@@ -1,5 +1,4 @@
 `verilator_config
-lint_off -file "/home/svijay97/black-parrot/external/basejump_stl/*"
 lint_off -file "*/sva/*"
 lint_off -rule UNUSED
 lint_off -rule DECLFILENAME
