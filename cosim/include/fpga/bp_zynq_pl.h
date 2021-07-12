@@ -72,6 +72,7 @@ class bp_zynq_pl {
       int *addr1 = (int *) GP1_ADDR_BASE; // e.g. 0x83c00000;
 
       // map in first PLAXI region of physical addresses to virtual addresses
+
       volatile int *ptr0 = (int *) mmap(addr0,GP0_ADDR_SIZE_BYTES,PROT_READ | PROT_WRITE, MAP_SHARED, fd,(int)addr0);
       assert(ptr0 == addr0);
       //assert(ptr0 != ((void *) -1));
@@ -88,6 +89,7 @@ class bp_zynq_pl {
       //  gp1_base_offset = ( (unsigned int) ptr1 - GP1_ADDR_BASE);
 
       printf("// bp_zynq_pl: mmap returned %p (offset %x) errno=%x\n",ptr1,gp1_base_offset,errno);      
+
 
       close(fd);
     }
