@@ -24,6 +24,8 @@ export VERILATOR_ROOT?=/gro/cad/verilator/v4.202/verilator/
 export VERILATOR?=$(VERILATOR_ROOT)/bin/verilator
 endif
 
+# FIXME: check verilator version
+
 ifeq ($(wildcard $(VERILATOR)),)
 $(error "VERILATOR variable must be set!")
 endif
