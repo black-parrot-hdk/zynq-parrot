@@ -6,7 +6,7 @@ module bp_unicore_axi_sim
  import bp_common_pkg::*;
  import bp_me_pkg::*;
 // see bp_common/src/include/bp_common_aviary_pkgdef.svh for a list of configurations that you can try!
-// this design requires an L2
+// this design requires a unicore and an L2 (of any size)
  #(parameter bp_params_e bp_params_p = e_bp_default_cfg
    `declare_bp_proc_params(bp_params_p)
 
