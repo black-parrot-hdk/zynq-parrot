@@ -18,4 +18,4 @@ See (this document)[https://docs.google.com/document/d/1U9XIxLkjbI1vQR5hxjk8Szqq
 
 All of the FPGA versions here build automatically from script (except simple-example), and do not require any other repos except the submodules above.
 
-See (this document)[https://docs.google.com/document/d/1mBLb9BgQSIv25p59MPj0a4c-TfvwlfqXeuFlZFBVzAY/edit] for the architecture of the BSG Zynq shell and how it is integrated with BlackParrot.
+See (this document)[https://docs.google.com/document/d/1mBLb9BgQSIv25p59MPj0a4c-TfvwlfqXeuFlZFBVzAY/edit] for the architecture of the BSG ZynqParrot shell and how it is integrated with BlackParrot.
