@@ -1,1 +1,8 @@
-This directory contains 1) support for cross-compiling RISC-V programs on X86 and 2) support for running these programs on bitstreams on the Zynq PL.
+This directory contains:
+
+1) support for cross-compiling RISC-V programs on X86 and
+
+2) support for running these programs on bitstreams on the Zynq PL.
+
+
+The eventual goal is to support having a build RISC-V tool chain on the board. But this may require some cleverness to get it to build (larger flash card) and maybe that end users use a higher end Ultra96 board for more memory, and faster ARM cores.
