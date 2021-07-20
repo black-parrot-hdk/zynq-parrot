@@ -4,7 +4,7 @@
 
 
 #ifndef __arm__
-#error this file intended only to be compiled on an ARM (Zynq) platform)
+#error this file intended only to be compiled on an ARM (Zynq) platform
 #endif
 
 // memory management hooks (corresponds to allocate function in python)

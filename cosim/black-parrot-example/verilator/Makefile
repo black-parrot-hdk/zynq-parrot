@@ -71,6 +71,8 @@ top: run
 flist.vcs: ../../import/black-parrot/bp_top/syn/flist.vcs Makefile
 	cp $< $@
 	echo "../bp_unicore_axi_sim.sv" >> flist.vcs
+	echo "../../import/black-parrot/bp_me/src/v/network/bp_lite_to_axi_lite_master.sv" >> flist.vcs
+	echo "../../import/black-parrot/bp_me/src/v/network/axi_lite_to_bp_lite_client.sv" >> flist.vcs
 	echo "../bp_to_axi_decoder.sv" >> flist.vcs
 	echo "\$$BSG_ZYNQ_PL_SHELL_DIR/bsg_zynq_pl_shell.v" >> flist.vcs
 	echo "../top_zynq.sv" >> flist.vcs

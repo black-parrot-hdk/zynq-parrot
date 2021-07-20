@@ -2,6 +2,7 @@
 `timescale 1 ns / 1 ps
 
 `include "bp_common_defines.svh"
+`include "bsg_cache.v"
 
 module top_zynq
   import bp_common_pkg::*;

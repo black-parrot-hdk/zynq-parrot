@@ -2,7 +2,8 @@
 .PHONY: load_bitstream
 
 # update this with a pointer to your vivado install
-XILINX_ENV=source /tools/Xilinx/Vivado/2019.1/settings64.sh
+#XILINX_ENV=source /tools/Xilinx/Vivado/2019.1/settings64.sh
+XILINX_ENV=source /gro/cad/Xilinx/Vivado/2019.1/settings64.sh
 
 # need to set the shell so that source works
 SHELL := /bin/bash
@@ -64,6 +65,11 @@ flist.vcs: ../../import/black-parrot/bp_top/syn/flist.vcs Makefile
 	cp $< $@
 	echo "../bp_unicore_axi_sim.sv" >> flist.vcs
 	echo "../bp_to_axi_decoder.sv" >> flist.vcs
+	echo "../../import/black-parrot/bp_me/src/v/network/bp_lite_to_axi_lite_master.sv" >> flist.vcs
+	echo "../../import/black-parrot/bp_me/src/v/network/axi_lite_to_bp_lite_client.sv" >> flist.vcs
+	echo "../../import/black-parrot/external/basejump_stl/bsg_cache/bsg_cache_to_axi.v" >> flist.vcs
+	echo "../../import/black-parrot/external/basejump_stl/bsg_cache/bsg_cache_to_axi_rx.v" >> flist.vcs
+	echo "../../import/black-parrot/external/basejump_stl/bsg_cache/bsg_cache_to_axi_tx.v" >> flist.vcs
 	echo "\$$BSG_ZYNQ_PL_SHELL_DIR/bsg_zynq_pl_shell.v" >> flist.vcs
 	echo "../top_zynq.sv" >> flist.vcs
 	echo "top.v" >> flist.vcs

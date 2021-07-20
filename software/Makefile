@@ -1,7 +1,7 @@
 SDK_DIR=../cosim/import/black-parrot-sdk
 NBF_DIR=../cosim/import/black-parrot/bp_common/software/py
 
-NCORES=4
+NCORES=20
 
 # RISC_V DRAM starts at 0x8000_0000; this sets the stack at 64MB
 # when building the RISCV binaries, bounding total used memory
