@@ -5,6 +5,7 @@
 // communication plumbing differences.
 
 
+#include <cassert>
 #include <stdlib.h>
 #include <stdio.h>
 #include "bp_zynq_pl.h"

@@ -6,39 +6,57 @@
 #include <string>
 #include <fstream>
 #include <iostream>
-#include "Vtop.h"
-#include "verilated.h"
-using namespace std;
 #include "bsg_nonsynth_dpi_clock_gen.hpp"
 #include "bsg_nonsynth_dpi_gpio.hpp"
+
+using namespace std;
 using namespace bsg_nonsynth_dpi;
 
-#define TOP_MODULE Vtop
+#include "Vtop.h"
+#include "verilated.h"
 
-// TODO: Make define
-#define GP0_ADDR_WIDTH 32
-
-#define ZYNQ_PL_DEBUG 1
-
-#ifndef GP0_ACLK_PERIOD
-#define GP0_ACLK_PERIOD 1000
+#ifndef ZYNQ_PL_DEBUG
+#define ZYNQ_PL_DEBUG 0
 #endif
+
+#ifndef GP0_ENABLE
+#define GP0_ADDR_WIDTH 0
+#define GP0_DATA_WIDTH 0
+#define GP0_ADDR_BASE  0
+#endif
+
+#ifndef GP0_ADDR_WIDTH
+#ERROR GP0_ADDR_WIDTH must be defined
+#endif
+#define GP0_ADDR_SIZE_BYTES (1 << GP0_ADDR_WIDTH)
 
 #ifndef GP0_ADDR_BASE
 #ERROR GP0_ADDR_BASE must be defined
 #endif
 
-#ifndef GP0_ADDR_SIZE_BYTES
-#ERROR GP0_ADDR_SIZE_BYTES must be defined
+#ifndef GP0_DATA_WIDTH
+#ERROR GP0_DATA_WIDTH must be defined
 #endif
+
+#ifndef GP1_ENABLE
+#define GP1_ADDR_WIDTH 0
+#define GP1_DATA_WIDTH 0
+#define GP1_ADDR_BASE  0
+#endif
+
+#ifndef GP1_ADDR_WIDTH
+#ERROR GP1_ADDR_WIDTH must be defined
+#endif
+#define GP1_ADDR_SIZE_BYTES (1 << GP1_ADDR_WIDTH)
 
 #ifndef GP1_ADDR_BASE
 #ERROR GP1_ADDR_BASE must be defined
 #endif
 
-#ifndef GP1_ADDR_SIZE_BYTES
-#ERROR GP1_ADDR_SIZE_BYTES must be defined
+#ifndef GP1_DATA_WIDTH
+#ERROR GP1_DATA_WIDTH must be defined
 #endif
+
 
 template <unsigned int W>
 class pin {
@@ -98,31 +116,31 @@ public:
     //int interface = 0;
     //if (interface == 0)
     //  {
-        p_aclk    ("TOP.top.axi_aclk_gpio"),
-        p_aresetn ("TOP.top.axi_aresetn_gpio"),
-        p_awaddr  ("TOP.top.axi_awaddr_gpio"),
-        p_awprot  ("TOP.top.axi_awprot_gpio"),
-        p_awvalid ("TOP.top.axi_awvalid_gpio"),
-        p_awready ("TOP.top.axi_awready_gpio"),
-        p_wdata   ("TOP.top.axi_wdata_gpio"),
-        p_wstrb   ("TOP.top.axi_wstrb_gpio"),
-        p_wvalid  ("TOP.top.axi_wvalid_gpio"),
-        p_wready  ("TOP.top.axi_wready_gpio"),
-        p_bresp   ("TOP.top.axi_bresp_gpio"),
-        p_bvalid  ("TOP.top.axi_bvalid_gpio"),
-        p_bready  ("TOP.top.axi_bready_gpio"),
-        p_araddr  ("TOP.top.axi_araddr_gpio"),
-        p_arprot  ("TOP.top.axi_arprot_gpio"),
-        p_arvalid ("TOP.top.axi_arvalid_gpio"),
-        p_arready ("TOP.top.axi_arready_gpio"),
-        p_rdata   ("TOP.top.axi_rdata_gpio"),
-        p_rresp   ("TOP.top.axi_rresp_gpio"),
-        p_rvalid  ("TOP.top.axi_rvalid_gpio"),
-        p_rready  ("TOP.top.axi_rready_gpio") { }
+        p_aclk    ("TOP.top.axil.aclk_gpio"),
+        p_aresetn ("TOP.top.axil.aresetn_gpio"),
+        p_awaddr  ("TOP.top.axil.awaddr_gpio"),
+        p_awprot  ("TOP.top.axil.awprot_gpio"),
+        p_awvalid ("TOP.top.axil.awvalid_gpio"),
+        p_awready ("TOP.top.axil.awready_gpio"),
+        p_wdata   ("TOP.top.axil.wdata_gpio"),
+        p_wstrb   ("TOP.top.axil.wstrb_gpio"),
+        p_wvalid  ("TOP.top.axil.wvalid_gpio"),
+        p_wready  ("TOP.top.axil.wready_gpio"),
+        p_bresp   ("TOP.top.axil.bresp_gpio"),
+        p_bvalid  ("TOP.top.axil.bvalid_gpio"),
+        p_bready  ("TOP.top.axil.bready_gpio"),
+        p_araddr  ("TOP.top.axil.araddr_gpio"),
+        p_arprot  ("TOP.top.axil.arprot_gpio"),
+        p_arvalid ("TOP.top.axil.arvalid_gpio"),
+        p_arready ("TOP.top.axil.arready_gpio"),
+        p_rdata   ("TOP.top.axil.rdata_gpio"),
+        p_rresp   ("TOP.top.axil.rresp_gpio"),
+        p_rvalid  ("TOP.top.axil.rvalid_gpio"),
+        p_rready  ("TOP.top.axil.rready_gpio") { }
 //      }
 //    else if (interface == 1)
 //      {
-//#ifdef BSG_ENABLE_S01
+//#ifdef GP1_ENABLE
 //        address_size = sizeof(tb->s01_axi_awaddr);
 //        //aclk    = &(tb->s01_axi_aclk);
 //        //aresetn = &(tb->s01_axi_aresetn);
@@ -231,11 +249,14 @@ public:
 
 class bp_zynq_pl {
 
-  TOP_MODULE *tb;
-  struct axil<4,32> *axi_int[2];
+  Vtop *tb;
+  struct axil<GP0_ADDR_WIDTH,GP0_DATA_WIDTH> *axi_gp0;
+  struct axil<GP1_ADDR_WIDTH,GP1_DATA_WIDTH> *axi_gp1;
 
   // Wait for (low true) reset to be asserted by the testbench
-  void reset(void) { while (axi_int[0]->p_aresetn == 0); }
+  void reset(void) {
+    while (axi_gp0->p_aresetn == 1);
+  }
 
   // Each bsg_timekeeper::next() moves to the next clock edge
   //   so we need 2 to perform one full clock cycle.
@@ -258,17 +279,17 @@ class bp_zynq_pl {
     // turn on tracing
     Verilated::traceEverOn(true);
 
-    tb = new TOP_MODULE;
+    tb = new Vtop;
 
     // Tick once to register clock generators
     tb->eval();
 
     printf("About to assign values\n");
-    //axi_int[0].init(0,tb);
-    axi_int[0] = new axil<4, 32>();
+    //axi_gp0.init(0,tb);
+    axi_gp0 = new axil<4, 32>();
     printf("Init 0\n");
-    //axi_int[1].init(1,tb);
-    //axi_int[1] = new axil();
+    //axi_gp1.init(1,tb);
+    //axi_gp1 = new axil();
     printf("Init 1\n");
 
     printf("bp_zynq_pl: Entering reset\n");
@@ -319,13 +340,13 @@ class bp_zynq_pl {
 
     assert(wstrb==0xf); // we only support full int writes right now
 
-    axi_int[index]->p_awvalid = 1;
-    axi_int[index]->p_wvalid = 1;
-    axi_int[index]->p_awaddr = address;
-    axi_int[index]->p_wdata = data;
-    axi_int[index]->p_wstrb = wstrb;
+    axi_gp0->p_awvalid = 1;
+    axi_gp0->p_wvalid = 1;
+    axi_gp0->p_awaddr = address;
+    axi_gp0->p_wdata = data;
+    axi_gp0->p_wstrb = wstrb;
 
-    while (axi_int[index]->p_awready == 0 && axi_int[index]->p_wready == 0) {
+    while (axi_gp0->p_awready == 0 && axi_gp0->p_wready == 0) {
 
       if (timeout_counter++ > AXI_TIMEOUT) {
         printf("bp_zynq_pl: AXI write timeout\n");
@@ -342,12 +363,12 @@ class bp_zynq_pl {
 
     // must drop valid signals
     // let's get things ready with bready at the same time
-    axi_int[index]->p_awvalid = 0;
-    axi_int[index]->p_wvalid = 0;
-    axi_int[index]->p_bready = 1;
+    axi_gp0->p_awvalid = 0;
+    axi_gp0->p_wvalid = 0;
+    axi_gp0->p_bready = 1;
 
     // wait for bvalid to go high
-    while (axi_int[index]->p_bvalid == 0) {
+    while (axi_gp0->p_bvalid == 0) {
       if (timeout_counter++ > AXI_TIMEOUT) {
         printf("bp_zynq_pl: AXI bvalid timeout\n");
         done();
@@ -360,7 +381,7 @@ class bp_zynq_pl {
 
     // now, we will drop bready low with ready on the next cycle
     this->tick();
-    axi_int[index]->p_bready  = 0;
+    axi_gp0->p_bready  = 0;
     return;
   }
 
@@ -397,11 +418,11 @@ class bp_zynq_pl {
     int timeout_counter = 0;
 
     // assert these signals "late in the cycle"
-    axi_int[index]->p_arvalid = 1;
-    axi_int[index]->p_araddr = address;
+    axi_gp0->p_arvalid = 1;
+    axi_gp0->p_araddr = address;
 
     // stall while ready is not asserted
-    while (axi_int[index]->p_arready == 0)
+    while (axi_gp0->p_arready == 0)
       {
         if (timeout_counter++ > AXI_TIMEOUT) {
           printf("bp_zynq_pl: AXI read arready timeout\n");
@@ -419,13 +440,13 @@ class bp_zynq_pl {
     // assert these signals "late in the cycle"
 
     // arvalid must drop the request
-    axi_int[index]->p_arvalid = 0;
+    axi_gp0->p_arvalid = 0;
 
     // setup to receive the reply
-    axi_int[index]->p_rready  = 1;
+    axi_gp0->p_rready  = 1;
 
     // stall while valid is not asserted
-    while (axi_int[index]->p_rvalid == 0)
+    while (axi_gp0->p_rvalid == 0)
       {
         if (timeout_counter++ > AXI_TIMEOUT) {
           printf("bp_zynq_pl: AXI read rvalid timeout\n");
@@ -438,12 +459,12 @@ class bp_zynq_pl {
       }
 
     // if valid was asserted, latch the incoming data
-    //data = *(axi_int[index].rdata);
-    data = axi_int[index]->p_rdata;
+    //data = *(axi_gp0.rdata);
+    data = axi_gp0->p_rdata;
     this->tick();
 
     // drop the ready signal on the following cycle
-    axi_int[index]->p_rready  = 0;
+    axi_gp0->p_rready  = 0;
 
     return data;
   }

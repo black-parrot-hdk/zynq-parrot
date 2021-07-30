@@ -44,8 +44,6 @@ module top #
     input wire                                  s00_axi_rready
     );
 
-   genvar                                       k;
-
    localparam num_regs_ps_to_pl_lp = 4;
    localparam num_fifo_ps_to_pl_lp = 4;
    localparam num_fifo_pl_to_ps_lp = 2;
@@ -60,15 +58,7 @@ module top #
    wire [num_fifo_ps_to_pl_lp-1:0]                           ps_to_pl_fifo_yumi_li;
 
    wire [num_regs_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_lo;
-
-   logic [C_S00_AXI_ADDR_WIDTH-1:0]                          last_write_addr_r;
-
-   always @(posedge s00_axi_aclk)
-     if (~s00_axi_aresetn)
-       last_write_addr_r <= '0;
-     else
-       if (s00_axi_awvalid & s00_axi_awready)
-         last_write_addr_r <= s00_axi_awaddr;
+   wire [num_regs_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_li;
 
    bsg_zynq_pl_shell
      #(
@@ -123,7 +113,7 @@ module top #
    // adding the outputs of a pair of ps to pl fifos to generate the value
    // inserted into a pl to ps fifo.
 
-   for (k=0; k < num_fifo_pl_to_ps_lp; k++)
+   for (genvar k = 0; k < num_fifo_pl_to_ps_lp; k++)
      begin: rof4
         assign pl_to_ps_fifo_data_li [k] = ps_to_pl_fifo_data_lo[k*2] + ps_to_pl_fifo_data_lo [k*2+1];
         assign pl_to_ps_fifo_v_li    [k] = ps_to_pl_fifo_v_lo   [k*2] & ps_to_pl_fifo_v_lo    [k*2+1];
@@ -133,6 +123,16 @@ module top #
      end
 
         // Add user logic here
+        //
+        logic [C_S00_AXI_ADDR_WIDTH-1:0] last_write_addr_r;
+
+        always @(posedge s00_axi_aclk)
+          if (~s00_axi_aresetn)
+            last_write_addr_r <= '0;
+          else
+            if (s00_axi_awvalid & s00_axi_awready)
+              last_write_addr_r <= s00_axi_awaddr;
+        assign csr_data_li = last_write_addr_r;
 
         // User logic ends
 
