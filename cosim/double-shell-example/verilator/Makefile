@@ -22,16 +22,17 @@ top: all
 
 INCLUDES=-I$(BASEJUMP_STL)/bsg_misc -I$(BASEJUMP_STL)/bsg_dataflow -I$(BASEJUMP_STL)/bsg_mem -I$(BASEJUMP_STL)/bsg_test ../../import/black-parrot/external/basejump_stl/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp -I../../common/v/
 
-VV_OPTS = -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTEMPTY -Wno-fatal -top-module top
+VV_OPTS += --cc
+VV_OPTS += -sv
+VV_OPTS += -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTEMPTY -Wno-fatal -top-module top
+VV_OPTS += -Wall -Wno-UNUSED
+VV_OPTS += --build --exe
 
-verilate: $(HOST-PROGRAM)
-	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(THE_FLAGS)" -Wall -Wno-UNUSED $(TRACE) -cc $(INCLUDES) $(TOP).v -exe $<
+obj_dir/V$(TOP): $(HOST-PROGRAM)
+	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(THE_FLAGS)" $(TRACE) $(INCLUDES) $(TOP).v $<
 
-recursive: verilate
-	make -j -C obj_dir/ -f V$(TOP).mk V$(TOP)
-
-all: recursive
-	obj_dir/V$(TOP) +bsg_trace
+all: obj_dir/V$(TOP)
+	$< +bsg_trace
 
 clean:
 	-rm -rf obj_dir/ *~ trace.fst

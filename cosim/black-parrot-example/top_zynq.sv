@@ -2,7 +2,7 @@
 `timescale 1 ns / 1 ps
 
 `include "bp_common_defines.svh"
-`include "bsg_cache.v"
+`include "bsg_cache.vh"
 
 module top_zynq
   import bp_common_pkg::*;
@@ -522,3 +522,4 @@ module top_zynq
       ,.axi_rready_o (m00_axi_rready)
       );
 endmodule
+

@@ -13,6 +13,7 @@ module top
     )
    (
     // Ports of Axi Slave Bus Interface S00_AXI
+`ifndef VERILATOR
     input wire                                   s00_axi_aclk
     ,input wire                                  s00_axi_aresetn
     ,input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
@@ -57,6 +58,95 @@ module top
     ,output wire                                 s01_axi_rvalid
     ,input wire                                  s01_axi_rready
     );
+`else
+    );
+
+    logic s00_axi_aclk, s00_axi_aresetn;
+    logic [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_awaddr;
+    logic [2:0] s00_axi_awprot;
+    logic s00_axi_awvalid, s00_axi_awready;
+    logic [C_S00_AXI_DATA_WIDTH-1:0] s00_axi_wdata;
+    logic [(C_S00_AXI_DATA_WIDTH/8)-1:0] s00_axi_wstrb;
+    logic s00_axi_wvalid, s00_axi_wready;
+    logic [1:0] s00_axi_bresp;
+    logic s00_axi_bvalid, s00_axi_bready;
+    logic [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_araddr;
+    logic [2:0] s00_axi_arprot;
+    logic s00_axi_arvalid, s00_axi_arready;
+    logic [C_S00_AXI_DATA_WIDTH-1:0] s00_axi_rdata;
+    logic [1:0] s00_axi_rresp;
+    logic s00_axi_rvalid, s00_axi_rready;
+    bsg_nonsynth_dpi_to_axil
+     #(.addr_width_p(C_S00_AXI_ADDR_WIDTH), .data_width_p(C_S00_AXI_DATA_WIDTH))
+     axil0
+      (.aclk_o(s00_axi_aclk)
+       ,.aresetn_o(s00_axi_aresetn)
+
+       ,.awaddr_o(s00_axi_awaddr)
+       ,.awprot_o(s00_axi_awprot)
+       ,.awvalid_o(s00_axi_awvalid)
+       ,.awready_i(s00_axi_awready)
+       ,.wdata_o(s00_axi_wdata)
+       ,.wstrb_o(s00_axi_wstrb)
+       ,.wvalid_o(s00_axi_wvalid)
+       ,.wready_i(s00_axi_wready)
+       ,.bresp_i(s00_axi_bresp)
+       ,.bvalid_i(s00_axi_bvalid)
+       ,.bready_o(s00_axi_bready)
+
+       ,.araddr_o(s00_axi_araddr)
+       ,.arprot_o(s00_axi_arprot)
+       ,.arvalid_o(s00_axi_arvalid)
+       ,.arready_i(s00_axi_arready)
+       ,.rdata_i(s00_axi_rdata)
+       ,.rresp_i(s00_axi_rresp)
+       ,.rvalid_i(s00_axi_rvalid)
+       ,.rready_o(s00_axi_rready)
+       );
+
+    logic s01_axi_aclk, s01_axi_aresetn;
+    logic [C_S01_AXI_ADDR_WIDTH-1:0] s01_axi_awaddr;
+    logic [2:0] s01_axi_awprot;
+    logic s01_axi_awvalid, s01_axi_awready;
+    logic [C_S01_AXI_DATA_WIDTH-1:0] s01_axi_wdata;
+    logic [(C_S01_AXI_DATA_WIDTH/8)-1:0] s01_axi_wstrb;
+    logic s01_axi_wvalid, s01_axi_wready;
+    logic [1:0] s01_axi_bresp;
+    logic s01_axi_bvalid, s01_axi_bready;
+    logic [C_S01_AXI_ADDR_WIDTH-1:0] s01_axi_araddr;
+    logic [2:0] s01_axi_arprot;
+    logic s01_axi_arvalid, s01_axi_arready;
+    logic [C_S01_AXI_DATA_WIDTH-1:0] s01_axi_rdata;
+    logic [1:0] s01_axi_rresp;
+    logic s01_axi_rvalid, s01_axi_rready;
+    bsg_nonsynth_dpi_to_axil
+     #(.addr_width_p(C_S01_AXI_ADDR_WIDTH), .data_width_p(C_S01_AXI_DATA_WIDTH))
+     axil1
+      (.aclk_o(s01_axi_aclk)
+       ,.aresetn_o(s01_axi_aresetn)
+
+       ,.awaddr_o(s01_axi_awaddr)
+       ,.awprot_o(s01_axi_awprot)
+       ,.awvalid_o(s01_axi_awvalid)
+       ,.awready_i(s01_axi_awready)
+       ,.wdata_o(s01_axi_wdata)
+       ,.wstrb_o(s01_axi_wstrb)
+       ,.wvalid_o(s01_axi_wvalid)
+       ,.wready_i(s01_axi_wready)
+       ,.bresp_i(s01_axi_bresp)
+       ,.bvalid_i(s01_axi_bvalid)
+       ,.bready_o(s01_axi_bready)
+
+       ,.araddr_o(s01_axi_araddr)
+       ,.arprot_o(s01_axi_arprot)
+       ,.arvalid_o(s01_axi_arvalid)
+       ,.arready_i(s01_axi_arready)
+       ,.rdata_i(s01_axi_rdata)
+       ,.rresp_i(s01_axi_rresp)
+       ,.rvalid_i(s01_axi_rvalid)
+       ,.rready_o(s01_axi_rready)
+       );
+`endif
 
    wire                                 m00_axi_aclk = s00_axi_aclk;
    wire                                 m00_axi_aresetn = s00_axi_aresetn;

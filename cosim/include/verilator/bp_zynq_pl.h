@@ -2,6 +2,9 @@
 // that can be swapped out with a separate implementation to run on the PS
 //
 
+#ifndef BP_ZYNQ_PL_H
+#define BP_ZYNQ_PL_H
+
 #include <stdio.h>
 #include <string>
 #include <fstream>
@@ -382,4 +385,6 @@ class bp_zynq_pl {
     return data;
   }
 };
+
+#endif
 

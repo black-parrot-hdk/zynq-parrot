@@ -171,23 +171,18 @@ int main(int argc, char **argv) {
       }
     */
 
-    int tmp = zpl->BP_ZYNQ_PL_DEBUG;
-    
 #ifndef SKIP_DRAM_TESTING
     
     int num_times = allocated_dram/32768;
     printf("ps.cpp: attempting to write L2 %d times over %d MB (testing ARM GP1 and HP0 connections)\n",num_times*outer,(allocated_dram)>>20);
     zpl->axil_write(0x80000000,0x12345678,mask1);
 
-
-    zpl->BP_ZYNQ_PL_DEBUG=0;
     for (int s = 0 ; s < outer; s++)
       for (int t = 0 ; t < num_times; t++)
       {
         zpl->axil_write(0x80000000+32768*t+s*4,0x1ADACACA+t+s
                         ,mask1);
       }
-    zpl->BP_ZYNQ_PL_DEBUG=tmp;
     printf("ps.cpp: finished write L2 %d times over %d MB\n",num_times*outer,(allocated_dram)>>20);
 
     int mismatches = 0;
@@ -205,7 +200,6 @@ int main(int argc, char **argv) {
 #endif
 
     printf("ps.cpp: attempting to read L2 %d times over %d MB (testing ARM GP1 and HP0 connections)\n",num_times*outer,(allocated_dram)>>20);
-    zpl->BP_ZYNQ_PL_DEBUG=0;
     for (int s = 0 ; s < outer; s++)
       for (int t = 0 ; t < num_times; t++)
         if (zpl->axil_read(0x80000000+32768*t+s*4) == 0x1ADACACA+t+s)
@@ -213,25 +207,17 @@ int main(int argc, char **argv) {
         else
           mismatches++;
 
-    zpl->BP_ZYNQ_PL_DEBUG=tmp;
-
     printf("ps.cpp: READ access through BP (some L1 coherence mismatch expected): %d matches, %d mismatches, %f\n",matches,mismatches,((float) matches)/(float) (mismatches+matches));
 
 #endif     // SKIP_DRAM_TESTING
 
-    zpl->BP_ZYNQ_PL_DEBUG=0;
-    
     printf("ps.cpp: beginning nbf load\n");
     nbf_load(zpl, argv[1]);
     struct timespec start,end;
     clock_gettime(CLOCK_MONOTONIC, &start);
     unsigned long long minstrret_start = get_counter_64(zpl,0x18 + GP0_ADDR_BASE);
     unsigned long long  mtime_start    = get_counter_64(zpl,0xA0000000+0x30bff8);
-    zpl->BP_ZYNQ_PL_DEBUG=0;
-
-    //    zpl->BP_ZYNQ_PL_DEBUG=tmp;
-
-    if (zpl->BP_ZYNQ_PL_DEBUG) {
+    if (ZYNQ_PL_DEBUG) {
       printf("ps.cpp: finished nbf load\n");
       printf("ps.cpp: polling i/o\n");
     }
@@ -246,7 +232,6 @@ int main(int argc, char **argv) {
 	break;
     }
 
-    //zpl->BP_ZYNQ_PL_DEBUG=tmp;
     unsigned long long mtime_stop = get_counter_64(zpl,0xA0000000+0x30bff8);
 
     unsigned long long minstrret_stop = get_counter_64(zpl,0x18 + GP0_ADDR_BASE);
@@ -349,12 +334,12 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
         continue;
       }
       else {
-	if (zpl->BP_ZYNQ_PL_DEBUG)
+	if (ZYNQ_PL_DEBUG)
 	  printf("ps.cpp: unrecognized nbf command, line %d : %x\n", line_count,  nbf[0]);
         return;
       }
     }
-    if (zpl->BP_ZYNQ_PL_DEBUG)
+    if (ZYNQ_PL_DEBUG)
       printf("ps.cpp: finished loading %d lines of nbf.\n",line_count);
   }
 
