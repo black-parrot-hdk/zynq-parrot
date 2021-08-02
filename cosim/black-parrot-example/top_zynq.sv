@@ -286,12 +286,7 @@ module top_zynq
         // Zynq PA 0x8000_0000 .. 0x8FFF_FFFF -> AXI 0x0000_0000 .. 0x0FFF_FFFF -> BP 0x8000_0000 - 0x8FFF_FFFF
         // Zynq PA 0xA000_0000 .. 0xAFFF_FFFF -> AXI 0x2000_0000 .. 0x2FFF_FFFF -> BP 0x0000_0000 - 0x0FFF_FFFF
 
-        waddr_offset = 32'h8000_0000;
-
-        if (s01_axi_awaddr > 31'h2000_0000)
-          waddr_offset = 32'h2000_0000;
-
-        waddr_translated_lo = s01_axi_awaddr ^ waddr_offset;
+        waddr_translated_lo = {~s01_axi_awaddr[29], 3'b0, s01_axi_awaddr[0+:28]};
      end
 
    always_comb
@@ -299,12 +294,7 @@ module top_zynq
         // Zynq PA 0x8000_0000 .. 0x8FFF_FFFF -> AXI 0x0000_0000 .. 0x0FFF_FFFF -> BP 0x8000_0000 - 0x8FFF_FFFF
         // Zynq PA 0xA000_0000 .. 0xAFFF_FFFF -> AXI 0x2000_0000 .. 0x2FFF_FFFF -> BP 0x0000_0000 - 0x0FFF_FFFF
 
-        raddr_offset = 32'h8000_0000;
-
-        if (s01_axi_araddr > 31'h2000_0000)
-          raddr_offset = 32'h2000_0000;
-
-        raddr_translated_lo = s01_axi_araddr ^ raddr_offset;
+        raddr_translated_lo = {~s01_axi_araddr[29], 3'b0, s01_axi_araddr[0+:28]};
      end
 
    // synopsys translate_off

@@ -162,6 +162,11 @@ int main(int argc, char **argv) {
 
     printf("ps.cpp: reading mtimecmp\n");
     assert(zpl->axil_read(0xA0000000U+0x304000)==y+1);
+    //zpl->axil_read(0xA0000000U+0x304000)==y+1;
+    //zpl->done();
+
+    //delete zpl;
+    //exit(EXIT_SUCCESS);
 
     /*
     printf("ps.cpp: mis-aligned read of mtime reg in BP CFG space\n");

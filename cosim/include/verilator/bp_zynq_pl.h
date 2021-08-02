@@ -88,8 +88,10 @@ class pin {
     }
 
     void operator=(const unsigned int val) {
+      unsigned int bval = 0;
       for (int i = 0; i < W; i++) {
-        gpio->set(i, (val & (1 << i)) >> i);
+        bval = (val & (1 << i)) >> i;
+        gpio->set(i, bval);
       }
     }
 
