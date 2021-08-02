@@ -15,49 +15,66 @@ using namespace bsg_nonsynth_dpi;
 #include "Vtop.h"
 #include "verilated.h"
 
+#define _STRINGIFY(x) #x
+#define STRINGIFY(x) _STRINGIFY(x)
+
 #ifndef ZYNQ_PL_DEBUG
 #define ZYNQ_PL_DEBUG 0
+#endif
+
+#ifndef ZYNQ_AXI_TIMEOUT
+#define ZYNQ_AXI_TIMEOUT 8000
 #endif
 
 #ifndef GP0_ENABLE
 #define GP0_ADDR_WIDTH 0
 #define GP0_DATA_WIDTH 0
 #define GP0_ADDR_BASE  0
+#define GP0_HIER_BASE  ""
 #endif
 
 #ifndef GP0_ADDR_WIDTH
-#ERROR GP0_ADDR_WIDTH must be defined
+#error GP0_ADDR_WIDTH must be defined
 #endif
 #define GP0_ADDR_SIZE_BYTES (1 << GP0_ADDR_WIDTH)
 
 #ifndef GP0_ADDR_BASE
-#ERROR GP0_ADDR_BASE must be defined
+#error GP0_ADDR_BASE must be defined
 #endif
 
 #ifndef GP0_DATA_WIDTH
-#ERROR GP0_DATA_WIDTH must be defined
+#error GP0_DATA_WIDTH must be defined
+#endif
+
+#ifndef GP0_HIER_BASE
+#error GP0_HIER_BASE must be defined
 #endif
 
 #ifndef GP1_ENABLE
 #define GP1_ADDR_WIDTH 0
 #define GP1_DATA_WIDTH 0
 #define GP1_ADDR_BASE  0
+#define GP1_HIER_BASE  ""
 #endif
 
 #ifndef GP1_ADDR_WIDTH
-#ERROR GP1_ADDR_WIDTH must be defined
+#error GP1_ADDR_WIDTH must be defined
 #endif
 #define GP1_ADDR_SIZE_BYTES (1 << GP1_ADDR_WIDTH)
 
 #ifndef GP1_ADDR_BASE
-#ERROR GP1_ADDR_BASE must be defined
+#error GP1_ADDR_BASE must be defined
 #endif
 
 #ifndef GP1_DATA_WIDTH
-#ERROR GP1_DATA_WIDTH must be defined
+#error GP1_DATA_WIDTH must be defined
 #endif
 
+#ifndef GP1_HIER_BASE
+#error GP1_HIER_BASE must be defined
+#endif
 
+// W = width of pin
 template <unsigned int W>
 class pin {
   dpi_gpio<W> *gpio;
@@ -83,8 +100,11 @@ class pin {
     }
 };
 
+// A = axil address width
+// D = axil data width
 template <unsigned int A, unsigned int D>
-struct axil {
+class axil {
+  public:
         pin<1>   p_aclk;
         pin<1>   p_aresetn;
 
@@ -109,99 +129,47 @@ struct axil {
         pin<1>   p_rvalid;
         pin<1>   p_rready;
 
-public:
-
-  //void init(int interface) {
-  axil() :
-    //int interface = 0;
-    //if (interface == 0)
-    //  {
-        p_aclk    ("TOP.top.axil.aclk_gpio"),
-        p_aresetn ("TOP.top.axil.aresetn_gpio"),
-        p_awaddr  ("TOP.top.axil.awaddr_gpio"),
-        p_awprot  ("TOP.top.axil.awprot_gpio"),
-        p_awvalid ("TOP.top.axil.awvalid_gpio"),
-        p_awready ("TOP.top.axil.awready_gpio"),
-        p_wdata   ("TOP.top.axil.wdata_gpio"),
-        p_wstrb   ("TOP.top.axil.wstrb_gpio"),
-        p_wvalid  ("TOP.top.axil.wvalid_gpio"),
-        p_wready  ("TOP.top.axil.wready_gpio"),
-        p_bresp   ("TOP.top.axil.bresp_gpio"),
-        p_bvalid  ("TOP.top.axil.bvalid_gpio"),
-        p_bready  ("TOP.top.axil.bready_gpio"),
-        p_araddr  ("TOP.top.axil.araddr_gpio"),
-        p_arprot  ("TOP.top.axil.arprot_gpio"),
-        p_arvalid ("TOP.top.axil.arvalid_gpio"),
-        p_arready ("TOP.top.axil.arready_gpio"),
-        p_rdata   ("TOP.top.axil.rdata_gpio"),
-        p_rresp   ("TOP.top.axil.rresp_gpio"),
-        p_rvalid  ("TOP.top.axil.rvalid_gpio"),
-        p_rready  ("TOP.top.axil.rready_gpio") { }
-//      }
-//    else if (interface == 1)
-//      {
-//#ifdef GP1_ENABLE
-//        address_size = sizeof(tb->s01_axi_awaddr);
-//        //aclk    = &(tb->s01_axi_aclk);
-//        //aresetn = &(tb->s01_axi_aresetn);
-//        p_awaddr  = (void *) &(tb->s01_axi_awaddr);
-//        p_awprot  = &(tb->s01_axi_awprot);
-//        p_awvalid = &(tb->s01_axi_awvalid);
-//        p_awready = &(tb->s01_axi_awready);
-//        p_wdata   = &(tb->s01_axi_wdata);
-//        p_wstrb   = &(tb->s01_axi_wstrb);
-//        p_wvalid  = &(tb->s01_axi_wvalid);
-//        p_wready  = &(tb->s01_axi_wready);
-//        p_bresp   = &(tb->s01_axi_bresp);
-//        p_bvalid  = &(tb->s01_axi_bvalid);
-//        p_bready  = &(tb->s01_axi_bready);
-//        p_araddr  = (void *) &(tb->s01_axi_araddr);
-//        p_arprot  = &(tb->s01_axi_arprot);
-//        p_arvalid = &(tb->s01_axi_arvalid);
-//        p_arready = &(tb->s01_axi_arready);
-//        p_rdata   = &(tb->s01_axi_rdata);
-//        p_rresp   = &(tb->s01_axi_rresp);
-//        p_rvalid  = &(tb->s01_axi_rvalid);
-//        p_rready  = &(tb->s01_axi_rready);
-//#else
-//        //int *space = (int *)malloc(sizeof(int)*22);
-//        //address_size = 4;
-//        //aclk    = (unsigned char *) &space[19];
-//        //aresetn = (unsigned char *) &space[20];
-//        //p_awaddr  = (void *)  &space[0];
-//        //p_awprot  = (unsigned char *) &space[1];
-//        //p_awvalid = (unsigned char *) &space[2];
-//        //p_awready = (unsigned char *) &space[3];
-//        //p_wdata   = (unsigned int *)  &space[4];
-//        //p_wstrb   = (unsigned char *) &space[5];
-//        //p_wvalid  = (unsigned char *) &space[6];
-//        //p_wready  = (unsigned char *) &space[7];
-//        //p_bresp   = (unsigned char *) &space[8];
-//        //p_bvalid  = (unsigned char *) &space[9];
-//        //p_bready  = (unsigned char *) &space[10];
-//        //p_araddr  = (void *)  &space[11];
-//        //p_arprot  = (unsigned char *) &space[12];
-//        //p_arvalid = (unsigned char *) &space[13];
-//        //p_arready = (unsigned char *) &space[14];
-//        //p_rdata   = (unsigned int *)  &space[15];
-//        //p_rresp   = (unsigned char *) &space[16];
-//        //p_rvalid  = (unsigned char *) &space[17];
-//        //p_rready  = (unsigned char *) &space[18];
-//#endif
-//        }
-//    else assert(0);
-//}
-
+  axil(const string &base) :
+        p_aclk    (string(base) + string(".aclk_gpio")),
+        p_aresetn (string(base) + string(".aresetn_gpio")),
+        p_awaddr  (string(base) + string(".awaddr_gpio")),
+        p_awprot  (string(base) + string(".awprot_gpio")),
+        p_awvalid (string(base) + string(".awvalid_gpio")),
+        p_awready (string(base) + string(".awready_gpio")),
+        p_wdata   (string(base) + string(".wdata_gpio")),
+        p_wstrb   (string(base) + string(".wstrb_gpio")),
+        p_wvalid  (string(base) + string(".wvalid_gpio")),
+        p_wready  (string(base) + string(".wready_gpio")),
+        p_bresp   (string(base) + string(".bresp_gpio")),
+        p_bvalid  (string(base) + string(".bvalid_gpio")),
+        p_bready  (string(base) + string(".bready_gpio")),
+        p_araddr  (string(base) + string(".araddr_gpio")),
+        p_arprot  (string(base) + string(".arprot_gpio")),
+        p_arvalid (string(base) + string(".arvalid_gpio")),
+        p_arready (string(base) + string(".arready_gpio")),
+        p_rdata   (string(base) + string(".rdata_gpio")),
+        p_rresp   (string(base) + string(".rresp_gpio")),
+        p_rvalid  (string(base) + string(".rvalid_gpio")),
+        p_rready  (string(base) + string(".rready_gpio")) {
+            std::cout << base << std::endl;
+        }
 };
 
 class bp_zynq_pl {
 
     Vtop *tb;
-    struct axil<GP0_ADDR_WIDTH,GP0_DATA_WIDTH> *axi_gp0;
-    struct axil<GP1_ADDR_WIDTH,GP1_DATA_WIDTH> *axi_gp1;
+    axil<GP0_ADDR_WIDTH,GP0_DATA_WIDTH> *axi_gp0;
+    axil<GP1_ADDR_WIDTH,GP1_DATA_WIDTH> *axi_gp1;
 
     // Wait for (low true) reset to be asserted by the testbench
-    void reset(void) { while (axi_gp0->p_aresetn == 1) { tick(); } }
+    template <unsigned int A, unsigned int D>
+    void reset(axil<A, D> *axil) {
+      printf("bp_zynq_pl: Entering reset\n");
+      while (axil->p_aresetn == 1) {
+        tick();
+      }
+      printf("bp_zynq_pl: Exiting reset\n");
+    }
 
     // Each bsg_timekeeper::next() moves to the next clock edge
     //   so we need 2 to perform one full clock cycle.
@@ -228,15 +196,16 @@ class bp_zynq_pl {
 
     // Tick once to register clock generators
     tb->eval();
+    tick();
 
-    printf("About to assign values\n");
-    axi_gp0 = new axil<GP0_ADDR_WIDTH, GP0_DATA_WIDTH>();
-    //axi_gp1.init(1,tb);
-    //axi_gp1 = new axil();
-
-    printf("bp_zynq_pl: Entering reset\n");
-    reset();
-    printf("bp_zynq_pl: Exiting reset\n");
+#ifdef GP0_ENABLE
+    axi_gp0 = new axil<GP0_ADDR_WIDTH, GP0_DATA_WIDTH>(STRINGIFY(GP0_HIER_BASE));
+    reset(axi_gp0);
+#endif
+#ifdef GP1_ENABLE
+    axi_gp1 = new axil<GP1_ADDR_WIDTH, GP1_DATA_WIDTH>(STRINGIFY(GP1_HIER_BASE));
+    reset(axi_gp1);
+#endif
   }
 
   ~bp_zynq_pl(void) {
@@ -271,61 +240,63 @@ class bp_zynq_pl {
     if (ZYNQ_PL_DEBUG)
       printf("  bp_zynq_pl: AXI writing [%x] -> port %d, [%x]<-%8.8x\n", address_orig, index, address, data);
 
-    axil_write_helper(index,address,data,wstrb);
+    if (index == 0) {
+      axil_write_helper(axi_gp0, address, data, wstrb);
+    } else if (index == 1) {
+      axil_write_helper(axi_gp1, address, data, wstrb);
+    }
   }
 
-#define AXI_TIMEOUT 8000
-
-  void axil_write_helper(int index, unsigned int address, int data, int wstrb)
+  template <typename T>
+  void axil_write_helper(T *axil, unsigned int address, int data, int wstrb)
   {
     int timeout_counter=0;
 
     assert(wstrb==0xf); // we only support full int writes right now
 
-    axi_gp0->p_awvalid = 1;
-    axi_gp0->p_wvalid = 1;
-    axi_gp0->p_awaddr = address;
-    axi_gp0->p_wdata = data;
-    axi_gp0->p_wstrb = wstrb;
+    axil->p_awvalid = 1;
+    axil->p_wvalid = 1;
+    axil->p_awaddr = address;
+    axil->p_wdata = data;
+    axil->p_wstrb = wstrb;
 
-    while (axi_gp0->p_awready == 0 && axi_gp0->p_wready == 0) {
+    while (axil->p_awready == 0 && axil->p_wready == 0) {
 
-      if (timeout_counter++ > AXI_TIMEOUT) {
+      if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         printf("bp_zynq_pl: AXI write timeout\n");
         done();
-        delete tb;
         exit(0);
         assert(0);
       }
 
-      this->tick();
+      tick();
     }
 
-    this->tick();
+    tick();
 
     // must drop valid signals
     // let's get things ready with bready at the same time
-    axi_gp0->p_awvalid = 0;
-    axi_gp0->p_wvalid = 0;
-    axi_gp0->p_bready = 1;
+    axil->p_awvalid = 0;
+    axil->p_wvalid = 0;
+    axil->p_bready = 1;
 
     // wait for bvalid to go high
-    while (axi_gp0->p_bvalid == 0) {
-      if (timeout_counter++ > AXI_TIMEOUT) {
+    while (axil->p_bvalid == 0) {
+      if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         printf("bp_zynq_pl: AXI bvalid timeout\n");
         done();
-        delete tb;
         exit(0);
       }
 
-      this->tick();
+      tick();
     }
 
     // now, we will drop bready low with ready on the next cycle
-    this->tick();
-    axi_gp0->p_bready  = 0;
+    tick();
+    axil->p_bready  = 0;
     return;
   }
+
 
   int axil_read(unsigned int address) {
     int address_orig = address;
@@ -347,7 +318,11 @@ class bp_zynq_pl {
     else
       assert(0);
 
-    data = axil_read_helper(index, address);
+    if (index == 0) {
+      data = axil_read_helper(axi_gp0, address);
+    } else if (index == 1) {
+      data = axil_read_helper(axi_gp1, address);
+    }
 
     if (ZYNQ_PL_DEBUG)
       printf("  bp_zynq_pl: AXI reading [%x] -> port %d, [%x]->%8.8x\n", address_orig, index, address, data);
@@ -355,59 +330,56 @@ class bp_zynq_pl {
     return data;
   }
 
-  int axil_read_helper(int index, unsigned int address) {
+  template <typename T>
+  int axil_read_helper(T *axil, unsigned int address) {
     int data;
     int timeout_counter = 0;
 
     // assert these signals "late in the cycle"
-    axi_gp0->p_arvalid = 1;
-    axi_gp0->p_araddr = address;
+    axil->p_arvalid = 1;
+    axil->p_araddr = address;
 
     // stall while ready is not asserted
-    while (axi_gp0->p_arready == 0)
+    while (axil->p_arready == 0)
       {
-        if (timeout_counter++ > AXI_TIMEOUT) {
+        if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
           printf("bp_zynq_pl: AXI read arready timeout\n");
           done();
-          delete tb;
           exit(0);
         }
 
-        this->tick();
+        tick();
       }
 
     // ready was asserted, transaction will be accepted!
-    this->tick();
-
-    // assert these signals "late in the cycle"
+    tick();
 
     // arvalid must drop the request
-    axi_gp0->p_arvalid = 0;
+    axil->p_arvalid = 0;
 
     // setup to receive the reply
-    axi_gp0->p_rready  = 1;
+    axil->p_rready  = 1;
 
     // stall while valid is not asserted
-    while (axi_gp0->p_rvalid == 0)
+    while (axil->p_rvalid == 0)
       {
-        if (timeout_counter++ > AXI_TIMEOUT) {
+        if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
           printf("bp_zynq_pl: AXI read rvalid timeout\n");
           done();
-          delete tb;
           exit(0);
         }
 
-        this->tick();
+        tick();
       }
 
     // if valid was asserted, latch the incoming data
-    //data = *(axi_gp0.rdata);
-    data = axi_gp0->p_rdata;
-    this->tick();
+    data = axil->p_rdata;
+    tick();
 
     // drop the ready signal on the following cycle
-    axi_gp0->p_rready  = 0;
+    axil->p_rready  = 0;
 
     return data;
   }
 };
+

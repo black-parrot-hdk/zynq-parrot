@@ -62,7 +62,7 @@ module top #
     logic s00_axi_rvalid, s00_axi_rready;
     bsg_nonsynth_dpi_to_axil
      #(.addr_width_p(C_S00_AXI_ADDR_WIDTH), .data_width_p(C_S00_AXI_DATA_WIDTH))
-     axil
+     axil0
       (.aclk_o(s00_axi_aclk)
        ,.aresetn_o(s00_axi_aresetn)
 

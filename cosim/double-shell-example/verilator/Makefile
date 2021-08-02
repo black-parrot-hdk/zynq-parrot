@@ -3,22 +3,29 @@ export TOP  ?= top
 export HOST-PROGRAM ?= ps.cpp
 export AXI_NAME ?= s00_axi
 
-BASEJUMP_STL := $(abspath ../../import/basejump_stl)
+VERILATOR ?= verilator
 
-INCLUDES=-I../../include/verilator -I../../../include/verilator
-VERILOG-INCLUDES= -I$(BASEJUMP_STL)/bsg_misc -I../$(BASEJUMP_STL)/bsg_misc -I$(BASEJUMP_STL)/bsg_dataflow -I../$(BASEJUMP_STL)/bsg_dataflow  -I$(BASEJUMP_STL)/bsg_mem -I../$(BASEJUMP_STL)/bsg_mem
-VPATH=../ .  ../../../common/v ../../../../common/v
+VPATH=../ .
 
 TRACE=--trace-fst
 
 # You need to configure these parameters for your particular accelerator!
+BASEJUMP_STL = ../../import/black-parrot/external/basejump_stl/
 
-THE_FLAGS = -DGP0_ADDR_BASE=0x43C00000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_SIZE_BYTES=4096 $(INCLUDES)
+#THE_FLAGS = -DGP0_ADDR_BASE=0x43C00000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_SIZE_BYTES=4096
+THE_FLAGS += -DZYNQ_PL_DEBUG
+THE_FLAGS += -DGP0_ENABLE -DGP0_ADDR_BASE=0x43C00000 -DGP0_ADDR_WIDTH=5 -DGP0_DATA_WIDTH=32 -DGP0_HIER_BASE=TOP.top.axil0
+THE_FLAGS += -DGP1_ENABLE -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_WIDTH=5 -DGP1_DATA_WIDTH=32 -DGP1_HIER_BASE=TOP.top.axil1
+THE_FLAGS += -I../../include/verilator -I../../include/verilator -I../../../include/verilator -I../$(BASEJUMP_STL)/bsg_test
 
 top: all
 
+INCLUDES=-I$(BASEJUMP_STL)/bsg_misc -I$(BASEJUMP_STL)/bsg_dataflow -I$(BASEJUMP_STL)/bsg_mem -I$(BASEJUMP_STL)/bsg_test ../../import/black-parrot/external/basejump_stl/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp -I../../common/v/
+
+VV_OPTS = -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTEMPTY -Wno-fatal -top-module top
+
 verilate: $(HOST-PROGRAM)
-	verilator -Wno-fatal -timescale 1ns/1ps -sv $(VERILOG-INCLUDES) -CFLAGS  "$(THE_FLAGS)" -Wno-UNUSED $(TRACE) -y $(BASEJUMP_STL)/ -y ../../common/v/ -cc $(TOP).v  -exe $<
+	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(THE_FLAGS)" -Wall -Wno-UNUSED $(TRACE) -cc $(INCLUDES) $(TOP).v -exe $<
 
 recursive: verilate
 	make -j -C obj_dir/ -f V$(TOP).mk V$(TOP)
