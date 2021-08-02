@@ -45,27 +45,21 @@
 	);
 `else
     );
-    logic s00_axi_aclk;
-    logic s00_axi_aresetn;
+    logic s00_axi_aclk, s00_axi_aresetn;
     logic [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_awaddr;
     logic [2:0] s00_axi_awprot;
-    logic s00_axi_awvalid;
-    logic s00_axi_awready;
+    logic s00_axi_awvalid, s00_axi_awready;
     logic [C_S00_AXI_DATA_WIDTH-1:0] s00_axi_wdata;
     logic [(C_S00_AXI_DATA_WIDTH/8)-1:0] s00_axi_wstrb;
-    logic s00_axi_wvalid;
-    logic s00_axi_wready;
+    logic s00_axi_wvalid, s00_axi_wready;
     logic [1:0] s00_axi_bresp;
-    logic s00_axi_bvalid;
-    logic s00_axi_bready;
+    logic s00_axi_bvalid, s00_axi_bready;
     logic [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_araddr;
     logic [2:0] s00_axi_arprot;
-    logic s00_axi_arvalid;
-    logic s00_axi_arready;
+    logic s00_axi_arvalid, s00_axi_arready;
     logic [C_S00_AXI_DATA_WIDTH-1:0] s00_axi_rdata;
     logic [1:0] s00_axi_rresp;
-    logic s00_axi_rvalid;
-    logic s00_axi_rready;
+    logic s00_axi_rvalid, s00_axi_rready;
     bsg_nonsynth_dpi_to_axil
      #(.addr_width_p(C_S00_AXI_ADDR_WIDTH), .data_width_p(C_S00_AXI_DATA_WIDTH))
      axil

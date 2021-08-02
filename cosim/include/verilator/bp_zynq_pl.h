@@ -192,85 +192,30 @@ public:
 //    else assert(0);
 //}
 
-  // we truncate this address to the verilator simulation size
-  // but presumably verilator is also internally truncating the
-  // address to the actual Verilog correct size. This would be the primary
-  // mechanism by which the base offset of the AXI slave ports
-  // is "subtracted off".
-  //
-  // for the more general case of lots of AXI devices and AXI switches etc
-  // more explicit modeling of the AXI switch would be necessary
-  //
-
-  //void set_araddr(unsigned int value)
-  //{
-  //  if (address_size == 1){
-  //    unsigned char *cp = (unsigned char *) araddr;
-  //    *cp = (unsigned char) value & 0xff;
-  //  } else
-  //    if (address_size == 2){
-  //      unsigned short *cp = (unsigned short *) araddr;
-  //      *cp = (unsigned short) value & 0xffff;
-  //    } else
-  //      if (address_size == 4){
-  //        unsigned int *cp = (unsigned int *) araddr;
-  //        *cp = value;
-  //      }
-  //      else
-  //        assert(0); // unhandled size
-  //}
-
-  //// we truncate this address to the verilator simulation size
-  //// but presumably verilator is also internally truncating the
-  //// address to the actual Verilog correct size. This would be the primary
-  //// mechanism by which the base offset of the AXI slave ports
-  //// is "subtracted off".
-
-  //void set_awaddr(unsigned int value)
-  //{
-  //  //    printf("%x address_size=%d\n",value, address_size);
-  //  if (address_size == 1){
-  //    unsigned char *cp = (unsigned char *) awaddr;
-  //    *cp = (unsigned char) value & 0xff;
-  //  } else
-  //    if (address_size == 2){
-  //      unsigned short *cp = (unsigned short *) awaddr;
-  //      *cp = (unsigned short) value & 0xffff;
-  //    } else
-  //      if (address_size == 4){
-  //        unsigned int *cp = (unsigned int *) awaddr;
-  //        *cp = value;
-  //      }
-  //      else
-  //        assert(0); // unhandled size
-  //}
-
 };
 
 class bp_zynq_pl {
 
-  Vtop *tb;
-  struct axil<GP0_ADDR_WIDTH,GP0_DATA_WIDTH> *axi_gp0;
-  struct axil<GP1_ADDR_WIDTH,GP1_DATA_WIDTH> *axi_gp1;
+    Vtop *tb;
+    struct axil<GP0_ADDR_WIDTH,GP0_DATA_WIDTH> *axi_gp0;
+    struct axil<GP1_ADDR_WIDTH,GP1_DATA_WIDTH> *axi_gp1;
 
-  // Wait for (low true) reset to be asserted by the testbench
-  void reset(void) {
-    while (axi_gp0->p_aresetn == 1);
-  }
+    // Wait for (low true) reset to be asserted by the testbench
+    void reset(void) { while (axi_gp0->p_aresetn == 1) { tick(); } }
 
-  // Each bsg_timekeeper::next() moves to the next clock edge
-  //   so we need 2 to perform one full clock cycle.
-  // If your design does not evaluate things on negedge, you could omit 
-  //   the first eval, but BSG designs tend to do assertions on negedge
-  //   at the least.
-  void tick() {
-    bsg_timekeeper::next();
-    tb->eval();
-    bsg_timekeeper::next();
-    tb->eval();
-  }
+    // Each bsg_timekeeper::next() moves to the next clock edge
+    //   so we need 2 to perform one full clock cycle.
+    // If your design does not evaluate things on negedge, you could omit 
+    //   the first eval, but BSG designs tend to do assertions on negedge
+    //   at the least.
+    void tick() {
+      bsg_timekeeper::next();
+      tb->eval();
+      bsg_timekeeper::next();
+      tb->eval();
+    }
 
- public:
+  public:
   
   bp_zynq_pl(int argc, char *argv[]) {
     // Initialize Verilators variables
@@ -285,12 +230,9 @@ class bp_zynq_pl {
     tb->eval();
 
     printf("About to assign values\n");
-    //axi_gp0.init(0,tb);
-    axi_gp0 = new axil<4, 32>();
-    printf("Init 0\n");
+    axi_gp0 = new axil<GP0_ADDR_WIDTH, GP0_DATA_WIDTH>();
     //axi_gp1.init(1,tb);
     //axi_gp1 = new axil();
-    printf("Init 1\n");
 
     printf("bp_zynq_pl: Entering reset\n");
     reset();

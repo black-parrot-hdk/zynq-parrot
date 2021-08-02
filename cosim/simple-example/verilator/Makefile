@@ -18,8 +18,8 @@ THE_FLAGS += -I../../include/verilator -I../../include/verilator -I../../../incl
 
 top: all
 
-INCLUDES=-I$(BASEJUMP_STL)/bsg_misc -I$(BASEJUMP_STL)/bsg_dataflow -I$(BASEJUMP_STL)/bsg_mem -I$(BASEJUMP_STL)/bsg_test ../../import/black-parrot/external/basejump_stl/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp bsg_nonsynth_dpi_to_axil.v
-
+INCLUDES=-I$(BASEJUMP_STL)/bsg_misc -I$(BASEJUMP_STL)/bsg_dataflow -I$(BASEJUMP_STL)/bsg_mem -I$(BASEJUMP_STL)/bsg_test ../../import/black-parrot/external/basejump_stl/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp
+INCLUDES+= ../../common/v/bsg_nonsynth_dpi_to_axil.v
 VV_OPTS = -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTEMPTY -Wno-fatal -top-module top
 
 verilate: $(HOST-PROGRAM)
