@@ -1,7 +1,7 @@
 # vivado -mode tcl
 
 
-set basejump_path ../../import/basejump_stl/
+set basejump_path ../../import/black-parrot/external/basejump_stl/
 
 set basejump_list { bsg_misc/bsg_dff_reset_en.v bsg_dataflow/bsg_fifo_1r1w_small.v bsg_dataflow/bsg_flow_counter.v bsg_misc/bsg_counter_up_down.v bsg_dataflow/bsg_fifo_1r1w_small_unhardened.v bsg_dataflow/bsg_two_fifo.v bsg_dataflow/bsg_fifo_1r1w_small_hardened.v bsg_misc/bsg_decode_with_v.v bsg_misc/bsg_decode.v bsg_misc/bsg_mux_one_hot.v bsg_dataflow/bsg_fifo_tracker.v bsg_misc/bsg_circular_ptr.v bsg_mem/bsg_mem_1r1w.v bsg_mem/bsg_mem_1r1w_synth.v}
 
