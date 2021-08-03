@@ -39,7 +39,9 @@ using namespace bsg_nonsynth_dpi;
 #ifndef GP0_ADDR_WIDTH
 #error GP0_ADDR_WIDTH must be defined
 #endif
+#ifndef GP0_ADDR_SIZE_BYTES
 #define GP0_ADDR_SIZE_BYTES (1 << GP0_ADDR_WIDTH)
+#endif
 
 #ifndef GP0_ADDR_BASE
 #error GP0_ADDR_BASE must be defined
@@ -63,7 +65,9 @@ using namespace bsg_nonsynth_dpi;
 #ifndef GP1_ADDR_WIDTH
 #error GP1_ADDR_WIDTH must be defined
 #endif
+#ifndef GP1_ADDR_SIZE_BYTES
 #define GP1_ADDR_SIZE_BYTES (1 << GP1_ADDR_WIDTH)
+#endif
 
 #ifndef GP1_ADDR_BASE
 #error GP1_ADDR_BASE must be defined

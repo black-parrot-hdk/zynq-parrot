@@ -16,6 +16,10 @@
 #define FREE_DRAM 0
 #define DRAM_ALLOCATE_SIZE 120*1024*1024
 
+#ifndef ZYNQ_PL_DEBUG
+#define ZYNQ_PL_DEBUG 0
+#endif
+
 void nbf_load(bp_zynq_pl *zpl, char *);
 bool decode_bp_output(bp_zynq_pl *zpl, int data);
 
@@ -147,9 +151,10 @@ int main(int argc, char **argv) {
     for (int q = 0; q < 10; q++)
     {
       int z = zpl->axil_read(0xA0000000U+0x30bff8);
+              //printf("ps.cpp: %d%c",z,(q % 8) == 7 ? '\n' : ' ');
       // read second 32-bits
       int z2 = zpl->axil_read(0xA0000000U+0x30bff8+4);
-      //        printf("ps.cpp: %d%c",z,(q % 8) == 7 ? '\n' : ' ');
+              //printf("ps.cpp: %d%c",z2,(q % 8) == 7 ? '\n' : ' ');
     }
 
     printf("ps.cpp: attempting to read and write mtime reg in BP CFG space (testing ARM GP1 connections)\n");

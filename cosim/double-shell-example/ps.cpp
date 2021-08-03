@@ -4,8 +4,6 @@
 // the API we provide abstracts away the
 // communication plumbing differences.
 
-#define BSG_ENABLE_S01
-
 #include <stdlib.h>
 #include <stdio.h>
 #include "bp_zynq_pl.h"
