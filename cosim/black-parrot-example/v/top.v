@@ -57,6 +57,51 @@ module top
     ,output wire [1 : 0]                         s01_axi_rresp
     ,output wire                                 s01_axi_rvalid
     ,input wire                                  s01_axi_rready
+
+    ,input wire                                  m00_axi_aclk
+    ,input wire                                  m00_axi_aresetn
+    ,output wire [C_M00_AXI_ADDR_WIDTH-1:0]      m00_axi_awaddr
+    ,output wire                                 m00_axi_awvalid
+    ,input wire                                  m00_axi_awready
+    ,output wire [5:0]                           m00_axi_awid
+    ,output wire [1:0]                           m00_axi_awlock  // 1 bit bsg_cache_to_axi (AXI4); 2 bit (AXI3)
+    ,output wire [3:0]                           m00_axi_awcache
+    ,output wire [2:0]                           m00_axi_awprot
+    ,output wire [3:0]                           m00_axi_awlen   // 8 bits bsg_cache_to_axi
+    ,output wire [2:0]                           m00_axi_awsize
+    ,output wire [1:0]                           m00_axi_awburst
+    ,output wire [3:0]                           m00_axi_awqos
+
+    ,output wire [C_M00_AXI_DATA_WIDTH-1:0]      m00_axi_wdata
+    ,output wire                                 m00_axi_wvalid
+    ,input wire                                  m00_axi_wready
+    ,output wire [5:0]                           m00_axi_wid
+    ,output wire                                 m00_axi_wlast
+    ,output wire [(C_M00_AXI_DATA_WIDTH/8)-1:0]  m00_axi_wstrb
+
+    ,input wire                                  m00_axi_bvalid
+    ,output wire                                 m00_axi_bready
+    ,input wire [5:0]                            m00_axi_bid
+    ,input wire [1:0]                            m00_axi_bresp
+
+    ,output wire [C_M00_AXI_ADDR_WIDTH-1:0]      m00_axi_araddr
+    ,output wire                                 m00_axi_arvalid
+    ,input wire                                  m00_axi_arready
+    ,output wire [5:0]                           m00_axi_arid
+    ,output wire [1:0]                           m00_axi_arlock
+    ,output wire [3:0]                           m00_axi_arcache
+    ,output wire [2:0]                           m00_axi_arprot
+    ,output wire [3:0]                           m00_axi_arlen
+    ,output wire [2:0]                           m00_axi_arsize
+    ,output wire [1:0]                           m00_axi_arburst
+    ,output wire [3:0]                           m00_axi_arqos
+
+    ,input wire [C_M00_AXI_DATA_WIDTH-1:0]       m00_axi_rdata
+    ,input wire                                  m00_axi_rvalid
+    ,output wire                                 m00_axi_rready
+    ,input wire [5:0]                            m00_axi_rid
+    ,input wire                                  m00_axi_rlast
+    ,input wire [1:0]                            m00_axi_rresp
     );
 `else
     );
@@ -288,6 +333,7 @@ module top
       ,.m00_axi_rresp  (m00_axi_rresp)
       );
 
+   `ifdef VERILATOR
    localparam axi_id_width_p = 6;
    localparam axi_addr_width_p = 33; // FIXME: seems inconsistent
    localparam axi_data_width_p = 64;
@@ -334,6 +380,7 @@ module top
       ,.axi_rvalid_o  (m00_axi_rvalid)
       ,.axi_rready_i  (m00_axi_rready)
       );
+  `endif
 
    initial
      begin

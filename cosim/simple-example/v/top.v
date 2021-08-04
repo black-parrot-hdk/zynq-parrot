@@ -20,7 +20,7 @@
 		// Do not modify the ports beyond this line
 
 		// Ports of Axi Slave Bus Interface S00_AXI
-`ifndef VERILATOR
+`ifdef FPGA
 		input wire  s00_axi_aclk,
 		input wire  s00_axi_aresetn,
 		input wire [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_awaddr,

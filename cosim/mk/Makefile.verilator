@@ -1,0 +1,35 @@
+
+include $(TOP)/cosim/mk/Makefile.common
+
+VV_OPTS += --cc --sv
+VV_OPTS += --build --exe
+VV_OPTS += --trace-fst --trace-structs
+VV_OPTS += -Wno-fatal -Wall -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTEMPTY -Wno-UNUSED -top-module $(TOP_MODULE)
+
+CINCLUDES += -I$(COSIM_INCLUDE_DIR)/verilator
+
+VSOURCES  += $(COSIM_SRC_DIR)/bsg_nonsynth_dpi_to_axil.v
+VSOURCES  += $(COSIM_SRC_DIR)/bsg_zynq_pl_shell.v
+
+TRACE ?= 0
+
+all: obj_dir/V$(TOP_MODULE)
+	$< $(SIM_ARGS) $(TRACE)
+
+obj_dir/V$(TOP_MODULE): $(HOST_PROGRAM)
+	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" $(VSOURCES) $(VINCLUDES) $<
+
+clean:
+	-rm -rf obj_dir/ *~ trace.fst
+
+view:
+	gtkwave -f trace.fst
+
+help:
+	@echo -e "Usage: make"
+	@echo -e "\tclean - Cleans directory"
+	@echo -e "\tview - Open waveform in gtkwave"
+	@echo -e "\tall - Runs the current test"
+	@echo -e "Options"
+	@echo -e "\tTRACE = whether to dump a .fst waveform"
+

@@ -1,0 +1,44 @@
+
+include $(TOP)/cosim/mk/Makefile.common
+
+CFLAGS += -O2
+CFLAGS += -lcma -lpthread
+
+CINCLUDES += -I$(COSIM_INCLUDE_DIR)/fpga
+
+EXE ?= runme
+run: $(EXE)
+	sudo $<
+
+$(EXE): $(HOST_PROGRAM)
+	$(GCC) $(CFLAGS) $(CINCLUDES) $(CSOURCES) $< -o $@
+
+fpga_build_ip: clean
+	@echo "reminder:  source /tools/Xilinx/Vivado/2019.1/settings64.sh to init xilinx tools"
+	mkdir fpga_build
+	$(VIVADO) -source $(CURR)/vivado-build-ip.tcl -mode tcl
+
+fpga_build: fpga_build_ip
+	$(VIVADO) -source $(CURR)/vivado-create-block.tcl -mode tcl
+
+pack_bitstream:
+	cp $(BASENAME)_bd_proj.srcs/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1* .
+	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.bit $(BASENAME)_bd_1.bit
+	tar -Jc $(BASENAME)_bd_1* | base64 > $(BASENAME)_bd_1.tar.xz.b64
+
+unpack_bitstream:
+	base64 -d $(BASENAME)_bd_1.tar.xz.b64 | tar xvJ
+
+load_bitstream:
+	echo 'from pynq import Overlay; overlay=Overlay("$(BASENAME)_bd_1.bit");' | sudo python3
+
+clean:
+	rm -rf $(EXE)
+	rm -rf *.log
+	rm -rf *.jou
+	rm -rf $(BASENAME)_ip_proj*
+	rm -rf fpga_build
+	rm -rf $(BASENAME)_bd_proj*
+	rm -rf $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.hwh $(BASENAME)_bd_1_bd.tcl
+	rm -rf sds_trace_data.dat
+
