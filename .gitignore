@@ -1,2 +1,5 @@
 trace.fst
 obj_dir/
+*.jou
+*.log
+*.str

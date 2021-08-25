@@ -191,7 +191,12 @@ module top
        ,.rvalid_i(s01_axi_rvalid)
        ,.rready_o(s01_axi_rready)
        );
-`endif
+
+   localparam axi_id_width_p = 6;
+   localparam axi_addr_width_p = 33; // FIXME: seems inconsistent
+   localparam axi_data_width_p = 64;
+   localparam axi_strb_width_p = axi_data_width_p >> 3;
+   localparam axi_burst_len_p = 8;
 
    wire                                 m00_axi_aclk = s00_axi_aclk;
    wire                                 m00_axi_aresetn = s00_axi_aresetn;
@@ -233,6 +238,60 @@ module top
    wire [5:0]                           m00_axi_rid;
    wire                                 m00_axi_rlast;
    wire [2:0]                           m00_axi_rresp;
+
+
+   bsg_nonsynth_axi_mem
+     #(.axi_id_width_p(axi_id_width_p)
+       ,.axi_addr_width_p(axi_addr_width_p)
+       ,.axi_data_width_p(axi_data_width_p)
+       ,.axi_burst_len_p (axi_burst_len_p)
+       ,.mem_els_p(2**28) // 256 MB
+       ,.init_data_p('0)
+     )
+   axi_mem
+     (.clk_i          (m00_axi_aclk)
+      ,.reset_i       (~m00_axi_aresetn)
+
+      ,.axi_awid_i    (m00_axi_awid)
+      ,.axi_awaddr_i  (m00_axi_awaddr)
+      ,.axi_awvalid_i (m00_axi_awvalid)
+      ,.axi_awready_o (m00_axi_awready)
+
+      ,.axi_wdata_i   (m00_axi_wdata)
+      ,.axi_wstrb_i   (m00_axi_wstrb)
+      ,.axi_wlast_i   (m00_axi_wlast)
+      ,.axi_wvalid_i  (m00_axi_wvalid)
+      ,.axi_wready_o  (m00_axi_wready)
+
+      ,.axi_bid_o     (m00_axi_bid)
+      ,.axi_bresp_o   (m00_axi_bresp)
+      ,.axi_bvalid_o  (m00_axi_bvalid)
+      ,.axi_bready_i  (m00_axi_bready)
+
+      ,.axi_arid_i    (m00_axi_arid)
+      ,.axi_araddr_i  (m00_axi_araddr)
+      ,.axi_arvalid_i (m00_axi_arvalid)
+      ,.axi_arready_o (m00_axi_arready)
+
+      ,.axi_rid_o     (m00_axi_rid)
+      ,.axi_rdata_o   (m00_axi_rdata)
+      ,.axi_rresp_o   (m00_axi_rresp)
+      ,.axi_rlast_o   (m00_axi_rlast)
+      ,.axi_rvalid_o  (m00_axi_rvalid)
+      ,.axi_rready_i  (m00_axi_rready)
+      );
+
+   initial
+     begin
+        if ($test$plusargs("bsg_trace") != 0)
+          begin
+             $display("[%0t] Tracing to trace.fst...\n", $time);
+             $dumpfile("trace.fst");
+             $dumpvars();
+          end
+     end
+
+`endif
 
    top_zynq #
      (.C_S00_AXI_DATA_WIDTH (C_S00_AXI_DATA_WIDTH)
@@ -333,63 +392,5 @@ module top
       ,.m00_axi_rresp  (m00_axi_rresp)
       );
 
-   `ifdef VERILATOR
-   localparam axi_id_width_p = 6;
-   localparam axi_addr_width_p = 33; // FIXME: seems inconsistent
-   localparam axi_data_width_p = 64;
-   localparam axi_strb_width_p = axi_data_width_p >> 3;
-   localparam axi_burst_len_p = 8;
-
-   bsg_nonsynth_axi_mem
-     #(.axi_id_width_p(axi_id_width_p)
-       ,.axi_addr_width_p(axi_addr_width_p)
-       ,.axi_data_width_p(axi_data_width_p)
-       ,.axi_burst_len_p (axi_burst_len_p)
-       ,.mem_els_p(2**28) // 256 MB
-       ,.init_data_p('0)
-     )
-   axi_mem
-     (.clk_i          (m00_axi_aclk)
-      ,.reset_i       (~m00_axi_aresetn)
-
-      ,.axi_awid_i    (m00_axi_awid)
-      ,.axi_awaddr_i  (m00_axi_awaddr)
-      ,.axi_awvalid_i (m00_axi_awvalid)
-      ,.axi_awready_o (m00_axi_awready)
-
-      ,.axi_wdata_i   (m00_axi_wdata)
-      ,.axi_wstrb_i   (m00_axi_wstrb)
-      ,.axi_wlast_i   (m00_axi_wlast)
-      ,.axi_wvalid_i  (m00_axi_wvalid)
-      ,.axi_wready_o  (m00_axi_wready)
-
-      ,.axi_bid_o     (m00_axi_bid)
-      ,.axi_bresp_o   (m00_axi_bresp)
-      ,.axi_bvalid_o  (m00_axi_bvalid)
-      ,.axi_bready_i  (m00_axi_bready)
-
-      ,.axi_arid_i    (m00_axi_arid)
-      ,.axi_araddr_i  (m00_axi_araddr)
-      ,.axi_arvalid_i (m00_axi_arvalid)
-      ,.axi_arready_o (m00_axi_arready)
-
-      ,.axi_rid_o     (m00_axi_rid)
-      ,.axi_rdata_o   (m00_axi_rdata)
-      ,.axi_rresp_o   (m00_axi_rresp)
-      ,.axi_rlast_o   (m00_axi_rlast)
-      ,.axi_rvalid_o  (m00_axi_rvalid)
-      ,.axi_rready_i  (m00_axi_rready)
-      );
-  `endif
-
-   initial
-     begin
-        if ($test$plusargs("bsg_trace") != 0)
-          begin
-             $display("[%0t] Tracing to trace.fst...\n", $time);
-             $dumpfile("trace.fst");
-             $dumpvars();
-          end
-     end
-
 endmodule
+

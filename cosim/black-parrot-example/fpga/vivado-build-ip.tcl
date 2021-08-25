@@ -4,7 +4,7 @@ source vivado_parse_bp_vcs_flist.tcl
 
 set flist_filename  flist.vcs
 
-set flist_includelist [list vivado_parse_bp_vcs_flist $flist_filename]
+set flist_includelist [vivado_parse_bp_vcs_flist $flist_filename ../../import/black-parrot ../../import/black-parrot/external/basejump_stl ../../import/black-parrot/external/HardFloat ../../v]
 
 set flist    [lindex $flist_includelist 0]
 set includelist  [lindex $flist_includelist 1]
@@ -14,7 +14,7 @@ set includelist  [lindex $flist_includelist 1]
 
 set project_top_module top
 
-set project_name black_parrot_ip_proj
+set project_name blackparrot_ip_proj
 
 #
 # create project and load in all the files

@@ -1,7 +1,7 @@
-set project_name black_parrot_bd_proj
+set project_name blackparrot_bd_proj
 
 create_project -force ${project_name} [pwd] -part xc7z020clg400-1
-create_bd_design "black_parrot_bd_1"
+create_bd_design "blackparrot_bd_1"
 update_compile_order -fileset sources_1
 startgroup
 create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0
@@ -10,7 +10,7 @@ set_property -dict [list CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {20}] [get_bd_cells
 set_property -dict [list CONFIG.PCW_USE_S_AXI_HP0 {1}] [get_bd_cells processing_system7_0]
 endgroup
 apply_bd_automation -rule xilinx.com:bd_rule:processing_system7 -config {make_external "FIXED_IO, DDR" Master "Disable" Slave "Disable" }  [get_bd_cells processing_system7_0]
-open_bd_design ${project_name}.srcs/sources_1/bd/black_parrot_bd_1/black_parrot_bd_1.bd}
+open_bd_design ${project_name}.srcs/sources_1/bd/blackparrot_bd_1/blackparrot_bd_1.bd}
 set_property  ip_repo_paths  fpga_build [current_project]
 update_ip_catalog
 
@@ -61,8 +61,8 @@ set_property range 4K [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg
 set_property range 1G [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg03}]
 
 validate_bd_design
-make_wrapper -files [get_files ${project_name}.srcs/sources_1/bd/black_parrot_bd_1/black_parrot_bd_1.bd] -top
-add_files -norecurse ${project_name}.srcs/sources_1/bd/black_parrot_bd_1/hdl/black_parrot_bd_1_wrapper.v
+make_wrapper -files [get_files ${project_name}.srcs/sources_1/bd/blackparrot_bd_1/blackparrot_bd_1.bd] -top
+add_files -norecurse ${project_name}.srcs/sources_1/bd/blackparrot_bd_1/hdl/blackparrot_bd_1_wrapper.v
 delete_bd_objs [get_bd_nets reset_rtl_0_1] [get_bd_ports reset_rtl_0]
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins proc_sys_reset_0/ext_reset_in]
 save_bd_design

@@ -28,6 +28,8 @@ endif
 # TODO: Check verilator version
 export VIVADO    ?= vivado
 export GCC       ?= g++
+# need to set the shell so that source works
+export SHELL     ?= /bin/bash
 
 export PATH := $(BP_TOOLS_DIR)/install/bin:$(BP_SDK_DIR)/install/bin:$(PATH)
 
