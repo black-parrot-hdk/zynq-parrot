@@ -13,6 +13,7 @@ module top
     )
    (
     // Ports of Axi Slave Bus Interface S00_AXI
+`ifndef VERILATOR
     input wire                                   s00_axi_aclk
     ,input wire                                  s00_axi_aresetn
     ,input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
@@ -56,7 +57,146 @@ module top
     ,output wire [1 : 0]                         s01_axi_rresp
     ,output wire                                 s01_axi_rvalid
     ,input wire                                  s01_axi_rready
+
+    ,input wire                                  m00_axi_aclk
+    ,input wire                                  m00_axi_aresetn
+    ,output wire [C_M00_AXI_ADDR_WIDTH-1:0]      m00_axi_awaddr
+    ,output wire                                 m00_axi_awvalid
+    ,input wire                                  m00_axi_awready
+    ,output wire [5:0]                           m00_axi_awid
+    ,output wire [1:0]                           m00_axi_awlock  // 1 bit bsg_cache_to_axi (AXI4); 2 bit (AXI3)
+    ,output wire [3:0]                           m00_axi_awcache
+    ,output wire [2:0]                           m00_axi_awprot
+    ,output wire [3:0]                           m00_axi_awlen   // 8 bits bsg_cache_to_axi
+    ,output wire [2:0]                           m00_axi_awsize
+    ,output wire [1:0]                           m00_axi_awburst
+    ,output wire [3:0]                           m00_axi_awqos
+
+    ,output wire [C_M00_AXI_DATA_WIDTH-1:0]      m00_axi_wdata
+    ,output wire                                 m00_axi_wvalid
+    ,input wire                                  m00_axi_wready
+    ,output wire [5:0]                           m00_axi_wid
+    ,output wire                                 m00_axi_wlast
+    ,output wire [(C_M00_AXI_DATA_WIDTH/8)-1:0]  m00_axi_wstrb
+
+    ,input wire                                  m00_axi_bvalid
+    ,output wire                                 m00_axi_bready
+    ,input wire [5:0]                            m00_axi_bid
+    ,input wire [1:0]                            m00_axi_bresp
+
+    ,output wire [C_M00_AXI_ADDR_WIDTH-1:0]      m00_axi_araddr
+    ,output wire                                 m00_axi_arvalid
+    ,input wire                                  m00_axi_arready
+    ,output wire [5:0]                           m00_axi_arid
+    ,output wire [1:0]                           m00_axi_arlock
+    ,output wire [3:0]                           m00_axi_arcache
+    ,output wire [2:0]                           m00_axi_arprot
+    ,output wire [3:0]                           m00_axi_arlen
+    ,output wire [2:0]                           m00_axi_arsize
+    ,output wire [1:0]                           m00_axi_arburst
+    ,output wire [3:0]                           m00_axi_arqos
+
+    ,input wire [C_M00_AXI_DATA_WIDTH-1:0]       m00_axi_rdata
+    ,input wire                                  m00_axi_rvalid
+    ,output wire                                 m00_axi_rready
+    ,input wire [5:0]                            m00_axi_rid
+    ,input wire                                  m00_axi_rlast
+    ,input wire [1:0]                            m00_axi_rresp
     );
+`else
+    );
+
+    logic s00_axi_aclk, s00_axi_aresetn;
+    logic [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_awaddr;
+    logic [2:0] s00_axi_awprot;
+    logic s00_axi_awvalid, s00_axi_awready;
+    logic [C_S00_AXI_DATA_WIDTH-1:0] s00_axi_wdata;
+    logic [(C_S00_AXI_DATA_WIDTH/8)-1:0] s00_axi_wstrb;
+    logic s00_axi_wvalid, s00_axi_wready;
+    logic [1:0] s00_axi_bresp;
+    logic s00_axi_bvalid, s00_axi_bready;
+    logic [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_araddr;
+    logic [2:0] s00_axi_arprot;
+    logic s00_axi_arvalid, s00_axi_arready;
+    logic [C_S00_AXI_DATA_WIDTH-1:0] s00_axi_rdata;
+    logic [1:0] s00_axi_rresp;
+    logic s00_axi_rvalid, s00_axi_rready;
+    bsg_nonsynth_dpi_to_axil
+     #(.addr_width_p(C_S00_AXI_ADDR_WIDTH), .data_width_p(C_S00_AXI_DATA_WIDTH))
+     axil0
+      (.aclk_o(s00_axi_aclk)
+       ,.aresetn_o(s00_axi_aresetn)
+
+       ,.awaddr_o(s00_axi_awaddr)
+       ,.awprot_o(s00_axi_awprot)
+       ,.awvalid_o(s00_axi_awvalid)
+       ,.awready_i(s00_axi_awready)
+       ,.wdata_o(s00_axi_wdata)
+       ,.wstrb_o(s00_axi_wstrb)
+       ,.wvalid_o(s00_axi_wvalid)
+       ,.wready_i(s00_axi_wready)
+       ,.bresp_i(s00_axi_bresp)
+       ,.bvalid_i(s00_axi_bvalid)
+       ,.bready_o(s00_axi_bready)
+
+       ,.araddr_o(s00_axi_araddr)
+       ,.arprot_o(s00_axi_arprot)
+       ,.arvalid_o(s00_axi_arvalid)
+       ,.arready_i(s00_axi_arready)
+       ,.rdata_i(s00_axi_rdata)
+       ,.rresp_i(s00_axi_rresp)
+       ,.rvalid_i(s00_axi_rvalid)
+       ,.rready_o(s00_axi_rready)
+       );
+
+    logic s01_axi_aclk, s01_axi_aresetn;
+    logic [C_S01_AXI_ADDR_WIDTH-1:0] s01_axi_awaddr;
+    logic [2:0] s01_axi_awprot;
+    logic s01_axi_awvalid, s01_axi_awready;
+    logic [C_S01_AXI_DATA_WIDTH-1:0] s01_axi_wdata;
+    logic [(C_S01_AXI_DATA_WIDTH/8)-1:0] s01_axi_wstrb;
+    logic s01_axi_wvalid, s01_axi_wready;
+    logic [1:0] s01_axi_bresp;
+    logic s01_axi_bvalid, s01_axi_bready;
+    logic [C_S01_AXI_ADDR_WIDTH-1:0] s01_axi_araddr;
+    logic [2:0] s01_axi_arprot;
+    logic s01_axi_arvalid, s01_axi_arready;
+    logic [C_S01_AXI_DATA_WIDTH-1:0] s01_axi_rdata;
+    logic [1:0] s01_axi_rresp;
+    logic s01_axi_rvalid, s01_axi_rready;
+    bsg_nonsynth_dpi_to_axil
+     #(.addr_width_p(C_S01_AXI_ADDR_WIDTH), .data_width_p(C_S01_AXI_DATA_WIDTH))
+     axil1
+      (.aclk_o(s01_axi_aclk)
+       ,.aresetn_o(s01_axi_aresetn)
+
+       ,.awaddr_o(s01_axi_awaddr)
+       ,.awprot_o(s01_axi_awprot)
+       ,.awvalid_o(s01_axi_awvalid)
+       ,.awready_i(s01_axi_awready)
+       ,.wdata_o(s01_axi_wdata)
+       ,.wstrb_o(s01_axi_wstrb)
+       ,.wvalid_o(s01_axi_wvalid)
+       ,.wready_i(s01_axi_wready)
+       ,.bresp_i(s01_axi_bresp)
+       ,.bvalid_i(s01_axi_bvalid)
+       ,.bready_o(s01_axi_bready)
+
+       ,.araddr_o(s01_axi_araddr)
+       ,.arprot_o(s01_axi_arprot)
+       ,.arvalid_o(s01_axi_arvalid)
+       ,.arready_i(s01_axi_arready)
+       ,.rdata_i(s01_axi_rdata)
+       ,.rresp_i(s01_axi_rresp)
+       ,.rvalid_i(s01_axi_rvalid)
+       ,.rready_o(s01_axi_rready)
+       );
+
+   localparam axi_id_width_p = 6;
+   localparam axi_addr_width_p = 33; // FIXME: seems inconsistent
+   localparam axi_data_width_p = 64;
+   localparam axi_strb_width_p = axi_data_width_p >> 3;
+   localparam axi_burst_len_p = 8;
 
    wire                                 m00_axi_aclk = s00_axi_aclk;
    wire                                 m00_axi_aresetn = s00_axi_aresetn;
@@ -98,6 +238,60 @@ module top
    wire [5:0]                           m00_axi_rid;
    wire                                 m00_axi_rlast;
    wire [2:0]                           m00_axi_rresp;
+
+
+   bsg_nonsynth_axi_mem
+     #(.axi_id_width_p(axi_id_width_p)
+       ,.axi_addr_width_p(axi_addr_width_p)
+       ,.axi_data_width_p(axi_data_width_p)
+       ,.axi_burst_len_p (axi_burst_len_p)
+       ,.mem_els_p(2**28) // 256 MB
+       ,.init_data_p('0)
+     )
+   axi_mem
+     (.clk_i          (m00_axi_aclk)
+      ,.reset_i       (~m00_axi_aresetn)
+
+      ,.axi_awid_i    (m00_axi_awid)
+      ,.axi_awaddr_i  (m00_axi_awaddr)
+      ,.axi_awvalid_i (m00_axi_awvalid)
+      ,.axi_awready_o (m00_axi_awready)
+
+      ,.axi_wdata_i   (m00_axi_wdata)
+      ,.axi_wstrb_i   (m00_axi_wstrb)
+      ,.axi_wlast_i   (m00_axi_wlast)
+      ,.axi_wvalid_i  (m00_axi_wvalid)
+      ,.axi_wready_o  (m00_axi_wready)
+
+      ,.axi_bid_o     (m00_axi_bid)
+      ,.axi_bresp_o   (m00_axi_bresp)
+      ,.axi_bvalid_o  (m00_axi_bvalid)
+      ,.axi_bready_i  (m00_axi_bready)
+
+      ,.axi_arid_i    (m00_axi_arid)
+      ,.axi_araddr_i  (m00_axi_araddr)
+      ,.axi_arvalid_i (m00_axi_arvalid)
+      ,.axi_arready_o (m00_axi_arready)
+
+      ,.axi_rid_o     (m00_axi_rid)
+      ,.axi_rdata_o   (m00_axi_rdata)
+      ,.axi_rresp_o   (m00_axi_rresp)
+      ,.axi_rlast_o   (m00_axi_rlast)
+      ,.axi_rvalid_o  (m00_axi_rvalid)
+      ,.axi_rready_i  (m00_axi_rready)
+      );
+
+   initial
+     begin
+        if ($test$plusargs("bsg_trace") != 0)
+          begin
+             $display("[%0t] Tracing to trace.fst...\n", $time);
+             $dumpfile("trace.fst");
+             $dumpvars();
+          end
+     end
+
+`endif
 
    top_zynq #
      (.C_S00_AXI_DATA_WIDTH (C_S00_AXI_DATA_WIDTH)
@@ -198,61 +392,5 @@ module top
       ,.m00_axi_rresp  (m00_axi_rresp)
       );
 
-   localparam axi_id_width_p = 6;
-   localparam axi_addr_width_p = 33; // FIXME: seems inconsistent
-   localparam axi_data_width_p = 64;
-   localparam axi_strb_width_p = axi_data_width_p >> 3;
-   localparam axi_burst_len_p = 8;
-
-   bsg_nonsynth_axi_mem
-     #(.axi_id_width_p(axi_id_width_p)
-       ,.axi_addr_width_p(axi_addr_width_p)
-       ,.axi_data_width_p(axi_data_width_p)
-       ,.axi_burst_len_p (axi_burst_len_p)
-       ,.mem_els_p(2**28) // 256 MB
-       ,.init_data_p('0)
-     )
-   axi_mem
-     (.clk_i          (m00_axi_aclk)
-      ,.reset_i       (~m00_axi_aresetn)
-
-      ,.axi_awid_i    (m00_axi_awid)
-      ,.axi_awaddr_i  (m00_axi_awaddr)
-      ,.axi_awvalid_i (m00_axi_awvalid)
-      ,.axi_awready_o (m00_axi_awready)
-
-      ,.axi_wdata_i   (m00_axi_wdata)
-      ,.axi_wstrb_i   (m00_axi_wstrb)
-      ,.axi_wlast_i   (m00_axi_wlast)
-      ,.axi_wvalid_i  (m00_axi_wvalid)
-      ,.axi_wready_o  (m00_axi_wready)
-
-      ,.axi_bid_o     (m00_axi_bid)
-      ,.axi_bresp_o   (m00_axi_bresp)
-      ,.axi_bvalid_o  (m00_axi_bvalid)
-      ,.axi_bready_i  (m00_axi_bready)
-
-      ,.axi_arid_i    (m00_axi_arid)
-      ,.axi_araddr_i  (m00_axi_araddr)
-      ,.axi_arvalid_i (m00_axi_arvalid)
-      ,.axi_arready_o (m00_axi_arready)
-
-      ,.axi_rid_o     (m00_axi_rid)
-      ,.axi_rdata_o   (m00_axi_rdata)
-      ,.axi_rresp_o   (m00_axi_rresp)
-      ,.axi_rlast_o   (m00_axi_rlast)
-      ,.axi_rvalid_o  (m00_axi_rvalid)
-      ,.axi_rready_i  (m00_axi_rready)
-      );
-
-   initial
-     begin
-        if ($test$plusargs("bsg_trace") != 0)
-          begin
-             $display("[%0t] Tracing to trace.fst...\n", $time);
-             $dumpfile("trace.fst");
-             $dumpvars();
-          end
-     end
-
 endmodule
+

@@ -1,30 +1,27 @@
-export TEST_DIR ?= .
-export TOP  ?= top
-export HOST-PROGRAM ?= ps.cpp
-export AXI_NAME ?= s00_axi
+TOP  := $(shell git rev-parse --show-toplevel)
+CURR := $(shell pwd)
 
-INCLUDES=-I../../include/verilator -I../../../include/verilator
-VPATH=../ .
+#############################
+# Project Settings
+#############################
+export TOP_MODULE ?= top
 
-TRACE=--trace-fst
+#############################
+# Accelerator Software Settings
+#############################
+HOST_PROGRAM ?= $(abspath ../ps.cpp)
+BASE_FLIST   ?= $(abspath ../flist.vcs)
+FLIST        ?= $(abspath flist.vcs)
 
-# You need to configure these parameters for your particular accelerator!
+CFLAGS += -DZYNQ_PL_DEBUG
+CFLAGS += -DGP0_ENABLE -DGP0_ADDR_BASE=0x43C00000 -DGP0_ADDR_WIDTH=4 -DGP0_DATA_WIDTH=32 -DGP0_HIER_BASE=TOP.top.axil0
 
-THE_FLAGS = -DGP0_ADDR_BASE=0x43C00000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_SIZE_BYTES=4096 $(INCLUDES)
+include $(TOP)/cosim/mk/Makefile.verilator
 
-top: all
+#############################
+# Modify base flist
+#############################
+$(FLIST): $(BASE_FLIST)
+	cat $< | envsubst > $@
+	echo "$(COSIM_SRC_DIR)/bsg_nonsynth_dpi_to_axil.v" >> $@
 
-verilate: $(HOST-PROGRAM)
-	verilator $(INCLUDES) -CFLAGS  "$(THE_FLAGS)" -Wall -Wno-UNUSED $(TRACE) -cc $(TOP).v -exe $<
-
-recursive: verilate
-	make -j -C obj_dir/ -f V$(TOP).mk V$(TOP)
-
-all: recursive
-	obj_dir/V$(TOP) +bsg_trace
-
-clean:
-	-rm -rf obj_dir/ *~ trace.fst
-
-view:
-	gtkwave -f trace.fst

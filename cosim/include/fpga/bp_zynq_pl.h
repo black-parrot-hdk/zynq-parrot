@@ -4,7 +4,7 @@
 
 
 #ifndef __arm__
-#error this file intended only to be compiled on an ARM (Zynq) platform)
+#error this file intended only to be compiled on an ARM (Zynq) platform
 #endif
 
 // memory management hooks (corresponds to allocate function in python)
@@ -25,20 +25,50 @@ extern "C" {
     void _xlnk_reset();
 };
 
-#ifndef GP0_ADDR_BASE
-#error GP0_ADDR_BASE must be defined
+#ifndef GP0_ENABLE
+#define GP0_ADDR_WIDTH 0
+#define GP0_DATA_WIDTH 0
+#define GP0_ADDR_BASE  0
+#define GP0_ADDR_SIZE_BYTES 0
+#endif
+
+#ifndef GP0_ADDR_WIDTH
+#error GP0_ADDR_WIDTH must be defined
 #endif
 
 #ifndef GP0_ADDR_SIZE_BYTES
 #error GP0_ADDR_SIZE_BYTES must be defined
 #endif
 
-#ifndef GP1_ADDR_BASE
-#error GP1_ADDR_BASE must be defined
+#ifndef GP0_ADDR_BASE
+#error GP0_ADDR_BASE must be defined
+#endif
+
+#ifndef GP0_DATA_WIDTH
+#error GP0_DATA_WIDTH must be defined
+#endif
+
+#ifndef GP1_ENABLE
+#define GP1_ADDR_WIDTH 0
+#define GP1_DATA_WIDTH 0
+#define GP1_ADDR_BASE  0
+#define GP1_ADDR_SIZE_BYTES  0
+#endif
+
+#ifndef GP1_ADDR_WIDTH
+#error GP1_ADDR_WIDTH must be defined
 #endif
 
 #ifndef GP1_ADDR_SIZE_BYTES
 #error GP1_ADDR_SIZE_BYTES must be defined
+#endif
+
+#ifndef GP1_ADDR_BASE
+#error GP1_ADDR_BASE must be defined
+#endif
+
+#ifndef GP1_DATA_WIDTH
+#error GP1_DATA_WIDTH must be defined
 #endif
 
 #include <unistd.h>

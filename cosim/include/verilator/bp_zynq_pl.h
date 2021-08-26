@@ -2,253 +2,197 @@
 // that can be swapped out with a separate implementation to run on the PS
 //
 
+#ifndef BP_ZYNQ_PL_H
+#define BP_ZYNQ_PL_H
+
 #include <stdio.h>
 #include <string>
 #include <fstream>
 #include <iostream>
+#include "bsg_nonsynth_dpi_clock_gen.hpp"
+#include "bsg_nonsynth_dpi_gpio.hpp"
+
+using namespace std;
+using namespace bsg_nonsynth_dpi;
+
 #include "Vtop.h"
 #include "verilated.h"
-using namespace std;
 
-#ifndef PERIOD
-#define PERIOD 25000
+#define _STRINGIFY(x) #x
+#define STRINGIFY(x) _STRINGIFY(x)
+
+#ifndef ZYNQ_PL_DEBUG
+#define ZYNQ_PL_DEBUG 0
 #endif
 
-#define TOP_MODULE Vtop
+#ifndef ZYNQ_AXI_TIMEOUT
+#define ZYNQ_AXI_TIMEOUT 8000
+#endif
+
+#ifndef GP0_ENABLE
+#define GP0_ADDR_WIDTH 0
+#define GP0_DATA_WIDTH 0
+#define GP0_ADDR_BASE  0
+#define GP0_HIER_BASE  ""
+#endif
+
+#ifndef GP0_ADDR_WIDTH
+#error GP0_ADDR_WIDTH must be defined
+#endif
+#ifndef GP0_ADDR_SIZE_BYTES
+#define GP0_ADDR_SIZE_BYTES (1 << GP0_ADDR_WIDTH)
+#endif
 
 #ifndef GP0_ADDR_BASE
-#ERROR GP0_ADDR_BASE must be defined
+#error GP0_ADDR_BASE must be defined
 #endif
 
-#ifndef GP0_ADDR_SIZE_BYTES
-#ERROR GP0_ADDR_SIZE_BYTES must be defined
+#ifndef GP0_DATA_WIDTH
+#error GP0_DATA_WIDTH must be defined
+#endif
+
+#ifndef GP0_HIER_BASE
+#error GP0_HIER_BASE must be defined
+#endif
+
+#ifndef GP1_ENABLE
+#define GP1_ADDR_WIDTH 0
+#define GP1_DATA_WIDTH 0
+#define GP1_ADDR_BASE  0
+#define GP1_HIER_BASE  ""
+#endif
+
+#ifndef GP1_ADDR_WIDTH
+#error GP1_ADDR_WIDTH must be defined
+#endif
+#ifndef GP1_ADDR_SIZE_BYTES
+#define GP1_ADDR_SIZE_BYTES (1 << GP1_ADDR_WIDTH)
 #endif
 
 #ifndef GP1_ADDR_BASE
-#ERROR GP1_ADDR_BASE must be defined
+#error GP1_ADDR_BASE must be defined
 #endif
 
-#ifndef GP1_ADDR_SIZE_BYTES
-#ERROR GP1_ADDR_SIZE_BYTES must be defined
+#ifndef GP1_DATA_WIDTH
+#error GP1_DATA_WIDTH must be defined
 #endif
 
-#define BSG_move_bit(q,x,y) ((((q) >> (x)) & 1) << y)
-#define BSG_expand_byte_mask(x) ((BSG_move_bit(x,0,0) | BSG_move_bit(x,1,8) | BSG_move_bit(x,2,16) | BSG_move_bit(x,3,24))*0xFF)
+#ifndef GP1_HIER_BASE
+#error GP1_HIER_BASE must be defined
+#endif
 
+// W = width of pin
+template <unsigned int W>
+class pin {
+  dpi_gpio<W> *gpio;
 
+  public:
+    pin(const string &hierarchy) {
+      gpio = new dpi_gpio<W>(hierarchy);
+    }
 
-struct axil {
-        unsigned char *aresetn;
-        unsigned char *aclk;
-
-        unsigned char *awprot;
-        unsigned char *awvalid;
-        unsigned char *awready;
-        unsigned int  *wdata;
-        unsigned char *wstrb;
-        unsigned char *wvalid;
-        unsigned char *wready;
-        unsigned char *bresp;
-        unsigned char *bvalid;
-        unsigned char *bready;
-
-        unsigned char *arprot;
-        unsigned char *arvalid;
-        unsigned char *arready;
-        unsigned int  *rdata;
-        unsigned char *rresp;
-        unsigned char *rvalid;
-        unsigned char *rready;
-        int address_size;
-
-  private:
-        void *awaddr;
-        void *araddr;
-
-public:
-
-  void init(int interface, TOP_MODULE *tb) {
-    if (interface == 0)
-      {
-        address_size = sizeof(tb->s00_axi_awaddr);
-        aresetn = &(tb->s00_axi_aresetn);
-        aclk    = &(tb->s00_axi_aclk);
-        awaddr  = (void *) &(tb->s00_axi_awaddr);
-        awprot  = &(tb->s00_axi_awprot);
-        awvalid = &(tb->s00_axi_awvalid);
-        awready = &(tb->s00_axi_awready);
-        wdata   = &(tb->s00_axi_wdata);
-        wstrb   = &(tb->s00_axi_wstrb);
-        wvalid  = &(tb->s00_axi_wvalid);
-        wready  = &(tb->s00_axi_wready);
-        bresp   = &(tb->s00_axi_bresp);
-        bvalid  = &(tb->s00_axi_bvalid);
-        bready  = &(tb->s00_axi_bready);
-        araddr  = (void *) &(tb->s00_axi_araddr);
-        arprot  = &(tb->s00_axi_arprot);
-        arvalid = &(tb->s00_axi_arvalid);
-        arready = &(tb->s00_axi_arready);
-        rdata   = &(tb->s00_axi_rdata);
-        rresp   = &(tb->s00_axi_rresp);
-        rvalid  = &(tb->s00_axi_rvalid);
-        rready  = &(tb->s00_axi_rready);
+    void operator=(const unsigned int val) {
+      unsigned int bval = 0;
+      for (int i = 0; i < W; i++) {
+        bval = (val & (1 << i)) >> i;
+        gpio->set(i, bval);
       }
-    else if (interface == 1)
-      {
-#ifdef BSG_ENABLE_S01
-        address_size = sizeof(tb->s01_axi_awaddr);
-        aresetn = &(tb->s01_axi_aresetn);
-        aclk    = &(tb->s01_axi_aclk);
-        awaddr  = (void *) &(tb->s01_axi_awaddr);
-        awprot  = &(tb->s01_axi_awprot);
-        awvalid = &(tb->s01_axi_awvalid);
-        awready = &(tb->s01_axi_awready);
-        wdata   = &(tb->s01_axi_wdata);
-        wstrb   = &(tb->s01_axi_wstrb);
-        wvalid  = &(tb->s01_axi_wvalid);
-        wready  = &(tb->s01_axi_wready);
-        bresp   = &(tb->s01_axi_bresp);
-        bvalid  = &(tb->s01_axi_bvalid);
-        bready  = &(tb->s01_axi_bready);
-        araddr  = (void *) &(tb->s01_axi_araddr);
-        arprot  = &(tb->s01_axi_arprot);
-        arvalid = &(tb->s01_axi_arvalid);
-        arready = &(tb->s01_axi_arready);
-        rdata   = &(tb->s01_axi_rdata);
-        rresp   = &(tb->s01_axi_rresp);
-        rvalid  = &(tb->s01_axi_rvalid);
-        rready  = &(tb->s01_axi_rready);
-#else
-        int *space = (int *)malloc(sizeof(int)*22);
-        address_size = 4;
-        aresetn = (unsigned char *) &space[20];
-        aclk    = (unsigned char *) &space[19];
-        awaddr  = (void *)  &space[0];
-        awprot  = (unsigned char *) &space[1];
-        awvalid = (unsigned char *) &space[2];
-        awready = (unsigned char *) &space[3];
-        wdata   = (unsigned int *)  &space[4];
-        wstrb   = (unsigned char *) &space[5];
-        wvalid  = (unsigned char *) &space[6];
-        wready  = (unsigned char *) &space[7];
-        bresp   = (unsigned char *) &space[8];
-        bvalid  = (unsigned char *) &space[9];
-        bready  = (unsigned char *) &space[10];
-        araddr  = (void *)  &space[11];
-        arprot  = (unsigned char *) &space[12];
-        arvalid = (unsigned char *) &space[13];
-        arready = (unsigned char *) &space[14];
-        rdata   = (unsigned int *)  &space[15];
-        rresp   = (unsigned char *) &space[16];
-        rvalid  = (unsigned char *) &space[17];
-        rready  = (unsigned char *) &space[18];
-#endif
+    }
+
+    operator int() const {
+      unsigned int N = 0;
+      for (int i = 0; i < W; i++) {
+        N |= gpio->get(i) << i;
+      }
+
+      return N;
+    }
+};
+
+// A = axil address width
+// D = axil data width
+template <unsigned int A, unsigned int D>
+class axil {
+  public:
+        pin<1>   p_aclk;
+        pin<1>   p_aresetn;
+
+        pin<A>   p_awaddr;
+        pin<3>   p_awprot;
+        pin<1>   p_awvalid;
+        pin<1>   p_awready;
+        pin<D>   p_wdata;
+        pin<D/8> p_wstrb;
+        pin<1>   p_wvalid;
+        pin<1>   p_wready;
+        pin<2>   p_bresp;
+        pin<1>   p_bvalid;
+        pin<1>   p_bready;
+
+        pin<A>   p_araddr;
+        pin<3>   p_arprot;
+        pin<1>   p_arvalid;
+        pin<1>   p_arready;
+        pin<D>   p_rdata;
+        pin<2>   p_rresp;
+        pin<1>   p_rvalid;
+        pin<1>   p_rready;
+
+  axil(const string &base) :
+        p_aclk    (string(base) + string(".aclk_gpio")),
+        p_aresetn (string(base) + string(".aresetn_gpio")),
+        p_awaddr  (string(base) + string(".awaddr_gpio")),
+        p_awprot  (string(base) + string(".awprot_gpio")),
+        p_awvalid (string(base) + string(".awvalid_gpio")),
+        p_awready (string(base) + string(".awready_gpio")),
+        p_wdata   (string(base) + string(".wdata_gpio")),
+        p_wstrb   (string(base) + string(".wstrb_gpio")),
+        p_wvalid  (string(base) + string(".wvalid_gpio")),
+        p_wready  (string(base) + string(".wready_gpio")),
+        p_bresp   (string(base) + string(".bresp_gpio")),
+        p_bvalid  (string(base) + string(".bvalid_gpio")),
+        p_bready  (string(base) + string(".bready_gpio")),
+        p_araddr  (string(base) + string(".araddr_gpio")),
+        p_arprot  (string(base) + string(".arprot_gpio")),
+        p_arvalid (string(base) + string(".arvalid_gpio")),
+        p_arready (string(base) + string(".arready_gpio")),
+        p_rdata   (string(base) + string(".rdata_gpio")),
+        p_rresp   (string(base) + string(".rresp_gpio")),
+        p_rvalid  (string(base) + string(".rvalid_gpio")),
+        p_rready  (string(base) + string(".rready_gpio")) {
+            std::cout << base << std::endl;
         }
-    else assert(0);
-  }
-
-  // we truncate this address to the verilator simulation size
-  // but presumably verilator is also internally truncating the
-  // address to the actual Verilog correct size. This would be the primary
-  // mechanism by which the base offset of the AXI slave ports
-  // is "subtracted off".
-  //
-  // for the more general case of lots of AXI devices and AXI switches etc
-  // more explicit modeling of the AXI switch would be necessary
-  //
-
-  void set_araddr(unsigned int value)
-  {
-    if (address_size == 1){
-      unsigned char *cp = (unsigned char *) araddr;
-      *cp = (unsigned char) value & 0xff;
-    } else
-      if (address_size == 2){
-        unsigned short *cp = (unsigned short *) araddr;
-        *cp = (unsigned short) value & 0xffff;
-      } else
-        if (address_size == 4){
-          unsigned int *cp = (unsigned int *) araddr;
-          *cp = value;
-        }
-        else
-          assert(0); // unhandled size
-  }
-
-  // we truncate this address to the verilator simulation size
-  // but presumably verilator is also internally truncating the
-  // address to the actual Verilog correct size. This would be the primary
-  // mechanism by which the base offset of the AXI slave ports
-  // is "subtracted off".
-
-  void set_awaddr(unsigned int value)
-  {
-    //    printf("%x address_size=%d\n",value, address_size);
-    if (address_size == 1){
-      unsigned char *cp = (unsigned char *) awaddr;
-      *cp = (unsigned char) value & 0xff;
-    } else
-      if (address_size == 2){
-        unsigned short *cp = (unsigned short *) awaddr;
-        *cp = (unsigned short) value & 0xffff;
-      } else
-        if (address_size == 4){
-          unsigned int *cp = (unsigned int *) awaddr;
-          *cp = value;
-        }
-        else
-          assert(0); // unhandled size
-  }
-
 };
 
 class bp_zynq_pl {
 
-  int period = PERIOD; // ps
-  TOP_MODULE *tb;
-  struct axil axi_int[2];
+    Vtop *tb;
+    axil<GP0_ADDR_WIDTH,GP0_DATA_WIDTH> *axi_gp0;
+    axil<GP1_ADDR_WIDTH,GP1_DATA_WIDTH> *axi_gp1;
 
-  // reset is low true
-  void reset(void) {
-    this->tick(period);
-    *(axi_int[0].aresetn) = 0;
-    *(axi_int[1].aresetn) = 0;
-    this->tick(period);
-    *(axi_int[0].aresetn) = 1;
-    *(axi_int[1].aresetn) = 1;
-  }
+    // Wait for (low true) reset to be asserted by the testbench
+    template <unsigned int A, unsigned int D>
+    void reset(axil<A, D> *axil) {
+      printf("bp_zynq_pl: Entering reset\n");
+      while (axil->p_aresetn == 1) {
+        tick();
+      }
+      printf("bp_zynq_pl: Exiting reset\n");
+    }
 
-  // structure of a verilator clock cycle
-  //
-  //
-  //
-  //   my_inputs=X, CLK = 0, eval(): this triggers negedge clock events, and also absorbs combinational inputs. the assumption
-  //                                 is that the DUT has no negedge events that are connected to combinational inputs. also "primes the pump"
-  //                                 for the posedge of the clock
-  //  (CLK = 1) eval():  this triggers posedge clock events, and also the combinational logic that happens as a result of those flops changing
-  //
-  //
-  // so then you might have
-  //
-  //  t=0  reset=1
-  //  t=5  negedge_calc()  // pass negedge, absorb inputs from reset
-  //  t=10 posedge_calc()  // pass posedge, generate new outputs
+    // Each bsg_timekeeper::next() moves to the next clock edge
+    //   so we need 2 to perform one full clock cycle.
+    // If your design does not evaluate things on negedge, you could omit 
+    //   the first eval, but BSG designs tend to do assertions on negedge
+    //   at the least.
+    void tick() {
+      bsg_timekeeper::next();
+      tb->eval();
+      bsg_timekeeper::next();
+      tb->eval();
+    }
 
-
-  void tick(int time_period) {
-    Verilated::timeInc(time_period>>1);
-    *(axi_int[0].aclk) = 0;
-    *(axi_int[1].aclk) = 0;
-    tb->eval();
-    Verilated::timeInc(time_period>>1);
-    *(axi_int[0].aclk) = 1;
-    *(axi_int[1].aclk) = 1;
-    tb->eval();
-  }
-
-
- public:
-  int BP_ZYNQ_PL_DEBUG=1;
+  public:
   
   bp_zynq_pl(int argc, char *argv[]) {
     // Initialize Verilators variables
@@ -257,14 +201,20 @@ class bp_zynq_pl {
     // turn on tracing
     Verilated::traceEverOn(true);
 
-    tb = new TOP_MODULE;
-    printf("About to assign values\n");
-    axi_int[0].init(0,tb);
-    axi_int[1].init(1,tb);
+    tb = new Vtop;
 
-    printf("bp_zynq_pl: Entering reset\n");
-    reset();
-    printf("bp_zynq_pl: Exiting reset\n");
+    // Tick once to register clock generators
+    tb->eval();
+    tick();
+
+#ifdef GP0_ENABLE
+    axi_gp0 = new axil<GP0_ADDR_WIDTH, GP0_DATA_WIDTH>(STRINGIFY(GP0_HIER_BASE));
+    reset(axi_gp0);
+#endif
+#ifdef GP1_ENABLE
+    axi_gp1 = new axil<GP1_ADDR_WIDTH, GP1_DATA_WIDTH>(STRINGIFY(GP1_HIER_BASE));
+    reset(axi_gp1);
+#endif
   }
 
   ~bp_zynq_pl(void) {
@@ -296,65 +246,66 @@ class bp_zynq_pl {
     else
       assert(0);
 
-    if (BP_ZYNQ_PL_DEBUG)
+    if (ZYNQ_PL_DEBUG)
       printf("  bp_zynq_pl: AXI writing [%x] -> port %d, [%x]<-%8.8x\n", address_orig, index, address, data);
 
-    axil_write_helper(index,address,data,wstrb);
+    if (index == 0) {
+      axil_write_helper(axi_gp0, address, data, wstrb);
+    } else if (index == 1) {
+      axil_write_helper(axi_gp1, address, data, wstrb);
+    }
   }
 
-#define AXI_TIMEOUT 8000
-
-  void axil_write_helper(int index, unsigned int address, int data, int wstrb)
+  template <typename T>
+  void axil_write_helper(T *axil, unsigned int address, int data, int wstrb)
   {
     int timeout_counter=0;
 
     assert(wstrb==0xf); // we only support full int writes right now
 
-    *(axi_int[index].awvalid) = 1;
-    *(axi_int[index].wvalid)  = 1;
-    axi_int[index].set_awaddr(address);
-    //*(axi_int[index].awaddr)  = address;
-    *(axi_int[index].wdata)   = data;
-    *(axi_int[index].wstrb)   = wstrb;
+    axil->p_awvalid = 1;
+    axil->p_wvalid = 1;
+    axil->p_awaddr = address;
+    axil->p_wdata = data;
+    axil->p_wstrb = wstrb;
 
-    while ((*(axi_int[index].awready) == 0) && (*(axi_int[index].wready) == 0)) {
+    while (axil->p_awready == 0 && axil->p_wready == 0) {
 
-      if (timeout_counter++ > AXI_TIMEOUT) {
+      if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         printf("bp_zynq_pl: AXI write timeout\n");
         done();
-        delete tb;
         exit(0);
         assert(0);
       }
 
-      this->tick(period);
+      tick();
     }
 
-    this->tick(period);
+    tick();
 
     // must drop valid signals
     // let's get things ready with bready at the same time
-    *(axi_int[index].awvalid) = 0;
-    *(axi_int[index].wvalid)  = 0;
-    *(axi_int[index].bready)  = 1;
+    axil->p_awvalid = 0;
+    axil->p_wvalid = 0;
+    axil->p_bready = 1;
 
     // wait for bvalid to go high
-    while (*(axi_int[index].bvalid) == 0) {
-      if (timeout_counter++ > AXI_TIMEOUT) {
+    while (axil->p_bvalid == 0) {
+      if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         printf("bp_zynq_pl: AXI bvalid timeout\n");
         done();
-        delete tb;
         exit(0);
       }
 
-      this->tick(period);
+      tick();
     }
 
     // now, we will drop bready low with ready on the next cycle
-    this->tick(period);
-    *(axi_int[index].bready)  = 0;
+    tick();
+    axil->p_bready  = 0;
     return;
   }
+
 
   int axil_read(unsigned int address) {
     int address_orig = address;
@@ -376,67 +327,70 @@ class bp_zynq_pl {
     else
       assert(0);
 
-    data = axil_read_helper(index, address);
+    if (index == 0) {
+      data = axil_read_helper(axi_gp0, address);
+    } else if (index == 1) {
+      data = axil_read_helper(axi_gp1, address);
+    }
 
-    if (BP_ZYNQ_PL_DEBUG)
+    if (ZYNQ_PL_DEBUG)
       printf("  bp_zynq_pl: AXI reading [%x] -> port %d, [%x]->%8.8x\n", address_orig, index, address, data);
 
     return data;
   }
 
-  int axil_read_helper(int index, unsigned int address) {
+  template <typename T>
+  int axil_read_helper(T *axil, unsigned int address) {
     int data;
     int timeout_counter = 0;
 
     // assert these signals "late in the cycle"
-    *(axi_int[index].arvalid) = 1;
-    axi_int[index].set_araddr(address);
-    //*(axi_int[index].araddr)  = address;
+    axil->p_arvalid = 1;
+    axil->p_araddr = address;
 
     // stall while ready is not asserted
-    while  (*(axi_int[index].arready) == 0)
+    while (axil->p_arready == 0)
       {
-        if (timeout_counter++ > AXI_TIMEOUT) {
+        if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
           printf("bp_zynq_pl: AXI read arready timeout\n");
           done();
-          delete tb;
           exit(0);
         }
 
-        this->tick(period);
+        tick();
       }
 
     // ready was asserted, transaction will be accepted!
-    this->tick(period);
-
-    // assert these signals "late in the cycle"
+    tick();
 
     // arvalid must drop the request
-    *(axi_int[index].arvalid) = 0;
+    axil->p_arvalid = 0;
 
     // setup to receive the reply
-    *(axi_int[index].rready)  = 1;
+    axil->p_rready  = 1;
 
     // stall while valid is not asserted
-    while(*(axi_int[index].rvalid) == 0)
+    while (axil->p_rvalid == 0)
       {
-        if (timeout_counter++ > AXI_TIMEOUT) {
+        if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
           printf("bp_zynq_pl: AXI read rvalid timeout\n");
           done();
-          delete tb;
           exit(0);
         }
 
-        this->tick(period);
+        tick();
       }
 
     // if valid was asserted, latch the incoming data
-    data = *(axi_int[index].rdata);
-    this->tick(period);
+    data = axil->p_rdata;
+    tick();
 
     // drop the ready signal on the following cycle
-    *(axi_int[index].rready)  = 0;
+    axil->p_rready  = 0;
 
     return data;
   }
 };
+
+#endif
+

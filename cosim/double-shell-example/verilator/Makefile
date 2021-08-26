@@ -1,33 +1,28 @@
-export TEST_DIR ?= .
-export TOP  ?= top
-export HOST-PROGRAM ?= ps.cpp
-export AXI_NAME ?= s00_axi
+TOP  := $(shell git rev-parse --show-toplevel)
+CURR := $(shell pwd)
 
-BASEJUMP_STL := $(abspath ../../import/basejump_stl)
+#############################
+# Project Settings
+#############################
+export TOP_MODULE ?= top
 
-INCLUDES=-I../../include/verilator -I../../../include/verilator
-VERILOG-INCLUDES= -I$(BASEJUMP_STL)/bsg_misc -I../$(BASEJUMP_STL)/bsg_misc -I$(BASEJUMP_STL)/bsg_dataflow -I../$(BASEJUMP_STL)/bsg_dataflow  -I$(BASEJUMP_STL)/bsg_mem -I../$(BASEJUMP_STL)/bsg_mem
-VPATH=../ .  ../../../common/v ../../../../common/v
+#############################
+# Accelerator Software Settings
+#############################
+HOST_PROGRAM ?= $(abspath ../ps.cpp)
+BASE_FLIST   ?= $(abspath ../flist.vcs)
+FLIST        ?= $(abspath flist.vcs)
 
-TRACE=--trace-fst
+CFLAGS += -DZYNQ_PL_DEBUG
+CFLAGS += -DGP0_ENABLE -DGP0_ADDR_BASE=0x43C00000 -DGP0_ADDR_WIDTH=5 -DGP0_DATA_WIDTH=32 -DGP0_HIER_BASE=TOP.top.axil0
+CFLAGS += -DGP1_ENABLE -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_WIDTH=5 -DGP1_DATA_WIDTH=32 -DGP1_HIER_BASE=TOP.top.axil1
 
-# You need to configure these parameters for your particular accelerator!
+include $(TOP)/cosim/mk/Makefile.verilator
 
-THE_FLAGS = -DGP0_ADDR_BASE=0x43C00000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_SIZE_BYTES=4096 $(INCLUDES)
+#############################
+# Modify base flist
+#############################
+$(FLIST): $(BASE_FLIST)
+	cat $< | envsubst > $@
+	echo "$(COSIM_SRC_DIR)/bsg_nonsynth_dpi_to_axil.v" >> $@
 
-top: all
-
-verilate: $(HOST-PROGRAM)
-	verilator -Wno-fatal -timescale 1ns/1ps -sv $(VERILOG-INCLUDES) -CFLAGS  "$(THE_FLAGS)" -Wno-UNUSED $(TRACE) -y $(BASEJUMP_STL)/ -y ../../common/v/ -cc $(TOP).v  -exe $<
-
-recursive: verilate
-	make -j -C obj_dir/ -f V$(TOP).mk V$(TOP)
-
-all: recursive
-	obj_dir/V$(TOP) +bsg_trace
-
-clean:
-	-rm -rf obj_dir/ *~ trace.fst
-
-view:
-	gtkwave -f trace.fst

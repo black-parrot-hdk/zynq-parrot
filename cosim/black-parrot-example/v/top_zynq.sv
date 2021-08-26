@@ -2,6 +2,7 @@
 `timescale 1 ns / 1 ps
 
 `include "bp_common_defines.svh"
+`include "bsg_cache.vh"
 
 module top_zynq
   import bp_common_pkg::*;
@@ -285,12 +286,7 @@ module top_zynq
         // Zynq PA 0x8000_0000 .. 0x8FFF_FFFF -> AXI 0x0000_0000 .. 0x0FFF_FFFF -> BP 0x8000_0000 - 0x8FFF_FFFF
         // Zynq PA 0xA000_0000 .. 0xAFFF_FFFF -> AXI 0x2000_0000 .. 0x2FFF_FFFF -> BP 0x0000_0000 - 0x0FFF_FFFF
 
-        waddr_offset = 32'h8000_0000;
-
-        if (s01_axi_awaddr > 31'h2000_0000)
-          waddr_offset = 32'h2000_0000;
-
-        waddr_translated_lo = s01_axi_awaddr ^ waddr_offset;
+        waddr_translated_lo = {~s01_axi_awaddr[29], 3'b0, s01_axi_awaddr[0+:28]};
      end
 
    always_comb
@@ -298,12 +294,7 @@ module top_zynq
         // Zynq PA 0x8000_0000 .. 0x8FFF_FFFF -> AXI 0x0000_0000 .. 0x0FFF_FFFF -> BP 0x8000_0000 - 0x8FFF_FFFF
         // Zynq PA 0xA000_0000 .. 0xAFFF_FFFF -> AXI 0x2000_0000 .. 0x2FFF_FFFF -> BP 0x0000_0000 - 0x0FFF_FFFF
 
-        raddr_offset = 32'h8000_0000;
-
-        if (s01_axi_araddr > 31'h2000_0000)
-          raddr_offset = 32'h2000_0000;
-
-        raddr_translated_lo = s01_axi_araddr ^ raddr_offset;
+        raddr_translated_lo = {~s01_axi_araddr[29], 3'b0, s01_axi_araddr[0+:28]};
      end
 
    // synopsys translate_off
@@ -459,7 +450,6 @@ module top_zynq
       ,.block_size_in_words_p(l2_block_size_in_fill_p)
       ,.num_cache_p(1)
       ,.axi_id_width_p  (axi_id_width_p)
-      ,.axi_addr_width_p(axi_addr_width_p)
       ,.axi_data_width_p(axi_data_width_p)
       ,.axi_burst_len_p (axi_burst_len_p)
       )
@@ -480,7 +470,8 @@ module top_zynq
       ,.dma_data_yumi_o (dma_data_yumi_li)
 
       ,.axi_awid_o   (m00_axi_awid)
-      ,.axi_awaddr_o (axi_awaddr)
+      ,.axi_awaddr_addr_o(axi_awaddr)
+      ,.axi_awaddr_cache_id_o()
       ,.axi_awlen_o  (m00_axi_awlen) // this is an 8-bit output, connected to 4-bit output??
                                      // as long as the max burst length bits in 4-bits, we are okay
       ,.axi_awsize_o (m00_axi_awsize)
@@ -503,7 +494,8 @@ module top_zynq
       ,.axi_bready_o (m00_axi_bready)
 
       ,.axi_arid_o   (m00_axi_arid)
-      ,.axi_araddr_o (axi_araddr)
+      ,.axi_araddr_addr_o(axi_araddr)
+      ,.axi_araddr_cache_id_o()
       ,.axi_arlen_o  (m00_axi_arlen) // 8-bit output connect to 4-bit output?
       ,.axi_arsize_o (m00_axi_arsize)
       ,.axi_arburst_o(m00_axi_arburst)
@@ -521,3 +513,4 @@ module top_zynq
       ,.axi_rready_o (m00_axi_rready)
       );
 endmodule
+

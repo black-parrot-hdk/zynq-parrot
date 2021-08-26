@@ -1,14 +1,20 @@
-PS_FILE=../ps.cpp
+TOP  := $(shell git rev-parse --show-toplevel)
+CURR := $(shell pwd)
 
-# you must set these for the accelerator to work
+#############################
+# Project Settings
+#############################
+export PART       ?= xc7z020clg400-1
+export TOP_MODULE ?= top
+export BASENAME   ?= dram
 
-CFLAGS=-DGP0_ADDR_BASE=0x40000000 -DGP0_ADDR_SIZE_BYTES=4096 -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_SIZE_BYTES=0x40000000
+#############################
+# Accelerator Software Settings
+#############################
+HOST_PROGRAM ?= $(abspath ../ps.cpp)
 
-all:
-	g++ -g -L/usr/lib/ -I../../include/fpga $(CFLAGS) -O2 $(PS_FILE)  -lcma -lpthread
-	sudo ./a.out
+CFLAGS+= -DGP0_ENABLE -DGP0_ADDR_BASE=0x43C00000 -DGP0_ADDR_WIDTH=6 -DGP0_DATA_WIDTH=32
+CFLAGS+= -DGP1_ENABLE -DGP1_ADDR_BASE=0x80000000 -DGP1_ADDR_WIDTH=6 -DGP1_DATA_WIDTH=32
 
-clean:
-	-rm -f *~ ./a.out sds_trace_data.dat
-
+include $(TOP)/cosim/mk/Makefile.fpga
 

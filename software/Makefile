@@ -1,7 +1,7 @@
 SDK_DIR=../cosim/import/black-parrot-sdk
 NBF_DIR=../cosim/import/black-parrot/bp_common/software/py
 
-NCORES=4
+NCORES=20
 
 # RISC_V DRAM starts at 0x8000_0000; this sets the stack at 64MB
 # when building the RISCV binaries, bounding total used memory
@@ -26,12 +26,10 @@ nothing:
 
 checkout_tools:
 	cd ../cosim/import; git submodule update --init black-parrot-sdk
-	@echo fixing up linker file for Zynq DRAM size
-	sed -i '/_sp/c\_sp = $(TOP_OF_MEM_RISC_V);' $(SDK_DIR)/linker/riscv.ld;
 
 #build once (x86 server); takes about 15 minutes
 build_tools: checkout_tools
-	$(MAKE) -j $(NCORES) -C $(SDK_DIR) panic_room
+	$(MAKE) -j $(NCORES) -C $(SDK_DIR) panic_room PLATFORM=zynqparrot
 
 #build these after you build the tools (x86 server)
 build_beebs: build_libs
