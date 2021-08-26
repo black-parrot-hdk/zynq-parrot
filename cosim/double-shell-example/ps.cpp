@@ -82,7 +82,7 @@ extern "C" void cosim_main(char *argstr) {
   assert((zpl->axil_read(0x8 + GP0_ADDR_BASE) == (val6)));
   assert((zpl->axil_read(0x8 + GP1_ADDR_BASE) == (val5)));
 
-  printf("bp_zynq: data communicated between two AXI slave regions.\n");
+  bsg_pr_info("bp_zynq: data communicated between two AXI slave regions.\n");
 
   zpl->axil_write(0x8 + GP0_ADDR_BASE, val1, mask1);
   zpl->axil_write(0x8 + GP0_ADDR_BASE, val2, mask1);
@@ -93,7 +93,7 @@ extern "C" void cosim_main(char *argstr) {
   assert((zpl->axil_read(0x10 + GP1_ADDR_BASE) == (4)));
   assert((zpl->axil_read(0x10 + GP0_ADDR_BASE) == (4)));
 
-  printf("bp_zynq filled up fifo to GP1.\n");
+  bsg_pr_info("bp_zynq filled up fifo to GP1.\n");
 
   zpl->axil_write(0x8 + GP1_ADDR_BASE, val4, mask1);
   zpl->axil_write(0x8 + GP1_ADDR_BASE, val3, mask1);
@@ -105,7 +105,7 @@ extern "C" void cosim_main(char *argstr) {
   assert((zpl->axil_read(0x10 + GP1_ADDR_BASE) == (4)));
   assert((zpl->axil_read(0x10 + GP0_ADDR_BASE) == (4)));
 
-  printf("bp_zynq filled up fifo to GP0.\n");
+  bsg_pr_info("bp_zynq filled up fifo to GP0.\n");
 
   zpl->axil_write(0x8 + GP1_ADDR_BASE, val5, mask1);
   zpl->axil_write(0x8 + GP1_ADDR_BASE, val6, mask1);
@@ -117,7 +117,7 @@ extern "C" void cosim_main(char *argstr) {
   assert((zpl->axil_read(0x10 + GP1_ADDR_BASE) == (0)));
   assert((zpl->axil_read(0x10 + GP0_ADDR_BASE) == (4)));
 
-  printf("bp_zynq filled up sequential fifo pair successfully.\n");
+  bsg_pr_info("bp_zynq filled up sequential fifo pair successfully.\n");
 
   zpl->axil_write(0x8 + GP0_ADDR_BASE, val5, mask1);
   zpl->axil_write(0x8 + GP0_ADDR_BASE, val6, mask1);
@@ -129,7 +129,7 @@ extern "C" void cosim_main(char *argstr) {
   assert((zpl->axil_read(0x10 + GP1_ADDR_BASE) == (0))); // no free space
   assert((zpl->axil_read(0x10 + GP0_ADDR_BASE) == (0))); // no free space
 
-  printf("bp_zynq filled up all fifos successfully.\n");
+  bsg_pr_info("bp_zynq filled up all fifos successfully.\n");
 
   assert((zpl->axil_read(0x8 + GP0_ADDR_BASE) == (val4)));
   assert((zpl->axil_read(0x8 + GP0_ADDR_BASE) == (val3)));
@@ -140,7 +140,7 @@ extern "C" void cosim_main(char *argstr) {
   assert((zpl->axil_read(0x8 + GP0_ADDR_BASE) == (val6)));
   assert((zpl->axil_read(0x8 + GP0_ADDR_BASE) == (val1)));
 
-  printf("bp_zynq read out suquential fifo pair successfully.\n");
+  bsg_pr_info("bp_zynq read out suquential fifo pair successfully.\n");
 
   assert((zpl->axil_read(0x8 + GP1_ADDR_BASE) == (val1)));
   assert((zpl->axil_read(0x8 + GP1_ADDR_BASE) == (val2)));
@@ -151,7 +151,7 @@ extern "C" void cosim_main(char *argstr) {
   assert((zpl->axil_read(0x8 + GP1_ADDR_BASE) == (val6)));
   assert((zpl->axil_read(0x8 + GP1_ADDR_BASE) == (val5)));
 
-  printf("bp_zynq read out second sequential fifo pair successfully.\n");
+  bsg_pr_info("bp_zynq read out second sequential fifo pair successfully.\n");
 
   // check pl_to_ps fifo counters are zero (no data)
   assert((zpl->axil_read(0xC + GP0_ADDR_BASE) == 0));

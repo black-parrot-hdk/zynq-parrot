@@ -91,8 +91,7 @@ public:
     } else
       assert(0);
 
-    if (ZYNQ_PL_DEBUG)
-      printf("  bp_zynq_pl: AXI writing [%x] -> port %d, [%x]<-%8.8x\n",
+    bsg_pr_dbg_pl("  bp_zynq_pl: AXI writing [%x] -> port %d, [%x]<-%8.8x\n",
              address_orig, index, address, data);
 
     if (index == 0) {
@@ -127,8 +126,7 @@ public:
       data = axi_gp1->axil_read_helper(address, tick);
     }
 
-    if (ZYNQ_PL_DEBUG)
-      printf("  bp_zynq_pl: AXI reading [%x] -> port %d, [%x]->%8.8x\n",
+    bsg_pr_dbg_pl("  bp_zynq_pl: AXI reading [%x] -> port %d, [%x]->%8.8x\n",
              address_orig, index, address, data);
 
     return data;
