@@ -12,8 +12,8 @@
 #ifndef GP0_ENABLE
 #define GP0_ADDR_WIDTH 0
 #define GP0_DATA_WIDTH 0
-#define GP0_ADDR_BASE  0
-#define GP0_HIER_BASE  ""
+#define GP0_ADDR_BASE 0
+#define GP0_HIER_BASE ""
 #endif
 
 #ifndef GP0_ADDR_WIDTH
@@ -38,8 +38,8 @@
 #ifndef GP1_ENABLE
 #define GP1_ADDR_WIDTH 0
 #define GP1_DATA_WIDTH 0
-#define GP1_ADDR_BASE  0
-#define GP1_HIER_BASE  ""
+#define GP1_ADDR_BASE 0
+#define GP1_HIER_BASE ""
 #endif
 
 #ifndef GP1_ADDR_WIDTH
@@ -62,4 +62,3 @@
 #endif
 
 #endif
-
