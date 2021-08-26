@@ -5,6 +5,7 @@
 #ifndef BP_ZYNQ_PL_H
 #define BP_ZYNQ_PL_H
 
+#include <cassert>
 #include <stdio.h>
 #include <string>
 #include <fstream>

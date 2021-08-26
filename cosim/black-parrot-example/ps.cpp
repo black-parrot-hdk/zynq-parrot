@@ -43,7 +43,14 @@ inline unsigned long long get_counter_64(bp_zynq_pl *zpl, unsigned int addr)
   while (1);
 }
 
-int main(int argc, char **argv) {
+#ifdef VERILATOR
+int main (int argc, char **argv) {
+#else
+extern "C" void cosim_main(char *argstr) {
+    int argc = get_argc(argstr);
+    char *argv[argc];
+    get_argv(argstr, argc, argv);
+#endif
   // this ensures that even with tee, the output is line buffered
   // so that we can see what is happening in real time
 

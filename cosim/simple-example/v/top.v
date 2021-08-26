@@ -132,8 +132,8 @@
          end
      end
 `else
-   import "DPI-C" context task cosim_main(string argstr);
-   string argstr;
+   import "DPI-C" context task cosim_main(string c_args);
+   string c_args;
    initial
      begin
        if ($test$plusargs("bsg_trace") != 0)
@@ -142,11 +142,11 @@
            $dumpfile("vcdplus.vpd");
            $dumpvars();
          end
-       if ($test$plusargs("argstr") != 0)
+       if ($test$plusargs("c_args") != 0)
          begin
-           $value$plusargs("argstr", argstr);
+           $value$plusargs("c_args=%s", c_args);
          end
-       cosim_main(argstr);
+       cosim_main(c_args);
      end
 
    // Evaluate the simulation, until the next clk_i positive edge.

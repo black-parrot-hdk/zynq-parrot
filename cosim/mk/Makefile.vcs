@@ -23,7 +23,6 @@ CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_test
 
 TRACE ?= +bsg_trace
-ARGV  +=
 
 all:
 	@echo "## See the makefile for the fun things you can do in this directory"

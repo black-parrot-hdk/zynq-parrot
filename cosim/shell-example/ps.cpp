@@ -4,14 +4,19 @@
 // the API we provide abstracts away the
 // communication plumbing differences.
 
-
 #include <stdlib.h>
 #include <stdio.h>
 #include "bp_zynq_pl.h"
 
-int main(int argc, char **argv) {
-        bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
-
+#ifdef VERILATOR
+int main (int argc, char **argv) {
+#else
+extern "C" void cosim_main(char *argstr) {
+    int argc = get_argc(argstr);
+    char *argv[argc];
+    get_argv(argstr, argc, argv);
+#endif
+    bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
 
    // the read memory map is essentially
    //
