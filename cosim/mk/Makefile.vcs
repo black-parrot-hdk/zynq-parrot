@@ -1,0 +1,54 @@
+
+include $(TOP)/cosim/mk/Makefile.common
+
+VCS_OPTS += -full64
+VCS_OPTS += -notice
+VCS_OPTS += -V
+VCS_OPTS += +v2k -sverilog
+VCS_OPTS += -assert svaext
+VCS_OPTS += +noportcoerce
+VCS_OPTS += -timescale=1ps/1ps
+VCS_OPTS += -diag timescale
+VCS_OPTS += -f flist.vcs
+VCS_OPTS += -top $(TOP_MODULE)
+VCS_OPTS += -debug_pp
+VCS_OPTS += +vcs+vcdpluson
+VCS_OPTS += +vcs+vcdplusautoflushon
+
+CFLAGS += -DVCS
+CFLAGS += -std=gnu++11
+
+CINCLUDES += -I$(COSIM_INCLUDE_DIR)/vcs
+CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
+CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_test
+
+TRACE ?= +bsg_trace
+ARGV  +=
+
+all:
+	@echo "## See the makefile for the fun things you can do in this directory"
+
+simv: $(HOST_PROGRAM) $(FLIST)
+	$(VCS) $(VCS_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" -o $@ $<
+
+run: simv
+	$< $(SIM_ARGS) $(TRACE)
+
+clean:
+	-rm -rf csrc/
+	-rm -rf ucli.key
+	-rm -rf vc_hdrs.h
+	-rm -rf flist.vcs
+	-rm -rf simv* vcdplus.vpd
+
+view:
+	$(_DVE) -full64 -vpd vcdplus.vpd
+
+help:
+	@echo -e "Usage: make"
+	@echo -e "\tclean - Cleans directory"
+	@echo -e "\tview - Open waveform in gtkwave"
+	@echo -e "\tall - Runs the current test"
+	@echo -e "Options"
+	@echo -e "\tTRACE = whether to dump a .fst waveform"
+

@@ -6,17 +6,69 @@
 #define BP_ZYNQ_PL_H
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string>
 #include <fstream>
 #include <iostream>
-#include "bsg_nonsynth_dpi_clock_gen.hpp"
+#include <svdpi.h>
+#include <unistd.h>
 #include "bsg_nonsynth_dpi_gpio.hpp"
+
+// Given a string, determine the number of space-separated arguments
+static
+int get_argc(char * args){
+        char *cur = args, prev=' ';
+        int count = 1;
+        while(*cur != '\0'){
+                if((prev == ' ') && (prev != *cur)){
+                        count ++;
+                }
+                prev = *cur;
+                ++cur;
+        }
+        return count;
+}
+
+static
+void get_argv(char * args, int argc, char **argv){
+        int count = 0;
+        char *cur = args, prev=' ';
+
+        // First parse the path name. This is not in the argument string because
+        // VCS doesn't provide it to us. Instead, we "hack" around it by reading
+        // the path from 'proc/self/exe'. The maximum path-name length is 1024,
+        // with an extra null character for safety
+        static char path[1025] = {'\0'};
+
+        readlink("/proc/self/exe", path, sizeof(path) - 1);
+        argv[0] = path;
+        count ++;
+
+        // Then we parse the remaining arguments. Arguments are separated by N
+        // >= 1 spaces. We only register an argument when the previous character
+        // was a space, and the current character is not (so that multiple
+        // spaces don't count as multiple arguments). We replace spaces with
+        // null characters (\0) so that each argument appears to be an
+        // individual string and can be used later, by argparse (and other
+        // libraries)
+        while(*cur != '\0'){
+                if((prev == ' ') && (prev != *cur)){
+                        argv[count] = cur;
+                        count++;
+                }
+                prev = *cur;
+                if(*cur == ' ')
+                        *cur = '\0';
+                cur++;
+        }
+}
+
+extern "C" {
+    void bsg_dpi_next();
+}
 
 using namespace std;
 using namespace bsg_nonsynth_dpi;
-
-#include "Vtop.h"
-#include "verilated.h"
 
 #define _STRINGIFY(x) #x
 #define STRINGIFY(x) _STRINGIFY(x)
@@ -166,7 +218,6 @@ class axil {
 
 class bp_zynq_pl {
 
-    Vtop *tb;
     axil<GP0_ADDR_WIDTH,GP0_DATA_WIDTH> *axi_gp0;
     axil<GP1_ADDR_WIDTH,GP1_DATA_WIDTH> *axi_gp1;
 
@@ -180,31 +231,14 @@ class bp_zynq_pl {
       printf("bp_zynq_pl: Exiting reset\n");
     }
 
-    // Each bsg_timekeeper::next() moves to the next clock edge
-    //   so we need 2 to perform one full clock cycle.
-    // If your design does not evaluate things on negedge, you could omit 
-    //   the first eval, but BSG designs tend to do assertions on negedge
-    //   at the least.
+    // Move the simulation forward to the next DPI event
     void tick() {
-      bsg_timekeeper::next();
-      tb->eval();
-      bsg_timekeeper::next();
-      tb->eval();
+       bsg_dpi_next();
     }
 
   public:
-  
+
   bp_zynq_pl(int argc, char *argv[]) {
-    // Initialize Verilators variables
-    Verilated::commandArgs(argc, argv);
-
-    // turn on tracing
-    Verilated::traceEverOn(true);
-
-    tb = new Vtop;
-
-    // Tick once to register clock generators
-    tb->eval();
     tick();
 
 #ifdef GP0_ENABLE
@@ -222,8 +256,6 @@ class bp_zynq_pl {
   }
 
   ~bp_zynq_pl(void) {
-    delete tb;
-    tb = NULL;
   }
 
   void axil_write(unsigned int address, int data, int wstrb) {

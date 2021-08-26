@@ -5,3 +5,9 @@ obj_dir/
 *.str
 *.pyc
 fpga_build/
+vcdplus.vpd
+vc_hdrs.h
+ucli.key
+simv*
+csrc
+DVEfiles

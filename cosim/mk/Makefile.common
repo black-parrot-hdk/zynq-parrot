@@ -28,6 +28,8 @@ export VERILATOR ?= verilator
 endif
 # TODO: Check verilator version
 export VIVADO    ?= vivado
+export VCS       ?= vcs
+export _DVE      ?= dve
 export GCC       ?= g++
 # need to set the shell so that source works
 export SHELL     ?= /bin/bash
