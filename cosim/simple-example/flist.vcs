@@ -1,0 +1,7 @@
++incdir+$BASEJUMP_STL_DIR/bsg_misc
++incdir+$BASEJUMP_STL_DIR/bsg_test
+
+$BASEJUMP_STL_DIR/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp
+$CURR_SRC_DIR/example_axi_v1_0_S00_AXI.v
+$CURR_SRC_DIR/top.v
+

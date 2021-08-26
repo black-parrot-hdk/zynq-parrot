@@ -3,3 +3,5 @@ obj_dir/
 *.jou
 *.log
 *.str
+*.pyc
+fpga_build/

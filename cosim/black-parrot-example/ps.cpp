@@ -181,7 +181,7 @@ int main(int argc, char **argv) {
       }
     */
 
-#ifndef SKIP_DRAM_TESTING
+#ifdef DRAM_TEST
     
     int num_times = allocated_dram/32768;
     printf("ps.cpp: attempting to write L2 %d times over %d MB (testing ARM GP1 and HP0 connections)\n",num_times*outer,(allocated_dram)>>20);
@@ -219,7 +219,7 @@ int main(int argc, char **argv) {
 
     printf("ps.cpp: READ access through BP (some L1 coherence mismatch expected): %d matches, %d mismatches, %f\n",matches,mismatches,((float) matches)/(float) (mismatches+matches));
 
-#endif     // SKIP_DRAM_TESTING
+#endif // DRAM_TEST
 
     printf("ps.cpp: beginning nbf load\n");
     nbf_load(zpl, argv[1]);

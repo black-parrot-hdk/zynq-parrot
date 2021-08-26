@@ -450,7 +450,6 @@ module top_zynq
       ,.block_size_in_words_p(l2_block_size_in_fill_p)
       ,.num_cache_p(1)
       ,.axi_id_width_p  (axi_id_width_p)
-      ,.axi_addr_width_p(axi_addr_width_p)
       ,.axi_data_width_p(axi_data_width_p)
       ,.axi_burst_len_p (axi_burst_len_p)
       )
@@ -471,7 +470,8 @@ module top_zynq
       ,.dma_data_yumi_o (dma_data_yumi_li)
 
       ,.axi_awid_o   (m00_axi_awid)
-      ,.axi_awaddr_o (axi_awaddr)
+      ,.axi_awaddr_addr_o(axi_awaddr)
+      ,.axi_awaddr_cache_id_o()
       ,.axi_awlen_o  (m00_axi_awlen) // this is an 8-bit output, connected to 4-bit output??
                                      // as long as the max burst length bits in 4-bits, we are okay
       ,.axi_awsize_o (m00_axi_awsize)
@@ -494,7 +494,8 @@ module top_zynq
       ,.axi_bready_o (m00_axi_bready)
 
       ,.axi_arid_o   (m00_axi_arid)
-      ,.axi_araddr_o (axi_araddr)
+      ,.axi_araddr_addr_o(axi_araddr)
+      ,.axi_araddr_cache_id_o()
       ,.axi_arlen_o  (m00_axi_arlen) // 8-bit output connect to 4-bit output?
       ,.axi_arsize_o (m00_axi_arsize)
       ,.axi_arburst_o(m00_axi_arburst)

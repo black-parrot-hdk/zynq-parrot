@@ -14,15 +14,16 @@ export HARDFLOAT_DIR        ?= $(BP_EXTERNAL_DIR)/HardFloat
 export COSIM_DIR            ?= $(TOP)/cosim
 export COSIM_INCLUDE_DIR    ?= $(COSIM_DIR)/include
 export COSIM_SRC_DIR        ?= $(COSIM_DIR)/v
+export COSIM_PY_DIR         ?= $(COSIM_DIR)/py
+export COSIM_TCL_DIR        ?= $(COSIM_DIR)/tcl
 
 export CURR_SRC_DIR         ?= $(CURR)/../v
 
-export TOP_MODULE           ?= top
-export HOST_PROGRAM         ?= ps.cpp
-
 ifeq ($(shell /usr/bin/arch),armv7l)
+export ARM=1
 export VERILATOR=/usr/local/bin/verilator
 else
+export ARM=0
 export VERILATOR ?= verilator
 endif
 # TODO: Check verilator version
@@ -30,6 +31,7 @@ export VIVADO    ?= vivado
 export GCC       ?= g++
 # need to set the shell so that source works
 export SHELL     ?= /bin/bash
+export PYTHON    ?= PYTHONPATH=$(COSIM_PY_DIR) python
 
-export PATH := $(BP_TOOLS_DIR)/install/bin:$(BP_SDK_DIR)/install/bin:$(PATH)
+export PATH := $(BP_TOOLS_DIR)/install/bin:$(BP_SDK_DIR)/install/bin:$(COSIM_PY_DIR):$(PATH)
 

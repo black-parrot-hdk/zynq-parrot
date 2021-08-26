@@ -1,14 +1,20 @@
 
 include $(TOP)/cosim/mk/Makefile.common
 
+MODE ?= tcl
+
 # update this with a pointer to your vivado install
 #XILINX_ENV=source /tools/Xilinx/Vivado/2019.1/settings64.sh
 XILINX_ENV=source /gro/cad/Xilinx/Vivado/2019.1/settings64.sh
 
 CFLAGS += -O2
 CFLAGS += -lcma -lpthread
+CFLAGS += $(SIM_DEFINES)
 
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/fpga
+
+all:
+	@echo "## See the makefile for the fun things you can do in this directory"
 
 EXE ?= runme
 run: $(EXE)
@@ -16,9 +22,6 @@ run: $(EXE)
 
 $(EXE): $(HOST_PROGRAM)
 	$(GCC) $(CFLAGS) $(CINCLUDES) $(CSOURCES) $< -o $@
-
-all:
-	@echo "## See the makefile for the fun things you can do in this directory"
 
 fpga_report_build_block:
 	-@grep --color "CRITICAL WARNING" vivado.log
@@ -30,15 +33,15 @@ fpga_report_build_block:
 
 # this packages the IP, but does not continue to synthesis, pnr and bitfile generation
 # on the x86 server
-fpga_build_ip: clean_fpga_build flist.vcs
+fpga_build_ip: clean_fpga_build $(FLIST)
 	mkdir fpga_build
-	$(XILINX_ENV) && vivado -source vivado-build-ip.tcl -mode tcl
+	$(XILINX_ENV) && vivado -source $(COSIM_TCL_DIR)/vivado-build-ip.tcl -mode $(MODE)
 	-@grep --color "CRITICAL WARNING" vivado.log
 	-@grep --color "ERROR" vivado.log
 	-@tail -n5 vivado.log
 
 fpga_build: fpga_build_ip
-	$(VIVADO) -source $(CURR)/vivado-create-block.tcl -mode tcl
+	$(VIVADO) -source $(CURR)/vivado-create-block.tcl -mode $(MODE)
 	$(MAKE) fpga_report_build_block
 
 pack_bitstream:
@@ -72,6 +75,8 @@ print_clocks:
 	echo 'from pynq import Clocks;  Clocks.fclk0_mhz = $*; print("PL Clock Set To:: ",Clocks.fclk0_mhz,"MHz"); ' | sudo python3
 
 clean_fpga_build:
+	rm -rf flist.vcs
+	rm -rf *.fpga
 	rm -rf *.log
 	rm -rf *.jou
 	rm -rf *.b64

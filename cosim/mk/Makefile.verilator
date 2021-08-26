@@ -4,22 +4,29 @@ include $(TOP)/cosim/mk/Makefile.common
 VV_OPTS += --cc --sv
 VV_OPTS += --build --exe
 VV_OPTS += --trace-fst --trace-structs
-VV_OPTS += -Wno-fatal -Wall -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTEMPTY -Wno-UNUSED -top-module $(TOP_MODULE)
+VV_OPTS += -Wno-fatal -Wall -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTEMPTY -Wno-UNUSED
+VV_OPTS += -f flist.vcs
+VV_OPTS += -top-module $(TOP_MODULE)
+
+CFLAGS    += -DVERILATOR
 
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/verilator
+CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
+CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_test
 
-VSOURCES  += $(COSIM_SRC_DIR)/bsg_nonsynth_dpi_to_axil.v
-VSOURCES  += $(COSIM_SRC_DIR)/bsg_zynq_pl_shell.v
+TRACE ?= +bsg_trace
 
-TRACE ?= 0
+all:
+	@echo "## See the makefile for the fun things you can do in this directory"
 
-all: obj_dir/V$(TOP_MODULE)
+run: obj_dir/V$(TOP_MODULE)
 	$< $(SIM_ARGS) $(TRACE)
 
-obj_dir/V$(TOP_MODULE): $(HOST_PROGRAM)
-	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" $(VSOURCES) $(VINCLUDES) $<
+obj_dir/V$(TOP_MODULE): $(HOST_PROGRAM) $(FLIST)
+	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" $<
 
 clean:
+	-rm -rf flist.vcs
 	-rm -rf obj_dir/ *~ trace.fst
 
 view:
