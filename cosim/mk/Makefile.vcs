@@ -16,8 +16,9 @@ VCS_OPTS += +vcs+vcdpluson
 VCS_OPTS += +vcs+vcdplusautoflushon
 
 CFLAGS += -DVCS
-CFLAGS += -std=gnu++11
+CFLAGS += -std=c++14
 
+CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/vcs
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_test

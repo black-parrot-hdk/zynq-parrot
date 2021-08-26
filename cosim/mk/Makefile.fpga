@@ -10,7 +10,9 @@ XILINX_ENV=source /gro/cad/Xilinx/Vivado/2019.1/settings64.sh
 CFLAGS += -O2
 CFLAGS += -lcma -lpthread
 CFLAGS += $(SIM_DEFINES)
+CFLAGS += -std=c++14
 
+CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/fpga
 
 all:

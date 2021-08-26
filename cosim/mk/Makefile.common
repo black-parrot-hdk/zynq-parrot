@@ -19,6 +19,9 @@ export COSIM_TCL_DIR        ?= $(COSIM_DIR)/tcl
 
 export CURR_SRC_DIR         ?= $(CURR)/../v
 
+# Set up cad tools if using a non-bsg_cadenv environment
+-include $(TOP)/../bsg_cadenv/cadenv.mk
+
 ifeq ($(shell /usr/bin/arch),armv7l)
 export ARM=1
 export VERILATOR=/usr/local/bin/verilator
