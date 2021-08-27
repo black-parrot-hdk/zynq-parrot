@@ -236,77 +236,78 @@ extern "C" void cosim_main(char *argstr) {
   bsg_pr_dbg_ps("ps.cpp: finished nbf load\n");
   bsg_pr_info("ps.cpp: polling i/o\n");
 
-while (1) {
-  // keep reading as long as there is data
-  data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
-  if (data != 0) {
-    data = zpl->axil_read(0xC + GP0_ADDR_BASE);
-    done |= decode_bp_output(zpl, data);
-  } else if (done)
-    break;
-}
+  while (1) {
+    // keep reading as long as there is data
+    data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
+    if (data != 0) {
+      data = zpl->axil_read(0xC + GP0_ADDR_BASE);
+      done |= decode_bp_output(zpl, data);
+    } else if (done)
+      break;
+  }
 
-unsigned long long mtime_stop = get_counter_64(zpl, 0xA0000000 + 0x30bff8);
+  unsigned long long mtime_stop = get_counter_64(zpl, 0xA0000000 + 0x30bff8);
 
-unsigned long long minstrret_stop = get_counter_64(zpl, 0x18 + GP0_ADDR_BASE);
-// test delay for reading counter
-unsigned long long counter_data = get_counter_64(zpl, 0x18 + GP0_ADDR_BASE);
-clock_gettime(CLOCK_MONOTONIC, &end);
-setlocale(LC_NUMERIC, "");
-bsg_pr_info("ps.cpp: end polling i/o\n");
-bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
-            minstrret_start, minstrret_start);
-bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
-            minstrret_stop, minstrret_stop);
-unsigned long long minstrret_delta = minstrret_stop - minstrret_start;
-bsg_pr_info("ps.cpp: minstret delta:                  %'16llu (%16llx)\n",
-            minstrret_delta, minstrret_delta);
-bsg_pr_info("ps.cpp: MTIME start:                     %'16llu (%16llx)\n",
-            mtime_start, mtime_start);
-bsg_pr_info("ps.cpp: MTIME stop:                      %'16llu (%16llx)\n",
-            mtime_stop, mtime_stop);
-unsigned long long mtime_delta = mtime_stop - mtime_start;
-bsg_pr_info("ps.cpp: MTIME delta (=1/8 BP cycles):    %'16llu (%16llx)\n",
-            mtime_delta, mtime_delta);
-bsg_pr_info("ps.cpp: IPC        :                     %'16f\n",
-            ((double)minstrret_delta) / ((double)(mtime_delta)) / 8.0);
-bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
-            counter_data, counter_data);
-unsigned long long diff_ns =
-    1000LL * 1000LL * 1000LL *
-        ((unsigned long long)(end.tv_sec - start.tv_sec)) +
-    (end.tv_nsec - start.tv_nsec);
-bsg_pr_info("ps.cpp: wall clock time                : %'16llu (%16llx) ns\n",
-            diff_ns, diff_ns);
-bsg_pr_info(
-    "ps.cpp: sim/emul speed                 : %'16.2f BP cycles per minute\n",
-    mtime_delta * 8 / ((double)(diff_ns) / (60.0 * 1000.0 * 1000.0 * 1000.0)));
+  unsigned long long minstrret_stop = get_counter_64(zpl, 0x18 + GP0_ADDR_BASE);
+  // test delay for reading counter
+  unsigned long long counter_data = get_counter_64(zpl, 0x18 + GP0_ADDR_BASE);
+  clock_gettime(CLOCK_MONOTONIC, &end);
+  setlocale(LC_NUMERIC, "");
+  bsg_pr_info("ps.cpp: end polling i/o\n");
+  bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
+              minstrret_start, minstrret_start);
+  bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
+              minstrret_stop, minstrret_stop);
+  unsigned long long minstrret_delta = minstrret_stop - minstrret_start;
+  bsg_pr_info("ps.cpp: minstret delta:                  %'16llu (%16llx)\n",
+              minstrret_delta, minstrret_delta);
+  bsg_pr_info("ps.cpp: MTIME start:                     %'16llu (%16llx)\n",
+              mtime_start, mtime_start);
+  bsg_pr_info("ps.cpp: MTIME stop:                      %'16llu (%16llx)\n",
+              mtime_stop, mtime_stop);
+  unsigned long long mtime_delta = mtime_stop - mtime_start;
+  bsg_pr_info("ps.cpp: MTIME delta (=1/8 BP cycles):    %'16llu (%16llx)\n",
+              mtime_delta, mtime_delta);
+  bsg_pr_info("ps.cpp: IPC        :                     %'16f\n",
+              ((double)minstrret_delta) / ((double)(mtime_delta)) / 8.0);
+  bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
+              counter_data, counter_data);
+  unsigned long long diff_ns =
+      1000LL * 1000LL * 1000LL *
+          ((unsigned long long)(end.tv_sec - start.tv_sec)) +
+      (end.tv_nsec - start.tv_nsec);
+  bsg_pr_info("ps.cpp: wall clock time                : %'16llu (%16llx) ns\n",
+              diff_ns, diff_ns);
+  bsg_pr_info(
+      "ps.cpp: sim/emul speed                 : %'16.2f BP cycles per minute\n",
+      mtime_delta * 8 /
+          ((double)(diff_ns) / (60.0 * 1000.0 * 1000.0 * 1000.0)));
 
-bsg_pr_info("ps.cpp: BP DRAM USAGE MASK (each bit is 8 MB): "
-            "%-8.8x%-8.8x%-8.8x%-8.8x\n",
-            zpl->axil_read(0x2C + GP0_ADDR_BASE),
-            zpl->axil_read(0x28 + GP0_ADDR_BASE),
-            zpl->axil_read(0x24 + GP0_ADDR_BASE),
-            zpl->axil_read(0x20 + GP0_ADDR_BASE));
+  bsg_pr_info("ps.cpp: BP DRAM USAGE MASK (each bit is 8 MB): "
+              "%-8.8x%-8.8x%-8.8x%-8.8x\n",
+              zpl->axil_read(0x2C + GP0_ADDR_BASE),
+              zpl->axil_read(0x28 + GP0_ADDR_BASE),
+              zpl->axil_read(0x24 + GP0_ADDR_BASE),
+              zpl->axil_read(0x20 + GP0_ADDR_BASE));
 #ifdef FPGA
-// in general we do not want to free the dram; the Xilinx allocator has a
-// tendency to
-// fail after many allocate/fail cycle. instead we keep a pointer to the dram
-// in a CSR
-// in the accelerator, and if we reload the bitstream, we copy the pointer
-// back in.s
+  // in general we do not want to free the dram; the Xilinx allocator has a
+  // tendency to
+  // fail after many allocate/fail cycle. instead we keep a pointer to the dram
+  // in a CSR
+  // in the accelerator, and if we reload the bitstream, we copy the pointer
+  // back in.s
 
-if (FREE_DRAM) {
-  bsg_pr_info("ps.cpp: freeing DRAM buffer\n");
-  zpl->free_dram((void *)buf);
-  zpl->axil_write(0x4 + GP0_ADDR_BASE, 0x0, mask2);
-}
+  if (FREE_DRAM) {
+    bsg_pr_info("ps.cpp: freeing DRAM buffer\n");
+    zpl->free_dram((void *)buf);
+    zpl->axil_write(0x4 + GP0_ADDR_BASE, 0x0, mask2);
+  }
 #endif
 
-zpl->done();
+  zpl->done();
 
-delete zpl;
-exit(EXIT_SUCCESS);
+  delete zpl;
+  exit(EXIT_SUCCESS);
 }
 
 void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {

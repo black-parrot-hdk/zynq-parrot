@@ -72,8 +72,8 @@ public:
     } else
       assert(0);
 
-      bsg_pr_dbg_pl("  bp_zynq_pl: AXI writing [%x] -> port %d, [%x]<-%8.8x\n",
-             address_orig, index, address, data);
+    bsg_pr_dbg_pl("  bp_zynq_pl: AXI writing [%x] -> port %d, [%x]<-%8.8x\n",
+                  address_orig, index, address, data);
 
     if (index == 0) {
       axi_gp0->axil_write_helper(address, data, wstrb, tick);
@@ -107,8 +107,8 @@ public:
       data = axi_gp1->axil_read_helper(address, tick);
     }
 
-      bsg_pr_dbg_pl("  bp_zynq_pl: AXI reading [%x] -> port %d, [%x]->%8.8x\n",
-             address_orig, index, address, data);
+    bsg_pr_dbg_pl("  bp_zynq_pl: AXI reading [%x] -> port %d, [%x]->%8.8x\n",
+                  address_orig, index, address, data);
 
     return data;
   }

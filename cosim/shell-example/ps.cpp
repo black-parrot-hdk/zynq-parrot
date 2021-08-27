@@ -51,7 +51,7 @@ extern "C" void cosim_main(char *argstr) {
   assert((zpl->axil_read(0x1C + GP0_ADDR_BASE) == 0));
 
   // check input fifo counters
-  bsg_pr_dbg_ps("%x\n",zpl->axil_read(0x20 + GP0_ADDR_BASE));
+  bsg_pr_dbg_ps("%x\n", zpl->axil_read(0x20 + GP0_ADDR_BASE));
   assert((zpl->axil_read(0x20 + GP0_ADDR_BASE) == 4));
   assert((zpl->axil_read(0x24 + GP0_ADDR_BASE) == 4));
   assert((zpl->axil_read(0x28 + GP0_ADDR_BASE) == 4));

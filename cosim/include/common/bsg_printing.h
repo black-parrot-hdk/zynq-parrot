@@ -56,27 +56,37 @@ extern "C" {
 #define BSG_PRINT_PREFIX_INFO "INFO:    "
 
 #if defined(ZYNQ_PL_DEBUG)
-#define bsg_pr_dbg_pl(fmt, ...)                                                   \
-  do { bsg_pr_info(BSG_PRINT_PREFIX_DEBUG_PL fmt, ##__VA_ARGS__); } while (0)
+#define bsg_pr_dbg_pl(fmt, ...)                                                \
+  do {                                                                         \
+    bsg_pr_info(BSG_PRINT_PREFIX_DEBUG_PL fmt, ##__VA_ARGS__);                 \
+  } while (0)
 #else
 #define bsg_pr_dbg_pl(...)
 #endif
 
 #if defined(ZYNQ_PS_DEBUG)
-#define bsg_pr_dbg_ps(fmt, ...)                                                   \
-  do { printf(BSG_PRINT_PREFIX_DEBUG_PS fmt, ##__VA_ARGS__); } while (0)
+#define bsg_pr_dbg_ps(fmt, ...)                                                \
+  do {                                                                         \
+    printf(BSG_PRINT_PREFIX_DEBUG_PS fmt, ##__VA_ARGS__);                      \
+  } while (0)
 #else
 #define bsg_pr_dbg_ps(...)
 #endif
 
 #define bsg_pr_err(fmt, ...)                                                   \
-  do { printf(BSG_PRINT_PREFIX_ERROR fmt, ##__VA_ARGS__); } while (0)
+  do {                                                                         \
+    printf(BSG_PRINT_PREFIX_ERROR fmt, ##__VA_ARGS__);                         \
+  } while (0)
 
 #define bsg_pr_warn(fmt, ...)                                                  \
-  do { printf(BSG_PRINT_PREFIX_WARN fmt, ##__VA_ARGS__); } while (0)
+  do {                                                                         \
+    printf(BSG_PRINT_PREFIX_WARN fmt, ##__VA_ARGS__);                          \
+  } while (0)
 
 #define bsg_pr_info(fmt, ...)                                                  \
-  do { printf(BSG_PRINT_PREFIX_INFO fmt, ##__VA_ARGS__); } while (0)
+  do {                                                                         \
+    printf(BSG_PRINT_PREFIX_INFO fmt, ##__VA_ARGS__);                          \
+  } while (0)
 
 #if defined(__cplusplus)
 }
