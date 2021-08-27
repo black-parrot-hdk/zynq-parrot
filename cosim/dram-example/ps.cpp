@@ -4,8 +4,10 @@
 // the API we provide abstracts away the
 // communication plumbing differences.
 
-// This host code uses Linux to allocate some uncached DRAM that can be shared with
-// DRAM.  We send the physical address to the PL so that it knows where to host its DRAM region.
+// This host code uses Linux to allocate some uncached DRAM that can be shared
+// with
+// DRAM.  We send the physical address to the PL so that it knows where to host
+// its DRAM region.
 //
 // This test is incomplete, the PL does not actually currently access the DRAM.
 //
@@ -15,34 +17,33 @@
 #include "bp_zynq_pl.h"
 
 int main(int argc, char **argv) {
-        bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
+  bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
 
-	int mask1 = 0xf;
-	unsigned long phys_ptr;
-	
-	volatile int *buf;
+  int mask1 = 0xf;
+  unsigned long phys_ptr;
 
-	if (argc==1)
-	  buf = (volatile int*) zpl->allocate_dram(16384,&phys_ptr);
+  volatile int *buf;
 
-	// write all of the dram
-	for (int i = 0; i < 16384/4;i++)
-	  buf[i] = i;
+  if (argc == 1)
+    buf = (volatile int *)zpl->allocate_dram(16384, &phys_ptr);
 
-	// read all of the dram
-	for (int i = 0; i < 16384/4;i++)
-	  assert(buf[i]==i);
-	
-	zpl->axil_write(0x0 + GP0_ADDR_BASE, phys_ptr, mask1);
+  // write all of the dram
+  for (int i = 0; i < 16384 / 4; i++)
+    buf[i] = i;
 
-	assert( (zpl->axil_read(0x0 + GP0_ADDR_BASE) == (phys_ptr)));
+  // read all of the dram
+  for (int i = 0; i < 16384 / 4; i++)
+    assert(buf[i] == i);
 
-	if (argc==1)
-	  zpl->free_dram((void *)buf);
+  zpl->axil_write(0x0 + GP0_ADDR_BASE, phys_ptr, mask1);
 
-	zpl->done();
+  assert((zpl->axil_read(0x0 + GP0_ADDR_BASE) == (phys_ptr)));
 
-	delete zpl;
-	exit(EXIT_SUCCESS);
+  if (argc == 1)
+    zpl->free_dram((void *)buf);
+
+  zpl->done();
+
+  delete zpl;
+  exit(EXIT_SUCCESS);
 }
-

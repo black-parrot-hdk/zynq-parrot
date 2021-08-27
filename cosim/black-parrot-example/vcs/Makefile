@@ -13,24 +13,27 @@ export NBF_FILE     ?= $(abspath ../prog.nbf)
 export HOST_PROGRAM ?= $(abspath ../ps.cpp)
 export BASE_FLIST   ?= $(abspath ../flist.vcs)
 export FLIST        ?= $(abspath flist.vcs)
-export SIM_ARGS     += $(NBF_FILE)
+export SIM_ARGS     += +c_args=$(NBF_FILE)
 export SIM_DEFINES  += -DVERILATOR
 
 SKIP_DRAM ?= -DSKIP_DRAM_TESTING
 
 CFLAGS += -DZYNQ_PL_DEBUG
 CFLAGS += -DZYNQ_PS_DEBUG
-CFLAGS += -DGP0_ENABLE -DGP0_ADDR_BASE=0x40000000U -DGP0_ADDR_WIDTH=6 -DGP0_DATA_WIDTH=32 -DGP0_HIER_BASE=TOP.top.axil0
-CFLAGS += -DGP1_ENABLE -DGP1_ADDR_BASE=0x80000000U -DGP1_ADDR_WIDTH=30 -DGP1_DATA_WIDTH=32 -DGP1_HIER_BASE=TOP.top.axil1
+CFLAGS += -DGP0_ENABLE -DGP0_ADDR_BASE=0x40000000U -DGP0_ADDR_WIDTH=6 -DGP0_DATA_WIDTH=32 -DGP0_HIER_BASE=top.axil0
+CFLAGS += -DGP1_ENABLE -DGP1_ADDR_BASE=0x80000000U -DGP1_ADDR_WIDTH=30 -DGP1_DATA_WIDTH=32 -DGP1_HIER_BASE=top.axil1
 CFLAGS += $(INCLUDES) $(SKIP_DRAM)
 
-include $(TOP)/cosim/mk/Makefile.verilator
+include $(TOP)/cosim/mk/Makefile.vcs
 
 #############################
 # Modify base flist
 #############################
 $(FLIST): $(BASE_FLIST)
 	cat $(BP_TOP_DIR)/syn/flist.vcs > $@
+	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_clock_gen.v" >> $@
+	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_reset_gen.v" >> $@
+	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_axi_mem.v" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.v " >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.v " >> $@

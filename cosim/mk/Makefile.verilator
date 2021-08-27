@@ -8,8 +8,10 @@ VV_OPTS += -Wno-fatal -Wall -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTE
 VV_OPTS += -f flist.vcs
 VV_OPTS += -top-module $(TOP_MODULE)
 
-CFLAGS    += -DVERILATOR
+CFLAGS += -DVERILATOR
+CFLAGS += -std=c++14
 
+CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/verilator
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_test

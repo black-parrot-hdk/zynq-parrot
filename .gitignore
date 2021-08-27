@@ -1,7 +1,13 @@
-trace.fst
+trace.fst*
 obj_dir/
 *.jou
 *.log
 *.str
 *.pyc
 fpga_build/
+vcdplus.vpd
+vc_hdrs.h
+ucli.key
+simv*
+csrc
+DVEfiles

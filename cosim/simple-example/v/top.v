@@ -1,48 +1,48 @@
 
 `timescale 1 ns / 1 ps
 
-	module top #
-	(
-		// Users to add parameters here
+    module top #
+    (
+        // Users to add parameters here
 
-		// User parameters ends
-		// Do not modify the parameters beyond this line
+        // User parameters ends
+        // Do not modify the parameters beyond this line
 
 
-		// Parameters of Axi Slave Bus Interface S00_AXI
-		parameter integer C_S00_AXI_DATA_WIDTH	= 32,
-		parameter integer C_S00_AXI_ADDR_WIDTH	= 4
-	)
-	(
-		// Users to add ports here
+        // Parameters of Axi Slave Bus Interface S00_AXI
+        parameter integer C_S00_AXI_DATA_WIDTH    = 32,
+        parameter integer C_S00_AXI_ADDR_WIDTH    = 4
+    )
+    (
+        // Users to add ports here
 
-		// User ports ends
-		// Do not modify the ports beyond this line
+        // User ports ends
+        // Do not modify the ports beyond this line
 
-		// Ports of Axi Slave Bus Interface S00_AXI
+        // Ports of Axi Slave Bus Interface S00_AXI
 `ifdef FPGA
-		input wire  s00_axi_aclk,
-		input wire  s00_axi_aresetn,
-		input wire [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_awaddr,
-		input wire [2:0] s00_axi_awprot,
-		input wire  s00_axi_awvalid,
-		output wire  s00_axi_awready,
-		input wire [C_S00_AXI_DATA_WIDTH-1:0] s00_axi_wdata,
-		input wire [(C_S00_AXI_DATA_WIDTH/8)-1:0] s00_axi_wstrb,
-		input wire  s00_axi_wvalid,
-		output wire  s00_axi_wready,
-		output wire [1:0] s00_axi_bresp,
-		output wire  s00_axi_bvalid,
-		input wire  s00_axi_bready,
-		input wire [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_araddr,
-		input wire [2:0] s00_axi_arprot,
-		input wire  s00_axi_arvalid,
-		output wire  s00_axi_arready,
-		output wire [C_S00_AXI_DATA_WIDTH-1:0] s00_axi_rdata,
-		output wire [1:0] s00_axi_rresp,
-		output wire  s00_axi_rvalid,
-		input wire  s00_axi_rready
-	);
+        input wire  s00_axi_aclk,
+        input wire  s00_axi_aresetn,
+        input wire [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_awaddr,
+        input wire [2:0] s00_axi_awprot,
+        input wire  s00_axi_awvalid,
+        output wire  s00_axi_awready,
+        input wire [C_S00_AXI_DATA_WIDTH-1:0] s00_axi_wdata,
+        input wire [(C_S00_AXI_DATA_WIDTH/8)-1:0] s00_axi_wstrb,
+        input wire  s00_axi_wvalid,
+        output wire  s00_axi_wready,
+        output wire [1:0] s00_axi_bresp,
+        output wire  s00_axi_bvalid,
+        input wire  s00_axi_bready,
+        input wire [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_araddr,
+        input wire [2:0] s00_axi_arprot,
+        input wire  s00_axi_arvalid,
+        output wire  s00_axi_arready,
+        output wire [C_S00_AXI_DATA_WIDTH-1:0] s00_axi_rdata,
+        output wire [1:0] s00_axi_rresp,
+        output wire  s00_axi_rvalid,
+        input wire  s00_axi_rready
+    );
 `else
     );
     logic s00_axi_aclk, s00_axi_aresetn;
@@ -90,45 +90,78 @@
 `endif
 
 // Instantiation of Axi Bus Interface S00_AXI
-	example_axi_v1_0_S00_AXI # ( 
-		.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
-		.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
-	) example_axi_v1_0_S00_AXI_inst (
-		.S_AXI_ACLK(s00_axi_aclk),
-		.S_AXI_ARESETN(s00_axi_aresetn),
-		.S_AXI_AWADDR(s00_axi_awaddr),
-		.S_AXI_AWPROT(s00_axi_awprot),
-		.S_AXI_AWVALID(s00_axi_awvalid),
-		.S_AXI_AWREADY(s00_axi_awready),
-		.S_AXI_WDATA(s00_axi_wdata),
-		.S_AXI_WSTRB(s00_axi_wstrb),
-		.S_AXI_WVALID(s00_axi_wvalid),
-		.S_AXI_WREADY(s00_axi_wready),
-		.S_AXI_BRESP(s00_axi_bresp),
-		.S_AXI_BVALID(s00_axi_bvalid),
-		.S_AXI_BREADY(s00_axi_bready),
-		.S_AXI_ARADDR(s00_axi_araddr),
-		.S_AXI_ARPROT(s00_axi_arprot),
-		.S_AXI_ARVALID(s00_axi_arvalid),
-		.S_AXI_ARREADY(s00_axi_arready),
-		.S_AXI_RDATA(s00_axi_rdata),
-		.S_AXI_RRESP(s00_axi_rresp),
-		.S_AXI_RVALID(s00_axi_rvalid),
-		.S_AXI_RREADY(s00_axi_rready)
-	);
+    example_axi_v1_0_S00_AXI # (
+        .C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
+        .C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
+    ) example_axi_v1_0_S00_AXI_inst (
+        .S_AXI_ACLK(s00_axi_aclk),
+        .S_AXI_ARESETN(s00_axi_aresetn),
+        .S_AXI_AWADDR(s00_axi_awaddr),
+        .S_AXI_AWPROT(s00_axi_awprot),
+        .S_AXI_AWVALID(s00_axi_awvalid),
+        .S_AXI_AWREADY(s00_axi_awready),
+        .S_AXI_WDATA(s00_axi_wdata),
+        .S_AXI_WSTRB(s00_axi_wstrb),
+        .S_AXI_WVALID(s00_axi_wvalid),
+        .S_AXI_WREADY(s00_axi_wready),
+        .S_AXI_BRESP(s00_axi_bresp),
+        .S_AXI_BVALID(s00_axi_bvalid),
+        .S_AXI_BREADY(s00_axi_bready),
+        .S_AXI_ARADDR(s00_axi_araddr),
+        .S_AXI_ARPROT(s00_axi_arprot),
+        .S_AXI_ARVALID(s00_axi_arvalid),
+        .S_AXI_ARREADY(s00_axi_arready),
+        .S_AXI_RDATA(s00_axi_rdata),
+        .S_AXI_RRESP(s00_axi_rresp),
+        .S_AXI_RVALID(s00_axi_rvalid),
+        .S_AXI_RREADY(s00_axi_rready)
+    );
 
-	// Add user logic here
+    // Add user logic here
 
-	// User logic ends
+    // User logic ends
 
+`ifdef VERILATOR
    initial
      begin
-	   if ($test$plusargs("bsg_trace") != 0) 
-	     begin
-                $display("[%0t] Tracing to trace.fst...\n", $time);
-                $dumpfile("trace.fst");
-                $dumpvars();
-	     end
+       if ($test$plusargs("bsg_trace") != 0)
+         begin
+           $display("[%0t] Tracing to trace.fst...\n", $time);
+           $dumpfile("trace.fst");
+           $dumpvars();
+         end
      end
-   
+`else
+   import "DPI-C" context task cosim_main(string c_args);
+   string c_args;
+   initial
+     begin
+       if ($test$plusargs("bsg_trace") != 0)
+         begin
+           $display("[%0t] Tracing to vcdplus.vpd...\n", $time);
+           $dumpfile("vcdplus.vpd");
+           $dumpvars();
+         end
+       if ($test$plusargs("c_args") != 0)
+         begin
+           $value$plusargs("c_args=%s", c_args);
+         end
+       cosim_main(c_args);
+     end
+
+   // Evaluate the simulation, until the next clk_i positive edge.
+   //
+   // Call bsg_dpi_next in simulators where the C testbench does not
+   // control the progression of time (i.e. NOT Verilator).
+   //
+   // The #1 statement guarantees that the positive edge has been
+   // evaluated, which is necessary for ordering in all of the DPI
+   // functions.
+   export "DPI-C" task bsg_dpi_next;
+   task bsg_dpi_next();
+     @(posedge s00_axi_aclk);
+     #1;
+   endtask
+`endif
+
  endmodule

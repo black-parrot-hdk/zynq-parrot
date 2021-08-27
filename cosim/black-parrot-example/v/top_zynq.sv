@@ -364,6 +364,11 @@ module top_zynq
        if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_araddr,m00_axi_araddr);
 
    // synopsys translate_on
+   // BlackParrot reset signal is connected to a CSR (along with
+   // the AXI interface reset) so that a regression can be launched
+   // without having to reload the bitstream
+   wire bp_reset_li = (~csr_data_lo[0][0]) || (~s01_axi_aresetn);
+
 
    bsg_dff_reset #(.width_p(128)) dff
      (.clk_i(s01_axi_aclk)
@@ -374,11 +379,6 @@ module top_zynq
                )
       ,.data_o(mem_profiler_r)
       );
-
-   // BlackParrot reset signal is connected to a CSR (along with
-   // the AXI interface reset) so that a regression can be launched
-   // without having to reload the bitstream
-   wire bp_reset_li = (~csr_data_lo[0][0]) || (~s01_axi_aresetn);
 
    bp_unicore_axi_sim #
      (.bp_params_p(bp_params_p)

@@ -32,7 +32,7 @@ module bsg_nonsynth_dpi_to_axil
    , output logic                           rready_o
    );
 
-    bsg_nonsynth_dpi_clock_gen
+    bsg_nonsynth_clock_gen
      #(.cycle_time_p(1000))
      clock_gen
       (.o(aclk_o));

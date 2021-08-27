@@ -23,7 +23,7 @@ module top #
     // Do not modify the ports beyond this line
 
 
-`ifndef VERILATOR
+`ifdef FPGA
     // Ports of Axi Slave Bus Interface S00_AXI
     input wire                                  s00_axi_aclk,
     input wire                                  s00_axi_aresetn,
@@ -292,14 +292,47 @@ module top #
 
         // User logic ends
 
+`ifdef VERILATOR
    initial
      begin
-        if ($test$plusargs("bsg_trace") != 0)
-          begin
-             $display("[%0t] Tracing to trace.fst...\n", $time);
-             $dumpfile("trace.fst");
-             $dumpvars();
-          end
+       if ($test$plusargs("bsg_trace") != 0)
+         begin
+           $display("[%0t] Tracing to trace.fst...\n", $time);
+           $dumpfile("trace.fst");
+           $dumpvars();
+         end
      end
+`else
+   import "DPI-C" context task cosim_main(string c_args);
+   string c_args;
+   initial
+     begin
+       if ($test$plusargs("bsg_trace") != 0)
+         begin
+           $display("[%0t] Tracing to vcdplus.vpd...\n", $time);
+           $dumpfile("vcdplus.vpd");
+           $dumpvars();
+         end
+       if ($test$plusargs("c_args") != 0)
+         begin
+           $value$plusargs("c_args=%s", c_args);
+         end
+       cosim_main(c_args);
+     end
+
+   // Evaluate the simulation, until the next clk_i positive edge.
+   //
+   // Call bsg_dpi_next in simulators where the C testbench does not
+   // control the progression of time (i.e. NOT Verilator).
+   //
+   // The #1 statement guarantees that the positive edge has been
+   // evaluated, which is necessary for ordering in all of the DPI
+   // functions.
+   export "DPI-C" task bsg_dpi_next;
+   task bsg_dpi_next();
+     @(posedge s00_axi_aclk);
+     #1;
+   endtask
+`endif
 
  endmodule

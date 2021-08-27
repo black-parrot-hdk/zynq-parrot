@@ -7,53 +7,37 @@
 
 #include <cassert>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <memory>
+#include <svdpi.h>
+#include <unistd.h>
+#include <memory>
+#include "bsg_argparse.h"
 #include "bsg_axil.h"
 #include "bsg_printing.h"
-#include "bsg_nonsynth_dpi_clock_gen.hpp"
 #include "bsg_nonsynth_dpi_gpio.hpp"
 #include "zynq_headers.h"
+
+extern "C" { void bsg_dpi_next(); }
 
 using namespace std;
 using namespace bsg_nonsynth_dpi;
 
-#include "Vtop.h"
-#include "verilated.h"
-
 class bp_zynq_pl {
-  static Vtop *tb;
 
   static std::unique_ptr<axil<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > axi_gp0;
   static std::unique_ptr<axil<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > axi_gp1;
 
 public:
-  // Each bsg_timekeeper::next() moves to the next clock edge
-  //   so we need 2 to perform one full clock cycle.
-  // If your design does not evaluate things on negedge, you could omit
-  //   the first eval, but BSG designs tend to do assertions on negedge
-  //   at the least.
-  static void tick(void) {
-    bsg_timekeeper::next();
-    tb->eval();
-    bsg_timekeeper::next();
-    tb->eval();
-  }
+  // Move the simulation forward to the next DPI event
+  static void tick(void) { bsg_dpi_next(); }
 
   static void done(void) { printf("bp_zynq_pl: done() called, exiting\n"); }
 
   bp_zynq_pl(int argc, char *argv[]) {
-    // Initialize Verilators variables
-    Verilated::commandArgs(argc, argv);
-
-    // turn on tracing
-    Verilated::traceEverOn(true);
-
-    tb = new Vtop();
-
-    // Tick once to register clock generators
-    tb->eval();
     tick();
 
 #ifdef GP0_ENABLE
@@ -68,10 +52,7 @@ public:
 #endif
   }
 
-  ~bp_zynq_pl(void) {
-    // Causes segfault, double free?
-    // delete tb;
-  }
+  ~bp_zynq_pl(void) {}
 
   void axil_write(unsigned int address, int data, int wstrb) {
     int address_orig = address;
@@ -133,7 +114,6 @@ public:
   }
 };
 
-Vtop *bp_zynq_pl::tb;
 std::unique_ptr<axil<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > bp_zynq_pl::axi_gp0;
 std::unique_ptr<axil<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > bp_zynq_pl::axi_gp1;
 
