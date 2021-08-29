@@ -7,6 +7,7 @@ VV_OPTS += --trace-fst --trace-structs
 VV_OPTS += -Wno-fatal -Wall -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTEMPTY -Wno-UNUSED
 VV_OPTS += -f flist.vcs
 VV_OPTS += -top-module $(TOP_MODULE)
+VV_OPTS += +incdir+$(COSIM_DIR)/include/verilator
 
 CFLAGS += -DVERILATOR
 CFLAGS += -std=c++14

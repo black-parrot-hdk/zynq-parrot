@@ -1,6 +1,8 @@
 
 `timescale 1 ns / 1 ps
 
+`include "bp_zynq_pl.vh"
+
 module top
   #(
     // Parameters of Axi Slave Bus Interface S00_AXI
@@ -391,7 +393,7 @@ module top
            $dumpvars();
          end
      end
-`else
+`elsif VCS
    import "DPI-C" context task cosim_main(string c_args);
    string c_args;
    initial

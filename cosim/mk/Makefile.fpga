@@ -37,7 +37,7 @@ fpga_report_build_block:
 # on the x86 server
 fpga_build_ip: clean_fpga_build $(FLIST)
 	mkdir fpga_build
-	$(XILINX_ENV) && vivado -source $(COSIM_TCL_DIR)/vivado-build-ip.tcl -mode $(MODE)
+	$(XILINX_ENV) && $(VIVADO) -source $(COSIM_TCL_DIR)/vivado-build-ip.tcl -mode $(MODE)
 	-@grep --color "CRITICAL WARNING" vivado.log
 	-@grep --color "ERROR" vivado.log
 	-@tail -n5 vivado.log

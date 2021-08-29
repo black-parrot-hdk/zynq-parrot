@@ -26,4 +26,5 @@ include $(TOP)/cosim/mk/Makefile.fpga
 #############################
 $(FLIST): $(BASE_FLIST)
 	cat $< | envsubst > $@
+	echo "+incdir+$(COSIM_DIR)/include/fpga" >> $@
 

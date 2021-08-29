@@ -33,6 +33,7 @@ include $(TOP)/cosim/mk/Makefile.fpga
 #############################
 $(FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs $(BASE_FLIST)
 	cat $^ | envsubst > $@
+	echo "+incdir+$(COSIM_DIR)/include/fpga" >> $@
 	# Replace hardened memory which is incorrectly inferred on some Xilinx FPGAs
 	sed -i "/bsg_mem_1rw_sync_mask_write_bit.v/d" $@
 	sed -i "/bsg_mem_1rw_sync_mask_write_bit_synth.v/d" $@

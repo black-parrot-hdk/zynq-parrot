@@ -1,5 +1,6 @@
 
 `timescale 1 ns / 1 ps
+`include "bp_zynq_pl.vh"
 
     module top #
     (
@@ -20,6 +21,7 @@
         // Do not modify the ports beyond this line
 
         // Ports of Axi Slave Bus Interface S00_AXI
+// TODO: This must be set in the vivado gui
 `ifdef FPGA
         input wire  s00_axi_aclk,
         input wire  s00_axi_aresetn,
@@ -131,7 +133,7 @@
            $dumpvars();
          end
      end
-`else
+`elsif VCS
    import "DPI-C" context task cosim_main(string c_args);
    string c_args;
    initial
