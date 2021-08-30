@@ -195,7 +195,7 @@ module top
        );
 
    localparam axi_id_width_p = 6;
-   localparam axi_addr_width_p = 33; // FIXME: seems inconsistent
+   localparam axi_addr_width_p = 32;
    localparam axi_data_width_p = 64;
    localparam axi_strb_width_p = axi_data_width_p >> 3;
    localparam axi_burst_len_p = 8;
@@ -239,7 +239,7 @@ module top
    wire                                 m00_axi_rready;
    wire [5:0]                           m00_axi_rid;
    wire                                 m00_axi_rlast;
-   wire [2:0]                           m00_axi_rresp;
+   wire [1:0]                           m00_axi_rresp;
 
 
    bsg_nonsynth_axi_mem

@@ -81,6 +81,10 @@ module bp_unicore_axi_sim
   
 // note: bp_unicore has L2 cache; (bp_unicore_lite does not, but does not have dma_* interface
 // and would need mem_cmd/mem_resp-to-axi converter to be written.)
+  `declare_bsg_cache_dma_pkt_s(daddr_width_p);
+  // Alias daddr to caddr in zynq-parrot
+  bsg_cache_dma_pkt_s dma_pkt_lo;
+  assign dma_pkt_o = {dma_pkt_lo.write_not_read, dma_pkt_lo.addr[0+:caddr_width_p]};
   bp_unicore
    #(.bp_params_p(bp_params_p))
    unicore
@@ -105,7 +109,7 @@ module bp_unicore_axi_sim
     ,.io_resp_v_o(io_resp_v_lo)
     ,.io_resp_ready_and_i(io_resp_ready_li)
 
-    ,.dma_pkt_o(dma_pkt_o)
+    ,.dma_pkt_o(dma_pkt_lo)
     ,.dma_pkt_v_o(dma_pkt_v_o)
     ,.dma_pkt_yumi_i(dma_pkt_yumi_i)
 

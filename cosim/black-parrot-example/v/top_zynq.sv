@@ -330,7 +330,7 @@ module top_zynq
       );
 
    localparam axi_id_width_p = 6;
-   localparam axi_addr_width_p = 33;
+   localparam axi_addr_width_p = 32;
    localparam axi_data_width_p = 64;
    localparam axi_strb_width_p = axi_data_width_p >> 3;
    localparam axi_burst_len_p = 8;
@@ -427,7 +427,7 @@ module top_zynq
 
 
       // these are caches misses coming from BP L2
-     ,.dma_pkt_o            (dma_pkt_lo)
+      ,.dma_pkt_o           (dma_pkt_lo)
       ,.dma_pkt_v_o         (dma_pkt_v_lo)
       ,.dma_pkt_yumi_i      (dma_pkt_yumi_li)
 
