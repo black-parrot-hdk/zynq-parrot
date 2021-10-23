@@ -128,6 +128,7 @@ extern "C" void cosim_main(char *argstr) {
         "No nbf file specified, sleeping for 2^31 seconds (this will hold "
         "onto allocated DRAM)\n");
     sleep(1 << 31);
+    delete zpl;
     exit(0);
   }
 
@@ -323,6 +324,7 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
 
   if (!nbf_file.is_open()) {
     bsg_pr_err("ps.cpp: error opening nbf file.\n");
+    delete zpl;
     exit(-1);
   }
 
