@@ -141,7 +141,7 @@ public:
     while (this->p_rvalid == 0) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         printf("bp_zynq_pl: AXI read rvalid timeout\n");
-        assert(0);
+        //assert(0);
       }
 
       tick();
@@ -191,7 +191,7 @@ public:
     while (this->p_bvalid == 0) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         printf("bp_zynq_pl: AXI bvalid timeout\n");
-        assert(0);
+        //assert(0);
       }
 
       tick();

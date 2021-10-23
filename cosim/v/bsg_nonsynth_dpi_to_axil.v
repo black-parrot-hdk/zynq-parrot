@@ -4,8 +4,6 @@
 module bsg_nonsynth_dpi_to_axil
  #(parameter `BSG_INV_PARAM(addr_width_p)
    , parameter `BSG_INV_PARAM(data_width_p)
-
-   , localparam strb_width_lp = data_width_p/8
    )
   (output logic                             aclk_o
    , output logic                           aresetn_o
@@ -14,10 +12,12 @@ module bsg_nonsynth_dpi_to_axil
    , output logic [2:0]                     awprot_o
    , output logic                           awvalid_o
    , input                                  awready_i
+
    , output logic [data_width_p-1:0]        wdata_o
    , output logic [(data_width_p/8)-1:0]    wstrb_o
    , output logic                           wvalid_o
    , input                                  wready_i
+
    , input [1:0]                            bresp_i
    , input                                  bvalid_i
    , output logic                           bready_o
@@ -26,6 +26,7 @@ module bsg_nonsynth_dpi_to_axil
    , output logic [2:0]                     arprot_o
    , output logic                           arvalid_o
    , input                                  arready_i
+
    , input [data_width_p-1:0]               rdata_i
    , input [1:0]                            rresp_i
    , input                                  rvalid_i

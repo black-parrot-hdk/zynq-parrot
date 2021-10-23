@@ -35,7 +35,7 @@ public:
   // Move the simulation forward to the next DPI event
   static void tick(void) { bsg_dpi_next(); }
 
-  static void done(void) { printf("bp_zynq_pl: done() called, exiting\n"); }
+  static void done(void) { bsg_pr_info("bp_zynq_pl: done() called, exiting\n"); }
 
   bp_zynq_pl(int argc, char *argv[]) {
     tick();
@@ -69,8 +69,9 @@ public:
                address <= GP1_ADDR_BASE + GP1_ADDR_SIZE_BYTES) {
       index = 1;
       address = address - GP1_ADDR_BASE;
-    } else
-      assert(0);
+    } else {
+      bsg_pr_err("  bp_zynq: unsupported AXIL port %d", index);
+    }
 
     bsg_pr_dbg_pl("  bp_zynq_pl: AXI writing [%x] -> port %d, [%x]<-%8.8x\n",
                   address_orig, index, address, data);
@@ -98,8 +99,9 @@ public:
                address <= GP1_ADDR_BASE + GP1_ADDR_SIZE_BYTES) {
       index = 1;
       address = address - GP1_ADDR_BASE;
-    } else
-      assert(0);
+    } else {
+      bsg_pr_err("  bp_zynq: unsupported AXIL port %d", index);
+    }
 
     if (index == 0) {
       data = axi_gp0->axil_read_helper(address, tick);
