@@ -89,7 +89,7 @@ public:
       index = 1;
       address = address - GP1_ADDR_BASE;
     } else
-      assert(0);
+      bsg_pr_err("Invalid axi port: %d\n", index);
 
     bsg_pr_dbg_pl("  bp_zynq_pl: AXI writing [%x] -> port %d, [%x]<-%8.8x\n",
                   address_orig, index, address, data);
@@ -118,7 +118,7 @@ public:
       index = 1;
       address = address - GP1_ADDR_BASE;
     } else
-      assert(0);
+      bsg_pr_err("Invalid axi port: %d\n", index);
 
     if (index == 0) {
       data = axi_gp0->axil_read_helper(address, tick);
