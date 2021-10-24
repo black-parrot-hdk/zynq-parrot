@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string>
 #include "bsg_nonsynth_dpi_gpio.hpp"
+#include "bsg_printing.h"
 
 #ifndef ZYNQ_AXI_TIMEOUT
 #define ZYNQ_AXI_TIMEOUT 8000
@@ -121,8 +122,7 @@ public:
     // stall while ready is not asserted
     while (this->p_arready == 0) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
-        printf("bp_zynq_pl: AXI read arready timeout\n");
-        assert(0);
+        bsg_pr_err("bp_zynq_pl: AXI read arready timeout\n");
       }
 
       tick();
@@ -140,8 +140,7 @@ public:
     // stall while valid is not asserted
     while (this->p_rvalid == 0) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
-        printf("bp_zynq_pl: AXI read rvalid timeout\n");
-        assert(0);
+        bsg_pr_err("bp_zynq_pl: AXI read rvalid timeout\n");
       }
 
       tick();
@@ -172,8 +171,7 @@ public:
     while (this->p_awready == 0 && this->p_wready == 0) {
 
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
-        printf("bp_zynq_pl: AXI write timeout\n");
-        assert(0);
+        bsg_pr_err("bp_zynq_pl: AXI write timeout\n");
       }
 
       tick();
@@ -190,8 +188,7 @@ public:
     // wait for bvalid to go high
     while (this->p_bvalid == 0) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
-        printf("bp_zynq_pl: AXI bvalid timeout\n");
-        assert(0);
+        bsg_pr_err("bp_zynq_pl: AXI bvalid timeout\n");
       }
 
       tick();

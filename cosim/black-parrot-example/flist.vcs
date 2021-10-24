@@ -6,7 +6,7 @@ $BP_ME_DIR/src/v/network/bp_lite_to_axi_lite_master.sv
 $BP_ME_DIR/src/v/network/axi_lite_to_bp_lite_client.sv
 $COSIM_SRC_DIR/bsg_zynq_pl_shell.v
 $CURR_SRC_DIR/bp_unicore_axi_sim.sv
-$CURR_SRC_DIR/bp_to_axi_decoder.sv
+$CURR_SRC_DIR/axil_store_packer.sv
 $CURR_SRC_DIR/top_zynq.sv
 $CURR_SRC_DIR/top.v
 
