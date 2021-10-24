@@ -12,8 +12,6 @@ VCS_OPTS += -diag timescale
 VCS_OPTS += -f flist.vcs
 VCS_OPTS += -top $(TOP_MODULE)
 VCS_OPTS += -debug_pp
-VCS_OPTS += +vcs+vcdpluson
-VCS_OPTS += +vcs+vcdplusautoflushon
 VCS_OPTS += +incdir+$(COSIM_DIR)/include/vcs
 
 CFLAGS += -DVCS
@@ -33,7 +31,7 @@ simv: $(HOST_PROGRAM) $(FLIST)
 	$(VCS) $(VCS_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" -o $@ $<
 
 run: simv
-	$< $(SIM_ARGS) $(TRACE)
+	./$< $(SIM_ARGS) $(TRACE)
 
 clean:
 	-rm -rf csrc/

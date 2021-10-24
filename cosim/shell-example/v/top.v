@@ -201,8 +201,9 @@ module top #
        if ($test$plusargs("bsg_trace") != 0)
          begin
            $display("[%0t] Tracing to vcdplus.vpd...\n", $time);
-           $dumpfile("vcdplus.vpd");
-           $dumpvars();
+           $vcdplusfile("vcdplus.vpd");
+           $vcdpluson();
+           $vcdplusautoflushon();
          end
        if ($test$plusargs("c_args") != 0)
          begin
