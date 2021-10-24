@@ -425,6 +425,14 @@ module top
      @(posedge s00_axi_aclk);
      #1;
    endtask
+
+  initial
+    begin
+      $assertoff();
+      @(posedge s00_axi_aclk);
+      @(negedge s00_axi_aresetn);
+      $asserton();
+    end
 `endif
 
 endmodule

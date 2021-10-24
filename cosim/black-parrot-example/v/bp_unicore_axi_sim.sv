@@ -121,9 +121,9 @@ module bp_unicore_axi_sim
   // unicore declaration
   `declare_bp_bedrock_mem_if(paddr_width_p, uce_mem_data_width_lp, lce_id_width_p, lce_assoc_p, uce);
   bp_bedrock_uce_mem_msg_s io_cmd_li, io_resp_lo;
-  logic io_cmd_v_li, io_cmd_yumi_lo, io_resp_v_lo, io_resp_ready_li;
+  logic io_cmd_v_li, io_cmd_ready_and_lo, io_resp_v_lo, io_resp_ready_li;
   bp_bedrock_uce_mem_msg_s io_cmd_lo, io_resp_li;
-  logic io_cmd_v_lo, io_cmd_ready_and_li, io_resp_v_li, io_resp_yumi_lo;
+  logic io_cmd_v_lo, io_cmd_ready_and_li, io_resp_v_li, io_resp_ready_and_lo;
   
   // note: bp_unicore has L2 cache; (bp_unicore_lite does not, but does not have dma_* interface
   // and would need mem_cmd/mem_resp-to-axi converter to be written.)
@@ -138,23 +138,36 @@ module bp_unicore_axi_sim
    (.clk_i(clk_i)
     ,.reset_i(reset_i)
 
+    // Irrelevant for zynq-parrot
+    ,.my_did_i('0)
+    ,.host_did_i('0)
+    ,.my_cord_i('0)
+
     // Outgoing I/O
-    ,.io_cmd_o(io_cmd_lo)
+    ,.io_cmd_header_o(io_cmd_lo.header)
+    ,.io_cmd_data_o(io_cmd_lo.data)
     ,.io_cmd_v_o(io_cmd_v_lo)
     ,.io_cmd_ready_and_i(io_cmd_ready_and_li)
+    ,.io_cmd_last_o()
 
-    ,.io_resp_i(io_resp_li)
+    ,.io_resp_header_i(io_resp_li.header)
+    ,.io_resp_data_i(io_resp_li.data)
     ,.io_resp_v_i(io_resp_v_li)
-    ,.io_resp_yumi_o(io_resp_yumi_lo)
+    ,.io_resp_ready_and_o(io_resp_ready_and_lo)
+    ,.io_resp_last_i(io_resp_v_li) // stub
 
     // Incoming I/O
-    ,.io_cmd_i(io_cmd_li)
+    ,.io_cmd_header_i(io_cmd_li.header)
+    ,.io_cmd_data_i(io_cmd_li.data)
     ,.io_cmd_v_i(io_cmd_v_li)
-    ,.io_cmd_yumi_o(io_cmd_yumi_lo)
+    ,.io_cmd_ready_and_o(io_cmd_ready_and_lo)
+    ,.io_cmd_last_i(io_cmd_v_li) // stub
 
-    ,.io_resp_o(io_resp_lo) 
+    ,.io_resp_header_o(io_resp_lo.header)
+    ,.io_resp_data_o(io_resp_lo.data)
     ,.io_resp_v_o(io_resp_v_lo)
     ,.io_resp_ready_and_i(io_resp_ready_li)
+    ,.io_resp_last_o()
 
     ,.dma_pkt_o(dma_pkt_lo)
     ,.dma_pkt_v_o(dma_pkt_v_lo)
@@ -181,7 +194,7 @@ module bp_unicore_axi_sim
 
      ,.io_cmd_o(io_cmd_li)
      ,.io_cmd_v_o(io_cmd_v_li)
-     ,.io_cmd_yumi_i(io_cmd_yumi_lo)
+     ,.io_cmd_yumi_i(io_cmd_ready_and_lo & io_cmd_v_li)
 
      ,.io_resp_i(io_resp_lo)
      ,.io_resp_v_i(io_resp_v_lo)
@@ -207,7 +220,7 @@ module bp_unicore_axi_sim
 
      ,.io_resp_o(io_resp_li)
      ,.io_resp_v_o(io_resp_v_li)
-     ,.io_resp_yumi_i(io_resp_yumi_lo)
+     ,.io_resp_yumi_i(io_resp_ready_and_lo & io_resp_v_li)
 
      ,.*
      );
