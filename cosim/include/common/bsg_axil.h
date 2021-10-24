@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string>
 #include "bsg_nonsynth_dpi_gpio.hpp"
+#include "bsg_printing.h"
 
 #ifndef ZYNQ_AXI_TIMEOUT
 #define ZYNQ_AXI_TIMEOUT 8000

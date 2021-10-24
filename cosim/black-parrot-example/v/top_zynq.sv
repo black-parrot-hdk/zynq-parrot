@@ -124,7 +124,7 @@ module top_zynq
    logic [2:0][C_S00_AXI_DATA_WIDTH-1:0]        csr_data_lo;
    logic [C_S00_AXI_DATA_WIDTH-1:0]             pl_to_ps_fifo_data_li, ps_to_pl_fifo_data_lo;
    logic                                        pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
-   logic                                        ps_to_pl_fifo_v_lo, ps_to_pl_fifo_yumi_li;
+   logic                                        ps_to_pl_fifo_v_lo, ps_to_pl_fifo_ready_li;
 
    logic [C_S01_AXI_ADDR_WIDTH-1 : 0]           m01_axi_awaddr;
    logic [2 : 0]                                m01_axi_awprot;
@@ -202,7 +202,7 @@ module top_zynq
 
         ,.ps_to_pl_fifo_data_o (ps_to_pl_fifo_data_lo)
         ,.ps_to_pl_fifo_v_o    (ps_to_pl_fifo_v_lo)
-        ,.ps_to_pl_fifo_yumi_i (ps_to_pl_fifo_yumi_li)
+        ,.ps_to_pl_fifo_yumi_i (ps_to_pl_fifo_ready_li & ps_to_pl_fifo_v_lo)
 
         ,.S_AXI_ACLK   (s00_axi_aclk)
         ,.S_AXI_ARESETN(s00_axi_aresetn)
@@ -315,7 +315,7 @@ module top_zynq
         raddr_translated_lo = {~s01_axi_araddr[29], 3'b0, s01_axi_araddr[0+:28]};
      end
 
-   axi_store_packer
+   axil_store_packer
     #(.axi_addr_width_p(bp_axi_lite_addr_width_lp)
       ,.axi_data_width_p(32)
       )
@@ -323,38 +323,37 @@ module top_zynq
      (.clk_i   (s01_axi_aclk)
       ,.reset_i(~s01_axi_aresetn)
 
-      ,.s_axi_lite_awaddr_i (m01_axi_awaddr)
-      ,.s_axi_lite_awprot_i (m01_axi_awprot)
-      ,.s_axi_lite_awvalid_i(m01_axi_awvalid)
-      ,.s_axi_lite_awready_o(m01_axi_awready)
+      ,.s_axi_awaddr_i (m01_axi_awaddr)
+      ,.s_axi_awprot_i (m01_axi_awprot)
+      ,.s_axi_awvalid_i(m01_axi_awvalid)
+      ,.s_axi_awready_o(m01_axi_awready)
 
-      ,.s_axi_lite_wdata_i  (m01_axi_wdata)
-      ,.s_axi_lite_wstrb_i  (m01_axi_wstrb)
-      ,.s_axi_lite_wvalid_i (m01_axi_wvalid)
-      ,.s_axi_lite_wready_o (m01_axi_wready)
+      ,.s_axi_wdata_i  (m01_axi_wdata)
+      ,.s_axi_wstrb_i  (m01_axi_wstrb)
+      ,.s_axi_wvalid_i (m01_axi_wvalid)
+      ,.s_axi_wready_o (m01_axi_wready)
 
-      ,.s_axi_lite_bresp_o  (m01_axi_bresp)
-      ,.s_axi_lite_bvalid_o (m01_axi_bvalid)
-      ,.s_axi_lite_bready_i (m01_axi_bready)
+      ,.s_axi_bresp_o  (m01_axi_bresp)
+      ,.s_axi_bvalid_o (m01_axi_bvalid)
+      ,.s_axi_bready_i (m01_axi_bready)
 
-      ,.s_axi_lite_araddr_i (m01_axi_araddr)
-      ,.s_axi_lite_arprot_i (m01_axi_arprot)
-      ,.s_axi_lite_arvalid_i(m01_axi_arvalid)
-      ,.s_axi_lite_arready_o(m01_axi_arready)
+      ,.s_axi_araddr_i (m01_axi_araddr)
+      ,.s_axi_arprot_i (m01_axi_arprot)
+      ,.s_axi_arvalid_i(m01_axi_arvalid)
+      ,.s_axi_arready_o(m01_axi_arready)
 
-      ,.s_axi_lite_rdata_o  (m01_axi_rdata)
-      ,.s_axi_lite_rresp_o  (m01_axi_rresp)
-      ,.s_axi_lite_rvalid_o (m01_axi_rvalid)
-      ,.s_axi_lite_rready_i (m01_axi_rready)
+      ,.s_axi_rdata_o  (m01_axi_rdata)
+      ,.s_axi_rresp_o  (m01_axi_rresp)
+      ,.s_axi_rvalid_o (m01_axi_rvalid)
+      ,.s_axi_rready_i (m01_axi_rready)
 
       ,.data_o (pl_to_ps_fifo_data_li)
       ,.v_o    (pl_to_ps_fifo_v_li)
       ,.ready_i(pl_to_ps_fifo_ready_lo)
 
-      // TODO: Connect to support host reads
-      ,.data_i('0)
-      ,.v_i('0)
-      ,.ready_o()
+      ,.data_i(ps_to_pl_fifo_data_lo)
+      ,.v_i(ps_to_pl_fifo_v_lo)
+      ,.ready_o(ps_to_pl_fifo_ready_li)
       );
 
    localparam axi_addr_width_p = 32;
