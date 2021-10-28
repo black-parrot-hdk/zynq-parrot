@@ -6,10 +6,6 @@ set flist_filename  flist.vcs
 
 #set flist_includelist [vivado_parse_bp_vcs_flist $flist_filename ../../import/black-parrot ../../import/black-parrot/external/basejump_stl ../../import/black-parrot/external/HardFloat ../../v]
 
-puts $::env(VINCLUDES)
-
-exit
-
 set flist    [lindex $flist_includelist 0]
 set includelist  [lindex $flist_includelist 1]
 
