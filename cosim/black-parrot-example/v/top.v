@@ -12,6 +12,8 @@ module top
     , parameter integer C_S01_AXI_ADDR_WIDTH = 30
     , parameter integer C_M00_AXI_DATA_WIDTH = 64
     , parameter integer C_M00_AXI_ADDR_WIDTH = 32
+    , parameter integer C_M01_AXI_DATA_WIDTH = 64
+    , parameter integer C_M01_AXI_ADDR_WIDTH = 32
     )
    (
     // Ports of Axi Slave Bus Interface S00_AXI
@@ -104,6 +106,28 @@ module top
     ,input wire [5:0]                            m00_axi_rid
     ,input wire                                  m00_axi_rlast
     ,input wire [1:0]                            m00_axi_rresp
+
+    ,input wire                                  m01_axi_aclk
+    ,input wire                                  m01_axi_aresetn
+    ,output wire [C_M01_AXI_ADDR_WIDTH-1 : 0]    m01_axi_awaddr
+    ,output wire [2 : 0]                         m01_axi_awprot
+    ,output wire                                 m01_axi_awvalid
+    ,input wire                                  m01_axi_awready
+    ,output wire [C_M01_AXI_DATA_WIDTH-1 : 0]    m01_axi_wdata
+    ,output wire [(C_M01_AXI_DATA_WIDTH/8)-1:0]  m01_axi_wstrb
+    ,output wire                                 m01_axi_wvalid
+    ,input wire                                  m01_axi_wready
+    ,input wire [1 : 0]                          m01_axi_bresp
+    ,input wire                                  m01_axi_bvalid
+    ,output wire                                 m01_axi_bready
+    ,output wire [C_M01_AXI_ADDR_WIDTH-1 : 0]    m01_axi_araddr
+    ,output wire [2 : 0]                         m01_axi_arprot
+    ,output wire                                 m01_axi_arvalid
+    ,input wire                                  m01_axi_arready
+    ,input wire [C_M01_AXI_DATA_WIDTH-1 : 0]     m01_axi_rdata
+    ,input wire [1 : 0]                          m01_axi_rresp
+    ,input wire                                  m01_axi_rvalid
+    ,output wire                                 m01_axi_rready
     );
 `else
     );
@@ -192,6 +216,50 @@ module top
        ,.rresp_i(s01_axi_rresp)
        ,.rvalid_i(s01_axi_rvalid)
        ,.rready_o(s01_axi_rready)
+       );
+
+    // TODO: Fix widths
+    logic m01_axi_aclk, m01_axi_aresetn;
+    logic [C_S01_AXI_ADDR_WIDTH-1:0] m01_axi_awaddr;
+    logic [2:0] m01_axi_awprot;
+    logic m01_axi_awvalid, m01_axi_awready;
+    logic [C_S01_AXI_DATA_WIDTH-1:0] m01_axi_wdata;
+    logic [(C_S01_AXI_DATA_WIDTH/8)-1:0] m01_axi_wstrb;
+    logic m01_axi_wvalid, m01_axi_wready;
+    logic [1:0] m01_axi_bresp;
+    logic m01_axi_bvalid, m01_axi_bready;
+    logic [C_S01_AXI_ADDR_WIDTH-1:0] m01_axi_araddr;
+    logic [2:0] m01_axi_arprot;
+    logic m01_axi_arvalid, m01_axi_arready;
+    logic [C_S01_AXI_DATA_WIDTH-1:0] m01_axi_rdata;
+    logic [1:0] m01_axi_rresp;
+    logic m01_axi_rvalid, m01_axi_rready;
+    bsg_nonsynth_axil_to_dpi
+     #(.addr_width_p(C_S01_AXI_ADDR_WIDTH), .data_width_p(C_S01_AXI_DATA_WIDTH))
+     axil2
+      (.aclk_o(m01_axi_aclk)
+       ,.aresetn_o(m01_axi_aresetn)
+
+       ,.awaddr_i(m01_axi_awaddr)
+       ,.awprot_i(m01_axi_awprot)
+       ,.awvalid_i(m01_axi_awvalid)
+       ,.awready_o(m01_axi_awready)
+       ,.wdata_i(m01_axi_wdata)
+       ,.wstrb_i(m01_axi_wstrb)
+       ,.wvalid_i(m01_axi_wvalid)
+       ,.wready_o(m01_axi_wready)
+       ,.bresp_o(m01_axi_bresp)
+       ,.bvalid_o(m01_axi_bvalid)
+       ,.bready_i(m01_axi_bready)
+
+       ,.araddr_i(m01_axi_araddr)
+       ,.arprot_i(m01_axi_arprot)
+       ,.arvalid_i(m01_axi_arvalid)
+       ,.arready_o(m01_axi_arready)
+       ,.rdata_o(m01_axi_rdata)
+       ,.rresp_o(m01_axi_rresp)
+       ,.rvalid_o(m01_axi_rvalid)
+       ,.rready_i(m01_axi_rready)
        );
 
    localparam axi_id_width_p = 6;
@@ -291,6 +359,8 @@ module top
       ,.C_S01_AXI_ADDR_WIDTH(C_S01_AXI_ADDR_WIDTH)
       ,.C_M00_AXI_DATA_WIDTH(C_M00_AXI_DATA_WIDTH)
       ,.C_M00_AXI_ADDR_WIDTH(C_M00_AXI_ADDR_WIDTH)
+      ,.C_M01_AXI_DATA_WIDTH(C_M01_AXI_DATA_WIDTH)
+      ,.C_M01_AXI_ADDR_WIDTH(C_M01_AXI_ADDR_WIDTH)
       )
      top_fpga_inst
      (.s00_axi_aclk    (s00_axi_aclk)
@@ -381,6 +451,28 @@ module top
       ,.m00_axi_rid    (m00_axi_rid)
       ,.m00_axi_rlast  (m00_axi_rlast)
       ,.m00_axi_rresp  (m00_axi_rresp)
+
+      ,.m01_axi_aclk   (m01_axi_aclk)
+      ,.m01_axi_aresetn(m01_axi_aresetn)
+      ,.m01_axi_awaddr (m01_axi_awaddr)
+      ,.m01_axi_awprot (m01_axi_awprot)
+      ,.m01_axi_awvalid(m01_axi_awvalid)
+      ,.m01_axi_awready(m01_axi_awready)
+      ,.m01_axi_wdata  (m01_axi_wdata)
+      ,.m01_axi_wstrb  (m01_axi_wstrb)
+      ,.m01_axi_wvalid (m01_axi_wvalid)
+      ,.m01_axi_wready (m01_axi_wready)
+      ,.m01_axi_bresp  (m01_axi_bresp)
+      ,.m01_axi_bvalid (m01_axi_bvalid)
+      ,.m01_axi_bready (m01_axi_bready)
+      ,.m01_axi_araddr (m01_axi_araddr)
+      ,.m01_axi_arprot (m01_axi_arprot)
+      ,.m01_axi_arvalid(m01_axi_arvalid)
+      ,.m01_axi_arready(m01_axi_arready)
+      ,.m01_axi_rdata  (m01_axi_rdata)
+      ,.m01_axi_rresp  (m01_axi_rresp)
+      ,.m01_axi_rvalid (m01_axi_rvalid)
+      ,.m01_axi_rready (m01_axi_rready)
       );
 
 `ifdef VERILATOR
