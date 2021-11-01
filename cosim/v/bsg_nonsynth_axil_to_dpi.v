@@ -46,12 +46,12 @@ module bsg_nonsynth_axil_to_dpi
     assign aresetn_o = ~areset;
 
     bsg_nonsynth_dpi_gpio
-     #(.width_p(1), .use_output_p(1))
+     #(.width_p(1), .use_input_p(1))
      aclk_gpio
       (.gpio_i(aclk_o), .gpio_o());
 
     bsg_nonsynth_dpi_gpio
-     #(.width_p(1), .use_output_p(1))
+     #(.width_p(1), .use_input_p(1))
      aresetn_gpio
       (.gpio_i(areset), .gpio_o());
 

@@ -15,6 +15,7 @@
 #include <svdpi.h>
 #include <unistd.h>
 #include <memory>
+#include <vector>
 #include "bsg_argparse.h"
 #include "bsg_axil.h"
 #include "bsg_printing.h"
@@ -26,10 +27,31 @@ extern "C" { void bsg_dpi_next(); }
 using namespace std;
 using namespace bsg_nonsynth_dpi;
 
+// Scratchpad
+#define SCRATCHPAD_BASE 0x500000
+#define SCRATCHPAD_SIZE 0x100000
+class zynq_scratchpad : public axil_device {
+  std::vector<int> mem;
+
+public:
+  int read(int address) {
+    int final_addr = (address-SCRATCHPAD_BASE) % SCRATCHPAD_SIZE;
+    return mem[final_addr];
+  }
+
+  void write(int address, int data) {
+    int final_addr = (address-SCRATCHPAD_BASE) % SCRATCHPAD_SIZE;
+    mem[final_addr] = data;
+  }
+};
+
 class bp_zynq_pl {
 
-  static std::unique_ptr<axil<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > axi_gp0;
-  static std::unique_ptr<axil<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > axi_gp1;
+  static std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > axi_gp0;
+  static std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > axi_gp1;
+  static std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> > axi_hp0;
+
+  static std::unique_ptr<zynq_scratchpad> scratchpad;
 
 public:
   // Move the simulation forward to the next DPI event
@@ -41,14 +63,19 @@ public:
     tick();
 
 #ifdef GP0_ENABLE
-    axi_gp0 = std::make_unique<axil<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> >(
+    axi_gp0 = std::make_unique<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> >(
         STRINGIFY(GP0_HIER_BASE));
     axi_gp0->reset(tick);
 #endif
 #ifdef GP1_ENABLE
-    axi_gp1 = std::make_unique<axil<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> >(
+    axi_gp1 = std::make_unique<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> >(
         STRINGIFY(GP1_HIER_BASE));
     axi_gp1->reset(tick);
+#endif
+#ifdef HP0_ENABLE
+    axi_hp0 = std::make_unique<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> >(
+        STRINGIFY(HP0_HIER_BASE));
+    axi_hp0->reset(tick);
 #endif
   }
 
@@ -114,9 +141,17 @@ public:
 
     return data;
   }
+
+  void axil_poll() {
+    // Write
+    if (axi_hp0->p_awvalid && axi_hp0->p_wvalid && (axi_hp0->p_awaddr >= SCRATCHPAD_BASE) && (axi_hp0->p_awaddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {
+    } else if (axi_hp0->p_arvalid && (axi_hp0->p_araddr >= SCRATCHPAD_BASE) && (axi_hp0->p_araddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {
+    }
+  }
 };
 
-std::unique_ptr<axil<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > bp_zynq_pl::axi_gp0;
-std::unique_ptr<axil<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > bp_zynq_pl::axi_gp1;
+std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > bp_zynq_pl::axi_gp0;
+std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > bp_zynq_pl::axi_gp1;
+std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> > bp_zynq_pl::axi_hp0;
 
 #endif

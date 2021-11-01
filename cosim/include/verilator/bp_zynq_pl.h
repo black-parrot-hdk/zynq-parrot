@@ -25,8 +25,8 @@ using namespace bsg_nonsynth_dpi;
 class bp_zynq_pl {
   static Vtop *tb;
 
-  static std::unique_ptr<axil<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > axi_gp0;
-  static std::unique_ptr<axil<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > axi_gp1;
+  static std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > axi_gp0;
+  static std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > axi_gp1;
 
 public:
   // Each bsg_timekeeper::next() moves to the next clock edge
@@ -57,12 +57,12 @@ public:
     tick();
 
 #ifdef GP0_ENABLE
-    axi_gp0 = std::make_unique<axil<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> >(
+    axi_gp0 = std::make_unique<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> >(
         STRINGIFY(GP0_HIER_BASE));
     axi_gp0->reset(tick);
 #endif
 #ifdef GP1_ENABLE
-    axi_gp1 = std::make_unique<axil<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> >(
+    axi_gp1 = std::make_unique<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> >(
         STRINGIFY(GP1_HIER_BASE));
     axi_gp1->reset(tick);
 #endif
@@ -134,7 +134,7 @@ public:
 };
 
 Vtop *bp_zynq_pl::tb;
-std::unique_ptr<axil<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > bp_zynq_pl::axi_gp0;
-std::unique_ptr<axil<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > bp_zynq_pl::axi_gp1;
+std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > bp_zynq_pl::axi_gp0;
+std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > bp_zynq_pl::axi_gp1;
 
 #endif
