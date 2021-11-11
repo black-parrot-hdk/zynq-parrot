@@ -229,12 +229,6 @@ module top_zynq
 
    // Add user logic here
 
-   //`declare_bp_bedrock_mem_if(paddr_width_p, uce_mem_data_width_lp, lce_id_width_p, lce_assoc_p, uce);
-
-   //bp_bedrock_uce_mem_msg_s   io_cmd_lo, io_resp_li;
-   //logic                      io_cmd_v_lo, io_cmd_ready_and_li;
-   //logic                      io_resp_v_li, io_resp_yumi_lo;
-
    `declare_bsg_cache_dma_pkt_s(caddr_width_p);
    bsg_cache_dma_pkt_s dma_pkt_lo;
    logic                       dma_pkt_v_lo, dma_pkt_yumi_li;
@@ -358,9 +352,8 @@ module top_zynq
 
    localparam axi_addr_width_p = 32;
    localparam axi_data_width_p = 64;
-
-   wire [axi_addr_width_p-1:0] axi_awaddr;
-   wire [axi_addr_width_p-1:0] axi_araddr;
+   logic [axi_addr_width_p-1:0] axi_awaddr;
+   logic [axi_addr_width_p-1:0] axi_araddr;
 
    // to translate from BP DRAM space to ARM PS DRAM space
    // we xor-subtract the BP DRAM base address (32'h8000_0000) and add the
@@ -463,7 +456,7 @@ module top_zynq
       ,.s_axi_lite_rvalid_o (s01_axi_rvalid)
       ,.s_axi_lite_rready_i (s01_axi_rready)
 
-      ,.m_axi_awaddr_o   (m00_axi_awaddr)
+      ,.m_axi_awaddr_o   (axi_awaddr)
       ,.m_axi_awvalid_o  (m00_axi_awvalid)
       ,.m_axi_awready_i  (m00_axi_awready)
       ,.m_axi_awid_o     (m00_axi_awid)
@@ -487,7 +480,7 @@ module top_zynq
       ,.m_axi_bid_i      (m00_axi_bid)
       ,.m_axi_bresp_i    (m00_axi_bresp)
 
-      ,.m_axi_araddr_o   (m00_axi_araddr)
+      ,.m_axi_araddr_o   (axi_araddr)
       ,.m_axi_arvalid_o  (m00_axi_arvalid)
       ,.m_axi_arready_i  (m00_axi_arready)
       ,.m_axi_arid_o     (m00_axi_arid)
