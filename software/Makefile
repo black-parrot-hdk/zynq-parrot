@@ -3,6 +3,11 @@ NBF_DIR=../cosim/import/black-parrot/bp_common/software/py
 
 NCORES=20
 
+export PATH := $(SDK_DIR)/install/bin/:$(PATH)
+CROSS_COMPILE ?= riscv64-unknown-elf-dramfs-
+RISCV_OBJCOPY ?= $(CROSS_COMPILE)objcopy
+SED ?= sed
+
 # RISC_V DRAM starts at 0x8000_0000; this sets the stack at 64MB
 # when building the RISCV binaries, bounding total used memory
 
@@ -125,8 +130,10 @@ build_libs: build_tools
 	$(MAKE)  -C $(SDK_DIR) -j1 bootrom
 
 # run on x86
+VPATH := $(wildcard ../cosim/import/black-parrot-sdk/prog/*)
 %.nbf: %.riscv
-	$(SDK_DIR)/install/bin/riscv64-unknown-elf-dramfs/bin/objcopy -O verilog $< $*.mem
+	$(RISCV_OBJCOPY) -O verilog $< $*.mem
+	$(SED) -i "s/@8/@0/g" $*.mem
 	python $(NBF_DIR)/nbf.py --config --mem $*.mem > $@
 	-rm $*.mem
 

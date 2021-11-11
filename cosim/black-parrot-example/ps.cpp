@@ -7,7 +7,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <locale.h>
+#include <pthread.h>
 #include <time.h>
+#include <queue>
 #include <unistd.h>
 
 #include "bp_zynq_pl.h"
@@ -21,6 +23,17 @@
 
 void nbf_load(bp_zynq_pl *zpl, char *);
 bool decode_bp_output(bp_zynq_pl *zpl, int data);
+
+std::queue<int> getchar_queue;  
+
+void *monitor(void *vargp) {
+  int c = -1;
+  while(1) {
+    c = getchar();
+    if(c != -1)
+      getchar_queue.push(c);
+  }
+}
 
 inline unsigned long long get_counter_64(bp_zynq_pl *zpl, unsigned int addr) {
   unsigned long long val;
@@ -227,6 +240,10 @@ extern "C" void cosim_main(char *argstr) {
 
 #endif // DRAM_TEST
 
+  bsg_pr_info("ps.cpp: Starting scan thread\n");
+  pthread_t thread_id;
+  pthread_create(&thread_id, NULL, monitor, NULL);
+
   bsg_pr_info("ps.cpp: beginning nbf load\n");
   nbf_load(zpl, argv[1]);
   struct timespec start, end;
@@ -380,7 +397,8 @@ bool decode_bp_output(bp_zynq_pl *zpl, int data) {
   int print_data = data & 0xFF;
   if (rd_wr) {
     if (address == 0x101000) {
-      bsg_pr_info("%c", print_data);
+      printf("%c", print_data);
+      fflush(stdout);
       return false;
     } else if (address == 0x102000) {
       if (print_data == 0)
@@ -393,9 +411,17 @@ bool decode_bp_output(bp_zynq_pl *zpl, int data) {
     bsg_pr_err("ps.cpp: Errant write to %x\n", address);
     return false;
   }
-  // TODO: Need to implement logic for bp io_read
   else {
-    bsg_pr_err("ps.cpp: Unsupported read (%x)\n", data);
+    if (address == 0x100000) {
+      if (getchar_queue.empty()) {
+        zpl->axil_write(0xC + GP0_ADDR_BASE, -1, 0xf);
+      } else {
+        zpl->axil_write(0xC + GP0_ADDR_BASE, getchar_queue.front(), 0xf);
+        getchar_queue.pop();
+      }
+    } else {
+      bsg_pr_err("ps.cpp: Errant read from (%x)\n", address);
+    }
     return false;
   }
 }

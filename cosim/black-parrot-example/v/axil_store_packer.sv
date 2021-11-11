@@ -26,7 +26,7 @@ module axil_store_packer
 
     // WRITE DATA CHANNEL SIGNALS
     , input [axi_data_width_p-1:0]               s_axi_wdata_i
-    , input [axi_data_width_p>>3-1:0]            s_axi_wstrb_i // unused
+    , input [(axi_data_width_p>>3)-1:0]          s_axi_wstrb_i // unused
     , input                                      s_axi_wvalid_i
     , output logic                               s_axi_wready_o
 
