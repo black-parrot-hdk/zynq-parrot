@@ -120,9 +120,11 @@ module bp_unicore_axi_sim
 
   // unicore declaration
   `declare_bp_bedrock_mem_if(paddr_width_p, uce_mem_data_width_lp, lce_id_width_p, lce_assoc_p, uce);
-  bp_bedrock_uce_mem_msg_s io_cmd_li, io_resp_lo;
-  logic io_cmd_v_li, io_cmd_ready_and_lo, io_resp_v_lo, io_resp_ready_li;
-  bp_bedrock_uce_mem_msg_s io_cmd_lo, io_resp_li;
+  bp_bedrock_uce_mem_header_s io_cmd_header_li, io_resp_header_lo;
+  logic [uce_mem_data_width_lp-1:0] io_cmd_data_li, io_resp_data_lo;
+  logic io_cmd_v_li, io_cmd_ready_and_lo, io_resp_v_lo, io_resp_ready_and_li;
+  bp_bedrock_uce_mem_header_s io_cmd_header_lo, io_resp_header_li;
+  logic [uce_mem_data_width_lp-1:0] io_cmd_data_lo, io_resp_data_li;
   logic io_cmd_v_lo, io_cmd_ready_and_li, io_resp_v_li, io_resp_ready_and_lo;
   
   // note: bp_unicore has L2 cache; (bp_unicore_lite does not, but does not have dma_* interface
@@ -144,29 +146,29 @@ module bp_unicore_axi_sim
     ,.my_cord_i('0)
 
     // Outgoing I/O
-    ,.io_cmd_header_o(io_cmd_lo.header)
-    ,.io_cmd_data_o(io_cmd_lo.data)
+    ,.io_cmd_header_o(io_cmd_header_lo)
+    ,.io_cmd_data_o(io_cmd_data_lo)
     ,.io_cmd_v_o(io_cmd_v_lo)
     ,.io_cmd_ready_and_i(io_cmd_ready_and_li)
     ,.io_cmd_last_o()
 
-    ,.io_resp_header_i(io_resp_li.header)
-    ,.io_resp_data_i(io_resp_li.data)
+    ,.io_resp_header_i(io_resp_header_li)
+    ,.io_resp_data_i(io_resp_data_li)
     ,.io_resp_v_i(io_resp_v_li)
     ,.io_resp_ready_and_o(io_resp_ready_and_lo)
     ,.io_resp_last_i(io_resp_v_li) // stub
 
     // Incoming I/O
-    ,.io_cmd_header_i(io_cmd_li.header)
-    ,.io_cmd_data_i(io_cmd_li.data)
+    ,.io_cmd_header_i(io_cmd_header_li)
+    ,.io_cmd_data_i(io_cmd_data_li)
     ,.io_cmd_v_i(io_cmd_v_li)
     ,.io_cmd_ready_and_o(io_cmd_ready_and_lo)
     ,.io_cmd_last_i(io_cmd_v_li) // stub
 
-    ,.io_resp_header_o(io_resp_lo.header)
-    ,.io_resp_data_o(io_resp_lo.data)
+    ,.io_resp_header_o(io_resp_header_lo)
+    ,.io_resp_data_o(io_resp_data_lo)
     ,.io_resp_v_o(io_resp_v_lo)
-    ,.io_resp_ready_and_i(io_resp_ready_li)
+    ,.io_resp_ready_and_i(io_resp_ready_and_li)
     ,.io_resp_last_o()
 
     ,.dma_pkt_o(dma_pkt_lo)
@@ -183,7 +185,7 @@ module bp_unicore_axi_sim
     );
   
   // incoming io wrapper
-  axi_lite_to_bp_lite_client
+  bp_me_axil_client
    #(.bp_params_p(bp_params_p)
      ,.axi_data_width_p(axi_lite_data_width_p)
      ,.axi_addr_width_p(axi_lite_addr_width_p)
@@ -192,20 +194,22 @@ module bp_unicore_axi_sim
     (.clk_i(clk_i)
      ,.reset_i(reset_i)
 
-     ,.io_cmd_o(io_cmd_li)
+     ,.io_cmd_header_o(io_cmd_header_li)
+     ,.io_cmd_data_o(io_cmd_data_li)
      ,.io_cmd_v_o(io_cmd_v_li)
      ,.io_cmd_yumi_i(io_cmd_ready_and_lo & io_cmd_v_li)
 
-     ,.io_resp_i(io_resp_lo)
+     ,.io_resp_header_i(io_resp_header_lo)
+     ,.io_resp_data_i(io_resp_data_lo)
      ,.io_resp_v_i(io_resp_v_lo)
-     ,.io_resp_ready_o(io_resp_ready_li)
+     ,.io_resp_ready_and_o(io_resp_ready_and_li)
 
      ,.lce_id_i(lce_id_width_p'('b10))
      ,.*
      );
 
   // incoming io wrapper
-  bp_lite_to_axi_lite_master
+  bp_me_axil_master
    #(.bp_params_p(bp_params_p)
      ,.axi_data_width_p(axi_lite_data_width_p)
      ,.axi_addr_width_p(axi_lite_addr_width_p)
@@ -214,13 +218,15 @@ module bp_unicore_axi_sim
     (.clk_i(clk_i)
      ,.reset_i(reset_i)
 
-     ,.io_cmd_i(io_cmd_lo)
+     ,.io_cmd_header_i(io_cmd_header_lo)
+     ,.io_cmd_data_i(io_cmd_data_lo)
      ,.io_cmd_v_i(io_cmd_v_lo)
-     ,.io_cmd_ready_o(io_cmd_ready_and_li)
+     ,.io_cmd_ready_and_o(io_cmd_ready_and_li)
 
-     ,.io_resp_o(io_resp_li)
+     ,.io_resp_header_o(io_resp_header_li)
+     ,.io_resp_data_o(io_resp_data_li)
      ,.io_resp_v_o(io_resp_v_li)
-     ,.io_resp_yumi_i(io_resp_ready_and_lo & io_resp_v_li)
+     ,.io_resp_ready_and_i(io_resp_ready_and_lo)
 
      ,.*
      );
