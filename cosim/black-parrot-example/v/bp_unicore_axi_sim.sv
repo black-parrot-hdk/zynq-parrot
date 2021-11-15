@@ -197,7 +197,7 @@ module bp_unicore_axi_sim
      ,.io_cmd_header_o(io_cmd_header_li)
      ,.io_cmd_data_o(io_cmd_data_li)
      ,.io_cmd_v_o(io_cmd_v_li)
-     ,.io_cmd_yumi_i(io_cmd_ready_and_lo & io_cmd_v_li)
+     ,.io_cmd_ready_and_i(io_cmd_ready_and_lo)
 
      ,.io_resp_header_i(io_resp_header_lo)
      ,.io_resp_data_i(io_resp_data_lo)
