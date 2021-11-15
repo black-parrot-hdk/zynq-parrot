@@ -6,7 +6,7 @@ Checkout these examples in this directory:
 - **blackparrot-example**: working example of BlackParrot. Runs in Verilator and FPGA.
 - **dram-example**: tests the software running on ARM that allocates DRAM space out of the ARM Linux available memory for the PL
 
-**NOTE**: For this repo to work, make sure to **git submodule update --init** the following directories
+**NOTE**: For this repo to work, make sure to **git submodule update --init** the following directories:
 
 - import/black-parrot
 - import/black-parrot-sdk
