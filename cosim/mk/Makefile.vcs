@@ -17,6 +17,8 @@ VCS_OPTS += +incdir+$(COSIM_DIR)/include/vcs
 CFLAGS += -DVCS
 CFLAGS += -std=c++14
 
+LDFLAGS += -lpthread
+
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/vcs
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
@@ -28,7 +30,7 @@ all:
 	@echo "## See the makefile for the fun things you can do in this directory"
 
 simv: $(HOST_PROGRAM) $(FLIST)
-	$(VCS) $(VCS_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" -o $@ $<
+	$(VCS) $(VCS_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" -LDFLAGS "$(LDFLAGS)" -o $@ $<
 
 run: simv
 	./$< $(SIM_ARGS) $(TRACE)

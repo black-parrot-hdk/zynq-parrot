@@ -1,5 +1,5 @@
 
-`timescale 1 ns / 1 ps
+`timescale 1 ps / 1 ps
 
 	module example_axi_v1_0_S00_AXI #
 	(

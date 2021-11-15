@@ -12,6 +12,8 @@ VV_OPTS += +incdir+$(COSIM_DIR)/include/verilator
 CFLAGS += -DVERILATOR
 CFLAGS += -std=c++14
 
+LDFLAGS += -lpthread
+
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/verilator
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
@@ -26,7 +28,7 @@ run: obj_dir/V$(TOP_MODULE)
 	$< $(SIM_ARGS) $(TRACE)
 
 obj_dir/V$(TOP_MODULE): $(HOST_PROGRAM) $(FLIST)
-	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" $<
+	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" -LDFLAGS "$(LDFLAGS)" $<
 
 clean:
 	-rm -rf flist.vcs
