@@ -1,4 +1,4 @@
-Examples:
+Checkout these examples in this directory:
 
 - **simple-example**: demonstrates how to use the Vivado GUI, Zynq board, etc. Useful to know for getting unstuck with the other directories. =)
 - **shell-example**: basic example of the BSG Zynq Shell. Runs in verilator and FPGA.
@@ -6,7 +6,7 @@ Examples:
 - **blackparrot-example**: working example of BlackParrot. Runs in Verilator and FPGA.
 - **dram-example**: tests the software running on ARM that allocates DRAM space out of the ARM Linux available memory for the PL
 
-For this repo to work, make sure to **git submodule update --init** the following directories
+**NOTE**: For this repo to work, make sure to **git submodule update --init** the following directories
 
 - import/black-parrot
 - import/black-parrot-sdk
