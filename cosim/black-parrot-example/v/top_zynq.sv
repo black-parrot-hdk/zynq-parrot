@@ -261,9 +261,12 @@ module top_zynq
    logic [l2_fill_width_p-1:0] dma_data_li;
    logic                       dma_data_v_li, dma_data_ready_and_lo;
 
-   localparam bp_axi_lite_addr_width_lp = 32;
+   localparam bp_axil_addr_width_lp = 32;
+   localparam bp_axil_data_width_lp = 32;
+   localparam bp_axi_addr_width_lp  = 32;
+   localparam bp_axi_data_width_lp  = 64;
 
-   logic [bp_axi_lite_addr_width_lp-1:0] waddr_translated_lo, raddr_translated_lo;
+   logic [bp_axil_addr_width_lp-1:0] waddr_translated_lo, raddr_translated_lo;
 
    // Address Translation (MBT):
    //
@@ -354,8 +357,8 @@ module top_zynq
    logic                                        s02_axi_rvalid;
    logic                                        s02_axi_rready;
 
-   axil_store_packer
-    #(.axi_addr_width_p(bp_axi_lite_addr_width_lp)
+   bsg_axil_store_packer
+    #(.axi_addr_width_p(bp_axil_addr_width_lp)
       ,.axi_data_width_p(32)
       )
     store_packer
@@ -363,7 +366,7 @@ module top_zynq
       ,.reset_i(~s01_axi_aresetn)
 
       ,.s_axi_awaddr_i (s02_axi_awaddr)
-      ,.s_axi_awprot_i (s02_axi_awprot)
+      ,.s_axi_awprot_i (axi_prot_type_e'(s02_axi_awprot))
       ,.s_axi_awvalid_i(s02_axi_awvalid)
       ,.s_axi_awready_o(s02_axi_awready)
 
@@ -377,7 +380,7 @@ module top_zynq
       ,.s_axi_bready_i (s02_axi_bready)
 
       ,.s_axi_araddr_i (s02_axi_araddr)
-      ,.s_axi_arprot_i (s02_axi_arprot)
+      ,.s_axi_arprot_i (axi_prot_type_e'(s02_axi_arprot))
       ,.s_axi_arvalid_i(s02_axi_arvalid)
       ,.s_axi_arready_o(s02_axi_arready)
 
@@ -396,7 +399,7 @@ module top_zynq
       );
 
   bsg_axil_demux
-   #(.addr_width_p(bp_axi_lite_addr_width_lp)
+   #(.addr_width_p(bp_axil_addr_width_lp)
      ,.data_width_p(32)
      // BP host address space is below this
      ,.split_addr_p(32'h0020_0000)
@@ -513,64 +516,67 @@ module top_zynq
       ,.data_o(mem_profiler_r)
       );
 
-   bp_unicore_axi_sim #
+   bp_unicore_axi #
      (.bp_params_p(bp_params_p)
-      ,.axi_lite_addr_width_p(bp_axi_lite_addr_width_lp)
+      ,.axil_addr_width_p(bp_axil_addr_width_lp)
+      ,.axil_data_width_p(bp_axil_data_width_lp)
+      ,.axi_addr_width_p(bp_axi_addr_width_lp)
+      ,.axi_data_width_p(bp_axi_data_width_lp)
       )
    blackparrot
      (.clk_i(s01_axi_aclk)
       ,.reset_i(bp_reset_li)
 
       // these are reads/write from BlackParrot
-      ,.m_axi_lite_awaddr_o (bp_axi_awaddr)
-      ,.m_axi_lite_awprot_o (bp_axi_awprot)
-      ,.m_axi_lite_awvalid_o(bp_axi_awvalid)
-      ,.m_axi_lite_awready_i(bp_axi_awready)
+      ,.m_axil_awaddr_o (bp_axi_awaddr)
+      ,.m_axil_awprot_o (bp_axi_awprot)
+      ,.m_axil_awvalid_o(bp_axi_awvalid)
+      ,.m_axil_awready_i(bp_axi_awready)
 
-      ,.m_axi_lite_wdata_o  (bp_axi_wdata)
-      ,.m_axi_lite_wstrb_o  (bp_axi_wstrb)
-      ,.m_axi_lite_wvalid_o (bp_axi_wvalid)
-      ,.m_axi_lite_wready_i (bp_axi_wready)
+      ,.m_axil_wdata_o  (bp_axi_wdata)
+      ,.m_axil_wstrb_o  (bp_axi_wstrb)
+      ,.m_axil_wvalid_o (bp_axi_wvalid)
+      ,.m_axil_wready_i (bp_axi_wready)
 
-      ,.m_axi_lite_bresp_i  (bp_axi_bresp)
-      ,.m_axi_lite_bvalid_i (bp_axi_bvalid)
-      ,.m_axi_lite_bready_o (bp_axi_bready)
+      ,.m_axil_bresp_i  (axi_resp_type_e'(bp_axi_bresp))
+      ,.m_axil_bvalid_i (bp_axi_bvalid)
+      ,.m_axil_bready_o (bp_axi_bready)
 
-      ,.m_axi_lite_araddr_o (bp_axi_araddr)
-      ,.m_axi_lite_arprot_o (bp_axi_arprot)
-      ,.m_axi_lite_arvalid_o(bp_axi_arvalid)
-      ,.m_axi_lite_arready_i(bp_axi_arready)
+      ,.m_axil_araddr_o (bp_axi_araddr)
+      ,.m_axil_arprot_o (bp_axi_arprot)
+      ,.m_axil_arvalid_o(bp_axi_arvalid)
+      ,.m_axil_arready_i(bp_axi_arready)
 
-      ,.m_axi_lite_rdata_i  (bp_axi_rdata)
-      ,.m_axi_lite_rresp_i  (bp_axi_rresp)
-      ,.m_axi_lite_rvalid_i (bp_axi_rvalid)
-      ,.m_axi_lite_rready_o (bp_axi_rready)
+      ,.m_axil_rdata_i  (bp_axi_rdata)
+      ,.m_axil_rresp_i  (axi_resp_type_e'(bp_axi_rresp))
+      ,.m_axil_rvalid_i (bp_axi_rvalid)
+      ,.m_axil_rready_o (bp_axi_rready)
 
       // these are reads/writes into BlackParrot
       // from the Zynq PS ARM core
-      ,.s_axi_lite_awaddr_i (waddr_translated_lo)
-      ,.s_axi_lite_awprot_i (s01_axi_awprot)
-      ,.s_axi_lite_awvalid_i(s01_axi_awvalid)
-      ,.s_axi_lite_awready_o(s01_axi_awready)
+      ,.s_axil_awaddr_i (waddr_translated_lo)
+      ,.s_axil_awprot_i (axi_prot_type_e'(s01_axi_awprot))
+      ,.s_axil_awvalid_i(s01_axi_awvalid)
+      ,.s_axil_awready_o(s01_axi_awready)
 
-      ,.s_axi_lite_wdata_i  (s01_axi_wdata)
-      ,.s_axi_lite_wstrb_i  (s01_axi_wstrb)
-      ,.s_axi_lite_wvalid_i (s01_axi_wvalid)
-      ,.s_axi_lite_wready_o (s01_axi_wready)
+      ,.s_axil_wdata_i  (s01_axi_wdata)
+      ,.s_axil_wstrb_i  (s01_axi_wstrb)
+      ,.s_axil_wvalid_i (s01_axi_wvalid)
+      ,.s_axil_wready_o (s01_axi_wready)
 
-      ,.s_axi_lite_bresp_o  (s01_axi_bresp)
-      ,.s_axi_lite_bvalid_o (s01_axi_bvalid)
-      ,.s_axi_lite_bready_i (s01_axi_bready)
+      ,.s_axil_bresp_o  (s01_axi_bresp)
+      ,.s_axil_bvalid_o (s01_axi_bvalid)
+      ,.s_axil_bready_i (s01_axi_bready)
 
-      ,.s_axi_lite_araddr_i (raddr_translated_lo)
-      ,.s_axi_lite_arprot_i (s01_axi_arprot)
-      ,.s_axi_lite_arvalid_i(s01_axi_arvalid)
-      ,.s_axi_lite_arready_o(s01_axi_arready)
+      ,.s_axil_araddr_i (raddr_translated_lo)
+      ,.s_axil_arprot_i (axi_prot_type_e'(s01_axi_arprot))
+      ,.s_axil_arvalid_i(s01_axi_arvalid)
+      ,.s_axil_arready_o(s01_axi_arready)
 
-      ,.s_axi_lite_rdata_o  (s01_axi_rdata)
-      ,.s_axi_lite_rresp_o  (s01_axi_rresp)
-      ,.s_axi_lite_rvalid_o (s01_axi_rvalid)
-      ,.s_axi_lite_rready_i (s01_axi_rready)
+      ,.s_axil_rdata_o  (s01_axi_rdata)
+      ,.s_axil_rresp_o  (s01_axi_rresp)
+      ,.s_axil_rvalid_o (s01_axi_rvalid)
+      ,.s_axil_rready_i (s01_axi_rready)
 
       ,.m_axi_awaddr_o   (axi_awaddr)
       ,.m_axi_awvalid_o  (m00_axi_awvalid)

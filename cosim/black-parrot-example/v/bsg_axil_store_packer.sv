@@ -9,7 +9,7 @@
 
 `include "bp_me_defines.svh"
 
-module axil_store_packer
+module bsg_axil_store_packer
  import bp_me_pkg::*;
  #(parameter `BSG_INV_PARAM(axi_addr_width_p)
    , parameter `BSG_INV_PARAM(axi_data_width_p)
@@ -26,7 +26,7 @@ module axil_store_packer
 
     // WRITE DATA CHANNEL SIGNALS
     , input [axi_data_width_p-1:0]               s_axi_wdata_i
-    , input [(axi_data_width_p>>3)-1:0]          s_axi_wstrb_i // unused
+    , input [(axi_data_width_p>>3)-1:0]          s_axi_wstrb_i
     , input                                      s_axi_wvalid_i
     , output logic                               s_axi_wready_o
 
@@ -131,4 +131,6 @@ module axil_store_packer
   // synopsys translate_on
 
 endmodule
+
+`BSG_ABSTRACT_MODULE(bsg_axil_store_packer)
 
