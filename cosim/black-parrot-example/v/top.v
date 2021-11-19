@@ -12,7 +12,7 @@ module top
     , parameter integer C_S01_AXI_ADDR_WIDTH = 30
     , parameter integer C_M00_AXI_DATA_WIDTH = 64
     , parameter integer C_M00_AXI_ADDR_WIDTH = 32
-    , parameter integer C_M01_AXI_DATA_WIDTH = 64
+    , parameter integer C_M01_AXI_DATA_WIDTH = 32
     , parameter integer C_M01_AXI_ADDR_WIDTH = 32
     )
    (
@@ -220,22 +220,22 @@ module top
 
     // TODO: Fix widths
     logic m01_axi_aclk, m01_axi_aresetn;
-    logic [C_S01_AXI_ADDR_WIDTH-1:0] m01_axi_awaddr;
+    logic [C_M01_AXI_ADDR_WIDTH-1:0] m01_axi_awaddr;
     logic [2:0] m01_axi_awprot;
     logic m01_axi_awvalid, m01_axi_awready;
-    logic [C_S01_AXI_DATA_WIDTH-1:0] m01_axi_wdata;
-    logic [(C_S01_AXI_DATA_WIDTH/8)-1:0] m01_axi_wstrb;
+    logic [C_M01_AXI_DATA_WIDTH-1:0] m01_axi_wdata;
+    logic [(C_M01_AXI_DATA_WIDTH/8)-1:0] m01_axi_wstrb;
     logic m01_axi_wvalid, m01_axi_wready;
     logic [1:0] m01_axi_bresp;
     logic m01_axi_bvalid, m01_axi_bready;
-    logic [C_S01_AXI_ADDR_WIDTH-1:0] m01_axi_araddr;
+    logic [C_M01_AXI_ADDR_WIDTH-1:0] m01_axi_araddr;
     logic [2:0] m01_axi_arprot;
     logic m01_axi_arvalid, m01_axi_arready;
-    logic [C_S01_AXI_DATA_WIDTH-1:0] m01_axi_rdata;
+    logic [C_M01_AXI_DATA_WIDTH-1:0] m01_axi_rdata;
     logic [1:0] m01_axi_rresp;
     logic m01_axi_rvalid, m01_axi_rready;
     bsg_nonsynth_axil_to_dpi
-     #(.addr_width_p(C_S01_AXI_ADDR_WIDTH), .data_width_p(C_S01_AXI_DATA_WIDTH))
+     #(.addr_width_p(C_M01_AXI_ADDR_WIDTH), .data_width_p(C_M01_AXI_DATA_WIDTH))
      axil2
       (.aclk_o(m01_axi_aclk)
        ,.aresetn_o(m01_axi_aresetn)

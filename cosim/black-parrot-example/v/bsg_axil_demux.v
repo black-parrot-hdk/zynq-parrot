@@ -86,12 +86,17 @@ module bsg_axil_demux
 
   logic select_m00_r, select_m01_r;
   wire clear_selection = (s00_axi_rvalid | s00_axi_bvalid);
-  wire select_m00_n = (s00_axi_arvalid & s00_axi_araddr <= split_addr_p)
-                      || (s00_axi_awvalid & s00_axi_awaddr <= split_addr_p);
+  wire select_m00_n = ((s00_axi_arvalid && (s00_axi_araddr < split_addr_p))
+                       || (s00_axi_awvalid && (s00_axi_awaddr < split_addr_p))
+                       )
+                      && ~select_m00_r
+                      && ~select_m01_r;
   // Prioritize m00 statically. Could arbitrate, but this is low performance anyway
-  wire select_m01_n = ((s00_axi_arvalid & s00_axi_araddr <= split_addr_p)
-                       || (s00_axi_awvalid & s00_axi_awaddr <= split_addr_p))
+  wire select_m01_n = ((s00_axi_arvalid & (s00_axi_araddr >= split_addr_p))
+                       || (s00_axi_awvalid & (s00_axi_awaddr >= split_addr_p))
+                       )
                       && ~select_m00_n
+                      && ~select_m00_r
                       && ~select_m01_r;
   bsg_dff_reset_set_clear
    #(.width_p(2))

@@ -29,7 +29,7 @@ module top_zynq
    , parameter integer C_S01_AXI_ADDR_WIDTH   = 30
    , parameter integer C_M00_AXI_DATA_WIDTH   = 64
    , parameter integer C_M00_AXI_ADDR_WIDTH   = 32
-   , parameter integer C_M01_AXI_DATA_WIDTH   = 64
+   , parameter integer C_M01_AXI_DATA_WIDTH   = 32
    , parameter integer C_M01_AXI_ADDR_WIDTH   = 32
    )
   (// Ports of Axi Slave Bus Interface S00_AXI
@@ -124,22 +124,22 @@ module top_zynq
 
    , input wire                                  m01_axi_aclk
    , input wire                                  m01_axi_aresetn
-   , output wire [C_S00_AXI_ADDR_WIDTH-1 : 0]    m01_axi_awaddr
+   , output wire [C_M01_AXI_ADDR_WIDTH-1 : 0]    m01_axi_awaddr
    , output wire [2 : 0]                         m01_axi_awprot
    , output wire                                 m01_axi_awvalid
    , input wire                                  m01_axi_awready
-   , output wire [C_S00_AXI_DATA_WIDTH-1 : 0]    m01_axi_wdata
-   , output wire [(C_S00_AXI_DATA_WIDTH/8)-1:0]  m01_axi_wstrb
+   , output wire [C_M01_AXI_DATA_WIDTH-1 : 0]    m01_axi_wdata
+   , output wire [(C_M01_AXI_DATA_WIDTH/8)-1:0]  m01_axi_wstrb
    , output wire                                 m01_axi_wvalid
    , input wire                                  m01_axi_wready
    , input wire [1 : 0]                          m01_axi_bresp
    , input wire                                  m01_axi_bvalid
    , output wire                                 m01_axi_bready
-   , output wire [C_S00_AXI_ADDR_WIDTH-1 : 0]    m01_axi_araddr
+   , output wire [C_M01_AXI_ADDR_WIDTH-1 : 0]    m01_axi_araddr
    , output wire [2 : 0]                         m01_axi_arprot
    , output wire                                 m01_axi_arvalid
    , input wire                                  m01_axi_arready
-   , input wire [C_S00_AXI_DATA_WIDTH-1 : 0]     m01_axi_rdata
+   , input wire [C_M01_AXI_DATA_WIDTH-1 : 0]     m01_axi_rdata
    , input wire [1 : 0]                          m01_axi_rresp
    , input wire                                  m01_axi_rvalid
    , output wire                                 m01_axi_rready

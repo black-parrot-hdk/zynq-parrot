@@ -9,7 +9,7 @@ export TOP_MODULE ?= top
 #############################
 # Accelerator Software Settings
 #############################
-export NBF_FILE     ?= $(abspath ../prog.nbf)
+export NBF_FILE     ?= $(abspath ../scratchpad.nbf)
 export HOST_PROGRAM ?= $(abspath ../ps.cpp)
 export BASE_FLIST   ?= $(abspath ../flist.vcs)
 export FLIST        ?= $(abspath flist.vcs)
@@ -22,7 +22,8 @@ CFLAGS += -DZYNQ_PL_DEBUG
 CFLAGS += -DZYNQ_PS_DEBUG
 CFLAGS += -DGP0_ENABLE -DGP0_ADDR_BASE=0x40000000U -DGP0_ADDR_WIDTH=6 -DGP0_DATA_WIDTH=32 -DGP0_HIER_BASE=top.axil0
 CFLAGS += -DGP1_ENABLE -DGP1_ADDR_BASE=0x80000000U -DGP1_ADDR_WIDTH=30 -DGP1_DATA_WIDTH=32 -DGP1_HIER_BASE=top.axil1
-CFLAGS += -DHP0_ENABLE -DHP0_ADDR_BASE=0x500000U   -DHP0_ADDR_WIDTH=30 -DHP0_DATA_WIDTH=32 -DHP0_HIER_BASE=top.axil2
+CFLAGS += -DHP0_ENABLE -DHP0_ADDR_BASE=0x1000000U -DHP0_ADDR_WIDTH=32 -DHP0_DATA_WIDTH=32 -DHP0_HIER_BASE=top.axil2
+CFLAGS += -DSCRATCHPAD_ENABLE
 CFLAGS += $(INCLUDES) $(SKIP_DRAM)
 
 include $(TOP)/cosim/mk/Makefile.vcs
