@@ -59,8 +59,8 @@ public:
 
 class axil_device {
 public:
-  virtual int read(int address, void (*tick)()) { printf("VIRTUAL READ\n"); };
-  virtual void write(int address, int data, void (*tick)()) { printf("VIRTUAL WRITE\n"); };
+  virtual int read(int address, void (*tick)()) = 0;
+  virtual void write(int address, int data, void (*tick)()) = 0;
 };
 
 // A = axil address width

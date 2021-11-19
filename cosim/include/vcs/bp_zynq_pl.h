@@ -107,7 +107,7 @@ public:
       index = 1;
       address = address - GP1_ADDR_BASE;
     } else {
-      bsg_pr_err("  bp_zynq_pl: unsupported AXIL port %d", index);
+      bsg_pr_err("  bp_zynq_pl: unsupported AXIL port %d\n", index);
     }
 
     bsg_pr_dbg_pl("  bp_zynq_pl: AXI writing [%x] -> port %d, [%x]<-%8.8x\n",
@@ -137,7 +137,7 @@ public:
       index = 1;
       address = address - GP1_ADDR_BASE;
     } else {
-      bsg_pr_err("  bp_zynq: unsupported AXIL port %d", index);
+      bsg_pr_err("  bp_zynq: unsupported AXIL port %d\n", index);
     }
 
     if (index == 0) {
@@ -159,10 +159,10 @@ public:
       axi_hp0->axil_read_helper((axil_device *)scratchpad.get(), tick);
     } else if (axi_hp0->p_awvalid) {
       int awaddr = axi_hp0->p_awaddr;
-      bsg_pr_err("  bp_zynq_pl: Unsupported AXI device write at [%x]", awaddr);
+      bsg_pr_err("  bp_zynq_pl: Unsupported AXI device write at [%x]\n", awaddr);
     } else if (axi_hp0->p_arvalid) {
       int araddr = axi_hp0->p_awaddr;
-      bsg_pr_err("  bp_zynq_pl: Unsupported AXI device read at [%x]", araddr);
+      bsg_pr_err("  bp_zynq_pl: Unsupported AXI device read at [%x]\n", araddr);
     }
   }
 };
