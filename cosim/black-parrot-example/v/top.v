@@ -18,8 +18,9 @@ module top
    (
     // Ports of Axi Slave Bus Interface S00_AXI
 `ifdef FPGA
-    input wire                                   s00_axi_aclk
-    ,input wire                                  s00_axi_aresetn
+    input wire                                   aclk
+    ,input wire                                  aresetn
+
     ,input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
     ,input wire [2 : 0]                          s00_axi_awprot
     ,input wire                                  s00_axi_awvalid
@@ -40,8 +41,6 @@ module top
     ,output wire                                 s00_axi_rvalid
     ,input wire                                  s00_axi_rready
 
-    ,input wire                                  s01_axi_aclk
-    ,input wire                                  s01_axi_aresetn
     ,input wire [C_S01_AXI_ADDR_WIDTH-1 : 0]     s01_axi_awaddr
     ,input wire [2 : 0]                          s01_axi_awprot
     ,input wire                                  s01_axi_awvalid
@@ -62,8 +61,6 @@ module top
     ,output wire                                 s01_axi_rvalid
     ,input wire                                  s01_axi_rready
 
-    ,input wire                                  m00_axi_aclk
-    ,input wire                                  m00_axi_aresetn
     ,output wire [C_M00_AXI_ADDR_WIDTH-1:0]      m00_axi_awaddr
     ,output wire                                 m00_axi_awvalid
     ,input wire                                  m00_axi_awready
@@ -107,8 +104,6 @@ module top
     ,input wire                                  m00_axi_rlast
     ,input wire [1:0]                            m00_axi_rresp
 
-    ,input wire                                  m01_axi_aclk
-    ,input wire                                  m01_axi_aresetn
     ,output wire [C_M01_AXI_ADDR_WIDTH-1 : 0]    m01_axi_awaddr
     ,output wire [2 : 0]                         m01_axi_awprot
     ,output wire                                 m01_axi_awvalid
@@ -129,6 +124,9 @@ module top
     ,input wire                                  m01_axi_rvalid
     ,output wire                                 m01_axi_rready
     );
+
+    assign {s00_axi_aclk, s01_axi_aclk, m00_axi_aclk, m01_axi_aclk} = {4{aclk}};
+    assign {s00_axi_aresetn, s01_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn} = {4{aresetn}};
 `else
     );
 

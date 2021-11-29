@@ -23,8 +23,9 @@
         // Ports of Axi Slave Bus Interface S00_AXI
 // TODO: This must be set in the vivado gui
 `ifdef FPGA
-        input wire  s00_axi_aclk,
-        input wire  s00_axi_aresetn,
+        input wire  aclk,
+        input wire  aresetn,
+
         input wire [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_awaddr,
         input wire [2:0] s00_axi_awprot,
         input wire  s00_axi_awvalid,
@@ -45,6 +46,8 @@
         output wire  s00_axi_rvalid,
         input wire  s00_axi_rready
     );
+    assign {s00_axi_aclk} = {1{aclk}};
+    assign {s00_axi_aresetn} = {1{aresetn}};
 `else
     );
     logic s00_axi_aclk, s00_axi_aresetn;

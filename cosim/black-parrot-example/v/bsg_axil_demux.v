@@ -3,6 +3,8 @@
 //   is not multiplexed between reads and writes. This is the case in BP.
 //   More specifically, arvalid and awvalid should be mutex
 
+`include "bsg_defines.v"
+
 module bsg_axil_demux
  #(parameter `BSG_INV_PARAM(addr_width_p)
    , parameter `BSG_INV_PARAM(data_width_p)
@@ -140,5 +142,5 @@ module bsg_axil_demux
 
 endmodule
 
-`BSG_ABSTRACT_MODULE(bsg_axil_decoder)
+`BSG_ABSTRACT_MODULE(bsg_axil_demux)
 
