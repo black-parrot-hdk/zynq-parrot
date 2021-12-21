@@ -54,7 +54,7 @@ public:
 
   ~bp_zynq_pl(void) {}
 
-  void axil_write(unsigned int address, int data, int wstrb) {
+  void axil_write(unsigned int address, int data, int wstrb=0xF) {
     int address_orig = address;
     int index;
 
