@@ -20,10 +20,10 @@ all:
 
 EXE ?= runme
 run: $(EXE)
-	sudo $< $(SIM_ARGS)
+	sudo ./$< $(SIM_ARGS)
 
 $(EXE): $(HOST_PROGRAM)
-	$(GCC) $(CFLAGS) $(CINCLUDES) $(CSOURCES) $< -o $@
+	$(GCC) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $(CSOURCES) $< $(CFLAGS) $(LDFLAGS) -o $@
 
 fpga_report_build_block:
 	-@grep --color "CRITICAL WARNING" vivado.log
