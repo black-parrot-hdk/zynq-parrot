@@ -57,15 +57,16 @@ unpack_bitstream:
 # load the bitstream on the Zynq board (copy the .b64 file into this dir first)
 # make sure to unpack it first
 
-load_bitstream: control-program
+load_bitstream: $(EXE)
 	echo 'import pprint; from pynq import Overlay; overlay=Overlay("$(BASENAME)_bd_1.bit"); print (overlay.__doc__); pprint.pprint(overlay.ip_dict,width=1); pprint.pprint(overlay.clock_dict,width=1);' | sudo python3
 	@echo 'allocating memory and sleeping...'
-	sudo ./control-program &
+	sudo ./$(EXE) &
 
 # use this instead if you have already loaded the bitstream this will load the bitstream, but transfer
 # over the physical memory pointer that was written into the accelerator before
-# this way we do not need to reallocate dram
-# on the zynq board
+# this way we do not need to reallocate dram on the zynq board
+# note: this rule is only currently necessary and only works with blackparrot, but with standardization
+# of addresses could apply to other DRAM-using accelerators
 
 reload_bitstream_keep_dram:
 	echo 'import pprint; from pynq import Overlay, MMIO; mmio=MMIO(0x40000000,0x1000); val4 = mmio.read(0x4); val8 = mmio.read(0x8);  overlay=Overlay("$(BASENAME)_bd_1.bit"); print("transferring over: ", hex(val4), hex(val8)); mmio.write(0x4,val4); mmio.write(0x8,val8);  print (overlay.__doc__); pprint.pprint(overlay.ip_dict,width=1); pprint.pprint(overlay.clock_dict,width=1)' | sudo python3
