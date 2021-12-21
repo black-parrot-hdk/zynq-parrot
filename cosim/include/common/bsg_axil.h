@@ -156,7 +156,7 @@ public:
     return data;
   }
 
-  void axil_write_helper(unsigned int address, int data, int wstrb,
+  void axil_write_helper(unsigned int address, int data, int wstrb=0xF,
                          void (*tick)()) {
     int timeout_counter = 0;
 
