@@ -16,7 +16,8 @@ CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/fpga
 
 all:
-	@echo "## See the makefile for the fun things you can do in this directory"
+	@echo "Rules for FPGA; see $(TOP)/cosim/mk/Makefile.fpga for more:"
+	@grep -o -e "^[a-Z_]*:" $(TOP)/cosim/mk/Makefile.fpga
 
 EXE ?= runme
 run: $(EXE)
