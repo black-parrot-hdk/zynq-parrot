@@ -17,7 +17,7 @@ CINCLUDES += -I$(COSIM_INCLUDE_DIR)/fpga
 
 all:
 	@echo "Rules for FPGA; see $(TOP)/cosim/mk/Makefile.fpga for more:"
-	@grep -o -e "^[a-Z_]*:" $(TOP)/cosim/mk/Makefile.fpga
+	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.fpga
 
 EXE ?= runme
 run: $(EXE)
@@ -60,8 +60,8 @@ unpack_bitstream:
 
 load_bitstream: $(EXE)
 	echo 'import pprint; from pynq import Overlay; overlay=Overlay("$(BASENAME)_bd_1.bit"); print (overlay.__doc__); pprint.pprint(overlay.ip_dict,width=1); pprint.pprint(overlay.clock_dict,width=1);' | sudo python3
-	@echo 'allocating memory and sleeping...'
-	sudo ./$(EXE) &
+	#@echo 'allocating memory and sleeping...'
+	#sudo ./$(EXE) &
 
 # use this instead if you have already loaded the bitstream this will load the bitstream, but transfer
 # over the physical memory pointer that was written into the accelerator before
