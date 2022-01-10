@@ -9,7 +9,7 @@ export TOP_MODULE ?= top
 #############################
 # Accelerator Software Settings
 #############################
-export NBF_FILE     ?= $(abspath ../scratchpad.nbf)
+export NBF_FILE     ?= $(abspath ../hello.nbf)
 export HOST_PROGRAM ?= $(abspath ../ps.cpp)
 export BASE_FLIST   ?= $(abspath ../flist.vcs)
 export FLIST        ?= $(abspath flist.vcs)
