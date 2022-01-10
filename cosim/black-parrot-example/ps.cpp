@@ -255,7 +255,9 @@ extern "C" void cosim_main(char *argstr) {
   bsg_pr_info("ps.cpp: polling i/o\n");
 
   while (1) {
+#ifndef FPGA
     zpl->axil_poll();
+#endif
     // keep reading as long as there is data
     data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
     if (data != 0) {
