@@ -13,6 +13,8 @@
 #include <unistd.h>
 
 #include "bp_zynq_pl.h"
+#include "bsg_printing.h"
+#include "bsg_argparse.h"
 
 #define FREE_DRAM 0
 #define DRAM_ALLOCATE_SIZE 120 * 1024 * 1024
@@ -50,7 +52,7 @@ inline unsigned long long get_counter_64(bp_zynq_pl *zpl, unsigned int addr) {
   } while (1);
 }
 
-#ifdef VERILATOR
+#ifndef VCS
 int main(int argc, char **argv) {
 #else
 extern "C" void cosim_main(char *argstr) {
