@@ -10,6 +10,7 @@ source $::env(COSIM_TCL_DIR)/vivado-parse-flist.tcl
 set vlist [vivado_parse_flist "flist.vcs"]
 set vsources_list  [lindex $vlist 0]
 set vincludes_list [lindex $vlist 1]
+set vdefines_list  [lindex $vlist 2]
 
 #
 # create project and load in all the files
@@ -18,10 +19,13 @@ set vincludes_list [lindex $vlist 1]
 create_project -force ${project_name} [pwd] -part ${project_part}
 
 puts ${vsources_list}
+puts ${vdefines_list}
 
 add_files -norecurse ${vsources_list}
 set_property file_type SystemVerilog [get_files ${vsources_list}]
 set_property include_dirs ${vincludes_list} [current_fileset]
+set_property verilog_define ${vdefines_list} [current_fileset]
+
 set_property top ${project_top_module} [current_fileset]
 
 update_compile_order -fileset sources_1

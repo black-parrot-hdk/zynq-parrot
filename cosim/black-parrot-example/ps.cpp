@@ -260,6 +260,14 @@ extern "C" void cosim_main(char *argstr) {
 #ifndef FPGA
     zpl->axil_poll();
 #endif
+#ifdef SIM_BACKPRESSURE_ENABLE
+    if (!(rand() % SIM_BACKPRESSURE_CHANCE)) {
+      for (int i = 0; i < SIM_BACKPRESSURE_LENGTH; i++) {
+        zpl->tick();
+      }
+    }
+#endif
+
     // keep reading as long as there is data
     data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
     if (data != 0) {
