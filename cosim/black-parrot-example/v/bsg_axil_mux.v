@@ -83,7 +83,7 @@ module bsg_axil_mux
    );
 
   logic select_s00_r, select_s01_r;
-  wire clear_selection = (m00_axi_rvalid & m00_axi_rready) | (m01_axi_bvalid & m01_axi_bready);
+  wire clear_selection = (m00_axi_rvalid & m00_axi_rready) | (m00_axi_bvalid & m00_axi_bready);
   // Statically prioritize s00 for now
   wire select_s00_n = (s00_axi_rvalid | s00_axi_awvalid);
   wire select_s01_n = (s01_axi_rvalid | s01_axi_awvalid) & ~select_s01_n & ~select_s01_r;

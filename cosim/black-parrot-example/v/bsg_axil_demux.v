@@ -87,7 +87,7 @@ module bsg_axil_demux
    );
 
   logic select_m00_r, select_m01_r;
-  wire clear_selection = (s00_axi_rvalid | s00_axi_bvalid);
+  wire clear_selection = ((s00_axi_rvalid & s00_axi_rready) | (s00_axi_bvalid & s00_axi_bready));
   wire select_m00_n = ((s00_axi_arvalid && (s00_axi_araddr < split_addr_p))
                        || (s00_axi_awvalid && (s00_axi_awaddr < split_addr_p))
                        )
@@ -123,7 +123,7 @@ module bsg_axil_demux
   assign m01_axi_wvalid = select_m01_r & s00_axi_wvalid;
   assign s00_axi_wready = (select_m00_r & m00_axi_wready) | (select_m01_r & m01_axi_wready);
 
-  assign s00_axi_bresp  = select_m01_r ? m00_axi_bresp : m01_axi_bresp;
+  assign s00_axi_bresp  = select_m01_r ? m01_axi_bresp : m00_axi_bresp;
   assign s00_axi_bvalid = (select_m00_r & m00_axi_bvalid) | (select_m01_r & m01_axi_bvalid);
   assign m00_axi_bready = select_m00_r & s00_axi_bready;
   assign m01_axi_bready = select_m01_r & s00_axi_bready;
