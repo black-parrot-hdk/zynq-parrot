@@ -9,7 +9,7 @@ module top_zynq
  import bp_common_pkg::*;
  import bp_be_pkg::*;
  import bp_me_pkg::*;
- #(parameter bp_params_e bp_params_p = e_bp_multicore_1_cfg
+ #(parameter bp_params_e bp_params_p = e_bp_unicore_cfg
    `declare_bp_proc_params(bp_params_p)
    `declare_bp_bedrock_mem_if_widths(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p, uce)
 
@@ -520,7 +520,7 @@ module top_zynq
       ,.data_o(mem_profiler_r)
       );
 
-   bp_unicore_axi #
+   bp_axi_top #
      (.bp_params_p(bp_params_p)
       ,.axil_addr_width_p(bp_axil_addr_width_lp)
       ,.axil_data_width_p(bp_axil_data_width_lp)
