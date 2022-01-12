@@ -20,33 +20,33 @@ module bsg_axil_store_packer
 
     //====================== AXI-4 LITE =========================
     // WRITE ADDRESS CHANNEL SIGNALS
-    , input [axi_addr_width_p-1:0]               s_axi_awaddr_i
-    , input axi_prot_type_e                      s_axi_awprot_i
-    , input                                      s_axi_awvalid_i
-    , output logic                               s_axi_awready_o
+    , input [axi_addr_width_p-1:0]               s_axil_awaddr_i
+    , input axi_prot_type_e                      s_axil_awprot_i
+    , input                                      s_axil_awvalid_i
+    , output logic                               s_axil_awready_o
 
     // WRITE DATA CHANNEL SIGNALS
-    , input [axi_data_width_p-1:0]               s_axi_wdata_i
-    , input [(axi_data_width_p>>3)-1:0]          s_axi_wstrb_i
-    , input                                      s_axi_wvalid_i
-    , output logic                               s_axi_wready_o
+    , input [axi_data_width_p-1:0]               s_axil_wdata_i
+    , input [(axi_data_width_p>>3)-1:0]          s_axil_wstrb_i
+    , input                                      s_axil_wvalid_i
+    , output logic                               s_axil_wready_o
 
     // WRITE RESPONSE CHANNEL SIGNALS
-    , output axi_resp_type_e                     s_axi_bresp_o
-    , output logic                               s_axi_bvalid_o
-    , input                                      s_axi_bready_i
+    , output axi_resp_type_e                     s_axil_bresp_o
+    , output logic                               s_axil_bvalid_o
+    , input                                      s_axil_bready_i
 
     // READ ADDRESS CHANNEL SIGNALS
-    , input [axi_addr_width_p-1:0]               s_axi_araddr_i
-    , input axi_prot_type_e                      s_axi_arprot_i
-    , input                                      s_axi_arvalid_i
-    , output logic                               s_axi_arready_o
+    , input [axi_addr_width_p-1:0]               s_axil_araddr_i
+    , input axi_prot_type_e                      s_axil_arprot_i
+    , input                                      s_axil_arvalid_i
+    , output logic                               s_axil_arready_o
 
     // READ DATA CHANNEL SIGNALS
-    , output logic [axi_data_width_p-1:0]        s_axi_rdata_o
-    , output axi_resp_type_e                     s_axi_rresp_o
-    , output logic                               s_axi_rvalid_o
-    , input                                      s_axi_rready_i
+    , output logic [axi_data_width_p-1:0]        s_axil_rdata_o
+    , output axi_resp_type_e                     s_axil_rresp_o
+    , output logic                               s_axil_rvalid_o
+    , input                                      s_axil_rready_i
 
     , output logic [31:0]                        data_o
     , output logic                               v_o
@@ -63,24 +63,24 @@ module bsg_axil_store_packer
   wire is_write_resp = (state_r == e_write_resp);
 
   // Ready for a request if we can send it out to the fifo
-  assign s_axi_awready_o = is_ready & ready_i;
-  assign s_axi_wready_o  = is_ready & ready_i;
-  assign s_axi_arready_o = is_ready & ready_i;
+  assign s_axil_awready_o = is_ready & ready_i;
+  assign s_axil_wready_o  = is_ready & ready_i;
+  assign s_axil_arready_o = is_ready & ready_i;
 
   // Don't support errors
-  assign s_axi_bresp_o = e_axi_resp_okay;
-  assign s_axi_rresp_o = e_axi_resp_okay;
+  assign s_axil_bresp_o = e_axi_resp_okay;
+  assign s_axil_rresp_o = e_axi_resp_okay;
 
-  assign s_axi_rdata_o = data_i;
-  assign ready_o = s_axi_rready_i;
+  assign s_axil_rdata_o = data_i;
+  assign ready_o = s_axil_rready_i;
 
-  wire [31:0] read_cmd_lo  = {1'b0, s_axi_araddr_i[22:0], 8'b0};
-  wire [31:0] write_cmd_lo = {1'b1, s_axi_awaddr_i[22:0], s_axi_wdata_i[7:0]};
+  wire [31:0] read_cmd_lo  = {1'b0, s_axil_araddr_i[22:0], 8'b0};
+  wire [31:0] write_cmd_lo = {1'b1, s_axil_awaddr_i[22:0], s_axil_wdata_i[7:0]};
 
   always_comb
     begin
-      s_axi_bvalid_o  = '0;
-      s_axi_rvalid_o  = '0;
+      s_axil_bvalid_o  = '0;
+      s_axil_rvalid_o  = '0;
 
       data_o = '0;
       v_o    = '0;
@@ -88,13 +88,13 @@ module bsg_axil_store_packer
       case (state_r)
         e_ready:
           begin
-            v_o = (s_axi_awready_o & s_axi_awvalid_i & s_axi_wready_o & s_axi_wvalid_i)
-              || (s_axi_arready_o & s_axi_arvalid_i);
+            v_o = (s_axil_awready_o & s_axil_awvalid_i & s_axil_wready_o & s_axil_wvalid_i)
+              || (s_axil_arready_o & s_axil_arvalid_i);
 
-            data_o = s_axi_arvalid_i ? read_cmd_lo : write_cmd_lo;
+            data_o = s_axil_arvalid_i ? read_cmd_lo : write_cmd_lo;
 
             state_n = v_o
-              ? s_axi_arvalid_i
+              ? s_axil_arvalid_i
                 ? e_read_resp
                 : e_write_resp
               : e_ready;
@@ -102,16 +102,16 @@ module bsg_axil_store_packer
 
         e_read_resp:
           begin
-            s_axi_rvalid_o = v_i;
+            s_axil_rvalid_o = v_i;
 
-            state_n = (s_axi_rready_i & s_axi_rvalid_o) ? e_ready : e_read_resp;
+            state_n = (s_axil_rready_i & s_axil_rvalid_o) ? e_ready : e_read_resp;
           end
 
         e_write_resp:
           begin
-            s_axi_bvalid_o = 1'b1;
+            s_axil_bvalid_o = 1'b1;
 
-            state_n = (s_axi_bready_i & s_axi_bvalid_o) ? e_ready : e_write_resp;
+            state_n = (s_axil_bready_i & s_axil_bvalid_o) ? e_ready : e_write_resp;
           end
       endcase
     end
@@ -126,7 +126,7 @@ module bsg_axil_store_packer
   // synopsys translate_off
   always_ff @(negedge clk_i)
     begin
-      assert(~(s_axi_awvalid_i & s_axi_arvalid_i))
+      assert(~(s_axil_awvalid_i & s_axil_arvalid_i))
         else $error("AXI lite requests must be mutex in this module.");
     end
   // synopsys translate_on
