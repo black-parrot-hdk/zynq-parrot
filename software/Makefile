@@ -64,12 +64,12 @@ build_spec: build_libs
 
 # run on x86 server
 clean_software:
-	-rm -rf $(SDK_DIR)/install/touchfiles/bedrock.*
-	-rm -rf $(SDK_DIR)/install/touchfiles/bootrom.*
-	-rm -rf $(SDK_DIR)/install/touchfiles/perch.*
-	-rm -rf $(SDK_DIR)/install/touchfiles/beebs.*
-	-rm -rf $(SDK_DIR)/install/touchfiles/spec2000.*
-	-rm -rf $(SDK_DIR)/install/touchfiles/spec2006.*
+	-rm -rf $(SDK_DIR)/install/touchfiles/prog/bedrock.*
+	-rm -rf $(SDK_DIR)/install/touchfiles/prog/bootrom.*
+	-rm -rf $(SDK_DIR)/install/touchfiles/prog/perch.*
+	-rm -rf $(SDK_DIR)/install/touchfiles/prog/beebs.*
+	-rm -rf $(SDK_DIR)/install/touchfiles/prog/spec2000.*
+	-rm -rf $(SDK_DIR)/install/touchfiles/prog/spec2006.*
 	-$(MAKE) -C ../cosim/import/fpga clean
 	-$(MAKE) -C $(SDK_DIR) prog_clean
 	-$(MAKE) -C $(SDK_DIR) tidy_progs

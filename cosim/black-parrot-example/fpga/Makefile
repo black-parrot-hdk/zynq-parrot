@@ -32,9 +32,10 @@ include $(TOP)/cosim/mk/Makefile.fpga
 # Modify base flist
 #############################
 $(FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs $(BASE_FLIST)
-	cat $^ | envsubst > $@
+	echo "+incdir+$(CURR_SRC_DIR)" > $@
 	echo "+incdir+$(COSIM_DIR)/include/fpga" >> $@
 	# Replace hardened memory which is incorrectly inferred on some Xilinx FPGAs
+	cat $^ | envsubst >> $@
 	sed -i "/bsg_mem_1rw_sync_mask_write_bit.v/d" $@
 	sed -i "/bsg_mem_1rw_sync_mask_write_bit_synth.v/d" $@
 	echo "$(BASEJUMP_STL_DIR)/hard/ultrascale_plus/bsg_mem/bsg_mem_1rw_sync_mask_write_bit.v" >> $@

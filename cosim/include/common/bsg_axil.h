@@ -31,7 +31,7 @@ public:
     gpio = std::make_unique<dpi_gpio<W> >(hierarchy);
   }
 
-  void operator=(const unsigned int val) {
+  void set(const unsigned int val) {
     unsigned int bval = 0;
     for (int i = 0; i < W; i++) {
       bval = (val & (1 << i)) >> i;
@@ -39,7 +39,11 @@ public:
     }
   }
 
-  operator int() const {
+  void operator=(const unsigned int val) {
+    set(val);
+  }
+
+  int get() const {
     unsigned int N = 0;
     for (int i = 0; i < W; i++) {
       N |= gpio->get(i) << i;
@@ -47,11 +51,21 @@ public:
 
     return N;
   }
+
+  operator int() const {
+    return get();
+  }
+};
+
+class axil_device {
+public:
+  virtual int read(int address, void (*tick)()) = 0;
+  virtual void write(int address, int data, void (*tick)()) = 0;
 };
 
 // A = axil address width
 // D = axil data width
-template <unsigned int A, unsigned int D> class axil {
+template <unsigned int A, unsigned int D> class axilm {
 public:
   pin<1> p_aclk;
   pin<1> p_aresetn;
@@ -77,7 +91,7 @@ public:
   pin<1> p_rvalid;
   pin<1> p_rready;
 
-  axil(const string &base)
+  axilm(const string &base)
       : p_aclk(string(base) + string(".aclk_gpio")),
         p_aresetn(string(base) + string(".aresetn_gpio")),
         p_awaddr(string(base) + string(".awaddr_gpio")),
@@ -168,7 +182,7 @@ public:
     this->p_wdata = data;
     this->p_wstrb = wstrb;
 
-    while (this->p_awready == 0 && this->p_wready == 0) {
+    while (this->p_awready == 0 || this->p_wready == 0) {
 
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         bsg_pr_err("bp_zynq_pl: AXI write timeout\n");
@@ -198,6 +212,153 @@ public:
     tick();
     this->p_bready = 0;
     return;
+  }
+};
+
+// A = axil address width
+// D = axil data width
+template <unsigned int A, unsigned int D> class axils {
+public:
+  pin<1> p_aclk;
+  pin<1> p_aresetn;
+
+  pin<A> p_awaddr;
+  pin<3> p_awprot;
+  pin<1> p_awvalid;
+  pin<1> p_awready;
+  pin<D> p_wdata;
+  pin<D / 8> p_wstrb;
+  pin<1> p_wvalid;
+  pin<1> p_wready;
+  pin<2> p_bresp;
+  pin<1> p_bvalid;
+  pin<1> p_bready;
+
+  pin<A> p_araddr;
+  pin<3> p_arprot;
+  pin<1> p_arvalid;
+  pin<1> p_arready;
+  pin<D> p_rdata;
+  pin<2> p_rresp;
+  pin<1> p_rvalid;
+  pin<1> p_rready;
+
+  axils(const string &base)
+      : p_aclk(string(base) + string(".aclk_gpio")),
+        p_aresetn(string(base) + string(".aresetn_gpio")),
+        p_awaddr(string(base) + string(".awaddr_gpio")),
+        p_awprot(string(base) + string(".awprot_gpio")),
+        p_awvalid(string(base) + string(".awvalid_gpio")),
+        p_awready(string(base) + string(".awready_gpio")),
+        p_wdata(string(base) + string(".wdata_gpio")),
+        p_wstrb(string(base) + string(".wstrb_gpio")),
+        p_wvalid(string(base) + string(".wvalid_gpio")),
+        p_wready(string(base) + string(".wready_gpio")),
+        p_bresp(string(base) + string(".bresp_gpio")),
+        p_bvalid(string(base) + string(".bvalid_gpio")),
+        p_bready(string(base) + string(".bready_gpio")),
+        p_araddr(string(base) + string(".araddr_gpio")),
+        p_arprot(string(base) + string(".arprot_gpio")),
+        p_arvalid(string(base) + string(".arvalid_gpio")),
+        p_arready(string(base) + string(".arready_gpio")),
+        p_rdata(string(base) + string(".rdata_gpio")),
+        p_rresp(string(base) + string(".rresp_gpio")),
+        p_rvalid(string(base) + string(".rvalid_gpio")),
+        p_rready(string(base) + string(".rready_gpio")) {
+    std::cout << "Instantiating AXIL at " << base << std::endl;
+  }
+
+  // Wait for (low true) reset to be asserted by the testbench
+  void reset(void (*tick)()) {
+    printf("bp_zynq_pl: Entering reset\n");
+    while (this->p_aresetn == 1) {
+      tick();
+    }
+    printf("bp_zynq_pl: Exiting reset\n");
+  }
+
+  void axil_read_helper(axil_device *p, void (*tick)()) {
+    int timeout_counter = 0;
+    int data;
+
+    this->p_arready = 1;
+    while (this->p_arvalid == 0) {
+      if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
+        bsg_pr_err("bp_zynq_pl: AXI read request timeout\n");
+      }
+
+      tick();
+    }
+
+    int raddr = this->p_araddr;
+    tick();
+
+    this->p_arready = 0;
+
+    int rdata = p->read(raddr, tick);
+
+    this->p_rdata = rdata;
+    this->p_rvalid = 1;
+
+    while (this->p_rready == 0) {
+      if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
+        bsg_pr_err("bp_zynq_pl: AXI read data timeout\n");
+      }
+
+      tick();
+    }
+
+    tick();
+    this->p_rvalid = 0;
+
+    return;
+  }
+
+  int axil_write_helper(axil_device *p, void (*tick)()) {
+    int timeout_counter = 0;
+
+    assert(this->p_wstrb == 0xf); // we only support full int writes right now
+
+    this->p_awready = 1;
+    this->p_wready = 1;
+
+    // Wait until both valids are ready
+    while (this->p_awvalid == 0 || this->p_wvalid == 0) {
+
+      if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
+        bsg_pr_err("bp_zynq_pl: AXI write timeout\n");
+      }
+
+      tick();
+    }
+
+    int awaddr = this->p_awaddr;
+    int wdata = this->p_wdata;
+
+    tick();
+    this->p_awready = 0;
+    this->p_wready = 0;
+    p->write(awaddr, wdata, tick);
+
+    tick();
+
+    // Drop write ready and raise write response
+    this->p_bvalid = 1;
+
+    while (this->p_bready == 0) {
+      if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
+        bsg_pr_err("bp_zynq_pl: AXI bvalid timeout\n");
+      }
+
+      tick();
+    }
+
+    tick();
+
+    // Drop bvalid
+    this->p_bvalid = 0;
+
+    return wdata;
   }
 };
 

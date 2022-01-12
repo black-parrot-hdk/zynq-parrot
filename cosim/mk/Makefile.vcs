@@ -12,6 +12,7 @@ VCS_OPTS += -diag timescale
 VCS_OPTS += -f flist.vcs
 VCS_OPTS += -top $(TOP_MODULE)
 VCS_OPTS += -debug_pp
+VCS_OPTS += +vcs+lic+wait
 VCS_OPTS += +incdir+$(COSIM_DIR)/include/vcs
 
 CFLAGS += -DVCS

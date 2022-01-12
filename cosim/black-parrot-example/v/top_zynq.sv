@@ -9,11 +9,9 @@ module top_zynq
  import bp_common_pkg::*;
  import bp_be_pkg::*;
  import bp_me_pkg::*;
- #(parameter bp_params_e bp_params_p = e_bp_default_cfg
+ #(parameter bp_params_e bp_params_p = e_bp_unicore_cfg
    `declare_bp_proc_params(bp_params_p)
-
-   , localparam uce_mem_data_width_lp = `BSG_MAX(icache_fill_width_p, dcache_fill_width_p)
-   `declare_bp_bedrock_mem_if_widths(paddr_width_p, uce_mem_data_width_lp, lce_id_width_p, lce_assoc_p, uce)
+   `declare_bp_bedrock_mem_if_widths(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p, uce)
 
    // NOTE these parameters are usually overridden by the parent module (top.v)
    // but we set them to make expectations consistent
@@ -29,6 +27,8 @@ module top_zynq
    , parameter integer C_S01_AXI_ADDR_WIDTH   = 30
    , parameter integer C_M00_AXI_DATA_WIDTH   = 64
    , parameter integer C_M00_AXI_ADDR_WIDTH   = 32
+   , parameter integer C_M01_AXI_DATA_WIDTH   = 32
+   , parameter integer C_M01_AXI_ADDR_WIDTH   = 32
    )
   (// Ports of Axi Slave Bus Interface S00_AXI
    input wire                                    s00_axi_aclk
@@ -119,6 +119,28 @@ module top_zynq
    , input wire [5:0]                            m00_axi_rid
    , input wire                                  m00_axi_rlast
    , input wire [1:0]                            m00_axi_rresp
+
+   , input wire                                  m01_axi_aclk
+   , input wire                                  m01_axi_aresetn
+   , output wire [C_M01_AXI_ADDR_WIDTH-1 : 0]    m01_axi_awaddr
+   , output wire [2 : 0]                         m01_axi_awprot
+   , output wire                                 m01_axi_awvalid
+   , input wire                                  m01_axi_awready
+   , output wire [C_M01_AXI_DATA_WIDTH-1 : 0]    m01_axi_wdata
+   , output wire [(C_M01_AXI_DATA_WIDTH/8)-1:0]  m01_axi_wstrb
+   , output wire                                 m01_axi_wvalid
+   , input wire                                  m01_axi_wready
+   , input wire [1 : 0]                          m01_axi_bresp
+   , input wire                                  m01_axi_bvalid
+   , output wire                                 m01_axi_bready
+   , output wire [C_M01_AXI_ADDR_WIDTH-1 : 0]    m01_axi_araddr
+   , output wire [2 : 0]                         m01_axi_arprot
+   , output wire                                 m01_axi_arvalid
+   , input wire                                  m01_axi_arready
+   , input wire [C_M01_AXI_DATA_WIDTH-1 : 0]     m01_axi_rdata
+   , input wire [1 : 0]                          m01_axi_rresp
+   , input wire                                  m01_axi_rvalid
+   , output wire                                 m01_axi_rready
    );
 
    logic [2:0][C_S00_AXI_DATA_WIDTH-1:0]        csr_data_lo;
@@ -126,25 +148,25 @@ module top_zynq
    logic                                        pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
    logic                                        ps_to_pl_fifo_v_lo, ps_to_pl_fifo_ready_li;
 
-   logic [C_S01_AXI_ADDR_WIDTH-1 : 0]           m01_axi_awaddr;
-   logic [2 : 0]                                m01_axi_awprot;
-   logic                                        m01_axi_awvalid;
-   logic                                        m01_axi_awready;
-   logic [C_S01_AXI_DATA_WIDTH-1 : 0]           m01_axi_wdata;
-   logic [(C_S01_AXI_DATA_WIDTH/8)-1 : 0]       m01_axi_wstrb;
-   logic                                        m01_axi_wvalid;
-   logic                                        m01_axi_wready;
-   logic  [1 : 0]                               m01_axi_bresp;
-   logic                                        m01_axi_bvalid;
-   logic                                        m01_axi_bready;
-   logic [C_S01_AXI_ADDR_WIDTH-1 : 0]           m01_axi_araddr;
-   logic [2 : 0]                                m01_axi_arprot;
-   logic                                        m01_axi_arvalid;
-   logic                                        m01_axi_arready;
-   logic  [C_S01_AXI_DATA_WIDTH-1 : 0]          m01_axi_rdata;
-   logic  [1 : 0]                               m01_axi_rresp;
-   logic                                        m01_axi_rvalid;
-   logic                                        m01_axi_rready;
+   logic [C_S01_AXI_ADDR_WIDTH-1 : 0]           bp_axi_awaddr;
+   logic [2 : 0]                                bp_axi_awprot;
+   logic                                        bp_axi_awvalid;
+   logic                                        bp_axi_awready;
+   logic [C_S01_AXI_DATA_WIDTH-1 : 0]           bp_axi_wdata;
+   logic [(C_S01_AXI_DATA_WIDTH/8)-1 : 0]       bp_axi_wstrb;
+   logic                                        bp_axi_wvalid;
+   logic                                        bp_axi_wready;
+   logic  [1 : 0]                               bp_axi_bresp;
+   logic                                        bp_axi_bvalid;
+   logic                                        bp_axi_bready;
+   logic [C_S01_AXI_ADDR_WIDTH-1 : 0]           bp_axi_araddr;
+   logic [2 : 0]                                bp_axi_arprot;
+   logic                                        bp_axi_arvalid;
+   logic                                        bp_axi_arready;
+   logic  [C_S01_AXI_DATA_WIDTH-1 : 0]          bp_axi_rdata;
+   logic  [1 : 0]                               bp_axi_rresp;
+   logic                                        bp_axi_rvalid;
+   logic                                        bp_axi_rready;
 
    localparam debug_lp = 0;
    localparam memory_upper_limit_lp = 120*1024*1024;
@@ -152,6 +174,12 @@ module top_zynq
    // use this as a way of figuring out how much memory a RISC-V program is using
    // each bit corresponds to a region of memory
    logic [127:0] mem_profiler_r;
+
+   logic [63:0] minstret_lo;
+   if (multicore_p)
+      assign minstret_lo = blackparrot.w.multicore.cc.y[0].x[0].tile_node.tile.core.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
+   else
+      assign minstret_lo = blackparrot.w.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
 
    // Connect Shell to AXI Bus Interface S00_AXI
    bsg_zynq_pl_shell #
@@ -192,8 +220,8 @@ module top_zynq
                        , mem_profiler_r[95:64]
                        , mem_profiler_r[63:32]
                        , mem_profiler_r[31:0]
-                       , blackparrot.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo[63:32]
-                       , blackparrot.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo[31:0]}
+                       , minstret_lo[63:32]
+                       , minstret_lo[31:0]}
                      )
 
         ,.pl_to_ps_fifo_data_i (pl_to_ps_fifo_data_li)
@@ -237,9 +265,12 @@ module top_zynq
    logic [l2_fill_width_p-1:0] dma_data_li;
    logic                       dma_data_v_li, dma_data_ready_and_lo;
 
-   localparam bp_axi_lite_addr_width_lp = 32;
+   localparam bp_axil_addr_width_lp = 32;
+   localparam bp_axil_data_width_lp = 32;
+   localparam bp_axi_addr_width_lp  = 32;
+   localparam bp_axi_data_width_lp  = 64;
 
-   logic [bp_axi_lite_addr_width_lp-1:0] waddr_translated_lo, raddr_translated_lo;
+   logic [bp_axil_addr_width_lp-1:0] waddr_translated_lo, raddr_translated_lo;
 
    // Address Translation (MBT):
    //
@@ -309,37 +340,58 @@ module top_zynq
         raddr_translated_lo = {~s01_axi_araddr[29], 3'b0, s01_axi_araddr[0+:28]};
      end
 
-   axil_store_packer
-    #(.axi_addr_width_p(bp_axi_lite_addr_width_lp)
+   // TODO: The widths here are weird
+   logic [C_S01_AXI_ADDR_WIDTH-1 : 0]           s02_axi_awaddr;
+   logic [2 : 0]                                s02_axi_awprot;
+   logic                                        s02_axi_awvalid;
+   logic                                        s02_axi_awready;
+   logic [C_S01_AXI_DATA_WIDTH-1 : 0]           s02_axi_wdata;
+   logic [(C_S01_AXI_DATA_WIDTH/8)-1 : 0]       s02_axi_wstrb;
+   logic                                        s02_axi_wvalid;
+   logic                                        s02_axi_wready;
+   logic  [1 : 0]                               s02_axi_bresp;
+   logic                                        s02_axi_bvalid;
+   logic                                        s02_axi_bready;
+   logic [C_S01_AXI_ADDR_WIDTH-1 : 0]           s02_axi_araddr;
+   logic [2 : 0]                                s02_axi_arprot;
+   logic                                        s02_axi_arvalid;
+   logic                                        s02_axi_arready;
+   logic  [C_S01_AXI_DATA_WIDTH-1 : 0]          s02_axi_rdata;
+   logic  [1 : 0]                               s02_axi_rresp;
+   logic                                        s02_axi_rvalid;
+   logic                                        s02_axi_rready;
+
+   bsg_axil_store_packer
+    #(.axi_addr_width_p(bp_axil_addr_width_lp)
       ,.axi_data_width_p(32)
       )
     store_packer
      (.clk_i   (s01_axi_aclk)
       ,.reset_i(~s01_axi_aresetn)
 
-      ,.s_axi_awaddr_i (m01_axi_awaddr)
-      ,.s_axi_awprot_i (m01_axi_awprot)
-      ,.s_axi_awvalid_i(m01_axi_awvalid)
-      ,.s_axi_awready_o(m01_axi_awready)
+      ,.s_axil_awaddr_i (s02_axi_awaddr)
+      ,.s_axil_awprot_i (axi_prot_type_e'(s02_axi_awprot))
+      ,.s_axil_awvalid_i(s02_axi_awvalid)
+      ,.s_axil_awready_o(s02_axi_awready)
 
-      ,.s_axi_wdata_i  (m01_axi_wdata)
-      ,.s_axi_wstrb_i  (m01_axi_wstrb)
-      ,.s_axi_wvalid_i (m01_axi_wvalid)
-      ,.s_axi_wready_o (m01_axi_wready)
+      ,.s_axil_wdata_i  (s02_axi_wdata)
+      ,.s_axil_wstrb_i  (s02_axi_wstrb)
+      ,.s_axil_wvalid_i (s02_axi_wvalid)
+      ,.s_axil_wready_o (s02_axi_wready)
 
-      ,.s_axi_bresp_o  (m01_axi_bresp)
-      ,.s_axi_bvalid_o (m01_axi_bvalid)
-      ,.s_axi_bready_i (m01_axi_bready)
+      ,.s_axil_bresp_o  (s02_axi_bresp)
+      ,.s_axil_bvalid_o (s02_axi_bvalid)
+      ,.s_axil_bready_i (s02_axi_bready)
 
-      ,.s_axi_araddr_i (m01_axi_araddr)
-      ,.s_axi_arprot_i (m01_axi_arprot)
-      ,.s_axi_arvalid_i(m01_axi_arvalid)
-      ,.s_axi_arready_o(m01_axi_arready)
+      ,.s_axil_araddr_i (s02_axi_araddr)
+      ,.s_axil_arprot_i (axi_prot_type_e'(s02_axi_arprot))
+      ,.s_axil_arvalid_i(s02_axi_arvalid)
+      ,.s_axil_arready_o(s02_axi_arready)
 
-      ,.s_axi_rdata_o  (m01_axi_rdata)
-      ,.s_axi_rresp_o  (m01_axi_rresp)
-      ,.s_axi_rvalid_o (m01_axi_rvalid)
-      ,.s_axi_rready_i (m01_axi_rready)
+      ,.s_axil_rdata_o  (s02_axi_rdata)
+      ,.s_axil_rresp_o  (s02_axi_rresp)
+      ,.s_axil_rvalid_o (s02_axi_rvalid)
+      ,.s_axil_rready_i (s02_axi_rready)
 
       ,.data_o (pl_to_ps_fifo_data_li)
       ,.v_o    (pl_to_ps_fifo_v_li)
@@ -349,6 +401,77 @@ module top_zynq
       ,.v_i(ps_to_pl_fifo_v_lo)
       ,.ready_o(ps_to_pl_fifo_ready_li)
       );
+
+  bsg_axil_demux
+   #(.addr_width_p(bp_axil_addr_width_lp)
+     ,.data_width_p(32)
+     // BP host address space is below this
+     ,.split_addr_p(32'h0020_0000)
+     )
+   axil_demux
+    (.clk_i(s01_axi_aclk)
+     ,.reset_i(~s01_axi_aresetn)
+
+     ,.s00_axil_awaddr(bp_axi_awaddr)
+     ,.s00_axil_awprot(bp_axi_awprot)
+     ,.s00_axil_awvalid(bp_axi_awvalid)
+     ,.s00_axil_awready(bp_axi_awready)
+     ,.s00_axil_wdata(bp_axi_wdata)
+     ,.s00_axil_wstrb(bp_axi_wstrb)
+     ,.s00_axil_wvalid(bp_axi_wvalid)
+     ,.s00_axil_wready(bp_axi_wready)
+     ,.s00_axil_bresp(bp_axi_bresp)
+     ,.s00_axil_bvalid(bp_axi_bvalid)
+     ,.s00_axil_bready(bp_axi_bready)
+     ,.s00_axil_araddr(bp_axi_araddr)
+     ,.s00_axil_arprot(bp_axi_arprot)
+     ,.s00_axil_arvalid(bp_axi_arvalid)
+     ,.s00_axil_arready(bp_axi_arready)
+     ,.s00_axil_rdata(bp_axi_rdata)
+     ,.s00_axil_rresp(bp_axi_rresp)
+     ,.s00_axil_rvalid(bp_axi_rvalid)
+     ,.s00_axil_rready(bp_axi_rready)
+
+     ,.m00_axil_awaddr(s02_axi_awaddr)
+     ,.m00_axil_awprot(s02_axi_awprot)
+     ,.m00_axil_awvalid(s02_axi_awvalid)
+     ,.m00_axil_awready(s02_axi_awready)
+     ,.m00_axil_wdata(s02_axi_wdata)
+     ,.m00_axil_wstrb(s02_axi_wstrb)
+     ,.m00_axil_wvalid(s02_axi_wvalid)
+     ,.m00_axil_wready(s02_axi_wready)
+     ,.m00_axil_bresp(s02_axi_bresp)
+     ,.m00_axil_bvalid(s02_axi_bvalid)
+     ,.m00_axil_bready(s02_axi_bready)
+     ,.m00_axil_araddr(s02_axi_araddr)
+     ,.m00_axil_arprot(s02_axi_arprot)
+     ,.m00_axil_arvalid(s02_axi_arvalid)
+     ,.m00_axil_arready(s02_axi_arready)
+     ,.m00_axil_rdata(s02_axi_rdata)
+     ,.m00_axil_rresp(s02_axi_rresp)
+     ,.m00_axil_rvalid(s02_axi_rvalid)
+     ,.m00_axil_rready(s02_axi_rready)
+
+     ,.m01_axil_awaddr(m01_axi_awaddr)
+     ,.m01_axil_awprot(m01_axi_awprot)
+     ,.m01_axil_awvalid(m01_axi_awvalid)
+     ,.m01_axil_awready(m01_axi_awready)
+     ,.m01_axil_wdata(m01_axi_wdata)
+     ,.m01_axil_wstrb(m01_axi_wstrb)
+     ,.m01_axil_wvalid(m01_axi_wvalid)
+     ,.m01_axil_wready(m01_axi_wready)
+     ,.m01_axil_bresp(m01_axi_bresp)
+     ,.m01_axil_bvalid(m01_axi_bvalid)
+     ,.m01_axil_bready(m01_axi_bready)
+     ,.m01_axil_araddr(m01_axi_araddr)
+     ,.m01_axil_arprot(m01_axi_arprot)
+     ,.m01_axil_arvalid(m01_axi_arvalid)
+     ,.m01_axil_arready(m01_axi_arready)
+     ,.m01_axil_rdata(m01_axi_rdata)
+     ,.m01_axil_rresp(m01_axi_rresp)
+     ,.m01_axil_rvalid(m01_axi_rvalid)
+     ,.m01_axil_rready(m01_axi_rready)
+     );
 
    localparam axi_addr_width_p = 32;
    localparam axi_data_width_p = 64;
@@ -397,64 +520,67 @@ module top_zynq
       ,.data_o(mem_profiler_r)
       );
 
-   bp_unicore_axi_sim #
+   bp_axi_top #
      (.bp_params_p(bp_params_p)
-      ,.axi_lite_addr_width_p(bp_axi_lite_addr_width_lp)
+      ,.axil_addr_width_p(bp_axil_addr_width_lp)
+      ,.axil_data_width_p(bp_axil_data_width_lp)
+      ,.axi_addr_width_p(bp_axi_addr_width_lp)
+      ,.axi_data_width_p(bp_axi_data_width_lp)
       )
    blackparrot
      (.clk_i(s01_axi_aclk)
       ,.reset_i(bp_reset_li)
 
       // these are reads/write from BlackParrot
-      ,.m_axi_lite_awaddr_o (m01_axi_awaddr)
-      ,.m_axi_lite_awprot_o (m01_axi_awprot)
-      ,.m_axi_lite_awvalid_o(m01_axi_awvalid)
-      ,.m_axi_lite_awready_i(m01_axi_awready)
+      ,.m_axil_awaddr_o (bp_axi_awaddr)
+      ,.m_axil_awprot_o (bp_axi_awprot)
+      ,.m_axil_awvalid_o(bp_axi_awvalid)
+      ,.m_axil_awready_i(bp_axi_awready)
 
-      ,.m_axi_lite_wdata_o  (m01_axi_wdata)
-      ,.m_axi_lite_wstrb_o  (m01_axi_wstrb)
-      ,.m_axi_lite_wvalid_o (m01_axi_wvalid)
-      ,.m_axi_lite_wready_i (m01_axi_wready)
+      ,.m_axil_wdata_o  (bp_axi_wdata)
+      ,.m_axil_wstrb_o  (bp_axi_wstrb)
+      ,.m_axil_wvalid_o (bp_axi_wvalid)
+      ,.m_axil_wready_i (bp_axi_wready)
 
-      ,.m_axi_lite_bresp_i  (m01_axi_bresp)
-      ,.m_axi_lite_bvalid_i (m01_axi_bvalid)
-      ,.m_axi_lite_bready_o (m01_axi_bready)
+      ,.m_axil_bresp_i  (axi_resp_type_e'(bp_axi_bresp))
+      ,.m_axil_bvalid_i (bp_axi_bvalid)
+      ,.m_axil_bready_o (bp_axi_bready)
 
-      ,.m_axi_lite_araddr_o (m01_axi_araddr)
-      ,.m_axi_lite_arprot_o (m01_axi_arprot)
-      ,.m_axi_lite_arvalid_o(m01_axi_arvalid)
-      ,.m_axi_lite_arready_i(m01_axi_arready)
+      ,.m_axil_araddr_o (bp_axi_araddr)
+      ,.m_axil_arprot_o (bp_axi_arprot)
+      ,.m_axil_arvalid_o(bp_axi_arvalid)
+      ,.m_axil_arready_i(bp_axi_arready)
 
-      ,.m_axi_lite_rdata_i  (m01_axi_rdata)
-      ,.m_axi_lite_rresp_i  (m01_axi_rresp)
-      ,.m_axi_lite_rvalid_i (m01_axi_rvalid)
-      ,.m_axi_lite_rready_o (m01_axi_rready)
+      ,.m_axil_rdata_i  (bp_axi_rdata)
+      ,.m_axil_rresp_i  (axi_resp_type_e'(bp_axi_rresp))
+      ,.m_axil_rvalid_i (bp_axi_rvalid)
+      ,.m_axil_rready_o (bp_axi_rready)
 
       // these are reads/writes into BlackParrot
       // from the Zynq PS ARM core
-      ,.s_axi_lite_awaddr_i (waddr_translated_lo)
-      ,.s_axi_lite_awprot_i (s01_axi_awprot)
-      ,.s_axi_lite_awvalid_i(s01_axi_awvalid)
-      ,.s_axi_lite_awready_o(s01_axi_awready)
+      ,.s_axil_awaddr_i (waddr_translated_lo)
+      ,.s_axil_awprot_i (axi_prot_type_e'(s01_axi_awprot))
+      ,.s_axil_awvalid_i(s01_axi_awvalid)
+      ,.s_axil_awready_o(s01_axi_awready)
 
-      ,.s_axi_lite_wdata_i  (s01_axi_wdata)
-      ,.s_axi_lite_wstrb_i  (s01_axi_wstrb)
-      ,.s_axi_lite_wvalid_i (s01_axi_wvalid)
-      ,.s_axi_lite_wready_o (s01_axi_wready)
+      ,.s_axil_wdata_i  (s01_axi_wdata)
+      ,.s_axil_wstrb_i  (s01_axi_wstrb)
+      ,.s_axil_wvalid_i (s01_axi_wvalid)
+      ,.s_axil_wready_o (s01_axi_wready)
 
-      ,.s_axi_lite_bresp_o  (s01_axi_bresp)
-      ,.s_axi_lite_bvalid_o (s01_axi_bvalid)
-      ,.s_axi_lite_bready_i (s01_axi_bready)
+      ,.s_axil_bresp_o  (s01_axi_bresp)
+      ,.s_axil_bvalid_o (s01_axi_bvalid)
+      ,.s_axil_bready_i (s01_axi_bready)
 
-      ,.s_axi_lite_araddr_i (raddr_translated_lo)
-      ,.s_axi_lite_arprot_i (s01_axi_arprot)
-      ,.s_axi_lite_arvalid_i(s01_axi_arvalid)
-      ,.s_axi_lite_arready_o(s01_axi_arready)
+      ,.s_axil_araddr_i (raddr_translated_lo)
+      ,.s_axil_arprot_i (axi_prot_type_e'(s01_axi_arprot))
+      ,.s_axil_arvalid_i(s01_axi_arvalid)
+      ,.s_axil_arready_o(s01_axi_arready)
 
-      ,.s_axi_lite_rdata_o  (s01_axi_rdata)
-      ,.s_axi_lite_rresp_o  (s01_axi_rresp)
-      ,.s_axi_lite_rvalid_o (s01_axi_rvalid)
-      ,.s_axi_lite_rready_i (s01_axi_rready)
+      ,.s_axil_rdata_o  (s01_axi_rdata)
+      ,.s_axil_rresp_o  (s01_axi_rresp)
+      ,.s_axil_rvalid_o (s01_axi_rvalid)
+      ,.s_axil_rready_i (s01_axi_rready)
 
       ,.m_axi_awaddr_o   (axi_awaddr)
       ,.m_axi_awvalid_o  (m00_axi_awvalid)

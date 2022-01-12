@@ -4,9 +4,10 @@ $BASEJUMP_STL_DIR/bsg_cache/bsg_cache_to_axi_rx.v
 $BASEJUMP_STL_DIR/bsg_cache/bsg_cache_to_axi_tx.v
 $BP_ME_DIR/src/v/network/bp_me_axil_master.sv
 $BP_ME_DIR/src/v/network/bp_me_axil_client.sv
+$BP_TOP_DIR/src/v/bp_axi_top.sv
 $COSIM_SRC_DIR/bsg_zynq_pl_shell.v
-$CURR_SRC_DIR/bp_unicore_axi_sim.sv
-$CURR_SRC_DIR/axil_store_packer.sv
+$CURR_SRC_DIR/bsg_axil_store_packer.sv
+$CURR_SRC_DIR/bsg_axil_demux.v
 $CURR_SRC_DIR/top_zynq.sv
 $CURR_SRC_DIR/top.v
 

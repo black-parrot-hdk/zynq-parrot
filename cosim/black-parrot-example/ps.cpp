@@ -13,6 +13,8 @@
 #include <unistd.h>
 
 #include "bp_zynq_pl.h"
+#include "bsg_printing.h"
+#include "bsg_argparse.h"
 
 #define FREE_DRAM 0
 #define DRAM_ALLOCATE_SIZE 120 * 1024 * 1024
@@ -50,7 +52,7 @@ inline unsigned long long get_counter_64(bp_zynq_pl *zpl, unsigned int addr) {
   } while (1);
 }
 
-#ifdef VERILATOR
+#ifndef VCS
 int main(int argc, char **argv) {
 #else
 extern "C" void cosim_main(char *argstr) {
@@ -255,6 +257,17 @@ extern "C" void cosim_main(char *argstr) {
   bsg_pr_info("ps.cpp: polling i/o\n");
 
   while (1) {
+#ifndef FPGA
+    zpl->axil_poll();
+#endif
+#ifdef SIM_BACKPRESSURE_ENABLE
+    if (!(rand() % SIM_BACKPRESSURE_CHANCE)) {
+      for (int i = 0; i < SIM_BACKPRESSURE_LENGTH; i++) {
+        zpl->tick();
+      }
+    }
+#endif
+
     // keep reading as long as there is data
     data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
     if (data != 0) {

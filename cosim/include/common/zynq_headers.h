@@ -61,4 +61,31 @@
 #error GP1_HIER_BASE must be defined
 #endif
 
+#ifndef HP0_ENABLE
+#define HP0_ADDR_WIDTH 0 
+#define HP0_DATA_WIDTH 0
+#define HP0_ADDR_BASE 0
+#define HP0_HIER_BASE ""
 #endif
+
+#ifndef HP0_ADDR_WIDTH
+#error HP0_ADDR_WIDTH must be defined
+#endif
+#ifndef HP0_ADDR_SIZE_BYTES
+#define HP0_ADDR_SIZE_BYTES (1 << HP0_ADDR_WIDTH)
+#endif
+
+#ifndef HP0_ADDR_BASE
+#error HP0_ADDR_BASE must be defined
+#endif
+
+#ifndef HP0_DATA_WIDTH
+#error HP0_DATA_WIDTH must be defined
+#endif
+
+#ifndef HP0_HIER_BASE
+#error HP0_HIER_BASE must be defined
+#endif
+
+#endif
+

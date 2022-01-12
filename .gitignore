@@ -13,3 +13,4 @@ csrc
 DVEfiles
 stack.info*
 bsg_cadenv/
+*.nbf
