@@ -33,6 +33,8 @@ export HARDFLOAT_DIR         ?= $(BP_EXTERNAL_DIR)/HardFloat
 # Override to zynq-parrot version
 export BP_TOOLS_DIR          ?= $(BLACKPARROT_TOOLS_DIR)
 
+export CVA6_DIR              ?= $(COSIM_DIR)/import/cva6
+
 export BSG_MANYCORE_DIR          ?= $(COSIM_DIR)/import/bsg_manycore
 export BSG_MANYCORE_SOFTWARE_DIR ?= $(BSG_MANYCORE_DIR)/software
 export BSG_REPLICANT_DIR         ?= $(SOFTWARE_IMPORT_DIR)/bsg_replicant

@@ -157,6 +157,8 @@ module top
 `else
     );
 
+    logic sys_resetn, tag_clk, tag_data;
+
     localparam rt_clk_period_lp = 2500000;
     logic rt_clk;
     bsg_nonsynth_clock_gen

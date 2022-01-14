@@ -103,6 +103,7 @@ make_wrapper -files [get_files ${project_name}.srcs/sources_1/bd/${project_bd}/$
 add_files -norecurse ${project_name}.srcs/sources_1/bd/${project_bd}/hdl/${project_bd}_wrapper.v
 delete_bd_objs [get_bd_nets reset_rtl_0_1] [get_bd_ports reset_rtl_0]
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins proc_sys_reset_0/ext_reset_in]
+set_property verilog_define $::env(SV_DEFINES) [current_fileset]
 save_bd_design
 
 # Change to 0 to have it stop before synthesis / implementation

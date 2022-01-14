@@ -38,7 +38,7 @@ VPATH := $(wildcard $(BLACKPARROT_SDK_DIR)/prog/*)
 	$(RISCV_OBJCOPY) -O verilog $< $*.mem
 	$(SED) -i "s/@8/@0/g" $*.mem
 	$(PYTHON) $(BP_COMMON_DIR)/software/py/nbf.py \
-		--skip_zeros --config --boot_pc 0x80000000 --mem $*.mem --ncpus $(NBF_NCPUS) > $@
+		--config --boot_pc 0x80000000 --mem $*.mem --ncpus $(NBF_NCPUS) > $@
 	rm $*.mem
 
 NBF_FILE ?= hello

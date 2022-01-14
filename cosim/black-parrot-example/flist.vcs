@@ -1,16 +1,19 @@
 +incdir+$CURR_SRC_DIR
 +incdir+$BASEJUMP_STL_DIR/bsg_tag
 $BASEJUMP_STL_DIR/bsg_misc/bsg_mux2_gatestack.v
+$BASEJUMP_STL_DIR/bsg_misc/bsg_counter_dynamic_limit.v
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_pkg.v
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_master_decentralized.v
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_client.v
 $BASEJUMP_STL_DIR/bsg_cache/bsg_cache_to_axi.v
 $BASEJUMP_STL_DIR/bsg_cache/bsg_cache_to_axi_rx.v
 $BASEJUMP_STL_DIR/bsg_cache/bsg_cache_to_axi_tx.v
+$BASEJUMP_STL_DIR/bsg_cache/bsg_cache_to_axi_ordering.v
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_bitbang.v
 $BLACKPARROT_SUB_DIR/axi/v/bp_me_axil_master.sv
 $BLACKPARROT_SUB_DIR/axi/v/bp_me_axil_client.sv
 $BLACKPARROT_SUB_DIR/axi/v/bp_axi_top.sv
+$BLACKPARROT_SUB_DIR/axi/v/bp_axi_cdl.sv
 $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_fifo_client.sv
 $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_fifo_master.sv
 $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_store_packer.sv
@@ -19,6 +22,9 @@ $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_mux.v
 $COSIM_SRC_DIR/bsg_zynq_pl_shell.v
 $CURR_SRC_DIR/bsg_blackparrot_pkg.sv
 $CURR_SRC_DIR/zynq_pkg.sv
+$CURR_SRC_DIR/bp_profiler_pkg.sv
+$CURR_SRC_DIR/bp_nonsynth_core_profiler.sv
+$CURR_SRC_DIR/bp_commit_profiler.sv
 $CURR_SRC_DIR/top_zynq.sv
 $CURR_SRC_DIR/top.v
 
