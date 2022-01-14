@@ -36,23 +36,19 @@ module bsg_nonsynth_zynq_testbench;
    aclk_gen
     (.o(aclk));
 
-  logic core_clk;
-`ifdef ASYNC_ACLK_CORE_CLK
-  localparam aclk_period_lp = 40000;
-  bsg_nonsynth_clock_gen
-   #(.cycle_time_p(core_clk_period_lp))
-   core_clk_gen
-    (.o(core_clk));
-`elsif
-  assign core_clk = aclk;
-`endif
-
   logic areset;
   bsg_nonsynth_reset_gen
    #(.reset_cycles_lo_p(0), .reset_cycles_hi_p(10))
    reset_gen
     (.clk_i(aclk), .async_reset_o(areset));
   wire aresetn = ~areset;
+
+  localparam ds_clk_period_lp = 200000;
+  logic ds_clk;
+  bsg_nonsynth_clock_gen
+   #(.cycle_time_p(ds_clk_period_lp))
+   ds_clk_gen
+    (.o(ds_clk));
 
   localparam rt_clk_period_lp = 2500000;
   logic rt_clk;

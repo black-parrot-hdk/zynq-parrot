@@ -3,6 +3,19 @@ include ../Makefile.design
 #############################
 # Modify base flist
 #############################
+# AXI clock frequency
+export AXI_FREQ ?= 160
+# core clock frequency
+export CORE_FREQ  ?= 40
+
+# Coverage
+COV_EN ?= 1
+COV_NUM ?= 4
+
+ifneq ($(COV_EN),0)
+VDEFINES = COV_EN COV_NUM=$(COV_NUM)
+endif
+
 BASE_FLIST ?= $(abspath ../flist.vcs)
 FLIST ?= $(abspath flist.vcs)
 

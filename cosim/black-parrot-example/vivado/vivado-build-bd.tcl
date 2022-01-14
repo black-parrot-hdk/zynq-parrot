@@ -9,6 +9,7 @@ set proj_bd      ${ip_name}_bd_1
 set part         $::env(PART)
 set boardname    $::env(BOARDNAME)
 set xdc_dir      $::env(COSIM_XDC_DIR)
+set vdefines     $::env(VDEFINES)
 
 set do_elab    $::env(ELAB)
 set do_synth   $::env(SYNTH)
@@ -16,7 +17,8 @@ set do_impl    $::env(IMPL)
 set do_handoff $::env(HANDOFF)
 set threads    $::env(THREADS)
 
-vivado_create_ip_proj ${proj_name} ${proj_bd} ${ip_name} ${part} ${ip_script}
+vivado_create_ip_proj ${proj_name} ${proj_bd} ${ip_name} ${part} ${ip_script} \
+    ${vdefines}
 
 vivado_elab_wrap ${do_elab} ${proj_bd}
 vivado_read_xdc ${xdc_dir} ${boardname}

@@ -20,6 +20,9 @@ $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_mux.sv
 $COSIM_VSRC_DIR/bsg_zynq_pl_shell.sv
 $CURR_VSRC_DIR/bsg_blackparrot_pkg.sv
 $CURR_VSRC_DIR/bsg_bootrom.v
+$CURR_VSRC_DIR/bsg_cam_1r1w_tag_array_snoop.sv
+$CURR_VSRC_DIR/bsg_cover.sv
+$BASEJUMP_STL_DIR/bsg_misc/bsg_lfsr.sv
 $CURR_VSRC_DIR/zynq_pkg.sv
 $CURR_VSRC_DIR/top_zynq.sv
 $CURR_VSRC_DIR/top.v

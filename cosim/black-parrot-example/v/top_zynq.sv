@@ -2,6 +2,7 @@
 `timescale 1 ps / 1 ps
 
 `include "bsg_tag.svh"
+`include "bsg_zynq_pl.vh"
 `include "bp_common_defines.svh"
 `include "bp_be_defines.svh"
 `include "bp_me_defines.svh"
@@ -16,15 +17,15 @@ module top_zynq
  #(parameter bp_params_e bp_params_p = bp_cfg_gp
    `declare_bp_proc_params(bp_params_p)
    `declare_bp_bedrock_if_widths(paddr_width_p, lce_id_width_p, cce_id_width_p, did_width_p, lce_assoc_p)
+`ifdef COV_EN
+   , parameter num_cov_p = `COV_NUM
+`endif
 
    // NOTE these parameters are usually overridden by the parent module (top.v)
    // but we set them to make expectations consistent
 
    // Parameters of Axi Slave Bus Interface S00_AXI
    , parameter integer C_S00_AXI_DATA_WIDTH   = 32
-
-   // needs to be updated to fit all addresses used
-   // by bsg_zynq_pl_shell read_locs_lp (update in top.v as well)
    , parameter integer C_S00_AXI_ADDR_WIDTH   = 10
    , parameter integer C_S01_AXI_DATA_WIDTH   = 32
    // the ARM AXI S01 interface drops the top two bits
@@ -38,6 +39,7 @@ module top_zynq
    )
   (input wire                                    aclk
    , input wire                                  aresetn
+   , input wire                                  ds_clk
    , input wire                                  rt_clk
    , output logic                                sys_resetn
 
@@ -169,23 +171,38 @@ module top_zynq
    , output wire                                 m01_axi_rready
    );
 
+  `define COREPATH blackparrot.processor.u.unicore.unicore_lite.core_minimal
+
+   localparam debug_lp = 0;
+ 
    localparam bp_axil_addr_width_lp = 32;
    localparam bp_axil_data_width_lp = 32;
    localparam bp_axi_addr_width_lp  = 32;
    localparam bp_axi_data_width_lp  = 64;
+ 
+`ifdef COV_EN
+   localparam num_regs_ps_to_pl_lp  = 6;
+   localparam num_regs_pl_to_ps_lp  = 11;
+
+   localparam num_fifo_ps_to_pl_lp = 1;
+   localparam num_fifo_pl_to_ps_lp = 2;
+`else
    localparam num_regs_ps_to_pl_lp  = 5;
-   localparam num_regs_pl_to_ps_lp  = 8;
-   localparam num_fifos_ps_to_pl_lp = 1;
-   localparam num_fifos_pl_to_ps_lp = 1;
+   localparam num_regs_pl_to_ps_lp  = 11;
+
+   localparam num_fifo_ps_to_pl_lp = 1;
+   localparam num_fifo_pl_to_ps_lp = 1;
+`endif
 
    ///////////////////////////////////////////////////////////////////////////////////////
    // csr_data_lo:
-   //
-   // 0: System-wide reset (low true); note: it is only legal to assert reset if you are
+
    //    finished with all AXI transactions (fixme: potential improvement to detect this)
-   // 4: Bit banging interface
-   // 8: = 1 if the DRAM has been allocated for the device in the ARM PS Linux subsystem
-   // C: The base register for the allocated dram
+   // 1: Bit banging interface
+   // 2: = 1 if the DRAM has been allocated for the device in the ARM PS Linux subsystem
+   // 3: The base register for the allocated dram
+   // 4: The bootrom access address
+   // 5: The coverage sampling enable
    //
    logic [num_regs_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_lo;
    logic [num_regs_ps_to_pl_lp-1:0]                           csr_data_new_lo;
@@ -193,15 +210,32 @@ module top_zynq
    ///////////////////////////////////////////////////////////////////////////////////////
    // csr_data_li:
    //
-   // 0: minstret (64b)
-   // 8: mem_profiler (128b)
+   // 0-3: memory access profiler mask
+   // 4: bootrom access data
+   // 5-6: cycle
+   // 7-8: mcycle
+   // 9-10: minstret
    //
    logic [num_regs_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_li;
 
-   logic [C_S00_AXI_DATA_WIDTH-1:0]      pl_to_ps_fifo_data_li, ps_to_pl_fifo_data_lo;
-   logic                                 pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
-   logic                                 ps_to_pl_fifo_v_lo, ps_to_pl_fifo_ready_li;
+   ///////////////////////////////////////////////////////////////////////////////////////
+   // pl_to_ps_fifo:
+   //
+   // 0: BP host IO access request
+   // 1: covergroup samples
+   //
+   logic [num_fifo_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] pl_to_ps_fifo_data_li;
+   logic [num_fifo_pl_to_ps_lp-1:0]                           pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
 
+   ///////////////////////////////////////////////////////////////////////////////////////
+   // ps_to_pl_fifo:
+   //
+   // 0: BP host IO access response
+   // 
+   logic [num_fifo_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] ps_to_pl_fifo_data_lo;
+   logic [num_fifo_ps_to_pl_lp-1:0]                           ps_to_pl_fifo_v_lo, ps_to_pl_fifo_ready_li;
+
+   // BP ingoing and outgoing AXIL IO
    logic [bp_axil_addr_width_lp-1:0]     bp_m_axil_awaddr;
    logic [2:0]                           bp_m_axil_awprot;
    logic                                 bp_m_axil_awvalid;
@@ -242,15 +276,10 @@ module top_zynq
    logic                                 bp_s_axil_rvalid;
    logic                                 bp_s_axil_rready;
 
-   localparam debug_lp = 0;
-   localparam memory_upper_limit_lp = 256*1024*1024;
-
    // Connect Shell to AXI Bus Interface S00_AXI
    bsg_zynq_pl_shell #
-     (
-      // need to update C_S00_AXI_ADDR_WIDTH accordingly
-      .num_fifo_ps_to_pl_p(num_fifos_ps_to_pl_lp)
-      ,.num_fifo_pl_to_ps_p(num_fifos_pl_to_ps_lp)
+     (.num_fifo_ps_to_pl_p(num_fifo_ps_to_pl_lp)
+      ,.num_fifo_pl_to_ps_p(num_fifo_pl_to_ps_lp)
       ,.num_regs_ps_to_pl_p (num_regs_ps_to_pl_lp)
       ,.num_regs_pl_to_ps_p(num_regs_pl_to_ps_lp)
       ,.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH)
@@ -292,30 +321,58 @@ module top_zynq
         ,.S_AXI_RREADY (s00_axi_rready)
         );
 
+
    ///////////////////////////////////////////////////////////////////////////////////////
-   // TODO: User code goes here
+   // User code goes here
    ///////////////////////////////////////////////////////////////////////////////////////
    localparam bootrom_data_lp = 32;
    localparam bootrom_addr_lp = 9;
+
    logic bb_data_li, bb_v_li;
    logic dram_init_li;
    logic [C_M00_AXI_ADDR_WIDTH-1:0] dram_base_li;
-   logic [63:0] minstret_lo;
+
    // use this as a way of figuring out how much memory a RISC-V program is using
    // each bit corresponds to a region of memory
    logic [127:0] mem_profiler_r;
-   logic [bootrom_data_lp-1:0] bootrom_data_li;
+   logic [63:0] cycle_lo, mcycle_lo, minstret_lo;
+
    logic [bootrom_addr_lp-1:0] bootrom_addr_lo;
+   logic [bootrom_data_lp-1:0] bootrom_data_li;
 
-   assign sys_resetn   = csr_data_lo[0][0]; // active-low
-   assign bb_data_li   = csr_data_lo[1][0]; assign bb_v_li = csr_data_new_lo[1];
-   assign dram_init_li = csr_data_lo[2];
-   assign dram_base_li = csr_data_lo[3];
-   assign bootrom_addr_lo = csr_data_lo[4];
+   assign sys_resetn         = csr_data_lo[0][0]; // active-low
+   assign bb_data_li         = csr_data_lo[1][0]; assign bb_v_li = csr_data_new_lo[1];
+   assign dram_init_li       = csr_data_lo[2];
+   assign dram_base_li       = csr_data_lo[3];
+   assign bootrom_addr_lo    = csr_data_lo[4];
+`ifdef COV_EN
+   logic cov_en_li;
+   assign cov_en_li          = csr_data_lo[5];
+`endif
 
-   assign csr_data_li[0+:2] = minstret_lo;
-   assign csr_data_li[2+:4] = mem_profiler_r;
-   assign csr_data_li[6+:1] = bootrom_data_li;
+   bsg_counter_clear_up
+    #(.max_val_p((65)'(2**64-1)), .init_val_p(0))
+    cycle_cnt
+     (.clk_i(aclk)
+     ,.reset_i(~aresetn)
+     ,.clear_i(`COREPATH.be.calculator.pipe_sys.csr.cfg_bus_cast_i.freeze)
+     ,.up_i(1'b1)
+     ,.count_o(cycle_lo)
+     );
+
+   assign mcycle_lo = `COREPATH.be.calculator.pipe_sys.csr.mcycle_lo;
+   assign minstret_lo = `COREPATH.be.calculator.pipe_sys.csr.minstret_lo;
+
+   assign csr_data_li[0+:4] = mem_profiler_r;
+   assign csr_data_li[4] = bootrom_data_li;
+   assign csr_data_li[5+:2] = cycle_lo;
+   assign csr_data_li[7+:2] = mcycle_lo;
+   assign csr_data_li[9+:2] = minstret_lo;
+
+   bsg_bootrom
+    #(.width_p(bootrom_data_lp), .addr_width_p(bootrom_addr_lp))
+    bootrom
+     (.addr_i(bootrom_addr_lo), .data_o(bootrom_data_li));
 
    // Tag bitbang
    logic tag_clk_r_lo, tag_data_r_lo;
@@ -351,7 +408,7 @@ module top_zynq
    logic tag_reset_li;
    bsg_tag_client
     #(.width_p(1))
-    client
+    reset_client
      (.bsg_tag_i(tag_lines_lo.core_reset)
       ,.recv_clk_i(aclk)
       ,.recv_new_r_o() // UNUSED
@@ -359,29 +416,52 @@ module top_zynq
       );
 
    // Reset BP during system reset or if bsg_tag says to
-   wire bp_reset_li = ~sys_resetn | tag_reset_li;
+   wire bp_async_reset_li = ~sys_resetn | tag_reset_li;
 
-   // (MBT)
-   // note: this ability to probe into the core is not supported in ASIC toolflows but
-   // is supported in Verilator, VCS, and Vivado Synthesis.
+   // Gating Logic
+   (* gated_clock = "yes" *) wire bp_clk;
 
-   // it is very helpful for adding instrumentation to a pre-existing design that you are
-   // prototyping in FPGA, where you don't necessarily want to put the support into the ASIC version
-   // or don't know yet if you want to.
+`ifdef COV_EN
+   logic [num_cov_p-1:0] cov_gate_lo;
+   wire gate_lo = (|cov_gate_lo);
+`else
+   wire gate_lo = 1'b0;
+`endif
 
-   // in additional to this approach of poking down into pre-existing registers, you can also
-   // instantiate counters, and then pull control signals out of the DUT in order to figure out when
-   // to increment the counters.
-   //
-   if (cce_type_p != e_cce_uce)
-     assign minstret_lo = blackparrot.processor.m.multicore.cc.y[0].x[0].tile_node.tile.core.core_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
-   else
-     assign minstret_lo = blackparrot.processor.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
-
-  bsg_bootrom
-   #(.width_p(bootrom_data_lp), .addr_width_p(bootrom_addr_lp))
-   bootrom
-    (.addr_i(bootrom_addr_lo), .data_o(bootrom_data_li));
+   // Clock Generation
+`ifdef VIVADO
+`ifdef ULTRASCALE
+   // Ultrascale primitives
+   BUFGCE #(
+      .CE_TYPE("SYNC"),
+      .IS_CE_INVERTED(1'b1),
+      .IS_I_INVERTED(1'b0)
+   )
+   BUFGCE_inst (
+      .I(ds_clk),
+      .CE(gate_lo),
+      .O(bp_clk)
+   );
+`elsif 7SERIES
+   // Zynq-7000 primitives
+   BUFGCE BUFGCE_inst (
+      .I(ds_clk),
+      .CE(~gate_lo),
+      .O(bp_clk)
+   );
+`else
+  initial begin
+    $error("Unknown device family!");
+  end
+`endif
+`else
+   bsg_icg_pos
+    clk_buf
+     (.clk_i(ds_clk)
+     ,.en_i(~gate_lo)
+     ,.clk_o(bp_clk)
+     );
+`endif
 
    // Address Translation (MBT):
    //
@@ -435,13 +515,10 @@ module top_zynq
 
    // Zynq PA 0x8000_0000 .. 0x8FFF_FFFF -> AXI 0x0000_0000 .. 0x0FFF_FFFF -> BP 0x8000_0000 - 0x8FFF_FFFF
    // Zynq PA 0xA000_0000 .. 0xAFFF_FFFF -> AXI 0x2000_0000 .. 0x2FFF_FFFF -> BP 0x0000_0000 - 0x0FFF_FFFF
-   
-   wire [bp_axil_addr_width_lp-1:0] s01_awaddr_translated_lo = {~s01_axi_awaddr[29], 3'b0, s01_axi_awaddr[0+:28]};
-   
-   // Zynq PA 0x8000_0000 .. 0x8FFF_FFFF -> AXI 0x0000_0000 .. 0x0FFF_FFFF -> BP 0x8000_0000 - 0x8FFF_FFFF
-   // Zynq PA 0xA000_0000 .. 0xAFFF_FFFF -> AXI 0x2000_0000 .. 0x2FFF_FFFF -> BP 0x0000_0000 - 0x0FFF_FFFF
-   
-   wire [bp_axil_addr_width_lp-1:0] s01_araddr_translated_lo = {~s01_axi_araddr[29], 3'b0, s01_axi_araddr[0+:28]};
+   logic [bp_axil_addr_width_lp-1:0] s01_awaddr_translated_lo, s01_araddr_translated_lo;
+   assign s01_awaddr_translated_lo = (s01_axi_awaddr < 32'h20000000) ? (s01_axi_awaddr + 32'h80000000) : {4'b0, s01_axi_awaddr[0+:28]};
+   assign s01_araddr_translated_lo = (s01_axi_araddr < 32'h20000000) ? (s01_axi_araddr + 32'h80000000) : {4'b0, s01_axi_araddr[0+:28]};
+
 
    logic [bp_axil_addr_width_lp-1 : 0]          spack_axi_awaddr;
    logic [2 : 0]                                spack_axi_awprot;
@@ -496,9 +573,9 @@ module top_zynq
       ,.s_axil_rvalid_o(spack_axi_rvalid)
       ,.s_axil_rready_i(spack_axi_rready)
 
-      ,.data_o(pl_to_ps_fifo_data_li)
-      ,.v_o(pl_to_ps_fifo_v_li)
-      ,.ready_i(pl_to_ps_fifo_ready_lo)
+      ,.data_o(pl_to_ps_fifo_data_li[0])
+      ,.v_o(pl_to_ps_fifo_v_li[0])
+      ,.ready_i(pl_to_ps_fifo_ready_lo[0])
 
       ,.data_i(ps_to_pl_fifo_data_lo)
       ,.v_i(ps_to_pl_fifo_v_lo)
@@ -576,6 +653,7 @@ module top_zynq
      ,.m01_axil_rready(m01_axi_rready)
      );
 
+
   // TODO: Bug in zero-extension of Xcelium 21.09
   wire [bp_axil_addr_width_lp-1:0] s02_awaddr_translated_lo = s02_axi_awaddr;
   wire [bp_axil_addr_width_lp-1:0] s02_araddr_translated_lo = s02_axi_araddr;
@@ -648,6 +726,7 @@ module top_zynq
      ,.m00_axil_rready (bp_s_axil_rready)
      );
 
+
    logic [bp_axi_addr_width_lp-1:0] axi_awaddr;
    logic [bp_axi_addr_width_lp-1:0] axi_araddr;
 
@@ -666,21 +745,9 @@ module top_zynq
    assign m00_axi_awaddr = (axi_awaddr ^ 32'h8000_0000) + dram_base_li;
    assign m00_axi_araddr = (axi_araddr ^ 32'h8000_0000) + dram_base_li;
 
-   // synopsys translate_off
-
-   always @(negedge aclk)
-     if (m00_axi_awvalid & m00_axi_awready)
-       if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_awaddr,m00_axi_awaddr);
-
-   always @(negedge aclk)
-     if (m00_axi_arvalid & m00_axi_arready)
-       if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_araddr,m00_axi_araddr);
-
-   // synopsys translate_on
-
    bsg_dff_reset #(.width_p(128)) dff
      (.clk_i(aclk)
-      ,.reset_i(bp_reset_li)
+      ,.reset_i(~aresetn)
       ,.data_i(mem_profiler_r
                | m00_axi_awvalid << (axi_awaddr[29-:7])
                | m00_axi_arvalid << (axi_araddr[29-:7])
@@ -697,13 +764,13 @@ module top_zynq
       ,.axi_addr_width_p(bp_axi_addr_width_lp)
       ,.axi_data_width_p(bp_axi_data_width_lp)
       ,.axi_id_width_p(6)
-      ,.axi_core_clk_async_p(0)
+      ,.axi_core_clk_async_p(1)
       )
    blackparrot
      (.axi_clk_i(aclk)
-      ,.core_clk_i(aclk)
+      ,.core_clk_i(bp_clk)
       ,.rt_clk_i(rt_clk)
-      ,.async_reset_i(bp_reset_li)
+      ,.async_reset_i(bp_async_reset_li)
 
       // these are reads/write from BlackParrot
       ,.m_axil_awaddr_o(bp_m_axil_awaddr)
@@ -801,6 +868,145 @@ module top_zynq
       ,.m_axi_rresp_i(m00_axi_rresp)
       );
 
+`ifdef COV_EN
+   // Coverage
+   // reset generation
+   logic bp_reset_li, ds_reset_li;
+   bsg_sync_sync
+    #(.width_p(1))
+    bp_reset_bss
+     (.oclk_i(bp_clk)
+     ,.iclk_data_i(bp_async_reset_li)
+     ,.oclk_data_o(bp_reset_li)
+     );
+
+   bsg_sync_sync
+    #(.width_p(1))
+    ds_reset_bss
+     (.oclk_i(ds_clk)
+     ,.iclk_data_i(bp_async_reset_li)
+     ,.oclk_data_o(ds_reset_li)
+     );
+
+   // coverage valid when enabled
+   logic cov_v_li;
+   logic [num_cov_p-1:0][32-1:0] cov_li;
+   bsg_sync_sync
+    #(.width_p(1))
+    cov_en_bp_bss
+     (.oclk_i(bp_clk)
+     ,.iclk_data_i(cov_en_li)
+     ,.oclk_data_o(cov_v_li)
+     );
+
+   // drain remaining coverage data after stopping coverage collection
+   logic cov_drain_li, cov_en_ds_sync_li;
+   bsg_sync_sync
+    #(.width_p(1))
+    cov_en_ds_bss
+     (.oclk_i(ds_clk)
+     ,.iclk_data_i(cov_en_li)
+     ,.oclk_data_o(cov_en_ds_sync_li)
+     );
+
+   bsg_edge_detect
+    #(.falling_not_rising_p(1))
+    drain_reg
+     (.clk_i(ds_clk)
+      ,.reset_i(ds_reset_li)
+      ,.sig_i(cov_en_ds_sync_li)
+      ,.detect_o(cov_drain_li)
+      );
+
+   // pick first covergroup to drain
+   logic [`BSG_SAFE_CLOG2(num_cov_p)-1:0] cov_idx_enc_lo;
+   bsg_priority_encode
+    #(.width_p(num_cov_p)
+     ,.lo_to_hi_p(1)
+     )
+    enc
+     (.i(cov_gate_lo)
+     ,.addr_o(cov_idx_enc_lo)
+     ,.v_o()
+     );
+
+   // covergroup instances
+   logic [num_cov_p-1:0] cov_v_lo, cov_ready_li, cov_idx_v_lo;
+   logic [num_cov_p-1:0][32-1:0] cov_data_lo;
+   for(genvar i = 0; i < num_cov_p; i++) begin: rof
+     // random covergroup input for testing
+     bsg_lfsr
+      #(.width_p(32))
+      i_rand
+       (.clk(bp_clk)
+       ,.reset_i(bp_reset_li)
+       ,.yumi_i(1'b1)
+       ,.o(cov_li[i])
+       );
+
+     bsg_cover
+      #(.idx_p(i)
+       ,.width_p(32)
+       ,.els_p(16)
+       ,.lg_afifo_size_p(3)
+       )
+      i_cov
+       (.core_clk_i(bp_clk)
+       ,.core_reset_i(bp_reset_li)
+
+       ,.ds_clk_i(ds_clk)
+       ,.ds_reset_i(ds_reset_li)
+
+       ,.axi_clk_i(aclk)
+       ,.axi_reset_i(bp_async_reset_li)
+
+       ,.v_i(cov_v_li)
+       ,.data_i(cov_li[i])
+       ,.ready_o()
+
+       ,.drain_i(cov_drain_li)
+       ,.gate_o(cov_gate_lo[i])
+
+       ,.ready_i(cov_ready_li[i])
+       ,.v_o(cov_v_lo[i])
+       ,.idx_v_o(cov_idx_v_lo[i])
+       ,.data_o(cov_data_lo[i])
+       );
+   end
+
+   logic cov_afifo_enq_li, cov_afifo_full_lo;
+   logic [32-1:0] cov_afifo_data_li;
+   assign cov_afifo_enq_li = ~cov_afifo_full_lo & cov_v_lo[cov_idx_enc_lo];
+   assign cov_afifo_data_li = {cov_idx_v_lo[cov_idx_enc_lo], cov_data_lo[cov_idx_enc_lo][0+:31]};
+   bsg_decode_with_v
+    #(.num_out_p(num_cov_p))
+    cov_demux
+     (.i(cov_idx_enc_lo)
+     ,.v_i(~cov_afifo_full_lo)
+     ,.o(cov_ready_li)
+     );
+
+   bsg_async_fifo
+    #(.lg_size_p(3)
+     ,.width_p(32)
+     )
+    cov_afifo
+     (.w_clk_i(ds_clk)
+     ,.w_reset_i(ds_reset_li)
+
+     ,.w_enq_i(cov_afifo_enq_li)
+     ,.w_data_i(cov_afifo_data_li)
+     ,.w_full_o(cov_afifo_full_lo)
+
+     ,.r_clk_i(aclk)
+     ,.r_reset_i(bp_async_reset_li)
+
+     ,.r_valid_o(pl_to_ps_fifo_v_li[1])
+     ,.r_data_o(pl_to_ps_fifo_data_li[1])
+     ,.r_deq_i(pl_to_ps_fifo_ready_lo[1] & pl_to_ps_fifo_v_li[1])
+     );
+`endif
+
    // synopsys translate_off
    always @(negedge aclk)
      if (aresetn !== '0 & bb_v_li & ~bb_ready_and_lo == 1'b1)
@@ -813,8 +1019,14 @@ module top_zynq
    always @(negedge aclk)
      if (s01_axi_arvalid & s01_axi_arready)
        if (debug_lp) $display("top_zynq: AXI Read Addr %x -> %x (BP)",s01_axi_araddr,s01_araddr_translated_lo);
+
+   always @(negedge aclk)
+     if (m00_axi_awvalid & m00_axi_awready)
+       if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_awaddr,m00_axi_awaddr);
+
+   always @(negedge aclk)
+     if (m00_axi_arvalid & m00_axi_arready)
+       if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_araddr,m00_axi_araddr);
    // synopsys translate_on
 
-
 endmodule
-

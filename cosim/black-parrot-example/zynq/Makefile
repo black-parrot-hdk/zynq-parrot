@@ -1,5 +1,9 @@
 include ../Makefile.design
 
+# Coverage
+COV_EN ?= 1
+COV_NUM ?= 4
+
 #############################
 # Accelerator Software Settings
 #############################
@@ -17,6 +21,9 @@ ifeq ($(BOARDNAME),pynqz2)
 DEFINES += DRAM_ALLOCATE_SIZE_MB=80
 else ifeq ($(BOARDNAME),ultra96v2)
 DEFINES += DRAM_ALLOCATE_SIZE_MB=200
+endif
+ifneq ($(COV_EN),0)
+DEFINES += COV_EN COV_NUM=$(COV_NUM)
 endif
 
 include $(TOP)/cosim/mk/Makefile.zynq

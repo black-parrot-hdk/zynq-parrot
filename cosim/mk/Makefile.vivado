@@ -8,6 +8,7 @@ export HANDOFF ?= 1
 export THREADS ?= 8
 
 export VIVADO_RUN ?= export $(DEFINES) && source $(XILINX_SETTINGS) && $(VIVADO)
+export VDEFINES += $(FAMILY)
 
 all:
 	@echo "Rules for Vivado; see $(TOP)/cosim/mk/Makefile.vivado for more:"

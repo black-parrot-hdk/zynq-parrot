@@ -11,16 +11,21 @@ proc post_propagate { cellpath otherInfo } {
 
 proc vivado_create_ip { args } {
     set flist [lindex [lindex ${args} 0] 0]
-    set aclk_freq_mhz [lindex [lindex ${args} 0] 1]
-    set rtclk_freq_mhz [lindex [lindex ${args} 0] 2]
+    set vdefines [lindex [lindex ${args} 0] 1]
+    set aclk_freq_mhz [lindex [lindex ${args} 0] 2]
+    set dsclk_freq_mhz [lindex [lindex ${args} 0] 3]
+    set rtclk_freq_mhz [lindex [lindex ${args} 0] 4]
 
     set aclk_freq_hz [expr round(${aclk_freq_mhz}*1e6)]
+    set dsclk_freq_hz [expr round(${dsclk_freq_mhz}*1e6)]
     set rtclk_freq_hz [expr round(${rtclk_freq_mhz}*1e6)]
 
-    vivado_parse_flist flist.vcs
+    vivado_parse_flist ${flist}
+    set_property verilog_define ${vdefines} [current_fileset]
     create_bd_cell -type module -reference top -name top
 
     create_bd_port -dir I -type clk -freq_hz ${aclk_freq_hz} aclk
+    create_bd_port -dir I -type clk -freq_hz ${dsclk_freq_hz} ds_clk
     create_bd_port -dir I -type clk -freq_hz ${rtclk_freq_hz} rt_clk
     create_bd_port -dir I -type rst aresetn
     create_bd_port -dir O -type rst sys_resetn
@@ -42,6 +47,7 @@ proc vivado_create_ip { args } {
     set_property CONFIG.PROTOCOL {AXI4LITE} [get_bd_intf_ports m01_axi]
 
     connect_bd_net [get_bd_pins top/aclk] [get_bd_ports aclk]
+    connect_bd_net [get_bd_pins top/ds_clk] [get_bd_ports ds_clk]
     connect_bd_net [get_bd_pins top/rt_clk] [get_bd_ports rt_clk]
     connect_bd_net [get_bd_pins top/aresetn] [get_bd_ports aresetn]
     connect_bd_net [get_bd_pins top/tag_ck] [get_bd_ports tag_ck]
@@ -63,6 +69,7 @@ proc vivado_create_ip { args } {
 
 proc vivado_ipx_customize { args } {
     ipx::remove_bus_parameter FREQ_HZ [ipx::get_bus_interfaces CLK.ACLK -of_objects [ipx::current_core]]
+    ipx::remove_bus_parameter FREQ_HZ [ipx::get_bus_interfaces CLK.DS_CLK -of_objects [ipx::current_core]]
     ipx::remove_bus_parameter FREQ_HZ [ipx::get_bus_interfaces CLK.RT_CLK -of_objects [ipx::current_core]]
     ipx::infer_bus_interface tag_ck xilinx.com:signal:data_rtl:1.0 [ipx::current_core]
 }

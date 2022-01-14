@@ -21,7 +21,7 @@
 #include "bsg_printing.h"
 
 #ifndef ZYNQ_AXI_TIMEOUT
-#define ZYNQ_AXI_TIMEOUT 1000
+#define ZYNQ_AXI_TIMEOUT 50000
 #endif
 
 extern "C" { int bsg_dpi_time(); }

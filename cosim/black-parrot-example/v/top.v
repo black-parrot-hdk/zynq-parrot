@@ -18,6 +18,7 @@ module top
     // Ports of Axi Slave Bus Interface S00_AXI
     input wire                                   aclk
     ,input wire                                  aresetn
+    ,input wire                                  ds_clk
     ,input wire                                  rt_clk
     // In order to prevent X from propagating to any of the initialized AXI buses,
     //   we use sys_resetn to put modules that have resets generated from bsg tags
@@ -166,6 +167,7 @@ module top
      top_fpga_inst
      (.aclk            (aclk)
       ,.aresetn        (aresetn)
+      ,.ds_clk         (ds_clk)
       ,.rt_clk         (rt_clk)
       ,.sys_resetn     (sys_resetn)
 
