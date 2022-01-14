@@ -7,8 +7,9 @@ endif
 
 CFLAGS += -DFPGA
 CFLAGS += -O2
-CFLAGS += -lcma -lpthread
+CFLAGS += $(SIM_DEFINES)
 CFLAGS += -std=c++14
+LFLAGS += -lcma -lpthread
 
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/fpga
@@ -23,7 +24,7 @@ run: $(EXE) $(RUN_COLLATERAL)
 	sudo ./$< $(SIM_ARGS) | tee run.log
 
 $(EXE): $(HOST_PROGRAM) $(BUILD_COLLATERAL)
-	$(GCC) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $(CSOURCES) $< $(CFLAGS) $(LDFLAGS) -o $@
+	$(GCC) $(CFLAGS) $(CINCLUDES) $(CSOURCES) $< $(LFLAGS) -o $@
 
 reset_pl:
 	echo 'from pynq import PL; PL.reset();' | sudo -E $(PYTHON3)

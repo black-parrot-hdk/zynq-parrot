@@ -8,6 +8,9 @@ WD_FLIST   ?= $(abspath flist.watchdog.vcs)
 TOP_FLIST  ?= $(abspath flist.blackparrot.vcs)
 FLIST      ?= $(WD_FLIST) $(TOP_FLIST)
 
+# Set to MULTICORE for different BP configs
+export SV_DEFINES ?=
+
 $(WD_FLIST):
 	echo "+incdir+$(BASEJUMP_STL_DIR)/bsg_misc" >> $@
 	echo "+incdir+$BASEJUMP_STL_DIR/bsg_tag" >> $@

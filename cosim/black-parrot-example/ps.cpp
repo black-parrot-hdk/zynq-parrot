@@ -12,6 +12,8 @@
 #include <queue>
 #include <unistd.h>
 #include <bitset>
+#include <cstdint>
+#include <iostream>
 
 #include "ps.hpp"
 
@@ -29,7 +31,7 @@
 #endif
 
 #ifndef DRAM_ALLOCATE_SIZE_MB
-#define DRAM_ALLOCATE_SIZE_MB 128
+#define DRAM_ALLOCATE_SIZE_MB 241
 #endif
 #define DRAM_ALLOCATE_SIZE (DRAM_ALLOCATE_SIZE_MB * 1024 * 1024)
 
@@ -44,14 +46,68 @@
 // Helper functions
 void nbf_load(bsg_zynq_pl *zpl, char *filename);
 bool decode_bp_output(bsg_zynq_pl *zpl, long data);
+void report(bsg_zynq_pl *zpl, char *);
+
+const char* metrics[] = {
+  "mcycle", "minstret",
+  "ic_miss",
+  "br_ovr", "ret_ovr", "jal_ovr", "fe_cmd", "fe_cmd_fence",
+  "mispredict", "control_haz", "long_haz", "data_haz",
+  "catchup_dep", "aux_dep", "load_dep", "mul_dep", "fma_dep", "sb_iraw_dep",
+  "sb_fraw_dep", "sb_iwaw_dep", "sb_fwaw_dep",
+  "struct_haz", "idiv_haz", "fdiv_haz",
+  "ptw_busy", "special", "exception", "_interrupt",
+  "itlb_miss", "dtlb_miss",
+  "dc_miss", "dc_fail", "unknown",
+
+  "e_ic_req_cnt", "e_ic_miss_cnt", "e_ic_miss",
+  "e_dc_req_cnt", "e_dc_miss_cnt", "e_dc_miss",
+
+  "e_ic_miss_l2_ic", "e_ic_miss_l2_dfetch", "e_ic_miss_l2_devict",
+  "e_dc_miss_l2_ic", "e_dc_miss_l2_dfetch", "e_dc_miss_l2_devict",
+
+  "e_dc_is_miss", "e_dc_is_late", "e_dc_is_resume", "e_dc_is_busy_cnt", "e_dc_is_busy",
+
+  "e_l2_ic_cnt", "e_l2_dfetch_cnt", "e_l2_devict_cnt",
+  "e_l2_ic", "e_l2_dfetch", "e_l2_devict",
+
+  "e_l2_ic_miss_cnt", "e_l2_dfetch_miss_cnt", "e_l2_devict_miss_cnt",
+  "e_l2_ic_miss", "e_l2_dfetch_miss", "e_l2_devict_miss",
+
+  "e_l2_ic_dma", "e_l2_dfetch_dma", "e_l2_devict_dma",
+
+  "e_wdma_ic_cnt", "e_rdma_ic_cnt", "e_wdma_ic", "e_rdma_ic", "e_dma_ic",
+  "e_wdma_dfetch_cnt", "e_rdma_dfetch_cnt", "e_wdma_dfetch", "e_rdma_dfetch", "e_dma_dfetch",
+  "e_wdma_devict_cnt", "e_wdma_devict",
+};
+
+const char* samples[] = {
+  "mcycle", "minstret"
+};
 
 // Globals
 std::queue<int> getchar_queue;
 std::bitset<BP_NCPUS> done_vec;
+bool run = true;
+
+inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr) {
+  uint64_t val;
+  do {
+    uint64_t val_hi = zpl->axil_read(addr + 4);
+    uint64_t val_lo = zpl->axil_read(addr + 0);
+    uint64_t val_hi2 = zpl->axil_read(addr + 4);
+    if (val_hi == val_hi2) {
+      val = val_hi << 32;
+      val += val_lo;
+      return val;
+    } else
+      bsg_pr_err("ps.cpp: timer wrapover!\n");
+  } while (1);
+}
 
 void *monitor(void *vargp) {
   char c;
-  while(1) {
+  while(run) {
     c = getchar();
     if(c != -1)
       getchar_queue.push(c);
@@ -75,24 +131,61 @@ void *device_poll(void *vargp) {
       break;
     }
   }
+  run = false;
   bsg_pr_info("Exiting from pthread\n");
 
   return NULL;
 }
 
-inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr) {
-  uint64_t val;
-  do {
-    uint64_t val_hi = zpl->axil_read(addr + 4);
-    uint64_t val_lo = zpl->axil_read(addr + 0);
-    uint64_t val_hi2 = zpl->axil_read(addr + 4);
-    if (val_hi == val_hi2) {
-      val = val_hi << 32;
-      val += val_lo;
-      return val;
-    } else
-      bsg_pr_err("ps.cpp: timer wrapover!\n");
-  } while (1);
+struct sampleArgs {
+    bsg_zynq_pl* zpl;
+    char* nbf_filename;
+};
+
+void *sample(void *vargp) {
+  bsg_zynq_pl *zpl = ((struct sampleArgs*)vargp)->zpl;
+  char* nbf_filename = ((struct sampleArgs*)vargp)->nbf_filename;;
+
+  char filename[100];
+  if(strrchr(nbf_filename, '/') != NULL)
+    strcpy(filename, 1 + strrchr(nbf_filename, '/'));
+  else
+    strcpy(filename, nbf_filename);
+  *strrchr(filename, '.') = '\0';
+  strcat(filename, ".sample");
+  ofstream file(filename, ios::binary);
+
+  int sampleIdx[sizeof(samples)/sizeof(samples[0])];
+  for(int i=0; i<sizeof(samples)/sizeof(samples[0]); i++) {
+    bool found = false;
+    for(int j=0; j<sizeof(metrics)/sizeof(metrics[0]); j++) {
+      if(!strcmp(samples[i], metrics[j])) {
+        sampleIdx[i] = j;
+        found = true;
+        break;
+      }
+    }
+    if(!found)
+      printf("Cannot find sample %s index!", samples[i]);
+  }
+
+  struct timespec tim;
+  tim.tv_sec = 0;
+  tim.tv_nsec = 100000000L;
+  if(file.is_open()) {
+    while(run) {
+      nanosleep(&tim, NULL);
+      for(int i=0; i<sizeof(samples)/sizeof(samples[0]); i++) {
+        unsigned long long sample = get_counter_64(zpl,GP0_RD_COUNTERS + 8*sampleIdx[i]);
+        file.write((char*)&sample, sizeof(sample));
+      }
+    }
+    file.close();
+  }
+  else printf("Cannot open sample file: %s\n", filename);
+
+  bsg_pr_info("Exiting from pthread\n");
+  return NULL;
 }
 
 #ifdef VERILATOR
@@ -112,13 +205,6 @@ extern "C" int cosim_main(char *argstr) {
 
   bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
-  long data;
-  long val1 = 0x1;
-  long val2 = 0x0;
-  long mask1 = 0xf;
-  long mask2 = 0xf;
-
-  pthread_t thread_id;
   long allocated_dram = DRAM_ALLOCATE_SIZE;
 
   int32_t val;
@@ -131,9 +217,9 @@ extern "C" int cosim_main(char *argstr) {
 
   bsg_pr_info("ps.cpp: attempting to write and read register 0x8\n");
 
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, 0xDEADBEEF, mask1);
+  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, 0xDEADBEEF, 0xf);
   assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == (0xDEADBEEF)));
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, val, mask1);
+  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, val, 0xf);
   assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == (val)));
 
   bsg_pr_info("ps.cpp: successfully wrote and read registers in bsg_zynq_shell "
@@ -141,6 +227,7 @@ extern "C" int cosim_main(char *argstr) {
 
   bsg_tag_bitbang *btb = new bsg_tag_bitbang(zpl, GP0_WR_CSR_TAG_BITBANG, TAG_NUM_CLIENTS, TAG_MAX_LEN);
   bsg_tag_client *pl_reset_client = new bsg_tag_client(TAG_CLIENT_PL_RESET_ID, TAG_CLIENT_PL_RESET_WIDTH);
+  bsg_tag_client *pl_cnten_client = new bsg_tag_client(TAG_CLIENT_PL_CNTEN_ID, TAG_CLIENT_PL_CNTEN_WIDTH);
   bsg_tag_client *wd_reset_client = new bsg_tag_client(TAG_CLIENT_WD_RESET_ID, TAG_CLIENT_WD_RESET_WIDTH);
 
   // Reset the bsg tag master
@@ -151,7 +238,9 @@ extern "C" int cosim_main(char *argstr) {
   btb->reset_client(wd_reset_client);
   // Set bsg client0 to 1 (assert BP reset)
   btb->set_client(pl_reset_client, 0x1);
-  // Set bsg client1 to 1 (assert WD reset)
+  // Set bsg client1 to 1 (assert BP counter en)
+  btb->set_client(pl_cnten_client, 0x1);
+  // Set bsg client2 to 1 (assert WD reset)
   btb->set_client(wd_reset_client, 0x1);
   // Set bsg client0 to 0 (deassert BP reset)
   btb->set_client(pl_reset_client, 0x0);
@@ -164,30 +253,31 @@ extern "C" int cosim_main(char *argstr) {
 #ifdef FPGA
   unsigned long phys_ptr;
   volatile int32_t *buf;
-  data = zpl->axil_read(GP0_RD_CSR_DRAM_INITED);
-  if (data == 0) {
+  if (zpl->axil_read(GP0_RD_CSR_DRAM_INITED) == 0) {
     bsg_pr_info(
         "ps.cpp: CSRs do not contain a DRAM base pointer; calling allocate "
         "dram with size %ld\n",
         allocated_dram);
     buf = (volatile int32_t *)zpl->allocate_dram(allocated_dram, &phys_ptr);
     bsg_pr_info("ps.cpp: received %p (phys = %lx)\n", buf, phys_ptr);
-    zpl->axil_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, mask1);
+    zpl->axil_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, 0xf);
     assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == (phys_ptr)));
     bsg_pr_info("ps.cpp: wrote and verified base register\n");
-    zpl->axil_write(GP0_WR_CSR_DRAM_INITED, 0x1, mask2);
+    zpl->axil_write(GP0_WR_CSR_DRAM_INITED, 0x1, 0xf);
     assert(zpl->axil_read(GP0_RD_CSR_DRAM_INITED) == 1);
   } else
     bsg_pr_info("ps.cpp: reusing dram base pointer %x\n",
                 zpl->axil_read(GP0_RD_CSR_DRAM_BASE));
 
   int outer = 1024 / 4;
+  long num_times = allocated_dram / 32768;
 #else
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, val1, mask1);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == (val1)));
+  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, 0x0, 0xf);
+  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == 0x0));
   bsg_pr_info("ps.cpp: wrote and verified base register\n");
 
-  int outer = 8 / 4;
+  int outer = 64 / 4;
+  long num_times = 64;
 #endif
 
   if (argc == 1) {
@@ -217,24 +307,23 @@ extern "C" int cosim_main(char *argstr) {
   int y = zpl->axil_read(GP1_CSR_BASE_ADDR + 0x304000);
 
   bsg_pr_info("ps.cpp: writing mtimecmp\n");
-  zpl->axil_write(GP1_CSR_BASE_ADDR + 0x304000, y + 1, mask1);
+  zpl->axil_write(GP1_CSR_BASE_ADDR + 0x304000, y + 1, 0xf);
 
   bsg_pr_info("ps.cpp: reading mtimecmp\n");
   assert(zpl->axil_read(GP1_CSR_BASE_ADDR + 0x304000) == y + 1);
 
 #ifdef DRAM_TEST
 
-  long num_times = allocated_dram / 32768;
   bsg_pr_info(
       "ps.cpp: attempting to write L2 %ld times over %ld MB (testing ARM GP1 "
       "and HP0 connections)\n",
       num_times * outer, (allocated_dram) >> 20);
-  zpl->axil_write(GP1_DRAM_BASE_ADDR, 0x12345678, mask1);
+  zpl->axil_write(GP1_DRAM_BASE_ADDR, 0x12345678, 0xf);
 
   for (int s = 0; s < outer; s++)
     for (int t = 0; t < num_times; t++) {
       zpl->axil_write(GP1_DRAM_BASE_ADDR + 32768 * t + s * 4, 0x1ADACACA + t + s,
-                      mask1);
+                      0xf);
     }
   bsg_pr_info("ps.cpp: finished write L2 %ld times over %ld MB\n",
               num_times * outer, (allocated_dram) >> 20);
@@ -281,11 +370,15 @@ extern "C" int cosim_main(char *argstr) {
     bsg_pr_info("ps.cpp: Zero-ing DRAM (%d bytes)\n", DRAM_ALLOCATE_SIZE);
     for (int i = 0; i < DRAM_ALLOCATE_SIZE; i+=4) {
       if (i % (1024*1024) == 0) bsg_pr_info("ps.cpp: zero-d %d MB\n", i/(1024*1024));
-      zpl->axil_write(gp1_addr_base + i, 0x0, mask1);
+      zpl->axil_write(gp1_addr_base + i, 0x0, 0xf);
     }
   }
 #endif
 
+  bsg_pr_info("ps.cpp: clearing pl to ps fifo\n");
+  while(zpl->axil_read(GP0_RD_PL2PS_FIFO_CTRS) != 0) {
+    zpl->axil_read(GP0_RD_PL2PS_FIFO_DATA);
+  }
 
   bsg_pr_info("ps.cpp: beginning nbf load\n");
   nbf_load(zpl, argv[1]);
@@ -295,22 +388,32 @@ extern "C" int cosim_main(char *argstr) {
   unsigned long long mtime_start = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
   bsg_pr_dbg_ps("ps.cpp: finished nbf load\n");
 
-  // Set bsg client1 to 0 (deassert WD reset)
+  // Set bsg client2 to 0 (deassert WD reset)
   btb->set_client(wd_reset_client, 0x0);
   bsg_pr_info("ps.cpp: starting watchdog\n");
   // We need some additional toggles for data to propagate through
   btb->idle(50);
 
+  pthread_t monitor_id, sample_id, poll_id;
+
   bsg_pr_info("ps.cpp: Starting scan thread\n");
-  pthread_create(&thread_id, NULL, monitor, NULL);
+  //pthread_create(&monitor_id, NULL, monitor, NULL);
+
+  bsg_pr_info("ps.cpp: Starting sample thread\n");
+  struct sampleArgs* args = (struct sampleArgs*)malloc(sizeof(struct sampleArgs));
+  args->zpl = zpl;
+  args->nbf_filename = argv[1];
+  //pthread_create(&sample_id, NULL, sample, (void *)args);
 
   bsg_pr_info("ps.cpp: Starting i/o polling thread\n");
-  pthread_create(&thread_id, NULL, device_poll, (void *)zpl);
+  pthread_create(&poll_id, NULL, device_poll, (void *)zpl);
 
   bsg_pr_info("ps.cpp: waiting for i/o packet\n");
-  pthread_join(thread_id, NULL);
+  pthread_join(poll_id, NULL);
 
-  // Set bsg client1 to 1 (assert WD reset)
+  // Set bsg client1 to 0 (deassert BP counter en)
+  btb->set_client(pl_cnten_client, 0x0);
+  // Set bsg client2 to 1 (assert WD reset)
   btb->set_client(wd_reset_client, 0x1);
   bsg_pr_info("ps.cpp: stopping watchdog\n");
   // We need some additional toggles for data to propagate through
@@ -349,7 +452,7 @@ extern "C" int cosim_main(char *argstr) {
   bsg_pr_info("ps.cpp: wall clock time                : %'16llu (%16llx) ns\n",
               diff_ns, diff_ns);
   bsg_pr_info(
-      "ps.cpp: sim/emul speed                 : %'16.2f BP cycles per minute\n",
+      "ps.cpp: sim/emul speed                         : %'16.2f BP cycles per minute\n",
       mtime_delta * 8 /
           ((double)(diff_ns) / (60.0 * 1000.0 * 1000.0 * 1000.0)));
 
@@ -359,6 +462,9 @@ extern "C" int cosim_main(char *argstr) {
               zpl->axil_read(GP0_RD_MEM_PROF_2),
               zpl->axil_read(GP0_RD_MEM_PROF_1),
               zpl->axil_read(GP0_RD_MEM_PROF_0));
+
+  report(zpl, argv[1]);
+
 #ifdef FPGA
   // in general we do not want to free the dram; the Xilinx allocator has a
   // tendency to
@@ -370,7 +476,7 @@ extern "C" int cosim_main(char *argstr) {
   if (FREE_DRAM) {
     bsg_pr_info("ps.cpp: freeing DRAM buffer\n");
     zpl->free_dram((void *)buf);
-    zpl->axil_write(GP0_WR_CSR_DRAM_INITED, 0x0, mask2);
+    zpl->axil_write(GP0_WR_CSR_DRAM_INITED, 0x0, 0xf);
   }
 #endif
 
@@ -401,7 +507,7 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
     return;
   }
 
-  int line_count = 0;
+  int line_count=0;
   while (getline(nbf_file, nbf_command)) {
     line_count++;
     int i = 0;
@@ -434,16 +540,16 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
       }
       else if (nbf[0] == 0x1) {
         int offset = nbf[1] % 4;
-        int shift = 2 * offset;
+        int shift = 8 * offset;
         data = zpl->axil_read(base_addr + nbf[1] - offset);
-        data = data & rotl((uint32_t)0xffff0000,shift) + nbf[2] & ((uint32_t)0x0000ffff << shift);
+        data = data & rotl((uint32_t)0xffff0000,shift) + ((nbf[2] & ((uint32_t)0x0000ffff)) << shift);
         zpl->axil_write(base_addr + nbf[1] - offset, data, 0xf);
       }
       else {
         int offset = nbf[1] % 4;
-        int shift = 2 * offset;
+        int shift = 8 * offset;
         data = zpl->axil_read(base_addr + nbf[1] - offset);
-        data = data & rotl((uint32_t)0xffffff00,shift) + nbf[2] & ((uint32_t)0x000000ff << shift);
+        data = data & rotl((uint32_t)0xffffff00,shift) + ((nbf[2] & ((uint32_t)0x000000ff)) << shift);
         zpl->axil_write(base_addr + nbf[1] - offset, data, 0xf);
       }
     }
@@ -472,6 +578,8 @@ bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
     if (address == 0x101000) {
       printf("%c", print_data);
       fflush(stdout);
+    } else if (address == 0x101004) {
+      return false;
     } else if (address >= 0x102000 && address < 0x103000) {
       done_vec[core] = true;
       if (print_data == 0) {
@@ -513,6 +621,7 @@ bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
     // if not implemented, print error
     else {
       bsg_pr_err("ps.cpp: Errant read from (%lx)\n", address);
+      sleep(60);
       return false;
     }
   }
@@ -520,3 +629,24 @@ bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
   return true;
 }
 
+void report(bsg_zynq_pl *zpl, char* nbf_filename) {
+
+  char filename[100];
+  if(strrchr(nbf_filename, '/') != NULL)
+    strcpy(filename, 1 + strrchr(nbf_filename, '/'));
+  else
+    strcpy(filename, nbf_filename);
+  *strrchr(filename, '.') = '\0';
+  strcat(filename, ".rep");
+  ofstream file(filename);
+
+  if(file.is_open()) {
+    file << nbf_filename << endl;
+    for(int i=0; i<sizeof(metrics)/sizeof(metrics[0]); i++) {
+      file << metrics[i] << "\t";
+      file << get_counter_64(zpl, GP0_RD_COUNTERS + i*8) << "\n";
+    }
+    file.close();
+  }
+  else printf("Cannot open report file: %s\n", filename);
+}

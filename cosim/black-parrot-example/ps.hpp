@@ -9,13 +9,13 @@
 #define GP0_RD_PL2PS_FIFO_DATA   (GP0_RD_CSR_DRAM_BASE     + 0x4)
 #define GP0_RD_PL2PS_FIFO_CTRS   (GP0_RD_PL2PS_FIFO_DATA   + 0x4)
 #define GP0_RD_PS2PL_FIFO_CTRS   (GP0_RD_PL2PS_FIFO_CTRS   + 0x4)
-#define GP0_RD_MINSTRET          (GP0_RD_PS2PL_FIFO_CTRS   + 0x4)
-#define GP0_RD_MINSTRET_0        (GP0_RD_MINSTRET               )
-#define GP0_RD_MINSTRET_1        (GP0_RD_MINSTRET_0        + 0x4)
-#define GP0_RD_MEM_PROF_0        (GP0_RD_MINSTRET_1        + 0x4)
+#define GP0_RD_MEM_PROF_0        (GP0_RD_PS2PL_FIFO_CTRS   + 0x4)
 #define GP0_RD_MEM_PROF_1        (GP0_RD_MEM_PROF_0        + 0x4)
 #define GP0_RD_MEM_PROF_2        (GP0_RD_MEM_PROF_1        + 0x4)
 #define GP0_RD_MEM_PROF_3        (GP0_RD_MEM_PROF_2        + 0x4)
+#define GP0_RD_COUNTERS          (GP0_RD_MEM_PROF_3        + 0x4)
+#define GP0_RD_MCYCLE            (GP0_RD_COUNTERS)
+#define GP0_RD_MINSTRET          (GP0_RD_COUNTERS          + 0x8)
 
 // GP0 Write Memory Map
 #define GP0_WR_CSR_SYS_RESETN    GP0_RD_CSR_SYS_RESETN
@@ -35,7 +35,9 @@
 #define TAG_MAX_LEN 1
 #define TAG_CLIENT_PL_RESET_ID 0
 #define TAG_CLIENT_PL_RESET_WIDTH 1
-#define TAG_CLIENT_WD_RESET_ID 1
+#define TAG_CLIENT_PL_CNTEN_ID 1
+#define TAG_CLIENT_PL_CNTEN_WIDTH 1
+#define TAG_CLIENT_WD_RESET_ID 2
 #define TAG_CLIENT_WD_RESET_WIDTH 1
 
 #endif
