@@ -3,26 +3,50 @@ include ../Makefile.design
 #############################
 # Accelerator Software Settings
 #############################
+
 DROMAJO_COSIM ?= 0
-SKIP_DRAM ?= -DSKIP_DRAM_TESTING
+
 BP_NCPUS ?= 1
 
+# AXI to core clock downsampling factor
+CLK_DIV ?= 2
+
+# Sampling gate enable and interval
+SAMPLE_GATE_EN ?= 1
+SAMPLE_INTRVL ?= 1
+
+# DRAM constant delay enable and latency
+DRAM_GATE_EN ?= 1
+DRAM_LATENCY ?= 80
+
+#CFLAGS += -DDRAM_TEST
 #CFLAGS += -DZYNQ_PL_DEBUG
 CFLAGS += -DZYNQ_PS_DEBUG
-CFLAGS += -I$(BP_TOOLS_DIR)/dromajo/include
 CFLAGS += -DBP_NCPUS=$(BP_NCPUS)
-CFLAGS += $(SKIP_DRAM)
+CFLAGS += -DSAMPLE_GATE_EN=$(SAMPLE_GATE_EN)
+CFLAGS += -DSAMPLE_INTRVL=$(SAMPLE_INTRVL)
+CFLAGS += -DDRAM_GATE_EN=$(DRAM_GATE_EN)
+CFLAGS += -DDRAM_LATENCY=$(DRAM_LATENCY)
+ifeq ($(DROMAJO_COSIM),1)
+CFLAGS += -I$(BP_TOOLS_DIR)/dromajo/include
+endif
 
+DEFINES += CLK_DIV=$(CLK_DIV)
 DEFINES += GP0_ENABLE
-DEFINES += GP0_ADDR_BASE=0x40000000U GP0_ADDR_WIDTH=10 GP0_DATA_WIDTH=32
+DEFINES += GP0_ADDR_BASE=0x400000000U GP0_ADDR_WIDTH=10 GP0_DATA_WIDTH=32
 DEFINES += GP0_HIER_BASE=bsg_nonsynth_zynq_testbench.axil0
 DEFINES += GP1_ENABLE
-DEFINES += GP1_ADDR_BASE=0x80000000U GP1_ADDR_WIDTH=30 GP1_DATA_WIDTH=32
+DEFINES += GP1_ADDR_BASE=0x500000000U GP1_ADDR_WIDTH=30 GP1_DATA_WIDTH=32
 DEFINES += GP1_HIER_BASE=bsg_nonsynth_zynq_testbench.axil1
 DEFINES += GP2_ENABLE
-DEFINES += GP2_ADDR_BASE=0x80000000U GP2_ADDR_WIDTH=28 GP2_DATA_WIDTH=32
+DEFINES += GP2_ADDR_BASE=0x800000000U GP2_ADDR_WIDTH=28 GP2_DATA_WIDTH=32
 DEFINES += GP2_HIER_BASE=bsg_nonsynth_zynq_testbench.axil2
+# watchdog cannot function if clock gating is enabled
+ifndef SAMPLE_GATE_EN
+ifndef DRAM_GATE_EN
 DEFINES += WATCHDOG_ENABLE
+endif
+endif
 DEFINES += HP0_ENABLE
 DEFINES += HP0_ADDR_BASE=0x0000000U HP0_ADDR_WIDTH=32 HP0_DATA_WIDTH=64
 DEFINES += AXI_MEM_ENABLE
@@ -58,10 +82,11 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	echo "+incdir+$(COSIM_DIR)/include/vcs" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_clock_gen.sv" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_reset_gen.sv" >> $@
-	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_axi_mem.sv" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.sv" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.sv" >> $@
+	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_axi_mem.sv" >> $@
+	echo "$(BASEJUMP_STL_DIR)/bsg_misc/bsg_icg_pos.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axil.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_axil_to_dpi.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv" >> $@

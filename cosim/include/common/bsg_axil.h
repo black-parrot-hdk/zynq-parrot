@@ -17,7 +17,7 @@
 #include "bsg_printing.h"
 
 #ifndef ZYNQ_AXI_TIMEOUT
-#define ZYNQ_AXI_TIMEOUT 8000
+#define ZYNQ_AXI_TIMEOUT 50000
 #endif
 
 using namespace std;

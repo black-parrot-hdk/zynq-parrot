@@ -1,9 +1,9 @@
 
 ##### FX #####
-proc bsg_clint_constraints { clint_inst cdc_delay } {
+proc bsg_clint_constraints { top_inst clint_inst cdc_delay clk_div} {
   puts "constraining clint_inst: $clint_inst"
 
-  create_generated_clock -name ${clint_inst}_ds_by_16_clk -source [get_pins $clint_inst/ds/aclk] -divide_by 16 [get_pins $clint_inst/ds/clk_r_o_reg/Q]
+  create_generated_clock -name ${clint_inst}_ds_by_16_clk -source [get_pins $top_inst/aclk] -divide_by [expr $clk_div * 16] [get_pins $clint_inst/ds/clk_r_o_reg/Q]
 
   # In BP, there is a 4-1 clock multiplexer that selects between 3 clocks and 1'b0 as the mtime clock.
   # (The 4-1 clock mux)
@@ -62,7 +62,7 @@ proc bsg_bss_constraints { bss_inst cdc_delay } {
 }
 
 ##### MAIN #####
-
+set top_inst [get_cells -hier top_fpga_inst]
 set bp_inst [get_cells -hier blackparrot]
 
 set clock_pins [get_pins -of_object $bp_inst -filter {name=~"*clk*"}]
@@ -79,6 +79,10 @@ foreach bss $all_bss {
   bsg_bss_constraints $bss $global_min_period
 }
 
+set clk_div $::env(CLK_DIV)
+create_generated_clock -name ds_clk -source [get_pins $top_inst/aclk] -divide_by $clk_div [get_nets $top_inst/ds_clk]
+create_generated_clock -name bp_clk -source [get_pins $top_inst/aclk] -divide_by $clk_div [get_nets $top_inst/bp_clk]
+
 set all_blss [get_cells -quiet -hier -filter {(ORIG_REF_NAME == bsg_launch_sync_sync || REF_NAME == bsg_launch_sync_sync)}]
 foreach blss $all_blss {
   bsg_blss_constraints $blss $global_min_period
@@ -86,6 +90,6 @@ foreach blss $all_blss {
 
 set all_clint [get_cells -quiet -hier -filter {(ORIG_REF_NAME == bp_me_clint_slice || REF_NAME == bp_me_clint_slice)}]
 foreach clint $all_clint {
-  bsg_clint_constraints $clint $global_min_period
+  bsg_clint_constraints $top_inst $clint $global_min_period $clk_div
 }
 

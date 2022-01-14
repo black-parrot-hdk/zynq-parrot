@@ -17,6 +17,7 @@ package zynq_pkg;
 
   typedef struct packed
   {
+    bsg_tag_s counter_en;
     bsg_tag_s core_reset;
   }  zynq_pl_tag_lines_s;
   localparam tag_pl_local_els_gp = $bits(zynq_pl_tag_lines_s)/$bits(bsg_tag_s);

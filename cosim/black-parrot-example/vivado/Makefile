@@ -3,6 +3,11 @@ include ../Makefile.design
 #############################
 # Modify base flist
 #############################
+export CLK_FREQ ?= 160
+export CLK_DIV  ?= 4
+
+export VDEFINES ?= CLK_DIV=$(CLK_DIV)
+
 BASE_FLIST ?= $(abspath ../flist.vcs)
 WD_FLIST   ?= $(abspath flist.watchdog.vcs)
 TOP_FLIST  ?= $(abspath flist.blackparrot.vcs)
@@ -33,7 +38,8 @@ $(WD_FLIST):
 	sed -i "s#.*bsg_mem_1rw_sync_mask_write_bit.sv#$(BASEJUMP_STL_DIR)/hard/ultrascale_plus/bsg_mem/bsg_mem_1rw_sync_mask_write_bit.sv#g" $@
 
 $(TOP_FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs $(BASE_FLIST)
-	cat $^ | envsubst > $@
+	echo "+define+CLK_DIV=$(CLK_DIV)" > $@
+	cat $^ | envsubst >> $@
 	sed -i "s/BASEJUMP_STL_DIR/BP_BASEJUMP_STL_DIR/g" $@
 	sed -i "/bp_common_pkg.sv/d" $@
 	sed -i "1i $(CURR_VSRC_DIR)/bp_common_pkg.sv" $@
