@@ -8,9 +8,11 @@ VV_OPTS += -Wno-fatal -Wall -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTE
 VV_OPTS += -f flist.vcs
 VV_OPTS += -top-module $(TOP_MODULE)
 VV_OPTS += +incdir+$(COSIM_DIR)/include/verilator
+VV_OPTS += $(VV_DEFS)
 
 CFLAGS += -DVERILATOR
 CFLAGS += -std=c++14
+CFLAGS += -lpthread
 
 LDFLAGS += -lpthread
 

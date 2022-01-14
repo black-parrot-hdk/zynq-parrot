@@ -34,7 +34,7 @@ public:
   void set(const unsigned int val) {
     unsigned int bval = 0;
     for (int i = 0; i < W; i++) {
-      bval = (val & (1 << i)) >> i;
+      bval = ((unsigned long int)val & (1 << i)) >> i;
       gpio->set(i, bval);
     }
   }
@@ -45,7 +45,7 @@ public:
 
   int get() const {
     unsigned int N = 0;
-    for (int i = 0; i < W; i++) {
+    for (int i = 0; i < min(W, (unsigned int)(8*sizeof(unsigned int))); i++) {
       N |= gpio->get(i) << i;
     }
 

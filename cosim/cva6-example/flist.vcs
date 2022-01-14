@@ -1,0 +1,8 @@
+
+$COSIM_SRC_DIR/bsg_zynq_pl_shell.v
+$CURR_SRC_DIR/ariane_commit_profiler.sv
+$CURR_SRC_DIR/axi_lite_to_dma.sv
+$CURR_SRC_DIR/ariane_top.sv
+$CURR_SRC_DIR/top_zynq.sv
+$CURR_SRC_DIR/top.v
+

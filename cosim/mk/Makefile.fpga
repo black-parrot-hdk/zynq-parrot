@@ -8,9 +8,9 @@ MODE ?= tcl
 XILINX_ENV=source /gro/cad/Xilinx/Vivado/2019.1/settings64.sh
 
 CFLAGS += -O2
-CFLAGS += -lcma -lpthread
 CFLAGS += $(SIM_DEFINES)
 CFLAGS += -std=c++14
+LFLAGS += -lcma -lpthread
 
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/fpga
@@ -19,12 +19,12 @@ all:
 	@echo "Rules for FPGA; see $(TOP)/cosim/mk/Makefile.fpga for more:"
 	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.fpga
 
-EXE ?= runme
+EXE ?= control-program
 run: $(EXE)
 	sudo ./$< $(SIM_ARGS)
 
 $(EXE): $(HOST_PROGRAM)
-	$(GCC) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $(CSOURCES) $< $(CFLAGS) $(LDFLAGS) -o $@
+	$(GCC) $(CFLAGS) $(CINCLUDES) $(CSOURCES) $< $(LFLAGS) -o $@
 
 fpga_report_build_block:
 	-@grep --color "CRITICAL WARNING" vivado.log

@@ -10,3 +10,6 @@
 [submodule "cosim/import/black-parrot-subsystems"]
 	path = cosim/import/black-parrot-subsystems
 	url = https://github.com/black-parrot-hdk/black-parrot-subsystems
+[submodule "cosim/import/cva6"]
+	path = cosim/import/cva6
+	url = git@github.com:farzamgl/cva6.git

@@ -46,4 +46,4 @@ update_ip_catalog
 
 puts "Type start_gui to enter Vivado GUI; quit to exit"
 
-
+exit

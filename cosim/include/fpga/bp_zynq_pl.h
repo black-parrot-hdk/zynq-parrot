@@ -2,7 +2,7 @@
 // that runs on the real Zynq chip.
 //
 
-#ifndef __arm__
+#if !defined(__arm__) && !defined(__aarch64__)
 #error this file intended only to be compiled on an ARM (Zynq) platform
 #endif
 
@@ -82,6 +82,10 @@ void _xlnk_reset();
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <cstdint>
+#include "bsg_argparse.h"
+#include "bsg_printing.h"
+
 using namespace std;
 
 class bp_zynq_pl {
@@ -97,8 +101,8 @@ public:
     int fd = open("/dev/mem", O_RDWR | O_SYNC);
     assert(fd != 0);
 
-    int *addr0 = (int *)GP0_ADDR_BASE; // e.g. 0x43c00000;
-    int *addr1 = (int *)GP1_ADDR_BASE; // e.g. 0x83c00000;
+    uint64_t* addr0 = (uint64_t*)GP0_ADDR_BASE; // e.g. 0x43c00000;
+    uint64_t* addr1 = (uint64_t*)GP1_ADDR_BASE; // e.g. 0x83c00000;
 
 
 #ifdef GP0_ENABLE
@@ -106,8 +110,8 @@ public:
 
     volatile int *ptr0 =
         (int *)mmap(addr0, GP0_ADDR_SIZE_BYTES, PROT_READ | PROT_WRITE,
-                    MAP_SHARED, fd, (int)addr0);
-    assert(ptr0 == addr0);
+                    MAP_SHARED, fd, (intptr_t)addr0);
+    assert(ptr0 == (int*)addr0);
 
     // assert(ptr0 != ((void *) -1));
     // if (ptr0 != addr0)
@@ -120,8 +124,8 @@ public:
     // map in second PLAXI region of physical addresses to virtual addresses
     volatile int *ptr1 =
         (int *)mmap(addr1, GP1_ADDR_SIZE_BYTES, PROT_READ | PROT_WRITE,
-                    MAP_SHARED, fd, (int)addr1);
-    assert(ptr1 == addr1);
+                    MAP_SHARED, fd, (intptr_t)addr1);
+    assert(ptr1 == (int*)addr1);
 
     // assert(ptr1 != ((void *) -1));
     // if (ptr1 != addr1)
@@ -164,9 +168,9 @@ public:
 
   bool done(void) { printf("bp_zynq_pl: done() called, exiting\n"); }
 
-  inline void axil_write(unsigned int address, int data, int wstrb=0xF) {
+  inline void axil_write(uint64_t address, uint32_t data, int wstrb=0xF) {
     if (BP_ZYNQ_PL_DEBUG)
-      printf("  bp_zynq_pl: AXI writing [%x]=%8.8x mask %x\n", address, data,
+      printf("  bp_zynq_pl: AXI writing [%lx]=%8.8x mask %x\n", address, data,
              wstrb);
 
     // assert(address >= ADDR_BASE && (address - ADDR_BASE < ADDR_SIZE_BYTES));
@@ -174,25 +178,25 @@ public:
 
     // for now we don't support alternate write strobes
     assert(wstrb == 0XF);
-    volatile int *ptr;
+    volatile uint32_t* ptr;
     if (address >= GP1_ADDR_BASE)
-      ptr = (int *)address + gp1_base_offset;
+      ptr = (uint32_t*)address + gp1_base_offset;
     else
-      ptr = (int *)address + gp0_base_offset;
+      ptr = (uint32_t*)address + gp0_base_offset;
     ptr[0] = data;
   }
 
-  inline int axil_read(unsigned int address) {
-    volatile int *ptr;
+  inline uint32_t axil_read(uint64_t address) {
+    volatile uint32_t* ptr;
     if (address >= GP1_ADDR_BASE)
-      ptr = (int *)address + gp1_base_offset;
+      ptr = (uint32_t*)address + gp1_base_offset;
     else
-      ptr = (int *)address + gp0_base_offset;
+      ptr = (uint32_t*)address + gp0_base_offset;
 
-    int data = ptr[0];
+    uint32_t data = ptr[0];
 
     if (BP_ZYNQ_PL_DEBUG)
-      printf("  bp_zynq_pl: AXI reading [%x]->%8.8x\n", address, data);
+      printf("  bp_zynq_pl: AXI reading [%lx]->%8.8x\n", address, data);
 
     return data;
   }

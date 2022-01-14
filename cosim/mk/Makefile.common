@@ -18,6 +18,8 @@ export COSIM_SRC_DIR         ?= $(COSIM_DIR)/v
 export COSIM_PY_DIR          ?= $(COSIM_DIR)/py
 export COSIM_TCL_DIR         ?= $(COSIM_DIR)/tcl
 
+export CVA6_DIR              ?= $(COSIM_DIR)/import/cva6
+
 export CURR_SRC_DIR          ?= $(CURR)/../v
 
 # Set up cad tools if using a non-bsg_cadenv environment

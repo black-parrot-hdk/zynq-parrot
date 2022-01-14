@@ -91,8 +91,8 @@ public:
 
   ~bp_zynq_pl(void) {}
 
-  void axil_write(unsigned int address, int data, int wstrb=0xF) {
-    int address_orig = address;
+  void axil_write(uint64_t address, uint32_t data, int wstrb=0xF) {
+    unsigned int offset;
     int index;
 
     // we subtract the bases to make it consistent with the Zynq AXI IPI
@@ -101,29 +101,29 @@ public:
     if (address >= GP0_ADDR_BASE &&
         address <= GP0_ADDR_BASE + GP0_ADDR_SIZE_BYTES) {
       index = 0;
-      address = address - GP0_ADDR_BASE;
+      offset = (unsigned int)(address - GP0_ADDR_BASE);
     } else if (address >= GP1_ADDR_BASE &&
                address <= GP1_ADDR_BASE + GP1_ADDR_SIZE_BYTES) {
       index = 1;
-      address = address - GP1_ADDR_BASE;
+      offset = (unsigned int)(address - GP1_ADDR_BASE);
     } else {
       bsg_pr_err("  bp_zynq_pl: unsupported AXIL port %d\n", index);
     }
 
-    bsg_pr_dbg_pl("  bp_zynq_pl: AXI writing [%x] -> port %d, [%x]<-%8.8x\n",
-                  address_orig, index, address, data);
+    bsg_pr_dbg_pl("  bp_zynq_pl: AXI writing [%lx] -> port %d, [%x]<-%8.8x\n",
+                  address, index, offset, data);
 
     if (index == 0) {
-      axi_gp0->axil_write_helper(address, data, wstrb, tick);
+      axi_gp0->axil_write_helper(offset, (int)data, wstrb, tick);
     } else if (index == 1) {
-      axi_gp1->axil_write_helper(address, data, wstrb, tick);
+      axi_gp1->axil_write_helper(offset, (int)data, wstrb, tick);
     }
   }
 
-  int axil_read(unsigned int address) {
-    int address_orig = address;
+  uint32_t axil_read(uint64_t address) {
+    unsigned int offset;
     int index = 0;
-    int data;
+    uint32_t data;
 
     // we subtract the bases to make it consistent with the Zynq AXI IPI
     // implementation
@@ -131,23 +131,23 @@ public:
     if (address >= GP0_ADDR_BASE &&
         address <= GP0_ADDR_BASE + GP0_ADDR_SIZE_BYTES) {
       index = 0;
-      address = address - GP0_ADDR_BASE;
+      offset = address - GP0_ADDR_BASE;
     } else if (address >= GP1_ADDR_BASE &&
                address <= GP1_ADDR_BASE + GP1_ADDR_SIZE_BYTES) {
       index = 1;
-      address = address - GP1_ADDR_BASE;
+      offset = address - GP1_ADDR_BASE;
     } else {
       bsg_pr_err("  bp_zynq: unsupported AXIL port %d\n", index);
     }
 
     if (index == 0) {
-      data = axi_gp0->axil_read_helper(address, tick);
+      data = (uint32_t)axi_gp0->axil_read_helper(offset, tick);
     } else if (index == 1) {
-      data = axi_gp1->axil_read_helper(address, tick);
+      data = (uint32_t)axi_gp1->axil_read_helper(offset, tick);
     }
 
-    bsg_pr_dbg_pl("  bp_zynq_pl: AXI reading [%x] -> port %d, [%x]->%8.8x\n",
-                  address_orig, index, address, data);
+    bsg_pr_dbg_pl("  bp_zynq_pl: AXI reading [%lx] -> port %d, [%x]->%8.8x\n",
+                  address, index, offset, data);
 
     return data;
   }

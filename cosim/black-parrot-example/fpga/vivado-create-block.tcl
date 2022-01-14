@@ -68,7 +68,7 @@ assign_bd_address
 # and select "Address Segment Properties..." to see what name to use in these commands.
 
 set_property offset 0x40000000 [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg0}]
-set_property offset 0x80000000 [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg03}]
+set_property offset 0x80000000 [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg01}]
 set_property range 4K [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg0}]
 set_property range 1G [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg03}]
 
@@ -77,6 +77,7 @@ make_wrapper -files [get_files ${project_name}.srcs/sources_1/bd/blackparrot_bd_
 add_files -norecurse ${project_name}.srcs/sources_1/bd/blackparrot_bd_1/hdl/blackparrot_bd_1_wrapper.v
 delete_bd_objs [get_bd_nets reset_rtl_0_1] [get_bd_ports reset_rtl_0]
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins proc_sys_reset_0/ext_reset_in]
+set_property verilog_define $::env(SV_DEFINES) [current_fileset]
 save_bd_design
 
 # change this to a 0 to have it stop before synthesis and implementation

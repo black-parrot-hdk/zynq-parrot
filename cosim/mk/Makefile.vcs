@@ -14,6 +14,7 @@ VCS_OPTS += -top $(TOP_MODULE)
 VCS_OPTS += -debug_pp
 VCS_OPTS += +vcs+lic+wait
 VCS_OPTS += +incdir+$(COSIM_DIR)/include/vcs
+VCS_OPTS += $(VCS_DEFS)
 
 CFLAGS += -DVCS
 CFLAGS += -std=c++14

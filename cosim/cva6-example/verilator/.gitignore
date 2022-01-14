@@ -1,0 +1,7 @@
+flist.vcs
+obj_dir/
+build.log
+run.log
+trace.fst
+trace.fst.hier
+trace_hart_00.dasm
