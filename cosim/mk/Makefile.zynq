@@ -11,8 +11,9 @@ CFLAGS += -DZYNQ
 CFLAGS += -DHOST_$(call upper,$(HOST))
 CFLAGS += $(addprefix -D,$(DEFINES))
 CFLAGS += -O2
-CFLAGS += -lcma -lpthread
+CFLAGS += $(SIM_DEFINES)
 CFLAGS += -std=c++14
+LFLAGS += -lcma -lpthread
 
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/zynq
@@ -29,7 +30,7 @@ run: $(EXE) $(RUN_COLLATERAL)
 	sudo ./$< $(SIM_ARGS) | tee run.log
 
 $(EXE): $(HOST_PROGRAM) $(BUILD_COLLATERAL)
-	$(GCC) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $(CSOURCES) $< $(CFLAGS) $(LDFLAGS) -o $@
+	$(GCC) $(CFLAGS) $(CINCLUDES) $(CSOURCES) $< $(LFLAGS) -o $@
 
 reset_pl:
 	echo 'from pynq import PL; PL.reset();' | sudo -E $(PYTHON3)

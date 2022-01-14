@@ -2,6 +2,8 @@ set project_name $::env(BASENAME)_bd_proj
 set project_part $::env(PART)
 set project_bd   $::env(BASENAME)_bd_1
 set tcl_dir      $::env(CURR_TCL_DIR)
+set clk_freq     $::env(CLK_FREQ)
+set vdefines     $::env(VDEFINES)
 
 create_project -force ${project_name} [pwd] -part ${project_part}
 create_bd_design "${project_bd}"
@@ -12,7 +14,7 @@ update_ip_catalog
 
 startgroup
 create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.3 zynq_ultra_ps_e_0
-set_property -dict [list CONFIG.PSU__FPGA_PL0_ENABLE {1}  CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {50}] [get_bd_cells zynq_ultra_ps_e_0]
+set_property -dict [list CONFIG.PSU__FPGA_PL0_ENABLE {1}  CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ $clk_freq] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP0 {1} CONFIG.PSU__MAXIGP0__DATA_WIDTH {32}] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP1 {1} CONFIG.PSU__MAXIGP1__DATA_WIDTH {32}] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__USE__S_AXI_GP3 {1} CONFIG.PSU__SAXIGP3__DATA_WIDTH {64}] [get_bd_cells zynq_ultra_ps_e_0]
@@ -84,10 +86,10 @@ connect_bd_intf_net [get_bd_intf_pins watchdog_0/m_axil] [get_bd_intf_pins smart
 connect_bd_net [get_bd_pins top_0/tag_clk] [get_bd_pins watchdog_0/tag_clk]
 connect_bd_net [get_bd_pins top_0/tag_data] [get_bd_pins watchdog_0/tag_data]
 
-apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps_e_0/pl_clk0 (50 MHz)" }  [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk]
-apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps_e_0/pl_clk0 (50 MHz)" }  [get_bd_pins zynq_ultra_ps_e_0/maxihpm1_fpd_aclk]
-apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps_e_0/pl_clk0 (50 MHz)" }  [get_bd_pins zynq_ultra_ps_e_0/saxihp1_fpd_aclk]
-apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps_e_0/pl_clk0 (50 MHz)" }  [get_bd_pins proc_sys_reset_0/slowest_sync_clk]
+apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps_e_0/pl_clk0 (${clk_freq} MHz)" }  [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk]
+apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps_e_0/pl_clk0 (${clk_freq} MHz)" }  [get_bd_pins zynq_ultra_ps_e_0/maxihpm1_fpd_aclk]
+apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps_e_0/pl_clk0 (${clk_freq} MHz)" }  [get_bd_pins zynq_ultra_ps_e_0/saxihp1_fpd_aclk]
+apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps_e_0/pl_clk0 (${clk_freq} MHz)" }  [get_bd_pins proc_sys_reset_0/slowest_sync_clk]
 apply_bd_automation -rule xilinx.com:bd_rule:board -config {Manual_Source {Auto}}  [get_bd_pins proc_sys_reset_0/ext_reset_in]
 
 create_bd_addr_seg -range 0x00002000 -offset 0x10000000 [get_bd_addr_spaces top_0/m01_axi] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] SEG_axi_bram_ctrl_0_Mem0
@@ -101,13 +103,14 @@ validate_bd_design
 
 make_wrapper -files [get_files ${project_name}.srcs/sources_1/bd/${project_bd}/${project_bd}.bd] -top
 add_files -norecurse ${project_name}.srcs/sources_1/bd/${project_bd}/hdl/${project_bd}_wrapper.v
-
+set_property verilog_define ${vdefines} [current_fileset]
 save_bd_design
 
 # Change to 0 to have it stop before synthesis / implementation
 # so you can inspect the design with the GUI
 
 if {1} {
+  set_property STEPS.SYNTH_DESIGN.ARGS.GATED_CLOCK_CONVERSION auto [get_runs synth_1]
   launch_runs synth_1 -jobs 4
   wait_on_run synth_1
   open_run synth_1 -name synth_1
