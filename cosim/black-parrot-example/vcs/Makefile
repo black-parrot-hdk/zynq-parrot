@@ -3,28 +3,32 @@ include ../Makefile.design
 #############################
 # Accelerator Software Settings
 #############################
+
 DROMAJO_COSIM ?= 0
-SKIP_DRAM ?= -DSKIP_DRAM_TESTING
+
 BP_NCPUS ?= 1
 
-CFLAGS += -DZYNQ_PL_DEBUG
+#CFLAGS += -DDRAM_TEST
+#CFLAGS += -DZYNQ_PL_DEBUG
 CFLAGS += -DZYNQ_PS_DEBUG
-CFLAGS += -I$(BP_TOOLS_DIR)/dromajo/include
 CFLAGS += -DBP_NCPUS=$(BP_NCPUS)
-CFLAGS += $(SKIP_DRAM)
+ifeq ($(DROMAJO_COSIM),1)
+CFLAGS += -I$(BP_TOOLS_DIR)/dromajo/include
+endif
 
-DEFINES += GP0_ADDR_BASE=0x40000000U
+DEFINES += GP0_ADDR_BASE=0x400000000U
 DEFINES += GP0_HIER_BASE=bsg_nonsynth_zynq_testbench.axil0
-DEFINES += GP1_ADDR_BASE=0x80000000U
+DEFINES += GP1_ADDR_BASE=0x500000000U
 DEFINES += GP1_HIER_BASE=bsg_nonsynth_zynq_testbench.axil1
-DEFINES += GP2_ADDR_BASE=0x80000000U
+DEFINES += GP2_ADDR_BASE=0x800000000U
 DEFINES += GP2_HIER_BASE=bsg_nonsynth_zynq_testbench.axil2
-DEFINES += WATCHDOG_ENABLE
 DEFINES += HP0_ADDR_BASE=0x0000000U
 DEFINES += AXI_MEM_ENABLE
 DEFINES += HP1_ADDR_BASE=0x1000000U
 DEFINES += HP1_HIER_BASE=bsg_nonsynth_zynq_testbench.axil4
 DEFINES += SCRATCHPAD_ENABLE
+# watchdog cannot function if clock gating is enabled
+#DEFINES += WATCHDOG_ENABLE
 
 SIM_ARGS += +c_args=$(NBF_FILE)
 
@@ -53,10 +57,11 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	echo "+incdir+$(COSIM_DIR)/include/vcs" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_clock_gen.sv" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_reset_gen.sv" >> $@
-	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_axi_mem.sv" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.sv" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.sv" >> $@
+	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_axi_mem.sv" >> $@
+	echo "$(BASEJUMP_STL_DIR)/bsg_misc/bsg_icg_pos.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axil.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_axil_to_dpi.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv" >> $@

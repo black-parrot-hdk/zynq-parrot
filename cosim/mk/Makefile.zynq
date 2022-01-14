@@ -62,11 +62,10 @@ print_clocks:
 	echo 'from pynq import Clocks;  Clocks.fclk0_mhz = $*; print("PL Clock Set To:: ",Clocks.fclk0_mhz,"MHz"); ' | sudo -E $(PYTHON3)
 
 clean:
-	rm -rf $(BUILD_COLLATERAL)
+	rm -rf $(SIM_COLLATERAL)
 	rm -rf $(EXE)
 	rm -rf sds_trace_data.dat
 	rm -rf *.nbf
 	rm -rf *.elf
 	rm -rf $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.hwh $(BASENAME)_bd_1_bd.tcl
-	rm -rf $(BUILD_COLLATERAL) $(SIM_COLLATERAL)
 

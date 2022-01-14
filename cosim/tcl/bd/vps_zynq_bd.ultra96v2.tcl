@@ -13,16 +13,17 @@ proc post_propagate { cellpath otherInfo } {
 
 proc vivado_create_ip { args } {
     set aclk_freq_mhz  [lindex [lindex ${args} 0] 0]
-    set rtclk_freq_mhz [lindex [lindex ${args} 0] 1]
-    set gp0_enable     [lindex [lindex ${args} 0] 2]
-    set gp0_data_width [lindex [lindex ${args} 0] 3]
-    set gp0_addr_width [lindex [lindex ${args} 0] 4]
-    set gp1_enable     [lindex [lindex ${args} 0] 5]
-    set gp1_data_width [lindex [lindex ${args} 0] 6]
-    set gp1_addr_width [lindex [lindex ${args} 0] 7]
-    set hp0_enable     [lindex [lindex ${args} 0] 8]
-    set hp0_data_width [lindex [lindex ${args} 0] 9]
-    set hp0_addr_width [lindex [lindex ${args} 0] 10]
+    set dsclk_freq_mhz [lindex [lindex ${args} 0] 1]
+    set rtclk_freq_mhz [lindex [lindex ${args} 0] 2]
+    set gp0_enable     [lindex [lindex ${args} 0] 3]
+    set gp0_data_width [lindex [lindex ${args} 0] 4]
+    set gp0_addr_width [lindex [lindex ${args} 0] 5]
+    set gp1_enable     [lindex [lindex ${args} 0] 6]
+    set gp1_data_width [lindex [lindex ${args} 0] 7]
+    set gp1_addr_width [lindex [lindex ${args} 0] 8]
+    set hp0_enable     [lindex [lindex ${args} 0] 9]
+    set hp0_data_width [lindex [lindex ${args} 0] 10]
+    set hp0_addr_width [lindex [lindex ${args} 0] 11]
 
     create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e zynq_ultra_ps_e_0
     set_property -dict [list CONFIG.PSU__FPGA_PL0_ENABLE {1}] [get_bd_cells zynq_ultra_ps_e_0]
@@ -40,19 +41,26 @@ proc vivado_create_ip { args } {
     set_property CONFIG.NUM_SI {1} [get_bd_cells smartconnect_1]
     set_property CONFIG.NUM_SI {1} [get_bd_cells smartconnect_2]
 
+    set_property CONFIG.ADVANCED_PROPERTIES {__experimental_features__ {disable_low_area_mode 1}} [get_bd_cells smartconnect_0]
+    set_property CONFIG.ADVANCED_PROPERTIES {__experimental_features__ {disable_low_area_mode 1}} [get_bd_cells smartconnect_1]
+
     create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz clk_wiz_0
 
     set_property CONFIG.CLKOUT2_USED true [get_bd_cells clk_wiz_0]
+    set_property CONFIG.CLKOUT3_USED true [get_bd_cells clk_wiz_0]
     set_property CONFIG.USE_LOCKED false [get_bd_cells clk_wiz_0]
     set_property CONFIG.USE_RESET false [get_bd_cells clk_wiz_0]
     set_property CONFIG.CLKOUT1_REQUESTED_OUT_FREQ ${aclk_freq_mhz} [get_bd_cells clk_wiz_0]
-    set_property CONFIG.CLKOUT2_REQUESTED_OUT_FREQ ${rtclk_freq_mhz} [get_bd_cells clk_wiz_0]
+    set_property CONFIG.CLKOUT2_REQUESTED_OUT_FREQ ${dsclk_freq_mhz} [get_bd_cells clk_wiz_0]
+    set_property CONFIG.CLKOUT3_REQUESTED_OUT_FREQ ${rtclk_freq_mhz} [get_bd_cells clk_wiz_0]
 
     create_bd_port -dir O -type clk aclk
+    create_bd_port -dir O -type clk ds_clk
     create_bd_port -dir O -type clk rt_clk
     create_bd_port -dir O -type rst aresetn
     connect_bd_net [get_bd_port aclk] [get_bd_pins clk_wiz_0/clk_out1]
-    connect_bd_net [get_bd_port rt_clk] [get_bd_pins clk_wiz_0/clk_out2]
+    connect_bd_net [get_bd_port ds_clk] [get_bd_pins clk_wiz_0/clk_out2]
+    connect_bd_net [get_bd_port rt_clk] [get_bd_pins clk_wiz_0/clk_out3]
     connect_bd_net [get_bd_port aresetn] [get_bd_pins proc_sys_reset_0/peripheral_aresetn]
 
     make_bd_intf_pins_external -name "GP0_AXI" [get_bd_intf_pins smartconnect_0/M00_AXI]

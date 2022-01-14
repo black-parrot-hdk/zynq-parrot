@@ -24,9 +24,8 @@ module bsg_nonsynth_zynq_testbench;
   localparam C_M01_AXI_DATA_WIDTH = `HP1_DATA_WIDTH;
   localparam C_M01_AXI_ADDR_WIDTH = `HP1_ADDR_WIDTH;
 `endif
-`ifdef HP2_ENABLE
-  localparam C_M02_AXI_DATA_WIDTH = `HP2_DATA_WIDTH;
-  localparam C_M02_AXI_ADDR_WIDTH = `HP2_ADDR_WIDTH;
+`ifdef DMA_ENABLE
+  localparam C_DMA_AXIS_DATA_WIDTH = `DMA_DATA_WIDTH;
 `endif
 
   localparam aclk_period_lp = 50000;
@@ -36,23 +35,19 @@ module bsg_nonsynth_zynq_testbench;
    aclk_gen
     (.o(aclk));
 
-  logic core_clk;
-`ifdef ASYNC_ACLK_CORE_CLK
-  localparam aclk_period_lp = 40000;
-  bsg_nonsynth_clock_gen
-   #(.cycle_time_p(core_clk_period_lp))
-   core_clk_gen
-    (.o(core_clk));
-`elsif
-  assign core_clk = aclk;
-`endif
-
   logic areset;
   bsg_nonsynth_reset_gen
    #(.reset_cycles_lo_p(0), .reset_cycles_hi_p(10))
    reset_gen
     (.clk_i(aclk), .async_reset_o(areset));
   wire aresetn = ~areset;
+
+  localparam ds_clk_period_lp = 200000;
+  logic ds_clk;
+  bsg_nonsynth_clock_gen
+   #(.cycle_time_p(ds_clk_period_lp))
+   ds_clk_gen
+    (.o(ds_clk));
 
   localparam rt_clk_period_lp = 2500000;
   logic rt_clk;
@@ -359,47 +354,21 @@ module bsg_nonsynth_zynq_testbench;
      );
 `endif
 
-`ifdef HP2_ENABLE
-  logic [C_M02_AXI_ADDR_WIDTH-1:0] m02_axi_awaddr;
-  logic [2:0] m02_axi_awprot;
-  logic m02_axi_awvalid, m02_axi_awready;
-  logic [C_M02_AXI_DATA_WIDTH-1:0] m02_axi_wdata;
-  logic [(C_M02_AXI_DATA_WIDTH/8)-1:0] m02_axi_wstrb;
-  logic m02_axi_wvalid, m02_axi_wready;
-  logic [1:0] m02_axi_bresp;
-  logic m02_axi_bvalid, m02_axi_bready;
-  logic [C_M02_AXI_ADDR_WIDTH-1:0] m02_axi_araddr;
-  logic [2:0] m02_axi_arprot;
-  logic m02_axi_arvalid, m02_axi_arready;
-  logic [C_M02_AXI_DATA_WIDTH-1:0] m02_axi_rdata;
-  logic [1:0] m02_axi_rresp;
-  logic m02_axi_rvalid, m02_axi_rready;
-  bsg_nonsynth_axil_to_dpi
-   #(.addr_width_p(C_M02_AXI_ADDR_WIDTH), .data_width_p(C_M02_AXI_DATA_WIDTH))
+`ifdef DMA_ENABLE
+  logic dma_axis_tready, dma_axis_tvalid, dma_axis_tlast;
+  logic [C_DMA_AXIS_DATA_WIDTH-1:0] dma_axis_tdata;
+  logic [(C_DMA_AXIS_DATA_WIDTH/8)-1:0] dma_axis_tkeep;
+  bsg_nonsynth_axis_to_dpi
+   #(.data_width_p(C_DMA_AXIS_DATA_WIDTH))
    axil5
     (.aclk_i(aclk)
      ,.aresetn_i(aresetn)
 
-     ,.awaddr_i(m02_axi_awaddr)
-     ,.awprot_i(m02_axi_awprot)
-     ,.awvalid_i(m02_axi_awvalid)
-     ,.awready_o(m02_axi_awready)
-     ,.wdata_i(m02_axi_wdata)
-     ,.wstrb_i(m02_axi_wstrb)
-     ,.wvalid_i(m02_axi_wvalid)
-     ,.wready_o(m02_axi_wready)
-     ,.bresp_o(m02_axi_bresp)
-     ,.bvalid_o(m02_axi_bvalid)
-     ,.bready_i(m02_axi_bready)
-
-     ,.araddr_i(m02_axi_araddr)
-     ,.arprot_i(m02_axi_arprot)
-     ,.arvalid_i(m02_axi_arvalid)
-     ,.arready_o(m02_axi_arready)
-     ,.rdata_o(m02_axi_rdata)
-     ,.rresp_o(m02_axi_rresp)
-     ,.rvalid_o(m02_axi_rvalid)
-     ,.rready_i(m02_axi_rready)
+     ,.tready_o(dma_axis_tready)
+     ,.tvalid_i(dma_axis_tvalid)
+     ,.tdata_i(dma_axis_tdata)
+     ,.tkeep_i(dma_axis_tkeep)
+     ,.tlast_i(dma_axis_tlast)
      );
 `endif
 
@@ -424,9 +393,8 @@ module bsg_nonsynth_zynq_testbench;
      .C_M01_AXI_DATA_WIDTH(C_M01_AXI_DATA_WIDTH),
      .C_M01_AXI_ADDR_WIDTH(C_M01_AXI_ADDR_WIDTH),
 `endif
-`ifdef HP2_ENABLE
-     .C_M02_AXI_DATA_WIDTH(C_M02_AXI_DATA_WIDTH),
-     .C_M02_AXI_ADDR_WIDTH(C_M02_AXI_ADDR_WIDTH),
+`ifdef DMA_ENABLE
+     .C_DMA_AXIS_DATA_WIDTH(C_DMA_AXIS_DATA_WIDTH),
 `endif
      .__DUMMY(0)
      )

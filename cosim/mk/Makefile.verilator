@@ -43,15 +43,15 @@ obj_dir/V$(TB_MODULE): $(FLIST) $(BUILD_COLLATERAL)
 
 clean:
 	rm -rf flist*.vcs
-	rm -rf obj_dir/ *~ trace.fst
+	rm -rf obj_dir/ *~
 	rm -rf build.log
 	rm -rf run.log
-	rm -rf *.nbf
-	rm -rf *.elf
-	rm -rf *.trace
-	rm -rf *.riscv*
+	#rm -rf *.nbf
+	#rm -rf *.elf
+	#rm -rf *.trace
+	#rm -rf *.riscv*
 	rm -rf *.rv*o*
-	rm -rf *.dump*
+	#rm -rf *.dump*
 	rm -rf $(BUILD_COLLATERAL) $(SIM_COLLATERAL)
 
 view:

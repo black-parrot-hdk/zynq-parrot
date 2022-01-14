@@ -12,6 +12,13 @@
 #include <queue>
 #include <unistd.h>
 #include <bitset>
+#include <cstdint>
+#include <iostream>
+#include <iomanip>
+#include <unordered_set>
+#ifdef ZYNQ
+#include <pynq_api.h>
+#endif
 
 #include "ps.hpp"
 
@@ -28,7 +35,7 @@
 #endif
 
 #ifndef DRAM_ALLOCATE_SIZE_MB
-#define DRAM_ALLOCATE_SIZE_MB 128
+#define DRAM_ALLOCATE_SIZE_MB 241
 #endif
 #define DRAM_ALLOCATE_SIZE (DRAM_ALLOCATE_SIZE_MB * 1024 * 1024)
 
@@ -43,6 +50,11 @@
 // Helper functions
 void nbf_load(bsg_zynq_pl *zpl, char *filename);
 bool decode_bp_output(bsg_zynq_pl *zpl, long data);
+void report(bsg_zynq_pl *zpl, char *);
+
+const char* metrics[] = {
+  "cycle", "mcycle", "minstret",
+};
 
 // Globals
 std::queue<int> getchar_queue;
@@ -75,17 +87,227 @@ inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr) {
   } while (1);
 }
 
+#ifdef COV_EN
+#define COV_BUF_LEN 1024
+typedef uint64_t dma_t;
+
+struct covBits {
+  int N;
+  dma_t* arr;
+
+  covBits(int N): N(N) {
+    arr = new dma_t[N];
+  }
+
+  void set(int i, dma_t x) {
+    this->arr[i] = x;
+  }
+
+  bool operator==(const covBits& c) const {
+    if(this->N != c.N)
+      return false;
+
+    for(int i = 0; i < this->N; i++)
+      if(this->arr[i] != c.arr[i])
+        return false;
+    return true;
+  }
+
+  struct Hash
+  {
+    size_t operator()(const covBits& c) const {
+      size_t NHash = std::hash<int>()(c.N);
+      size_t arrHash = std::hash<dma_t*>()(c.arr) << 1;
+      return NHash ^ arrHash;
+    }
+  };
+};
+
+ostream& operator<<(ostream& os, const covBits& c) {
+    for(int i = 0; i < c.N; i++)
+      os << std::hex << c.arr[i] << std::dec;
+    return os;
+}
+
+
+struct covProcState {
+  bool is_header;
+  int id;
+  int len;
+  int els;
+  int els_cnt;
+  int len_cnt;
+  covBits* curr_cov;
+
+  covProcState() {
+    is_header = true;
+  }
+};
+
+covProcState covState;
+std::unordered_set<covBits, covBits::Hash> covs[COV_NUM];
+
+inline void cov_proc(dma_t* buffer, int size) {
+  dma_t* p = buffer;
+  int cnt = size;
+  while(true) {
+    if(covState.is_header) {
+      if(cnt == 0)
+        return;
+
+      //bsg_pr_info("ps.cpp: header = %x\n", *p);
+      covState.id = *p & 0xFF;
+      covState.els = (*p >> 8) & 0xFF;
+      covState.len = (*p >> 16) & 0xFF;
+      covState.is_header = false;
+      covState.els_cnt = 0;
+      covState.len_cnt = 0;
+      p++;
+      cnt--;
+    }
+    else {
+      while(covState.els_cnt < covState.els) {
+        while(covState.len_cnt < covState.len) {
+          //bsg_pr_info("ps.cpp: data = %x\n", *p);
+          if(cnt == 0)
+            return;
+
+          if(covState.len_cnt == 0)
+            covState.curr_cov = new covBits(covState.len);
+
+          covState.curr_cov->set(covState.len_cnt, *p);
+          covState.len_cnt++;
+          p++;
+          cnt--;
+        }
+        //cout << "ps.cpp: cov = " << *covState.curr_cov << endl;
+        covs[covState.id].insert(*covState.curr_cov);
+        covState.len_cnt = 0;
+        covState.els_cnt++;
+      }
+      covState.is_header = true;
+    }
+  }
+}
+
+#ifdef ZYNQ
+PYNQ_SHARED_MEMORY cov_buff;
+PYNQ_AXI_DMA dma;
+
+pthread_t cov_pid;
+bool cov_run = true;
+
+void* cov_poll(void *vargp) {
+  bsg_zynq_pl* zpl = (bsg_zynq_pl*) vargp;
+  int len;
+  while(cov_run) {
+
+    // initiate read transfer and wait for completion
+    PYNQ_readDMA(&dma, &cov_buff, 0, sizeof(dma_t) * COV_BUF_LEN);
+    PYNQ_waitForDMAComplete(&dma, AXI_DMA_READ, &len);
+
+    // process the packet
+    cov_proc((dma_t*)cov_buff.pointer, (len / sizeof(dma_t)));
+  }
+  return NULL;
+}
+
+void cov_start(bsg_zynq_pl *zpl) {
+  // allocate CMA buffer and open read DMA
+  bsg_pr_info("ps.cpp: allocating coverage CMA memory\n");
+  PYNQ_allocatedSharedMemory(&cov_buff, sizeof(dma_t) * COV_BUF_LEN, 0);
+
+  bsg_pr_info("ps.cpp: openning DMA device\n");
+  PYNQ_openDMA(&dma, GP0_DMA_ADDR, true, false, sizeof(dma_t) * COV_BUF_LEN);
+
+  // assert coverage collection
+  bsg_pr_info("ps.cpp: Asserting coverage collection enable\n");
+  zpl->shell_write(GP0_WR_CSR_COV_EN, 0x1, 0xf);
+
+  // start coverage polling thread
+  pthread_create(&cov_pid, NULL, cov_poll, (void*)zpl);
+}
+
+void cov_done(bsg_zynq_pl *zpl) {
+  // stop coverage polling thread
+  cov_run = false;
+  pthread_join(cov_pid, NULL);
+
+  // deassert coverage collection
+  bsg_pr_info("ps.cpp: Desserting coverage collection enable\n");
+  zpl->shell_write(GP0_WR_CSR_COV_EN, 0x0, 0xf);
+
+  // close DMA and free CMA buffer
+  PYNQ_closeDMA(&dma);
+  PYNQ_freeSharedMemory(&cov_buff);
+
+  // report covergroup utilization
+  for(int i = 0; i < COV_NUM; i++) {
+    printf("cover-group[%d] size: %d\n", i, covs[i].size());
+  }
+}
+#else
+dma_t cov_buff[COV_BUF_LEN];
+
+void cov_poll(bsg_zynq_pl *zpl) {
+  // check if a complete DMA packet is available
+  int len = 0;
+  if(zpl->dma_has_read())
+    len = zpl->dma_read((int32_t *)cov_buff);
+  else
+    return;
+
+  // process the packet
+  //bsg_pr_info("ps.cpp: dma read done with len: %d\n", len);
+  cov_proc(cov_buff, len);
+}
+
+void cov_start(bsg_zynq_pl *zpl) {
+  // assert coverage collection
+  bsg_pr_info("ps.cpp: Asserting coverage collection enable\n");
+  zpl->shell_write(GP0_WR_CSR_COV_EN, 0x1, 0xf);
+}
+
+void cov_done(bsg_zynq_pl *zpl) {
+  // deassert coverage collection
+  bsg_pr_info("ps.cpp: Desserting coverage collection enable\n");
+  zpl->shell_write(GP0_WR_CSR_COV_EN, 0x0, 0xf);
+
+  // report covergroup utilization
+  for(int i = 0; i < COV_NUM; i++) {
+    printf("cover-group[%d] size: %d\n", i, covs[i].size());
+  }
+}
+#endif
+#endif
+
+void device_poll(bsg_zynq_pl *zpl) {
+#ifdef COV_EN
+  cov_start(zpl);
+#endif
+  while (1) {
+    // keep reading as long as there is data
+    if (zpl->shell_read(GP0_RD_PL2PS_FIFO_0_CTRS) != 0) {
+      decode_bp_output(zpl, zpl->shell_read(GP0_RD_PL2PS_FIFO_0_DATA));
+    }
+    // break loop when all cores done
+    if (done_vec.all()) {
+#ifdef COV_EN
+      cov_done(zpl);
+#endif
+      break;
+    }
+
+#if defined(COV_EN) && !defined(ZYNQ)
+    // on Zynq coverage polling is done on a seperate thread
+    cov_poll(zpl);
+#endif
+  }
+}
+
 int ps_main(int argc, char **argv) {
 
   bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
-
-  long data;
-  long val1 = 0x1;
-  long val2 = 0x0;
-  long mask1 = 0xf;
-  long mask2 = 0xf;
-
-  pthread_t thread_id;
 
   int32_t val;
   bsg_pr_info("ps.cpp: reading four base registers\n");
@@ -97,9 +319,9 @@ int ps_main(int argc, char **argv) {
 
   bsg_pr_info("ps.cpp: attempting to write and read register 0x8\n");
 
-  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, 0xDEADBEEF, mask1);
+  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, 0xDEADBEEF, 0xf);
   assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == (0xDEADBEEF)));
-  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, val, mask1);
+  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, val, 0xf);
   assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == (val)));
 
   bsg_pr_info("ps.cpp: successfully wrote and read registers in bsg_zynq_shell "
@@ -129,25 +351,22 @@ int ps_main(int argc, char **argv) {
 
   unsigned long phys_ptr;
   volatile int *buf;
-  data = zpl->shell_read(GP0_RD_CSR_DRAM_INITED);
-  if (data == 0) {
+  if (zpl->shell_read(GP0_RD_CSR_DRAM_INITED) == 0) {
     bsg_pr_info(
         "ps.cpp: CSRs do not contain a DRAM base pointer; calling allocate "
         "dram with size %ld\n",
         (long)DRAM_ALLOCATE_SIZE);
     buf = (volatile int*)zpl->allocate_dram(DRAM_ALLOCATE_SIZE, &phys_ptr);
     bsg_pr_info("ps.cpp: received %p (phys = %lx)\n", buf, phys_ptr);
-    zpl->shell_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, mask1);
+    zpl->shell_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, 0xf);
     assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == (int32_t)(phys_ptr)));
     bsg_pr_info("ps.cpp: wrote and verified base register\n");
-    zpl->shell_write(GP0_WR_CSR_DRAM_INITED, 0x1, mask2);
+    zpl->shell_write(GP0_WR_CSR_DRAM_INITED, 0x1, 0xf);
     assert(zpl->shell_read(GP0_RD_CSR_DRAM_INITED) == 1);
   } else {
     bsg_pr_info("ps.cpp: reusing dram base pointer %x\n",
                 zpl->shell_read(GP0_RD_CSR_DRAM_BASE));
   }
-
-  int outer = 1024 / 4;
 
   if (argc == 1) {
     bsg_pr_warn(
@@ -172,24 +391,29 @@ int ps_main(int argc, char **argv) {
   int y = zpl->shell_read(GP1_CSR_BASE_ADDR + 0x304000);
 
   bsg_pr_info("ps.cpp: writing mtimecmp\n");
-  zpl->shell_write(GP1_CSR_BASE_ADDR + 0x304000, y + 1, mask1);
+  zpl->shell_write(GP1_CSR_BASE_ADDR + 0x304000, y + 1, 0xf);
 
   bsg_pr_info("ps.cpp: reading mtimecmp\n");
   assert(zpl->shell_read(GP1_CSR_BASE_ADDR + 0x304000) == y + 1);
 
 #ifdef DRAM_TEST
-
+#ifdef ZYNQ
+  int outer = 1024 / 4;
   long num_times = DRAM_ALLOCATE_SIZE / 32768;
+#else
+  int outer = 64 / 4;
+  long num_times = 64;
+#endif
   bsg_pr_info(
       "ps.cpp: attempting to write L2 %ld times over %ld MB (testing ARM GP1 "
       "and HP0 connections)\n",
       num_times * outer, (long)((DRAM_ALLOCATE_SIZE) >> 20));
-  zpl->shell_write(GP1_DRAM_BASE_ADDR, 0x12345678, mask1);
+  zpl->shell_write(GP1_DRAM_BASE_ADDR, 0x12345678, 0xf);
 
   for (int s = 0; s < outer; s++)
     for (int t = 0; t < num_times; t++) {
       zpl->shell_write(GP1_DRAM_BASE_ADDR + 32768 * t + s * 4, 0x1ADACACA + t + s,
-                      mask1);
+                      0xf);
     }
   bsg_pr_info("ps.cpp: finished write L2 %ld times over %ld MB\n",
               num_times * outer, (long)((DRAM_ALLOCATE_SIZE) >> 20));
@@ -211,6 +435,8 @@ int ps_main(int argc, char **argv) {
               ((float)matches) / (float)(mismatches + matches));
 #endif
 
+  mismatches = 0;
+  matches = 0;
   bsg_pr_info(
       "ps.cpp: attempting to read L2 %ld times over %ld MB (testing ARM GP1 "
       "and HP0 connections)\n",
@@ -236,73 +462,74 @@ int ps_main(int argc, char **argv) {
     bsg_pr_info("ps.cpp: Zero-ing DRAM (%d bytes)\n", (int)DRAM_ALLOCATE_SIZE);
     for (int i = 0; i < DRAM_ALLOCATE_SIZE; i+=4) {
       if (i % (1024*1024) == 0) bsg_pr_info("ps.cpp: zero-d %d MB\n", i/(1024*1024));
-      zpl->shell_write(gp1_addr_base + i, 0x0, mask1);
+      zpl->shell_write(gp1_addr_base + i, 0x0, 0xf);
     }
   }
 #endif
+
+  bsg_pr_info("ps.cpp: clearing pl to ps fifo\n");
+  while(zpl->shell_read(GP0_RD_PL2PS_FIFO_0_CTRS) != 0) {
+    zpl->shell_read(GP0_RD_PL2PS_FIFO_0_DATA);
+  }
 
   bsg_pr_info("ps.cpp: beginning nbf load\n");
   nbf_load(zpl, argv[1]);
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
-  unsigned long long minstret_start = get_counter_64(zpl, GP0_RD_MINSTRET);
   unsigned long long mtime_start = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
   bsg_pr_dbg_ps("ps.cpp: finished nbf load\n");
 
+#ifndef COV_EN
   // Set bsg client1 to 0 (deassert WD reset)
   btb->set_client(wd_reset_client, 0x1);
   bsg_pr_info("ps.cpp: starting watchdog\n");
   // We need some additional toggles for data to propagate through
   btb->idle(50);
+#endif
   zpl->start();
 
+  bsg_pr_info("ps.cpp: Unfreezing BlackParrot\n");
+  zpl->shell_write(GP1_CSR_BASE_ADDR + 0x200008, 0x0, 0xf);
+
+#ifndef COV_EN
   bsg_pr_info("ps.cpp: Starting scan thread\n");
-  pthread_create(&thread_id, NULL, monitor, NULL);
+  pthread_t monitor_id;
+  pthread_create(&monitor_id, NULL, monitor, NULL);
+#endif
 
   bsg_pr_info("ps.cpp: Starting i/o polling thread\n");
-  while (1) {
-    // keep reading as long as there is data
-    if (zpl->shell_read(GP0_RD_PL2PS_FIFO_CTRS) != 0) {
-      decode_bp_output(zpl, zpl->shell_read(GP0_RD_PL2PS_FIFO_DATA));
-    }
-    // break loop when all cores done
-    if (done_vec.all()) {
-      break;
-    }
-  }
+  device_poll(zpl);
 
+#ifndef COV_EN
   // Set bsg client1 to 1 (assert WD reset)
   btb->set_client(wd_reset_client, 0x1);
   bsg_pr_info("ps.cpp: stopping watchdog\n");
   // We need some additional toggles for data to propagate through
   btb->idle(50);
+#endif
   zpl->stop();
 
+  unsigned long long mcycle_stop = get_counter_64(zpl, GP0_RD_MCYCLE);
   unsigned long long minstret_stop = get_counter_64(zpl, GP0_RD_MINSTRET);
   unsigned long long mtime_stop = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
-  // test delay for reading counter
-  unsigned long long counter_data = get_counter_64(zpl, GP0_RD_MINSTRET);
+  unsigned long long mtime_delta = mtime_stop - mtime_start;
+
+  report(zpl, argv[1]);
+
   clock_gettime(CLOCK_MONOTONIC, &end);
   setlocale(LC_NUMERIC, "");
-  bsg_pr_info("ps.cpp: end polling i/o\n");
-  bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
-              minstret_start, minstret_start);
+  bsg_pr_info("ps.cpp: mcycle (instructions retired): %'16llu (%16llx)\n",
+              mcycle_stop, mcycle_stop);
   bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
               minstret_stop, minstret_stop);
-  unsigned long long minstret_delta = minstret_stop - minstret_start;
-  bsg_pr_info("ps.cpp: minstret delta:                  %'16llu (%16llx)\n",
-              minstret_delta, minstret_delta);
   bsg_pr_info("ps.cpp: MTIME start:                     %'16llu (%16llx)\n",
               mtime_start, mtime_start);
   bsg_pr_info("ps.cpp: MTIME stop:                      %'16llu (%16llx)\n",
               mtime_stop, mtime_stop);
-  unsigned long long mtime_delta = mtime_stop - mtime_start;
   bsg_pr_info("ps.cpp: MTIME delta (=1/8 BP cycles):    %'16llu (%16llx)\n",
               mtime_delta, mtime_delta);
   bsg_pr_info("ps.cpp: IPC        :                     %'16f\n",
-              ((double)minstret_delta) / ((double)(mtime_delta)) / 8.0);
-  bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
-              counter_data, counter_data);
+              ((double)minstret_stop) / ((double)(mcycle_stop)));
   unsigned long long diff_ns =
       1000LL * 1000LL * 1000LL *
           ((unsigned long long)(end.tv_sec - start.tv_sec)) +
@@ -310,7 +537,7 @@ int ps_main(int argc, char **argv) {
   bsg_pr_info("ps.cpp: wall clock time                : %'16llu (%16llx) ns\n",
               diff_ns, diff_ns);
   bsg_pr_info(
-      "ps.cpp: sim/emul speed                 : %'16.2f BP cycles per minute\n",
+      "ps.cpp: sim/emul speed                         : %'16.2f BP cycles per minute\n",
       mtime_delta * 8 /
           ((double)(diff_ns) / (60.0 * 1000.0 * 1000.0 * 1000.0)));
 
@@ -320,6 +547,7 @@ int ps_main(int argc, char **argv) {
               zpl->shell_read(GP0_RD_MEM_PROF_2),
               zpl->shell_read(GP0_RD_MEM_PROF_1),
               zpl->shell_read(GP0_RD_MEM_PROF_0));
+  btb->idle(500000);
   // in general we do not want to free the dram; the Xilinx allocator has a
   // tendency to
   // fail after many allocate/fail cycle. instead we keep a pointer to the dram
@@ -330,7 +558,7 @@ int ps_main(int argc, char **argv) {
   if (FREE_DRAM) {
     bsg_pr_info("ps.cpp: freeing DRAM buffer\n");
     zpl->free_dram((void *)buf);
-    zpl->shell_write(GP0_WR_CSR_DRAM_INITED, 0x0, mask2);
+    zpl->shell_write(GP0_WR_CSR_DRAM_INITED, 0x0, 0xf);
   }
 
   zpl->done();
@@ -393,16 +621,16 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
       }
       else if (nbf[0] == 0x1) {
         int offset = nbf[1] % 4;
-        int shift = 2 * offset;
+        int shift = 8 * offset;
         data = zpl->shell_read(base_addr + nbf[1] - offset);
-        data = data & rotl((uint32_t)0xffff0000,shift) + nbf[2] & ((uint32_t)0x0000ffff << shift);
+        data = data & rotl((uint32_t)0xffff0000,shift) + ((nbf[2] & ((uint32_t)0x0000ffff)) << shift);
         zpl->shell_write(base_addr + nbf[1] - offset, data, 0xf);
       }
       else {
         int offset = nbf[1] % 4;
-        int shift = 2 * offset;
+        int shift = 8 * offset;
         data = zpl->shell_read(base_addr + nbf[1] - offset);
-        data = data & rotl((uint32_t)0xffffff00,shift) + nbf[2] & ((uint32_t)0x000000ff << shift);
+        data = data & rotl((uint32_t)0xffffff00,shift) + ((nbf[2] & ((uint32_t)0x000000ff)) << shift);
         zpl->shell_write(base_addr + nbf[1] - offset, data, 0xf);
       }
     }
@@ -483,3 +711,24 @@ bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
   return true;
 }
 
+void report(bsg_zynq_pl *zpl, char* nbf_filename) {
+
+  char filename[100];
+  if(strrchr(nbf_filename, '/') != NULL)
+    strcpy(filename, 1 + strrchr(nbf_filename, '/'));
+  else
+    strcpy(filename, nbf_filename);
+  *strrchr(filename, '.') = '\0';
+  strcat(filename, ".rep");
+  ofstream file(filename);
+
+  if(file.is_open()) {
+    file << nbf_filename << endl;
+    for(int i=0; i<sizeof(metrics)/sizeof(metrics[0]); i++) {
+      file << metrics[i] << "\t";
+      file << get_counter_64(zpl, GP0_RD_COUNTERS + i*8) << "\n";
+    }
+    file.close();
+  }
+  else printf("Cannot open report file: %s\n", filename);
+}

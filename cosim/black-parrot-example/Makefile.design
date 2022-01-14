@@ -13,6 +13,15 @@ BASENAME   ?= blackparrot
 MAIN_PROGRAM ?= $(COSIM_CSRC_DIR)/main.cpp
 HOST_PROGRAM ?= $(CURR_DESIGN_DIR)/ps.cpp
 
+# Coverage
+COV_EN   ?= 1
+RAND_COV ?= 1
+ifneq ($(RAND_COV),0)
+COV_NUM  ?= 4
+else
+COV_NUM  ?= 11
+endif
+
 #############################
 # Design Defines
 #############################
@@ -26,8 +35,22 @@ DEFINES += HP0_ENABLE=1
 DEFINES += HP0_ADDR_WIDTH=32 HP0_DATA_WIDTH=64
 DEFINES += HP1_ENABLE=1
 DEFINES += HP1_ADDR_WIDTH=32 HP1_DATA_WIDTH=32
-DEFINES += ACLK_MHZ=20
+DEFINES += ACLK_MHZ=160
+DEFINES += DSCLK_MHZ=40
 DEFINES += RTCLK_MHZ=8
+DEFINES += DMA_ENABLE=1
+DEFINES += DMA_DATA_WIDTH=64
+# TODO: infer from Vivado mapping
+DEFINES += DMA_OFFSET=0x10000
+
+ifneq ($(COV_EN),0)
+VDEFINES += COV_EN=1
+VDEFINES += COV_NUM=$(COV_NUM)
+ifneq ($(RAND_COV),0)
+VDEFINES += RAND_COV=1
+endif
+endif
+DEFINES += $(VDEFINES)
 
 #############################
 # Build Collateral
@@ -68,7 +91,7 @@ VPATH := $(wildcard $(BLACKPARROT_SDK_DIR)/prog/*)
 	$(RISCV_OBJCOPY) -O verilog $< $*.mem
 	$(SED) -i "s/@8/@0/g" $*.mem
 	$(PYTHON) $(BP_COMMON_DIR)/software/py/nbf.py \
-		--debug --skip_zeros --config --mem $*.mem --ncpus $(NBF_NCPUS) > $@
+		--debug --skip_zeros --config --boot_pc 0x80000000 --mem $*.mem --ncpus $(NBF_NCPUS) > $@
 	rm $*.mem
 
 NBF_FILE ?= hello_world.nbf

@@ -26,6 +26,9 @@
 #include "bsg_argparse.h"
 #include "bsg_printing.h"
 #include "zynq_headers.h"
+#ifdef NEON
+#include "arm_neon.h"
+#endif
 using namespace std;
 
 class bsg_zynq_pl_hardware {
@@ -168,6 +171,32 @@ protected:
             assert(false);  // Illegal write strobe
         }
     }
+
+#ifdef NEON
+    inline uint32x2_t axil_2read(uintptr_t address) {
+        // Only aligned 64B reads
+        assert(alignof(address) >= 8);
+        volatile uint32_t *ptr32x2 =  (uint32_t *)axil_get_ptr32(address);
+        uint32x2_t data = vld1_u32((const uint32_t *)ptr32x2);
+
+        bsg_pr_dbg_pl("AXI reading [%" PRIxPTR "]->%8.8x\n", address, data[0]);
+        bsg_pr_dbg_pl("AXI reading [%" PRIxPTR "]->%8.8x\n", address + 4, data[1]);
+        return data;
+    }
+
+    inline uint32x4_t axil_4read(uintptr_t address) {
+        // Only aligned 128B reads
+        assert(alignof(address) >= 16);
+        volatile uint32_t *ptr32x4 =  (uint32_t *)axil_get_ptr32(address);
+        uint32x4_t data = vld1q_u32((const uint32_t *)ptr32x4);
+
+        bsg_pr_dbg_pl("AXI reading [%" PRIxPTR "]->%8.8x\n", address, data[0]);
+        bsg_pr_dbg_pl("AXI reading [%" PRIxPTR "]->%8.8x\n", address + 4, data[1]);
+        bsg_pr_dbg_pl("AXI reading [%" PRIxPTR "]->%8.8x\n", address + 8, data[2]);
+        bsg_pr_dbg_pl("AXI reading [%" PRIxPTR "]->%8.8x\n", address + 12, data[3]);
+        return data;
+    }
+#endif
 #endif
 
 #ifdef UART_ENABLE

@@ -5,9 +5,10 @@ export ELAB    ?= 1
 export SYNTH   ?= 1
 export IMPL    ?= 1
 export HANDOFF ?= 1
-export THREADS ?= 8
+export THREADS ?= 16
 
 export VIVADO_RUN ?= export $(DEFINES) && source $(XILINX_SETTINGS) && $(VIVADO)
+export VDEFINES += $(FAMILY)=1
 
 all:
 	@echo "Rules for Vivado; see $(TOP)/cosim/mk/Makefile.vivado for more:"

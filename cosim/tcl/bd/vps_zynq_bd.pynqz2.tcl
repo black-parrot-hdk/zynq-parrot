@@ -23,84 +23,121 @@ proc post_propagate { cellpath otherInfo } {
 # ZynqParrot hook for population of BD
 proc vivado_create_ip { args } {
     set aclk_freq_mhz  [lindex [lindex ${args} 0] 0]
-    set rtclk_freq_mhz [lindex [lindex ${args} 0] 1]
-    set gp0_enable     [lindex [lindex ${args} 0] 2]
-    set gp0_data_width [lindex [lindex ${args} 0] 3]
-    set gp0_addr_width [lindex [lindex ${args} 0] 4]
-    set gp1_enable     [lindex [lindex ${args} 0] 5]
-    set gp1_data_width [lindex [lindex ${args} 0] 6]
-    set gp1_addr_width [lindex [lindex ${args} 0] 7]
-    set hp0_enable     [lindex [lindex ${args} 0] 8]
-    set hp0_data_width [lindex [lindex ${args} 0] 9]
-    set hp0_addr_width [lindex [lindex ${args} 0] 10]
+    set dsclk_freq_mhz [lindex [lindex ${args} 0] 1]
+    set rtclk_freq_mhz [lindex [lindex ${args} 0] 2]
+    set gp0_enable     [lindex [lindex ${args} 0] 3]
+    set gp0_data_width [lindex [lindex ${args} 0] 4]
+    set gp0_addr_width [lindex [lindex ${args} 0] 5]
+    set gp1_enable     [lindex [lindex ${args} 0] 6]
+    set gp1_data_width [lindex [lindex ${args} 0] 7]
+    set gp1_addr_width [lindex [lindex ${args} 0] 8]
+    set hp0_enable     [lindex [lindex ${args} 0] 9]
+    set hp0_data_width [lindex [lindex ${args} 0] 10]
+    set hp0_addr_width [lindex [lindex ${args} 0] 11]
+    set dma_enable     [lindex [lindex ${args} 0] 12]
+    set dma_data_width [lindex [lindex ${args} 0] 13]
 
     create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7 processing_system7_0
     set_property CONFIG.PCW_EN_CLK0_PORT {1} [get_bd_cells processing_system7_0]
     set_property CONFIG.PCW_USE_M_AXI_GP0 {1} [get_bd_cells processing_system7_0]
     set_property CONFIG.PCW_USE_M_AXI_GP1 {1} [get_bd_cells processing_system7_0]
     set_property CONFIG.PCW_USE_S_AXI_HP0 {1} [get_bd_cells processing_system7_0]
+    set_property CONFIG.PCW_USE_S_AXI_HP1 {1} [get_bd_cells processing_system7_0]
     apply_bd_automation -rule xilinx.com:bd_rule:processing_system7 -config {make_external "FIXED_IO, DDR" Master "Disable" Slave "Disable"} [get_bd_cells processing_system7_0]
 
     create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset proc_sys_reset_0
     create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect smartconnect_0
     create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect smartconnect_1
     create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect smartconnect_2
-
+    create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect smartconnect_3
     set_property CONFIG.NUM_SI {1} [get_bd_cells smartconnect_0]
+    set_property CONFIG.NUM_MI {2} [get_bd_cells smartconnect_0]
     set_property CONFIG.NUM_SI {1} [get_bd_cells smartconnect_1]
+    set_property CONFIG.NUM_MI {1} [get_bd_cells smartconnect_1]
     set_property CONFIG.NUM_SI {1} [get_bd_cells smartconnect_2]
+    set_property CONFIG.NUM_MI {1} [get_bd_cells smartconnect_2]
+    set_property CONFIG.NUM_SI {1} [get_bd_cells smartconnect_3]
+    set_property CONFIG.NUM_MI {1} [get_bd_cells smartconnect_3]
+    set_property CONFIG.ADVANCED_PROPERTIES {__experimental_features__ {disable_low_area_mode 1}} [get_bd_cells smartconnect_0]
+    set_property CONFIG.ADVANCED_PROPERTIES {__experimental_features__ {disable_low_area_mode 1}} [get_bd_cells smartconnect_1]
+    set_property CONFIG.ADVANCED_PROPERTIES {__experimental_features__ {disable_low_area_mode 1}} [get_bd_cells smartconnect_2]
+    set_property CONFIG.ADVANCED_PROPERTIES {__experimental_features__ {disable_low_area_mode 1}} [get_bd_cells smartconnect_3]
 
     create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz clk_wiz_0
-
     set_property CONFIG.CLKOUT2_USED true [get_bd_cells clk_wiz_0]
+    set_property CONFIG.CLKOUT3_USED true [get_bd_cells clk_wiz_0]
     set_property CONFIG.USE_LOCKED false [get_bd_cells clk_wiz_0]
     set_property CONFIG.USE_RESET false [get_bd_cells clk_wiz_0]
     set_property CONFIG.CLKOUT1_REQUESTED_OUT_FREQ ${aclk_freq_mhz} [get_bd_cells clk_wiz_0]
-    set_property CONFIG.CLKOUT2_REQUESTED_OUT_FREQ ${rtclk_freq_mhz} [get_bd_cells clk_wiz_0]
+    set_property CONFIG.CLKOUT2_REQUESTED_OUT_FREQ ${dsclk_freq_mhz} [get_bd_cells clk_wiz_0]
+    set_property CONFIG.CLKOUT3_REQUESTED_OUT_FREQ ${rtclk_freq_mhz} [get_bd_cells clk_wiz_0]
+
+    create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dma axi_dma_0
+    set_property CONFIG.c_include_sg {0} [get_bd_cells axi_dma_0]
+    set_property CONFIG.c_include_mm2s {0} [get_bd_cells axi_dma_0]
+    set_property CONFIG.c_sg_length_width {26} [get_bd_cells axi_dma_0]
+    set_property CONFIG.c_s_axis_s2mm_tdata_width ${dma_data_width} [get_bd_cells axi_dma_0]
+    set_property CONFIG.c_m_axi_s2mm_data_width {64} [get_bd_cells axi_dma_0]
+    set_property CONFIG.c_s2mm_burst_size {256} [get_bd_cells axi_dma_0]
 
     make_bd_pins_external -name "aclk" [get_bd_pins clk_wiz_0/clk_out1]
-    make_bd_pins_external -name "rt_clk" [get_bd_pins clk_wiz_0/clk_out2]
+    make_bd_pins_external -name "ds_clk" [get_bd_pins clk_wiz_0/clk_out2]
+    make_bd_pins_external -name "rt_clk" [get_bd_pins clk_wiz_0/clk_out3]
     make_bd_pins_external -name "aresetn" [get_bd_pins proc_sys_reset_0/peripheral_aresetn]
     make_bd_intf_pins_external -name "GP0_AXI" [get_bd_intf_pins smartconnect_0/M00_AXI]
     make_bd_intf_pins_external -name "GP1_AXI" [get_bd_intf_pins smartconnect_1/M00_AXI]
     make_bd_intf_pins_external -name "HP0_AXI" [get_bd_intf_pins smartconnect_2/S00_AXI]
+    make_bd_intf_pins_external -name "DMA_AXIS" [get_bd_intf_pins axi_dma_0/S_AXIS_S2MM]
 
-    connect_bd_intf_net [get_bd_intf_pins processing_system7_0/M_AXI_GP0] [get_bd_intf_pins smartconnect_0/S00_AXI]
     set_property CONFIG.PROTOCOL {AXI4LITE} [get_bd_intf_ports GP0_AXI]
     set_property CONFIG.DATA_WIDTH ${gp0_data_width} [get_bd_intf_ports GP0_AXI]
     set_property CONFIG.ADDR_WIDTH ${gp0_addr_width} [get_bd_intf_ports GP0_AXI]
 
-    connect_bd_intf_net [get_bd_intf_pins processing_system7_0/M_AXI_GP1] [get_bd_intf_pins smartconnect_1/S00_AXI]
     set_property CONFIG.PROTOCOL {AXI4LITE} [get_bd_intf_ports GP1_AXI]
     set_property CONFIG.DATA_WIDTH ${gp1_data_width} [get_bd_intf_ports GP1_AXI]
     set_property CONFIG.ADDR_WIDTH ${gp1_addr_width} [get_bd_intf_ports GP1_AXI]
 
-    connect_bd_intf_net [get_bd_intf_pins processing_system7_0/S_AXI_HP0] [get_bd_intf_pins smartconnect_2/M00_AXI]
     set_property CONFIG.PROTOCOL {AXI4} [get_bd_intf_ports HP0_AXI]
     set_property CONFIG.DATA_WIDTH ${hp0_data_width} [get_bd_intf_ports HP0_AXI]
     set_property CONFIG.ADDR_WIDTH ${hp0_addr_width} [get_bd_intf_ports HP0_AXI]
     set_property CONFIG.ID_WIDTH 6 [get_bd_intf_ports HP0_AXI]
 
+    connect_bd_intf_net [get_bd_intf_pins processing_system7_0/M_AXI_GP0] [get_bd_intf_pins smartconnect_0/S00_AXI]
+    connect_bd_intf_net [get_bd_intf_pins processing_system7_0/M_AXI_GP1] [get_bd_intf_pins smartconnect_1/S00_AXI]
+    connect_bd_intf_net [get_bd_intf_pins processing_system7_0/S_AXI_HP0] [get_bd_intf_pins smartconnect_2/M00_AXI]
+    connect_bd_intf_net [get_bd_intf_pins processing_system7_0/S_AXI_HP1] [get_bd_intf_pins smartconnect_3/M00_AXI]
+
+    connect_bd_intf_net [get_bd_intf_pins axi_dma_0/S_AXI_LITE] [get_bd_intf_pins smartconnect_0/M01_AXI]
+    connect_bd_intf_net [get_bd_intf_pins axi_dma_0/M_AXI_S2MM] [get_bd_intf_pins smartconnect_3/S00_AXI]
+
     connect_bd_net [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_ports aclk]
     connect_bd_net [get_bd_pins processing_system7_0/M_AXI_GP1_ACLK] [get_bd_ports aclk]
     connect_bd_net [get_bd_pins processing_system7_0/S_AXI_HP0_ACLK] [get_bd_ports aclk]
+    connect_bd_net [get_bd_pins processing_system7_0/S_AXI_HP1_ACLK] [get_bd_ports aclk]
     connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins clk_wiz_0/clk_in1]
     connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins proc_sys_reset_0/ext_reset_in]
 
     connect_bd_net [get_bd_port aclk] [get_bd_pins smartconnect_0/aclk]
     connect_bd_net [get_bd_port aclk] [get_bd_pins smartconnect_1/aclk]
     connect_bd_net [get_bd_port aclk] [get_bd_pins smartconnect_2/aclk]
+    connect_bd_net [get_bd_port aclk] [get_bd_pins smartconnect_3/aclk]
     connect_bd_net [get_bd_port aclk] [get_bd_pins proc_sys_reset_0/slowest_sync_clk]
+    connect_bd_net [get_bd_port aclk] [get_bd_pins axi_dma_0/s_axi_lite_aclk]
+    connect_bd_net [get_bd_port aclk] [get_bd_pins axi_dma_0/m_axi_s2mm_aclk]
     connect_bd_net [get_bd_port aresetn] [get_bd_pins smartconnect_0/aresetn]
     connect_bd_net [get_bd_port aresetn] [get_bd_pins smartconnect_1/aresetn]
     connect_bd_net [get_bd_port aresetn] [get_bd_pins smartconnect_2/aresetn]
+    connect_bd_net [get_bd_port aresetn] [get_bd_pins smartconnect_3/aresetn]
+    connect_bd_net [get_bd_port aresetn] [get_bd_pins axi_dma_0/axi_resetn]
 
-    set_property CONFIG.ASSOCIATED_BUSIF {GP0_AXI:GP1_AXI:HP0_AXI} [get_bd_ports aclk]
+    set_property CONFIG.ASSOCIATED_BUSIF {GP0_AXI:GP1_AXI:HP0_AXI:DMA_AXIS} [get_bd_ports aclk]
     set_property CONFIG.ASSOCIATED_RESET {aresetn} [get_bd_ports aclk]
 
     # TODO: Deduce the offset
     assign_bd_address -target_address_space [get_bd_addr_spaces processing_system7_0/Data] \
         [get_bd_addr_segs GP0*] -range 4K -offset 0x40000000 
+    assign_bd_address -target_address_space [get_bd_addr_spaces processing_system7_0/Data] \
+        [get_bd_addr_segs axi_dma_0/S_AXI_LITE*] -range 64K -offset 0x40010000
     assign_bd_address -target_address_space [get_bd_addr_spaces processing_system7_0/Data] \
         [get_bd_addr_segs GP1*] -range 1G -offset 0x80000000
 
@@ -118,6 +155,11 @@ proc vivado_create_ip { args } {
         delete_bd_objs [get_bd_cells smartconnect_2]
         delete_bd_objs [get_bd_intf_ports HP0_AXI]
 	}
+    if {${dma_enable} == 0} {
+        delete_bd_objs [get_bd_cells smartconnect_3]
+        delete_bd_objs [get_bd_cells axi_dma_0]
+        delete_bd_objs [get_bd_intf_ports DMA_AXIS]
+        }
 }
 
 # ZynqParrot hook for customization of BD

@@ -1,7 +1,6 @@
 
 module top
   #(
-    // Parameters of Axi Slave Bus Interface S00_AXI
     parameter integer C_S00_AXI_DATA_WIDTH = 32
     , parameter integer C_S00_AXI_ADDR_WIDTH = 10
     , parameter integer C_S01_AXI_DATA_WIDTH = 32
@@ -12,12 +11,14 @@ module top
     , parameter integer C_M00_AXI_ADDR_WIDTH = 32
     , parameter integer C_M01_AXI_DATA_WIDTH = 32
     , parameter integer C_M01_AXI_ADDR_WIDTH = 32
+    , parameter integer C_DMA_AXIS_DATA_WIDTH = 64
     , parameter integer __DUMMY = 0
     )
    (
     // Ports of Axi Slave Bus Interface S00_AXI
     input wire                                   aclk
     ,input wire                                  aresetn
+    ,input wire                                  ds_clk
     ,input wire                                  rt_clk
     // In order to prevent X from propagating to any of the initialized AXI buses,
     //   we use sys_resetn to put modules that have resets generated from bsg tags
@@ -149,6 +150,12 @@ module top
     ,input wire [1 : 0]                          m01_axi_rresp
     ,input wire                                  m01_axi_rvalid
     ,output wire                                 m01_axi_rready
+
+    ,input wire                                  dma_axis_tready
+    ,output wire                                 dma_axis_tvalid
+    ,output wire [C_DMA_AXIS_DATA_WIDTH-1 : 0]   dma_axis_tdata
+    ,output wire [(C_DMA_AXIS_DATA_WIDTH/8)-1:0] dma_axis_tkeep
+    ,output wire                                 dma_axis_tlast
     );
 
    top_zynq #
@@ -162,10 +169,12 @@ module top
       ,.C_M00_AXI_ADDR_WIDTH(C_M00_AXI_ADDR_WIDTH)
       ,.C_M01_AXI_DATA_WIDTH(C_M01_AXI_DATA_WIDTH)
       ,.C_M01_AXI_ADDR_WIDTH(C_M01_AXI_ADDR_WIDTH)
+      ,.C_DMA_AXIS_DATA_WIDTH(C_DMA_AXIS_DATA_WIDTH)
       )
      top_fpga_inst
      (.aclk            (aclk)
       ,.aresetn        (aresetn)
+      ,.ds_clk         (ds_clk)
       ,.rt_clk         (rt_clk)
       ,.sys_resetn     (sys_resetn)
 
@@ -294,6 +303,12 @@ module top
       ,.m01_axi_rresp  (m01_axi_rresp)
       ,.m01_axi_rvalid (m01_axi_rvalid)
       ,.m01_axi_rready (m01_axi_rready)
+
+      ,.dma_axis_tready(dma_axis_tready)
+      ,.dma_axis_tvalid(dma_axis_tvalid)
+      ,.dma_axis_tdata (dma_axis_tdata)
+      ,.dma_axis_tkeep (dma_axis_tkeep)
+      ,.dma_axis_tlast (dma_axis_tlast)
       );
 
 `ifdef DROMAJO_COSIM
