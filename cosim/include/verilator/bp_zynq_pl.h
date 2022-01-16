@@ -62,10 +62,10 @@ public:
   //   the first eval, but BSG designs tend to do assertions on negedge
   //   at the least.
   static void tick(void) {
-    bsg_timekeeper::next();
     tb->eval();
     bsg_timekeeper::next();
     tb->eval();
+    bsg_timekeeper::next();
   }
 
   static void done(void) { printf("bp_zynq_pl: done() called, exiting\n"); }
