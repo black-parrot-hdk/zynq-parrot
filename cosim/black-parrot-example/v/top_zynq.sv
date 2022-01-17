@@ -177,7 +177,7 @@ module top_zynq
 
    logic [63:0] minstret_lo;
    if (multicore_p)
-      assign minstret_lo = blackparrot.w.multicore.cc.y[0].x[0].tile_node.tile.core.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
+      assign minstret_lo = blackparrot.W.multicore.cc.y[0].x[0].tile_node.tile.core.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
    else
       assign minstret_lo = blackparrot.w.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
 
