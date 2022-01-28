@@ -1,6 +1,9 @@
 
 export BLACKPARROT_DIR      ?= $(COSIM_DIR)/import/black-parrot
 export BLACKPARROT_SDK_DIR  ?= $(COSIM_DIR)/import/black-parrot-sdk
+export OPENTITAN_DIR        ?= $(COSIM_DIR)/import/rv_plic/opentitan
+export PLIC_DIR             ?= $(COSIM_DIR)/import/rv_plic/rtl
+export ETH_ALEX_DIR         ?= $(COSIM_DIR)/import/eth_1g_test
 export BP_FE_DIR            ?= $(BLACKPARROT_DIR)/bp_fe
 export BP_COMMON_DIR        ?= $(BLACKPARROT_DIR)/bp_common
 export BP_BE_DIR            ?= $(BLACKPARROT_DIR)/bp_be

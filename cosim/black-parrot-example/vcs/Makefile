@@ -37,6 +37,8 @@ include $(TOP)/cosim/mk/Makefile.vcs
 #############################
 $(FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs $(BASE_FLIST)
 	echo "+incdir+$(CURR_SRC_DIR)" > $@
+	echo "+incdir+$(OPENTITAN_DIR)/hw/ip/prim/rtl" >> $@
+	echo "+incdir+$(ETH_ALEX_DIR)/src/alex" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_clock_gen.v" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_reset_gen.v" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_axi_mem.v" >> $@

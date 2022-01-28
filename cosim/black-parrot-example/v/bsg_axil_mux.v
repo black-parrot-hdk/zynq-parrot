@@ -2,6 +2,8 @@
 //   are not pipelined. This is the case in BP. More specifically,
 //   once a request on S00 starts, another request should not come
 //   in until the first is complete
+`include "bsg_defines.v"
+
 module bsg_axil_mux
  #(parameter `BSG_INV_PARAM(addr_width_p)
    , parameter `BSG_INV_PARAM(data_width_p)
@@ -85,8 +87,13 @@ module bsg_axil_mux
   logic select_s00_r, select_s01_r;
   wire clear_selection = (m00_axi_rvalid & m00_axi_rready) | (m00_axi_bvalid & m00_axi_bready);
   // Statically prioritize s00 for now
-  wire select_s00_n = (s00_axi_rvalid | s00_axi_awvalid);
-  wire select_s01_n = (s01_axi_rvalid | s01_axi_awvalid) & ~select_s01_n & ~select_s01_r;
+  wire select_s00_n = (s00_axi_arvalid | s00_axi_awvalid)
+                        & ~select_s00_r
+                        & ~select_s01_r;
+  wire select_s01_n = (s01_axi_arvalid | s01_axi_awvalid)
+                        & ~select_s00_n
+                        & ~select_s00_r
+                        & ~select_s01_r;
   bsg_dff_reset_set_clear
    #(.width_p(2))
    select_reg
@@ -94,7 +101,7 @@ module bsg_axil_mux
      ,.reset_i(reset_i)
 
      ,.set_i({select_s01_n, select_s00_n})
-     ,.clear_i(2{clear_selection}})
+     ,.clear_i({2{clear_selection}})
      ,.data_o({select_s01_r, select_s00_r})
      );
 
@@ -106,13 +113,13 @@ module bsg_axil_mux
 
   assign m00_axi_wdata  = select_s01_r ? s01_axi_wdata : s00_axi_wdata;
   assign m00_axi_wstrb  = select_s01_r ? s01_axi_wstrb : s00_axi_wstrb;
-  assign m00_axi_wvalid = (select_s01_r & s01_axi_wvalid) | (select_s01_r & s01_axi_wvalid);
+  assign m00_axi_wvalid = (select_s00_r & s00_axi_wvalid) | (select_s01_r & s01_axi_wvalid);
   assign s00_axi_wready = m00_axi_wready & select_s00_r;
   assign s01_axi_wready = m00_axi_wready & select_s01_r;
 
   assign {s01_axi_bresp, s00_axi_bresp} = {2{m00_axi_bresp}};
   assign s00_axi_bvalid = select_s00_r & m00_axi_bvalid;
-  assign s00_axi_bvalid = select_s01_r & m00_axi_bvalid;
+  assign s01_axi_bvalid = select_s01_r & m00_axi_bvalid;
   assign m00_axi_bready = (select_s00_r & s00_axi_bready) | (select_s01_r & s01_axi_bready);
 
   assign m00_axi_araddr  = select_s01_r ? s01_axi_araddr : s00_axi_araddr;
