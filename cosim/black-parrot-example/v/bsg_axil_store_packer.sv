@@ -85,6 +85,8 @@ module bsg_axil_store_packer
       data_o = '0;
       v_o    = '0;
 
+      state_n = state_r;
+
       case (state_r)
         e_ready:
           begin
