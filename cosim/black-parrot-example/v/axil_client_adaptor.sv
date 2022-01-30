@@ -95,15 +95,16 @@ module axil_client_adaptor
       s_axil_bresp_o   = e_axi_resp_okay;
       s_axil_bvalid_o  = '0;
 
-      case (s_axil_wstrb_i)
-        (axil_data_width_p>>3)'('h1)  : data_size_o = 2'b00;
-        (axil_data_width_p>>3)'('h3)  : data_size_o = 2'b01;
-        (axil_data_width_p>>3)'('hF)  : data_size_o = 2'b10;
-        (axil_data_width_p>>3)'('hFF) : data_size_o = 2'b11;
-        default:
-           if (s_axil_wvalid_i)
-              $warning("%m: received unhandled strobe pattern %b\n",s_axil_wstrb_i);
-      endcase
+      if (s_axil_wvalid_i) begin
+        case (s_axil_wstrb_i)
+          (axil_data_width_p>>3)'('h1)  : data_size_o = 2'b00;
+          (axil_data_width_p>>3)'('h3)  : data_size_o = 2'b01;
+          (axil_data_width_p>>3)'('hF)  : data_size_o = 2'b10;
+          (axil_data_width_p>>3)'('hFF) : data_size_o = 2'b11;
+          default:
+            $warning("%m: received unhandled strobe pattern %b\n",s_axil_wstrb_i);
+        endcase
+      end
 
       unique casez (state_r)
         e_wait:

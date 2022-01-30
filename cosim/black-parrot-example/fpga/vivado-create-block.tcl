@@ -1,6 +1,6 @@
 set project_name blackparrot_bd_proj
 
-create_project -force ${project_name} [pwd] -part xc7z020clg400-1
+create_project -force ${project_name} [pwd] -part xc7z020clg484-1
 create_bd_design "blackparrot_bd_1"
 update_compile_order -fileset sources_1
 startgroup
@@ -71,7 +71,25 @@ set_property offset 0x40000000 [get_bd_addr_segs {processing_system7_0/Data/SEG_
 set_property offset 0x80000000 [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg03}]
 set_property range 4K [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg0}]
 set_property range 1G [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg03}]
+##
+# Create 250MHZ and 200MHZ clocks for Ethernet and iodelay cells respectively
+set_property -dict [list CONFIG.PCW_FPGA1_PERIPHERAL_FREQMHZ {250} CONFIG.PCW_FPGA2_PERIPHERAL_FREQMHZ {200} CONFIG.PCW_EN_CLK1_PORT {1} CONFIG.PCW_EN_CLK2_PORT {1}] [get_bd_cells processing_system7_0]
+connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK1] [get_bd_pins top_0/clk250_i]
+connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK2] [get_bd_pins top_0/iodelay_ref_clk_i]
 
+make_bd_pins_external -name rgmii_rx_clk_i [get_bd_pins top_0/rgmii_rx_clk_i]
+make_bd_pins_external -name rgmii_rxd_i    [get_bd_pins top_0/rgmii_rxd_i]
+make_bd_pins_external -name rgmii_rx_ctl_i [get_bd_pins top_0/rgmii_rx_ctl_i]
+make_bd_pins_external -name rgmii_tx_clk_o [get_bd_pins top_0/rgmii_tx_clk_o]
+make_bd_pins_external -name rgmii_txd_o    [get_bd_pins top_0/rgmii_txd_o]
+make_bd_pins_external -name rgmii_tx_ctl_o [get_bd_pins top_0/rgmii_tx_ctl_o]
+
+
+create_bd_port -dir O -type rst eth_phy_resetn_o
+connect_bd_net [get_bd_ports eth_phy_resetn_o] [get_bd_pins proc_sys_reset_0/peripheral_aresetn]
+
+
+##
 validate_bd_design
 make_wrapper -files [get_files ${project_name}.srcs/sources_1/bd/blackparrot_bd_1/blackparrot_bd_1.bd] -top
 add_files -norecurse ${project_name}.srcs/sources_1/bd/blackparrot_bd_1/hdl/blackparrot_bd_1_wrapper.v
@@ -82,6 +100,16 @@ save_bd_design
 # change this to a 0 to have it stop before synthesis and implementation
 # so you can inspect the design with the GUI
 
+if {1} {
+launch_runs synth_1 -jobs 4
+wait_on_run synth_1
+open_run synth_1 -name synth_1
+source ../syn/bp_ethernet.xdc
+source ../syn/io_pin.xdc
+source ../syn/axis_async_fifo.tcl
+source ../syn/rgmii_phy_if.tcl
+source ../syn/eth_mac_1g_rgmii.tcl
+}
 if {1} {
 launch_runs impl_1 -to_step write_bitstream -jobs 4
 wait_on_run impl_1

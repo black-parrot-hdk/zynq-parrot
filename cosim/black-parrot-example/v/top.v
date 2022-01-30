@@ -21,7 +21,7 @@ module top
     input wire                                   aclk
     ,input wire                                  aresetn
     ,input wire                                  clk250_i
-    ,input wire                                  iodelay_ref_clk_i
+    ,input wire                                  iodelay_ref_clk_i // 200MHZ
 
     ,input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
     ,input wire [2 : 0]                          s00_axi_awprot
@@ -158,9 +158,9 @@ module top
     assign rgmii_rx_clk_li    = rgmii_rx_clk_i;
     assign rgmii_rxd_li       = rgmii_rxd_i   ;
     assign rgmii_rx_ctl_li    = rgmii_rx_ctl_i;
-    assign rgmii_tx_clk_lo    = rgmii_tx_clk_o;
-    assign rgmii_txd_lo       = rgmii_txd_o   ;
-    assign rgmii_tx_ctl_lo    = rgmii_tx_ctl_o;
+    assign rgmii_tx_clk_o     = rgmii_tx_clk_lo;
+    assign rgmii_txd_o        = rgmii_txd_lo   ;
+    assign rgmii_tx_ctl_o     = rgmii_tx_ctl_lo;
 `else
 
     logic s00_axi_aclk, s00_axi_aresetn;

@@ -1,3 +1,5 @@
+`include "bp_zynq_pl.vh"
+
 module iodelay_control(
     input logic clk_i
   , input logic reset_r_i

@@ -1,4 +1,7 @@
 
+`include "bsg_defines.v"
+`include "bp_zynq_pl.vh"
+
 module ethernet_controller_wrapper
   import bp_common_pkg::*;
 #(
@@ -56,8 +59,11 @@ module ethernet_controller_wrapper
 );
 
     // target ("SIM", "GENERIC", "XILINX", "ALTERA")
-//    localparam TARGET                = "XILINX";
+`ifdef FPGA
+    localparam TARGET                = "XILINX";
+`else
     localparam TARGET                = "GENERIC";
+`endif
     // IODDR style ("IODDR", "IODDR2")
     // Use IODDR for Virtex-4, Virtex-5, Virtex-6, 7 Series, Ultrascale
     // Use IODDR2 for Spartan-6
@@ -182,7 +188,7 @@ module ethernet_controller_wrapper
     //synopsys translate_off
     always_ff @(posedge clk_i) begin
       if(~reset_i & (resp_fifo_v_li & ~resp_fifo_ready_lo))
-        $display("ethernet_controller.sv: read data dropped");
+        $display("ethernet_controller_wrapper.sv: read data dropped");
     end
     //synopsys translate_on
 
