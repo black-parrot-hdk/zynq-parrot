@@ -2,7 +2,7 @@
 `include "bsg_defines.v"
 `include "bp_zynq_pl.vh"
 
-module ethernet_controller_wrapper
+module ethernet_axil_wrapper
   import bp_common_pkg::*;
 #(
      // AXI CHANNEL PARAMS
@@ -58,21 +58,12 @@ module ethernet_controller_wrapper
     , output logic                         irq_o
 );
 
-    // target ("SIM", "GENERIC", "XILINX", "ALTERA")
+    // platform ("ZEDBOARD", "SIM")
 `ifdef FPGA
-    localparam TARGET                = "XILINX";
+    parameter PLATFORM = "ZEDBOARD";
 `else
-    localparam TARGET                = "GENERIC";
+    parameter PLATFORM = "SIM";
 `endif
-    // IODDR style ("IODDR", "IODDR2")
-    // Use IODDR for Virtex-4, Virtex-5, Virtex-6, 7 Series, Ultrascale
-    // Use IODDR2 for Spartan-6
-    localparam IODDR_STYLE           = "IODDR";
-    // Clock input style ("BUFG", "BUFR", "BUFIO", "BUFIO2")
-    // Use BUFR for Virtex-6, 7-series
-    // Use BUFG for Virtex-5, Spartan-6, Ultrascale
-    localparam  CLOCK_INPUT_STYLE    = "BUFR";
-
     localparam buf_size_lp           = 2048; // byte
     localparam packet_size_width_lp = $clog2(buf_size_lp) + 1;
     localparam size_width_lp = `BSG_WIDTH(`BSG_SAFE_CLOG2(axil_data_width_p/8));
@@ -100,39 +91,6 @@ module ethernet_controller_wrapper
     wire write_en_li = v_lo & wr_en_lo;
     wire read_en_li = v_lo & ~wr_en_lo;
     logic read_en_lo;
-
-    logic reset_r_lo;
-    bsg_dff #(.width_p(1))
-      reset_reg (
-        .clk_i(clk_i)
-        ,.data_i(reset_i)
-        ,.data_o(reset_r_lo)
-        );
-
-    // I/O delay control for zynq-7000
-    iodelay_control iodelay_control (
-      .clk_i(clk_i)
-     ,.reset_r_i(reset_r_lo)
-     ,.iodelay_ref_clk_i(iodelay_ref_clk_i)
-    );
-
-`ifdef FPGA
-    (* ASYNC_REG = "TRUE", SHREG_EXTRACT = "NO" *)
-    logic [3:0] reset_clk250_sync_r;
-`else
-    logic [3:0] reset_clk250_sync_r;
-`endif
-
-
-    // reset sync logic for clk250
-    logic reset_clk250_late_o; // UNUSED
-    always @(posedge clk250_i or posedge reset_r_lo) begin
-        if(reset_r_lo)
-            reset_clk250_sync_r <= '1;
-        else
-            reset_clk250_sync_r <= {1'b0, reset_clk250_sync_r[3:1]};
-    end
-    wire reset_clk250_li  = reset_clk250_sync_r[0];
 
     // Allow only 1 outstanding request
     bsg_dff_reset_set_clear #(
@@ -195,7 +153,7 @@ module ethernet_controller_wrapper
     axil_client_adaptor #(
        .axil_data_width_p(axil_data_width_p)
       ,.axil_addr_width_p(axil_addr_width_p)
-    ) axil_client_adaptor (
+    ) axil (
        .clk_i(clk_i)
       ,.reset_i(reset_i)
 
@@ -235,18 +193,15 @@ module ethernet_controller_wrapper
       ,.s_axil_rready_i
     );
 
-    ethernet_controller_core #(
-        .TARGET(TARGET)
-       ,.IODDR_STYLE(IODDR_STYLE)
-       ,.CLOCK_INPUT_STYLE(CLOCK_INPUT_STYLE)
+    ethernet_controller_wrapper #(
+        .PLATFORM(PLATFORM)
        ,.buf_size_p(buf_size_lp)
        ,.axis_width_p(axil_data_width_p)
-    ) eth (
+    ) eth_ctr_wrapper (
         .clk_i(clk_i)
        ,.reset_i(reset_i)
        ,.clk250_i(clk250_i)
-       ,.reset_clk250_i(reset_clk250_li)
-       ,.reset_clk250_late_o(/* UNUSED */)
+       ,.iodelay_ref_clk_i(iodelay_ref_clk_i)
 
        ,.addr_i(addr_lo)
        ,.write_en_i(write_en_li)

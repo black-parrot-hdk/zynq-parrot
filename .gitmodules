@@ -9,6 +9,6 @@
 [submodule "cosim/import/rv_plic"]
 	path = cosim/import/rv_plic
 	url = https://github.com/Yuan-Mao/rv_plic.git
-[submodule "cosim/import/eth_1g_test"]
-	path = cosim/import/eth_1g_test
-	url = https://github.com/Yuan-Mao/eth_1g_test.git
+[submodule "cosim/import/eth_1g_core"]
+	path = cosim/import/eth_1g_core
+	url = https://github.com/Yuan-Mao/eth_1g_core.git

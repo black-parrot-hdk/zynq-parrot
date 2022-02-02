@@ -554,10 +554,10 @@ module top_zynq
      ,.s_axil_rready_i (plic_s_axil_rready)
   );
 
-  ethernet_controller_wrapper #(
+  ethernet_axil_wrapper #(
     .axil_data_width_p(bp_axil_addr_width_lp)
    ,.axil_addr_width_p(bp_axil_data_width_lp)
-  ) ethernet_controller (
+  ) eth_axil (
     .clk_i(s01_axi_aclk)
    ,.reset_i(bp_reset_li)
    ,.clk250_i(clk250_i)
