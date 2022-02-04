@@ -55,6 +55,7 @@ module axil_client_adaptor
 
   localparam e_axi_prot_default = 3'b000;
   localparam e_axi_resp_okay    = 2'b00;
+  localparam lsb_lp = $clog2(axil_addr_width_p >> 3);
 
   wire unused = &{s_axil_awprot_i, s_axil_arprot_i};
 
@@ -115,7 +116,8 @@ module axil_client_adaptor
 
             if (s_axil_arvalid_i)
               begin
-                addr_o           = s_axil_araddr_i;
+                // ignore lower bit if not aligned with the bus width
+                addr_o           = {s_axil_araddr_i[axil_addr_width_p-1:lsb_lp], lsb_lp'('b0)};
                 wr_en_o          = 1'b0;
                 v_o              = 1'b1;
                 s_axil_arready_o = ready_and_i;
