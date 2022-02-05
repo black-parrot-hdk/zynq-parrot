@@ -69,13 +69,12 @@ module ethernet_axil_wrapper
     localparam packet_size_width_lp = $clog2(buf_size_lp) + 1;
     localparam size_width_lp = `BSG_WIDTH(`BSG_SAFE_CLOG2(axil_data_width_p/8));
 
-    logic                         v_lo;
-    logic                         ready_and_li;
-    logic [axil_addr_width_p-1:0] addr_lo;
-    logic                         wr_en_lo;
-    logic [1:0]                   data_size_lo;
-    logic [axil_data_width_p-1:0] wdata_lo;
-    logic                         ready_and_lo;
+    logic                         cmd_v_lo;
+    logic                         cmd_ready_and_li;
+    logic [axil_addr_width_p-1:0] cmd_addr_lo;
+    logic                         cmd_wr_en_lo;
+    logic [1:0]                   cmd_data_size_lo;
+    logic [axil_data_width_p-1:0] cmd_wdata_lo;
 
     logic [axil_data_width_p-1:0] resp_fifo_li;
     logic                         resp_fifo_v_li;
@@ -89,8 +88,8 @@ module ethernet_axil_wrapper
     logic                         rx_interrupt_pending_lo;
     logic                         tx_interrupt_pending_lo;
 
-    wire write_en_li = v_lo & wr_en_lo;
-    wire read_en_li = v_lo & ~wr_en_lo;
+    wire write_en_li = cmd_v_lo & cmd_wr_en_lo;
+    wire read_en_li = cmd_v_lo & ~cmd_wr_en_lo;
     logic read_en_lo;
 
     // Allow only 1 outstanding request
@@ -100,12 +99,12 @@ module ethernet_axil_wrapper
     ) disable_reg (
       .clk_i(clk_i)
       ,.reset_i(reset_i)
-      ,.set_i(v_lo & ready_and_li)
+      ,.set_i(cmd_v_lo & cmd_ready_and_li)
       ,.clear_i(resp_fifo_yumi_li)
       ,.data_o(disable_r)
     );
     assign resp_fifo_yumi_li = resp_fifo_v_lo & resp_fifo_ready_and_li;
-    assign ready_and_li = ~disable_r;
+    assign cmd_ready_and_li = ~disable_r;
     assign resp_fifo_v_li = read_en_lo | write_en_li;
 
     logic [1:0] data_size_r;;
@@ -115,7 +114,7 @@ module ethernet_axil_wrapper
       data_size_buf (
         .clk_i(clk_i)
         ,.reset_i(reset_i)
-        ,.data_i(data_size_lo)
+        ,.data_i(cmd_data_size_lo)
         ,.data_o(data_size_r)
       );
 
@@ -158,16 +157,16 @@ module ethernet_axil_wrapper
        .clk_i(clk_i)
       ,.reset_i(reset_i)
 
-      ,.v_o(v_lo)
-      ,.ready_and_i(ready_and_li)
-      ,.addr_o(addr_lo)
-      ,.wr_en_o(wr_en_lo)
-      ,.data_size_o(data_size_lo)
-      ,.wdata_o(wdata_lo)
+      ,.cmd_v_o(cmd_v_lo)
+      ,.cmd_ready_and_i(cmd_ready_and_li)
+      ,.cmd_addr_o(cmd_addr_lo)
+      ,.cmd_wr_en_o(cmd_wr_en_lo)
+      ,.cmd_data_size_o(cmd_data_size_lo)
+      ,.cmd_wdata_o(cmd_wdata_lo)
 
-      ,.v_i(resp_fifo_v_lo)
-      ,.ready_and_o(resp_fifo_ready_and_li)
-      ,.rdata_i(resp_fifo_lo)
+      ,.resp_v_i(resp_fifo_v_lo)
+      ,.resp_ready_and_o(resp_fifo_ready_and_li)
+      ,.resp_rdata_i(resp_fifo_lo)
 
       ,.s_axil_awaddr_i
       ,.s_axil_awprot_i
@@ -205,11 +204,11 @@ module ethernet_axil_wrapper
        ,.reset_clk125_o(reset_clk125_o)
        ,.iodelay_ref_clk_i(iodelay_ref_clk_i)
 
-       ,.addr_i(addr_lo)
+       ,.addr_i(cmd_addr_lo)
        ,.write_en_i(write_en_li)
        ,.read_en_i(read_en_li)
-       ,.op_size_i(data_size_lo)
-       ,.write_data_i(wdata_lo)
+       ,.op_size_i(cmd_data_size_lo)
+       ,.write_data_i(cmd_wdata_lo)
        ,.read_data_o(resp_fifo_li) // sync read
        ,.read_data_v_o(read_en_lo)
 

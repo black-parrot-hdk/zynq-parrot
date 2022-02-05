@@ -84,12 +84,12 @@ module rv_plic_wrapper
   tlul_pkg::tl_h2d_t tl_li;
   tlul_pkg::tl_d2h_t tl_lo;
 
-  logic [axil_addr_width_p-1:0] addr_li, addr_lo;
-  logic                         wr_en_li, wr_en_lo;
-  logic [1:0]                   data_size_li, data_size_lo;
-  logic [axil_data_width_p-1:0] wdata_li, wdata_lo;
+  logic [axil_addr_width_p-1:0] cmd_addr_li, cmd_addr_lo;
+  logic                         cmd_wr_en_li, cmd_wr_en_lo;
+  logic [1:0]                   cmd_data_size_li, cmd_data_size_lo;
+  logic [axil_data_width_p-1:0] cmd_wdata_li, cmd_wdata_lo;
                                             
-  logic [axil_data_width_p-1:0] rdata_li;
+  logic [axil_data_width_p-1:0] resp_rdata_li;
 
   logic                         tlul_req_li;
   logic                         tlul_gnt_lo;
@@ -109,16 +109,16 @@ module rv_plic_wrapper
     .clk_i(clk_i)
    ,.reset_i(reset_i)
 
-   ,.v_o(input_fifo_v_li)
-   ,.ready_and_i(input_fifo_ready_lo)
-   ,.addr_o(addr_li)
-   ,.wr_en_o(wr_en_li)
-   ,.data_size_o(data_size_li)
-   ,.wdata_o(wdata_li)
+   ,.cmd_v_o(input_fifo_v_li)
+   ,.cmd_ready_and_i(input_fifo_ready_lo)
+   ,.cmd_addr_o(cmd_addr_li)
+   ,.cmd_wr_en_o(cmd_wr_en_li)
+   ,.cmd_data_size_o(cmd_data_size_li)
+   ,.cmd_wdata_o(cmd_wdata_li)
                     
-   ,.v_i(output_fifo_v_lo)
-   ,.ready_and_o(output_fifo_ready_and_li)
-   ,.rdata_i(rdata_li)
+   ,.resp_v_i(output_fifo_v_lo)
+   ,.resp_ready_and_o(output_fifo_ready_and_li)
+   ,.resp_rdata_i(resp_rdata_li)
                     
    ,.s_axil_awaddr_i
    ,.s_axil_awprot_i
@@ -165,10 +165,10 @@ module rv_plic_wrapper
    input_fifo (
     .clk_i(clk_i)
     ,.reset_i(reset_i)
-    ,.data_i({wdata_li, addr_li, data_size_li, wr_en_li})
+    ,.data_i({cmd_wdata_li, cmd_addr_li, cmd_data_size_li, cmd_wr_en_li})
     ,.v_i(input_fifo_v_li)
     ,.ready_o(input_fifo_ready_lo)
-    ,.data_o({wdata_lo, addr_lo, data_size_lo, wr_en_lo})
+    ,.data_o({cmd_wdata_lo, cmd_addr_lo, cmd_data_size_lo, cmd_wr_en_lo})
     ,.v_o(input_fifo_v_o)
     ,.yumi_i(output_fifo_yumi)
     );
@@ -177,7 +177,7 @@ module rv_plic_wrapper
     bus_pack
      (.data_i(tlul_rdata_lo)
       ,.sel_i('b0)
-      ,.size_i(data_size_lo)
+      ,.size_i(cmd_data_size_lo)
       ,.data_o(tlul_rdata_packed_lo)
       );
   bsg_fifo_1r1w_small #(
@@ -190,13 +190,13 @@ module rv_plic_wrapper
     ,.ready_o(/* UNUSED */)
     ,.data_i(tlul_rdata_packed_lo)
     ,.v_o(output_fifo_v_lo)
-    ,.data_o(rdata_li)
+    ,.data_o(resp_rdata_li)
     ,.yumi_i(output_fifo_yumi)
    );
   assign tlul_req_li = input_fifo_v_o & ~next_req_disable_r;
-  assign tlul_addr_li = (top_pkg::TL_AW)'(addr_lo[plic_addr_width_lp-1:0]);
-  assign tlul_we_li  = wr_en_lo;
-  assign tlul_wdata_li = wdata_lo;
+  assign tlul_addr_li = (top_pkg::TL_AW)'(cmd_addr_lo[plic_addr_width_lp-1:0]);
+  assign tlul_we_li  = cmd_wr_en_lo;
+  assign tlul_wdata_li = cmd_wdata_lo;
   assign tlul_be_li = '1; // write strobe == '1
 
   assign rst_ni = ~reset_i;

@@ -41,8 +41,8 @@ module irq_to_axil_adaptor #(
     , output logic                               m_axil_rready_o
     );
 
-    logic                 v_li;
-    logic                 yumi_lo;
+    logic                 cmd_v_li;
+    logic                 cmd_yumi_lo;
     logic [NumTarget-1:0] irq_prev_r;
     wire level_change_detected = irq_r_i[0] ^ irq_prev_r[0];
 
@@ -60,8 +60,8 @@ module irq_to_axil_adaptor #(
         .clk_i(clk_i)
        ,.reset_i(reset_i)
        ,.set_i(level_change_detected)
-       ,.clear_i(yumi_lo)
-       ,.data_o(v_li)
+       ,.clear_i(cmd_yumi_lo)
+       ,.data_o(cmd_v_li)
       );
     axil_master_adaptor #(
         .axil_data_width_p(axil_data_width_p)
@@ -89,16 +89,16 @@ module irq_to_axil_adaptor #(
        ,.m_axil_rvalid_i
        ,.m_axil_rready_o
 
-       ,.addr_i(s_mode_plic_addr_p)
-       ,.v_i(v_li)
-       ,.yumi_o(yumi_lo)
-       ,.wr_en_i(1'b1)
-       ,.data_size_i('b10)
-       ,.wdata_i(irq_r_i)
+       ,.cmd_addr_i(s_mode_plic_addr_p)
+       ,.cmd_v_i(cmd_v_li)
+       ,.cmd_yumi_o(cmd_yumi_lo)
+       ,.cmd_wr_en_i(1'b1)
+       ,.cmd_data_size_i('b10)
+       ,.cmd_wdata_i(irq_r_i)
 
-       ,.v_o(/* UNUSED */)
-       ,.ready_and_i(1'b1)
-       ,.rdata_o(/* UNUSED */)
+       ,.resp_v_o(/* UNUSED */)
+       ,.resp_ready_and_i(1'b1)
+       ,.resp_rdata_o(/* UNUSED */)
     );
     
 

@@ -39,16 +39,16 @@ module axil_master_adaptor #(
   , output logic                               m_axil_rready_o
 
   //====================== HOST SIGNALS =========================
-  , input  [axil_addr_width_p-1:0]             addr_i
-  , input                                      v_i
-  , output logic                               yumi_o
-  , input                                      wr_en_i
-  , input [1:0]                                data_size_i
-  , input [axil_data_width_p-1:0]              wdata_i
+  , input  [axil_addr_width_p-1:0]             cmd_addr_i
+  , input                                      cmd_v_i
+  , output logic                               cmd_yumi_o
+  , input                                      cmd_wr_en_i
+  , input [1:0]                                cmd_data_size_i
+  , input [axil_data_width_p-1:0]              cmd_wdata_i
 
-  , output logic                               v_o
-  , input                                      ready_and_i
-  , output logic [axil_data_width_p-1:0]       rdata_o
+  , output logic                               resp_v_o
+  , input                                      resp_ready_and_i
+  , output logic [axil_data_width_p-1:0]       resp_rdata_o
   );
 
   localparam e_axi_prot_default = 3'b000;
@@ -60,21 +60,21 @@ module axil_master_adaptor #(
     begin
       state_n = state_r;
 
-      yumi_o = 1'b0;
-      rdata_o = m_axil_rdata_i;
-      v_o = 1'b0;
+      cmd_yumi_o = 1'b0;
+      resp_rdata_o = m_axil_rdata_i;
+      resp_v_o = 1'b0;
 
       // WRITE ADDRESS CHANNEL SIGNALS
-      m_axil_awaddr_o  = addr_i;
+      m_axil_awaddr_o  = cmd_addr_i;
       m_axil_awprot_o  = e_axi_prot_default;
       m_axil_awvalid_o = 1'b0;
 
       // WRITE DATA CHANNEL SIGNALS
-      m_axil_wdata_o   = wdata_i;
+      m_axil_wdata_o   = cmd_wdata_i;
       m_axil_wvalid_o  = 1'b0;
 
       // READ ADDRESS CHANNEL SIGNALS
-      m_axil_araddr_o  = addr_i;
+      m_axil_araddr_o  = cmd_addr_i;
       m_axil_arprot_o  = e_axi_prot_default;
       m_axil_arvalid_o = 1'b0;
 
@@ -84,7 +84,7 @@ module axil_master_adaptor #(
       // WRITE RESPONSE CHANNEL SIGNALS
       m_axil_bready_o  = 1'b0;
 
-      case (data_size_i)
+      case (cmd_data_size_i)
         2'b00 : m_axil_wstrb_o = (axil_data_width_p>>3)'('h1);
         2'b01 : m_axil_wstrb_o = (axil_data_width_p>>3)'('h3);
         2'b10 : m_axil_wstrb_o = (axil_data_width_p>>3)'('hF);
@@ -96,11 +96,11 @@ module axil_master_adaptor #(
         e_ready:
           begin
             // if the client device is ready to receive, send the data along with the address
-            if (v_i & wr_en_i)
+            if (cmd_v_i & cmd_wr_en_i)
               begin
                 m_axil_awvalid_o   = 1'b1;
                 m_axil_wvalid_o    = 1'b1;
-                yumi_o = m_axil_awready_i;
+                cmd_yumi_o = m_axil_awready_i;
 
                 state_n = (m_axil_wready_i & m_axil_wvalid_o)
                   ? e_write_resp_rx
@@ -109,12 +109,12 @@ module axil_master_adaptor #(
                     : e_ready;
               end
 
-            else if (v_i & ~wr_en_i)
+            else if (cmd_v_i & ~cmd_wr_en_i)
               begin
                 m_axil_arvalid_o   = 1'b1;
-                v_o           = m_axil_rvalid_i;
-                m_axil_rready_o    = ready_and_i;
-                yumi_o        = m_axil_arready_i;
+                resp_v_o           = m_axil_rvalid_i;
+                m_axil_rready_o    = resp_ready_and_i;
+                cmd_yumi_o        = m_axil_arready_i;
 
                 state_n = (m_axil_rready_o & m_axil_rvalid_i)
                           ? e_ready
@@ -127,24 +127,24 @@ module axil_master_adaptor #(
         e_write_data_tx:
           begin
             m_axil_wvalid_o    = 1'b1;
-            yumi_o = m_axil_wready_i;
+            cmd_yumi_o = m_axil_wready_i;
 
             state_n = (m_axil_wready_i & m_axil_wvalid_o) ? e_ready : e_write_data_tx;
           end
 
         e_write_resp_rx:
           begin
-            m_axil_bready_o = ready_and_i;
-            v_o     = m_axil_bvalid_i;
+            m_axil_bready_o = resp_ready_and_i;
+            resp_v_o     = m_axil_bvalid_i;
             state_n = (m_axil_bvalid_i & m_axil_bready_o) ? e_ready : state_r;
           end
 
        e_read_data_tx:
          begin
-           m_axil_rready_o = ready_and_i;
-           v_o        = m_axil_rvalid_i;
+           m_axil_rready_o = resp_ready_and_i;
+           resp_v_o        = m_axil_rvalid_i;
 
-           state_n = (ready_and_i & v_o) ? e_ready : state_r;
+           state_n = (resp_ready_and_i & resp_v_o) ? e_ready : state_r;
          end
 
         default: state_n = state_r;

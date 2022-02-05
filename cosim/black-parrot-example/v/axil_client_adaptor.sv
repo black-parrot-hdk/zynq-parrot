@@ -11,16 +11,16 @@ module axil_client_adaptor
    , input                                      reset_i
 
    //==================== HOST SIGNALS ======================
-   , output logic                               v_o
-   , input                                      ready_and_i
-   , output logic [axil_addr_width_p-1:0]       addr_o
-   , output logic                               wr_en_o
-   , output logic [1:0]                         data_size_o
-   , output logic [axil_data_width_p-1:0]       wdata_o
+   , output logic                               cmd_v_o
+   , input                                      cmd_ready_and_i
+   , output logic [axil_addr_width_p-1:0]       cmd_addr_o
+   , output logic                               cmd_wr_en_o
+   , output logic [1:0]                         cmd_data_size_o
+   , output logic [axil_data_width_p-1:0]       cmd_wdata_o
 
-   , input                                      v_i
-   , output logic                               ready_and_o
-   , input [axil_data_width_p-1:0]              rdata_i
+   , input                                      resp_v_i
+   , output logic                               resp_ready_and_o
+   , input [axil_data_width_p-1:0]              resp_rdata_i
 
    //====================== AXI-4 LITE =========================
    // WRITE ADDRESS CHANNEL SIGNALS
@@ -67,15 +67,15 @@ module axil_client_adaptor
       state_n = state_r;
 
       // HOST side
-      addr_o         = '0;
-      wdata_o        = '0;
-      wr_en_o        = '0;
-      v_o            = '0;
-      ready_and_o    = '0;
+      cmd_addr_o         = '0;
+      cmd_wdata_o        = '0;
+      cmd_wr_en_o        = '0;
+      cmd_v_o            = '0;
+      resp_ready_and_o    = '0;
 
 
       // set default size
-      data_size_o = (axil_data_width_p == 32) ? 2'b10 : 2'b11;
+      cmd_data_size_o = (axil_data_width_p == 32) ? 2'b10 : 2'b11;
 
 
       // WRITE ADDRESS CHANNEL SIGNALS
@@ -98,10 +98,10 @@ module axil_client_adaptor
 
       if (s_axil_wvalid_i) begin
         case (s_axil_wstrb_i)
-          (axil_data_width_p>>3)'('h1)  : data_size_o = 2'b00;
-          (axil_data_width_p>>3)'('h3)  : data_size_o = 2'b01;
-          (axil_data_width_p>>3)'('hF)  : data_size_o = 2'b10;
-          (axil_data_width_p>>3)'('hFF) : data_size_o = 2'b11;
+          (axil_data_width_p>>3)'('h1)  : cmd_data_size_o = 2'b00;
+          (axil_data_width_p>>3)'('h3)  : cmd_data_size_o = 2'b01;
+          (axil_data_width_p>>3)'('hF)  : cmd_data_size_o = 2'b10;
+          (axil_data_width_p>>3)'('hFF) : cmd_data_size_o = 2'b11;
           default:
             $warning("%m: received unhandled strobe pattern %b\n",s_axil_wstrb_i);
         endcase
@@ -117,22 +117,22 @@ module axil_client_adaptor
             if (s_axil_arvalid_i)
               begin
                 // ignore lower bit if not aligned with the bus width
-                addr_o           = {s_axil_araddr_i[axil_addr_width_p-1:lsb_lp], lsb_lp'('b0)};
-                wr_en_o          = 1'b0;
-                v_o              = 1'b1;
-                s_axil_arready_o = ready_and_i;
+                cmd_addr_o           = {s_axil_araddr_i[axil_addr_width_p-1:lsb_lp], lsb_lp'('b0)};
+                cmd_wr_en_o          = 1'b0;
+                cmd_v_o              = 1'b1;
+                s_axil_arready_o = cmd_ready_and_i;
 
                 state_n = (s_axil_arready_o & s_axil_arvalid_i) ? e_read_resp : e_wait;
               end
             else if (s_axil_awvalid_i & s_axil_wvalid_i)
               begin
-                addr_o                = s_axil_awaddr_i;
-                wr_en_o               = 1'b1;
-                wdata_o               = s_axil_wdata_i;
-                v_o                   = 1'b1;
+                cmd_addr_o                = s_axil_awaddr_i;
+                cmd_wr_en_o               = 1'b1;
+                cmd_wdata_o               = s_axil_wdata_i;
+                cmd_v_o                   = 1'b1;
 
-                s_axil_awready_o = ready_and_i;
-                s_axil_wready_o  = ready_and_i;
+                s_axil_awready_o = cmd_ready_and_i;
+                s_axil_wready_o  = cmd_ready_and_i;
 
                 state_n = (s_axil_awready_o & s_axil_awvalid_i
                         & s_axil_wready_o & s_axil_wvalid_i) ? 
@@ -142,18 +142,18 @@ module axil_client_adaptor
 
         e_write_resp:
           begin
-            s_axil_bvalid_o  = v_i;
-            ready_and_o = s_axil_bready_i;
+            s_axil_bvalid_o  = resp_v_i;
+            resp_ready_and_o = s_axil_bready_i;
             state_n = (s_axil_bvalid_o & s_axil_bready_i) ? e_wait : state_r;
           end
 
         e_read_resp:
           begin
-            s_axil_rdata_o  = rdata_i;
-            s_axil_rvalid_o = v_i;
-            ready_and_o     = s_axil_rready_i;
+            s_axil_rdata_o  = resp_rdata_i;
+            s_axil_rvalid_o = resp_v_i;
+            resp_ready_and_o     = s_axil_rready_i;
 
-            state_n = (ready_and_o & v_i) ? e_wait : state_r;
+            state_n = (resp_ready_and_o & resp_v_i) ? e_wait : state_r;
           end
 
         default: state_n = state_r;
