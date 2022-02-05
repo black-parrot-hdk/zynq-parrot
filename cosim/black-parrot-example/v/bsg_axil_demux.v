@@ -143,16 +143,16 @@ module bsg_axil_demux
   logic                    encoder_v_lo;
 
   wire [master_count-1:0] raddr_hit = {
-        ((s00_axil_araddr >= 32'h50_0000) && (s00_axil_araddr < 32'h60_0000))  // eth
-       ,((s00_axil_araddr >= 32'h60_0000) && (s00_axil_araddr < 32'h460_0000)) // plic
-       ,((s00_axil_araddr >= 32'h460_0000) || ((s00_axil_araddr >= 32'h20_0000) && (s00_axil_araddr < 32'h50_0000))) // acc
+        ((s00_axil_araddr >= 32'h1000_0000) && (s00_axil_araddr < 32'h1010_0000)) // eth
+       ,((s00_axil_araddr >= 32'h2000_0000) && (s00_axil_araddr < 32'h2400_0000)) // plic
+       ,((s00_axil_araddr >= 32'h20_0000) && (s00_axil_araddr < 32'h1000_0000))  // acc
        ,(s00_axil_araddr < 32'h20_0000)  // host
        };
 
   wire [master_count-1:0] waddr_hit = {
-        ((s00_axil_awaddr >= 32'h50_0000) && (s00_axil_awaddr < 32'h60_0000))  // eth
-       ,((s00_axil_awaddr >= 32'h60_0000) && (s00_axil_awaddr < 32'h460_0000)) // plic
-       ,((s00_axil_awaddr >= 32'h460_0000) || ((s00_axil_awaddr >= 32'h20_0000) && (s00_axil_awaddr < 32'h50_0000))) // acc
+        ((s00_axil_awaddr >= 32'h1000_0000) && (s00_axil_awaddr < 32'h1010_0000)) // eth
+       ,((s00_axil_awaddr >= 32'h2000_0000) && (s00_axil_awaddr < 32'h2400_0000)) // plic
+       ,((s00_axil_awaddr >= 32'h20_0000) && (s00_axil_awaddr < 32'h1000_0000))  // acc
        ,(s00_axil_awaddr < 32'h20_0000)  // host
        };
 
