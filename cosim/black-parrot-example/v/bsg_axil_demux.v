@@ -150,10 +150,10 @@ module bsg_axil_demux
        };
 
   wire [master_count-1:0] waddr_hit = {
-        ((s00_axil_araddr >= 32'h50_0000) && (s00_axil_araddr < 32'h60_0000))  // eth
-       ,((s00_axil_araddr >= 32'h60_0000) && (s00_axil_araddr < 32'h460_0000)) // plic
-       ,((s00_axil_araddr >= 32'h460_0000) || ((s00_axil_araddr >= 32'h20_0000) && (s00_axil_araddr < 32'h50_0000))) // acc
-       ,(s00_axil_araddr < 32'h20_0000)  // host
+        ((s00_axil_awaddr >= 32'h50_0000) && (s00_axil_awaddr < 32'h60_0000))  // eth
+       ,((s00_axil_awaddr >= 32'h60_0000) && (s00_axil_awaddr < 32'h460_0000)) // plic
+       ,((s00_axil_awaddr >= 32'h460_0000) || ((s00_axil_awaddr >= 32'h20_0000) && (s00_axil_awaddr < 32'h50_0000))) // acc
+       ,(s00_axil_awaddr < 32'h20_0000)  // host
        };
 
   for(genvar i = 0;i < master_count;i++) begin: enable
