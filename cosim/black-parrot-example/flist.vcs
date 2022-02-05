@@ -45,7 +45,8 @@ $PLIC_DIR/rv_plic_reg_top.sv
 $PLIC_DIR/rv_plic_target.sv
 $ETH_ALEX_DIR/zedboard/ethernet_controller_wrapper.sv
 $ETH_ALEX_DIR/zedboard/iodelay_control.sv
-$ETH_ALEX_DIR/common/ethernet_with_buffer.sv
+$ETH_ALEX_DIR/common/ethernet_controller.sv
+$ETH_ALEX_DIR/common/mac_with_buffer.sv
 $ETH_ALEX_DIR/common/axis_adapter.v
 $ETH_ALEX_DIR/common/axis_async_fifo_adapter.v
 $ETH_ALEX_DIR/common/axis_async_fifo.v
@@ -58,13 +59,13 @@ $ETH_ALEX_DIR/common/eth_mac_1g.v
 $ETH_ALEX_DIR/common/iddr.v
 $ETH_ALEX_DIR/common/interrupt_generator.sv
 $ETH_ALEX_DIR/common/lfsr.v
-$ETH_ALEX_DIR/common/oddr_clock_downsample.v
+$ETH_ALEX_DIR/common/oddr_clock_downsample_and_right_shift.sv
+$ETH_ALEX_DIR/common/gtx_clk_and_phy_tx_clk_generator.sv
 $ETH_ALEX_DIR/common/rgmii_phy_if.v
 $ETH_ALEX_DIR/common/ssio_ddr_in.v
 $ETH_ALEX_DIR/common/ethernet_receiver.sv
 $ETH_ALEX_DIR/common/ethernet_sender.sv
-$ETH_ALEX_DIR/common/rx_buffer_memory.sv
-$ETH_ALEX_DIR/common/tx_buffer_memory.sv
+$ETH_ALEX_DIR/common/packet_buffer.sv
 $CURR_SRC_DIR/bsg_axil_store_packer.sv
 $CURR_SRC_DIR/bsg_axil_mux.v
 $CURR_SRC_DIR/bsg_axil_demux.v

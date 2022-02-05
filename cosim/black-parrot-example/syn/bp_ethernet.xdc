@@ -1,5 +1,5 @@
 # clk250 -> clk125
-create_generated_clock -name gtx_clk -source [get_pins {blackparrot_bd_1_i/processing_system7_0/inst/PS7_i/FCLKCLK[1]}] -divide_by 2 [get_pins blackparrot_bd_1_i/top_0/inst/top_fpga_inst/eth_axil/eth_ctr_wrapper/eth_ctr/eth/mac/clock_downsampler/clk_r_o_reg/Q]
+create_generated_clock -name gtx_clk -source [get_pins {blackparrot_bd_1_i/processing_system7_0/inst/PS7_i/FCLKCLK[1]}] -divide_by 2 [get_pins blackparrot_bd_1_i/top_0/inst/top_fpga_inst/eth_axil/eth_ctr_wrapper/eth_ctr/eth/mac/eth_mac_1g_rgmii_inst/rgmii_phy_if_inst/gtx_clk_and_phy_tx_clk_gen/gtx_clk_gen/clk_r_o_reg/Q]
 # clk250 -> 90-degree shifted clk125 for rgmii TX clk source
 create_generated_clock -name rgmii_tx_clk -source [get_pins {blackparrot_bd_1_i/processing_system7_0/inst/PS7_i/FCLKCLK[1]}] -edges {2 4 6} -edge_shift {0.000 0.000 0.000} [get_ports rgmii_tx_clk_o]
 # RX clk source (125M)

@@ -561,6 +561,7 @@ module top_zynq
     .clk_i(s01_axi_aclk)
    ,.reset_i(bp_reset_li)
    ,.clk250_i(clk250_i)
+   ,.reset_clk125_o(/* UNUSED */)
 
    ,.iodelay_ref_clk_i(iodelay_ref_clk_i)
 

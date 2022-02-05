@@ -13,6 +13,7 @@ module ethernet_axil_wrapper
       input  logic                         clk_i
     , input  logic                         reset_i
     , input  logic                         clk250_i
+    , output logic                         reset_clk125_o
     // zynq-7000 specific: 200 MHZ for IDELAY tap value
     , input  logic                         iodelay_ref_clk_i
 
@@ -201,6 +202,7 @@ module ethernet_axil_wrapper
         .clk_i(clk_i)
        ,.reset_i(reset_i)
        ,.clk250_i(clk250_i)
+       ,.reset_clk125_o(reset_clk125_o)
        ,.iodelay_ref_clk_i(iodelay_ref_clk_i)
 
        ,.addr_i(addr_lo)
