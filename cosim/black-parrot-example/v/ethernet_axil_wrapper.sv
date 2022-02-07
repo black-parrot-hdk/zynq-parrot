@@ -65,15 +65,13 @@ module ethernet_axil_wrapper
 `else
     parameter PLATFORM = "SIM";
 `endif
-    localparam buf_size_lp           = 2048; // byte
-    localparam packet_size_width_lp = $clog2(buf_size_lp) + 1;
     localparam size_width_lp = `BSG_WIDTH(`BSG_SAFE_CLOG2(axil_data_width_p/8));
 
     logic                         cmd_v_lo;
     logic                         cmd_ready_and_li;
     logic [axil_addr_width_p-1:0] cmd_addr_lo;
     logic                         cmd_wr_en_lo;
-    logic [1:0]                   cmd_data_size_lo;
+    logic [size_width_lp-1:0]     cmd_data_size_lo;
     logic [axil_data_width_p-1:0] cmd_wdata_lo;
 
     logic [axil_data_width_p-1:0] resp_fifo_li;
@@ -107,7 +105,7 @@ module ethernet_axil_wrapper
     assign cmd_ready_and_li = ~disable_r;
     assign resp_fifo_v_li = read_en_lo | write_en_li;
 
-    logic [1:0] data_size_r;;
+    logic [size_width_lp-1:0] data_size_r;
     // align with read data
     bsg_dff_reset
      #(.width_p(2))
@@ -195,8 +193,7 @@ module ethernet_axil_wrapper
 
     ethernet_controller_wrapper #(
         .PLATFORM(PLATFORM)
-       ,.buf_size_p(buf_size_lp)
-       ,.axis_width_p(axil_data_width_p)
+       ,.data_width_p(axil_data_width_p)
     ) eth_ctr_wrapper (
         .clk_i(clk_i)
        ,.reset_i(reset_i)
