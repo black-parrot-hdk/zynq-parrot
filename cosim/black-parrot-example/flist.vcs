@@ -74,6 +74,9 @@ $CURR_SRC_DIR/axil_client_adaptor.sv
 $CURR_SRC_DIR/ethernet_axil_wrapper.sv
 $CURR_SRC_DIR/rv_plic_wrapper.sv
 $CURR_SRC_DIR/irq_to_axil_adaptor.sv
+$CURR_SRC_DIR/iddr_nonsynth.v
+$CURR_SRC_DIR/oddr_nonsynth.v
+$CURR_SRC_DIR/rgmii_loopback_nonsynth.sv
 $CURR_SRC_DIR/top_zynq.sv
 $CURR_SRC_DIR/top.v
 

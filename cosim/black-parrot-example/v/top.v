@@ -145,7 +145,7 @@ module top
     logic clk250_li;
     logic iodelay_ref_clk_li;
 
-    logic         rgmii_rx_clk_li;
+    bit           rgmii_rx_clk_li;
     logic [3:0]   rgmii_rxd_li;
     logic         rgmii_rx_ctl_li;
     logic         rgmii_tx_clk_lo;
@@ -381,22 +381,52 @@ module top
       ,.axi_rvalid_o  (m00_axi_rvalid)
       ,.axi_rready_i  (m00_axi_rready)
       );
+    // We pretend s01_axi_aclk is 250 MHZ
     assign clk250_li          = s01_axi_aclk;
     assign iodelay_ref_clk_li = s01_axi_aclk;
-    assign rgmii_rx_clk_li    = rgmii_tx_clk_lo;
-    assign rgmii_rx_ctl_li    = rgmii_tx_ctl_lo;
-    assign rgmii_rxd_li       = rgmii_txd_lo;
 
-    logic                   rgmii_rx_clk_i;
+    bit                     rgmii_rx_clk_i;
     logic [3:0]             rgmii_rxd_i;
     logic                   rgmii_rx_ctl_i;
     logic                   rgmii_tx_clk_o;
     logic [3:0]             rgmii_txd_o;
     logic                   rgmii_tx_ctl_o;
-    assign rgmii_rx_clk_i = rgmii_tx_clk_o;
-    assign rgmii_rxd_i    = rgmii_txd_o;
-    assign rgmii_rx_ctl_i = rgmii_tx_ctl_o;
 
+    // phy_speed ("2.5", "25", "125") (MHZ)
+    // (10M, 100M, 1000M Ethernet)
+    parameter phy_speed = "2.5";
+    logic [7:0] downsample_rate;
+
+if(phy_speed == "2.5")
+    assign downsample_rate = 8'd99;
+else if(phy_speed == "25")
+    assign downsample_rate = 8'd9;
+else if(phy_speed == "125")
+    assign downsample_rate = 8'd1;
+
+    bit downsample_clk;
+    bit [7:0] downsample_counter;
+    always @(posedge s01_axi_aclk or negedge s01_axi_aclk) begin
+      if(downsample_counter == downsample_rate) begin
+        downsample_counter <= '0;
+        downsample_clk <= ~downsample_clk;
+      end
+      else
+        downsample_counter <= downsample_counter + 1;
+    end
+    assign rgmii_rx_clk_li = downsample_clk;
+
+    rgmii_loopback_nonsynth rgmii_loopback_nonsynth
+     (.rx_rst_i(top_fpga_inst.eth_axil.eth_ctr_wrapper.eth_ctr.eth.mac.tx_rst)
+      ,.rgmii_rx_clk_i(rgmii_tx_clk_lo)
+      ,.rgmii_rxd_i(rgmii_txd_lo)
+      ,.rgmii_rx_ctl_i(rgmii_tx_ctl_lo)
+
+      ,.tx_rst_i(top_fpga_inst.eth_axil.eth_ctr_wrapper.eth_ctr.eth.mac.rx_rst)
+      ,.rgmii_tx_clk_i(rgmii_rx_clk_li)
+      ,.rgmii_txd_o(rgmii_rxd_li)
+      ,.rgmii_tx_ctl_o(rgmii_rx_ctl_li)
+     );
 
 `endif
 
