@@ -3,7 +3,6 @@ module rv_plic_wrapper
     import rv_plic_reg_pkg::*; #(
       parameter axil_data_width_p = 32
     , parameter axil_addr_width_p = 32
-    , parameter s_mode_plic_addr_p = 'h30_a000
     // {Ethernet INT, Reserved}
     , localparam int SRCW    = $clog2(NumSrc)
   )
@@ -250,7 +249,7 @@ module rv_plic_wrapper
   irq_to_axil_adaptor #(
     .axil_data_width_p(axil_data_width_p)
     ,.axil_addr_width_p(axil_addr_width_p)
-    ,.s_mode_plic_addr_p(s_mode_plic_addr_p)
+    ,.s_mode_plic_addr_p('h30_b004)
   ) irq_to_axil_adaptor (
       .clk_i(clk_i)                         
      ,.reset_i(reset_i)

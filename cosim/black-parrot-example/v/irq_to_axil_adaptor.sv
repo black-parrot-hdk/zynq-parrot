@@ -1,7 +1,10 @@
+
+`include "bsg_defines.v"
+
 module irq_to_axil_adaptor #(
       parameter axil_data_width_p = 32
     , parameter axil_addr_width_p = 32
-    , parameter s_mode_plic_addr_p = 'h30_a000
+    , parameter `BSG_INV_PARAM(s_mode_plic_addr_p)
     , localparam NumTarget = 1 // We only support 1 target for now
     )
     (
