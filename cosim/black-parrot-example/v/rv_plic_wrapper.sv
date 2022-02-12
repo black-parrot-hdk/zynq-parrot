@@ -75,6 +75,7 @@ module rv_plic_wrapper
   parameter reg_width_p      = top_pkg::TL_DW;
   parameter reg_addr_width_p = top_pkg::TL_AW;
   localparam plic_addr_width_lp = 22;
+  localparam s_mode_plic_addr_lp = 'h30_b004;
 
   // Interrupt notification to targets
   logic [NumTarget-1:0]                   irq_lo; // eip
@@ -179,17 +180,16 @@ module rv_plic_wrapper
       ,.size_i(cmd_data_size_lo)
       ,.data_o(tlul_rdata_packed_lo)
       );
-  bsg_fifo_1r1w_small #(
-    .width_p(reg_width_p)
-    ,.els_p(2)) 
+  bsg_one_fifo #(
+    .width_p(reg_width_p))
    output_fifo (
     .clk_i(clk_i)
     ,.reset_i(reset_i)
+    ,.data_i(tlul_rdata_packed_lo)
     ,.v_i(tlul_valid_lo)
     ,.ready_o(/* UNUSED */)
-    ,.data_i(tlul_rdata_packed_lo)
-    ,.v_o(output_fifo_v_lo)
     ,.data_o(resp_rdata_li)
+    ,.v_o(output_fifo_v_lo)
     ,.yumi_i(output_fifo_yumi)
    );
   assign tlul_req_li = input_fifo_v_o & ~next_req_disable_r;
@@ -249,7 +249,7 @@ module rv_plic_wrapper
   irq_to_axil_adaptor #(
     .axil_data_width_p(axil_data_width_p)
     ,.axil_addr_width_p(axil_addr_width_p)
-    ,.s_mode_plic_addr_p('h30_b004)
+    ,.s_mode_plic_addr_p(s_mode_plic_addr_lp)
   ) irq_to_axil_adaptor (
       .clk_i(clk_i)                         
      ,.reset_i(reset_i)
