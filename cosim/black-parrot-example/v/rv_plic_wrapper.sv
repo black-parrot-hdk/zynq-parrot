@@ -100,7 +100,6 @@ module rv_plic_wrapper
                                 
   logic                         tlul_valid_lo;
   logic [top_pkg::TL_DW-1:0]    tlul_rdata_lo;
-  logic [top_pkg::TL_DW-1:0]    tlul_rdata_packed_lo;
 
   axil_client_adaptor #(
     .axil_data_width_p(reg_width_p)
@@ -172,20 +171,13 @@ module rv_plic_wrapper
     ,.v_o(input_fifo_v_o)
     ,.yumi_i(output_fifo_yumi)
     );
-  bsg_bus_pack
-   #(.in_width_p(reg_width_p))
-    bus_pack
-     (.data_i(tlul_rdata_lo)
-      ,.sel_i('b0)
-      ,.size_i(cmd_data_size_lo)
-      ,.data_o(tlul_rdata_packed_lo)
-      );
+
   bsg_one_fifo #(
     .width_p(reg_width_p))
    output_fifo (
     .clk_i(clk_i)
     ,.reset_i(reset_i)
-    ,.data_i(tlul_rdata_packed_lo)
+    ,.data_i(tlul_rdata_lo)
     ,.v_i(tlul_valid_lo)
     ,.ready_o(/* UNUSED */)
     ,.data_o(resp_rdata_li)

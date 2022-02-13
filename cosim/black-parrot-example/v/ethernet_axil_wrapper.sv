@@ -105,27 +105,6 @@ module ethernet_axil_wrapper
     assign cmd_ready_and_li = ~disable_r;
     assign resp_fifo_v_li = read_en_lo | write_en_li;
 
-    logic [size_width_lp-1:0] data_size_r;
-    // align with read data
-    bsg_dff_reset
-     #(.width_p(2))
-      data_size_buf (
-        .clk_i(clk_i)
-        ,.reset_i(reset_i)
-        ,.data_i(cmd_data_size_lo)
-        ,.data_o(data_size_r)
-      );
-
-    logic [axil_data_width_p-1:0] resp_fifo_packed_li;
-    bsg_bus_pack
-     #(.in_width_p(axil_data_width_p), .out_width_p(axil_data_width_p))
-      bus_pack
-       (.data_i(resp_fifo_li)
-        ,.sel_i('b0)
-        ,.size_i(data_size_r)
-        ,.data_o(resp_fifo_packed_li)
-        );
-
     // this tracks both read and write
     bsg_fifo_1r1w_small #(
        .width_p(axil_data_width_p)
@@ -135,7 +114,7 @@ module ethernet_axil_wrapper
       ,.reset_i(reset_i)
       ,.v_i(resp_fifo_v_li)
       ,.ready_o(resp_fifo_ready_lo)
-      ,.data_i(resp_fifo_packed_li)
+      ,.data_i(resp_fifo_li)
       ,.v_o(resp_fifo_v_lo)
       ,.data_o(resp_fifo_lo)
       ,.yumi_i(resp_fifo_yumi_li)
