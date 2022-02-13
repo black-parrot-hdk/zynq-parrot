@@ -106,9 +106,8 @@ module ethernet_axil_wrapper
     assign resp_fifo_v_li = read_en_lo | write_en_li;
 
     // this tracks both read and write
-    bsg_fifo_1r1w_small #(
+    bsg_one_fifo #(
        .width_p(axil_data_width_p)
-      ,.els_p(2)
     ) resp_fifo (
        .clk_i(clk_i)
       ,.reset_i(reset_i)
