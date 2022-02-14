@@ -58,13 +58,6 @@ module ethernet_axil_wrapper
     //====================== Ethernet IRQ =========================
     , output logic                         irq_o
 );
-
-    // platform ("ZEDBOARD", "SIM")
-`ifdef FPGA
-    parameter PLATFORM = "ZEDBOARD";
-`else
-    parameter PLATFORM = "SIM";
-`endif
     localparam size_width_lp = `BSG_WIDTH(`BSG_SAFE_CLOG2(axil_data_width_p/8));
 
     logic                         cmd_v_lo;
@@ -170,8 +163,7 @@ module ethernet_axil_wrapper
     );
 
     ethernet_controller_wrapper #(
-        .PLATFORM(PLATFORM)
-       ,.data_width_p(axil_data_width_p)
+        .data_width_p(axil_data_width_p)
     ) eth_ctr_wrapper (
         .clk_i(clk_i)
        ,.reset_i(reset_i)

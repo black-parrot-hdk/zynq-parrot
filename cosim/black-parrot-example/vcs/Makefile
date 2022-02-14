@@ -30,6 +30,8 @@ CFLAGS += -DSCRATCHPAD_ENABLE
 #CFLAGS += -DSIM_BACKPRESSURE_LENGTH=100
 CFLAGS += $(INCLUDES) $(SKIP_DRAM)
 
+VCS_OPTS += +define+SIM_MP
+
 include $(TOP)/cosim/mk/Makefile.vcs
 
 #############################
