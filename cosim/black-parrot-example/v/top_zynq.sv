@@ -9,7 +9,7 @@ module top_zynq
  import bp_common_pkg::*;
  import bp_be_pkg::*;
  import bp_me_pkg::*;
- #(parameter bp_params_e bp_params_p = e_bp_unicore_cfg
+ #(parameter bp_params_e bp_params_p = e_bp_default_cfg
    `declare_bp_proc_params(bp_params_p)
    `declare_bp_bedrock_mem_if_widths(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p, uce)
 
@@ -143,28 +143,33 @@ module top_zynq
    , output wire                                 m01_axi_rready
    );
 
+   localparam bp_axil_addr_width_lp = 32;
+   localparam bp_axil_data_width_lp = 32;
+   localparam bp_axi_addr_width_lp  = 32;
+   localparam bp_axi_data_width_lp  = 64;
+
    logic [2:0][C_S00_AXI_DATA_WIDTH-1:0]        csr_data_lo;
    logic [C_S00_AXI_DATA_WIDTH-1:0]             pl_to_ps_fifo_data_li, ps_to_pl_fifo_data_lo;
    logic                                        pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
    logic                                        ps_to_pl_fifo_v_lo, ps_to_pl_fifo_ready_li;
 
-   logic [C_S01_AXI_ADDR_WIDTH-1 : 0]           bp_axi_awaddr;
-   logic [2 : 0]                                bp_axi_awprot;
+   logic [bp_axil_addr_width_lp-1:0]            bp_axi_awaddr;
+   logic [2:0]                                  bp_axi_awprot;
    logic                                        bp_axi_awvalid;
    logic                                        bp_axi_awready;
-   logic [C_S01_AXI_DATA_WIDTH-1 : 0]           bp_axi_wdata;
-   logic [(C_S01_AXI_DATA_WIDTH/8)-1 : 0]       bp_axi_wstrb;
+   logic [bp_axil_data_width_lp-1:0]            bp_axi_wdata;
+   logic [(bp_axil_data_width_lp/8)-1:0]        bp_axi_wstrb;
    logic                                        bp_axi_wvalid;
    logic                                        bp_axi_wready;
-   logic  [1 : 0]                               bp_axi_bresp;
+   logic [1:0]                                  bp_axi_bresp;
    logic                                        bp_axi_bvalid;
    logic                                        bp_axi_bready;
-   logic [C_S01_AXI_ADDR_WIDTH-1 : 0]           bp_axi_araddr;
-   logic [2 : 0]                                bp_axi_arprot;
+   logic [bp_axil_addr_width_lp-1:0]            bp_axi_araddr;
+   logic [2:0]                                  bp_axi_arprot;
    logic                                        bp_axi_arvalid;
    logic                                        bp_axi_arready;
-   logic  [C_S01_AXI_DATA_WIDTH-1 : 0]          bp_axi_rdata;
-   logic  [1 : 0]                               bp_axi_rresp;
+   logic [bp_axil_data_width_lp-1:0]            bp_axi_rdata;
+   logic [1:0]                                  bp_axi_rresp;
    logic                                        bp_axi_rvalid;
    logic                                        bp_axi_rready;
 
@@ -177,9 +182,9 @@ module top_zynq
 
    logic [63:0] minstret_lo;
    if (multicore_p)
-      assign minstret_lo = blackparrot.w.multicore.cc.y[0].x[0].tile_node.tile.core.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
+     assign minstret_lo = blackparrot.m.multicore.cc.y[0].x[0].tile_node.tile.core.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
    else
-      assign minstret_lo = blackparrot.w.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
+     assign minstret_lo = blackparrot.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
 
    // Connect Shell to AXI Bus Interface S00_AXI
    bsg_zynq_pl_shell #
@@ -264,11 +269,6 @@ module top_zynq
    logic                       dma_data_v_lo, dma_data_yumi_li;
    logic [l2_fill_width_p-1:0] dma_data_li;
    logic                       dma_data_v_li, dma_data_ready_and_lo;
-
-   localparam bp_axil_addr_width_lp = 32;
-   localparam bp_axil_data_width_lp = 32;
-   localparam bp_axi_addr_width_lp  = 32;
-   localparam bp_axi_data_width_lp  = 64;
 
    logic [bp_axil_addr_width_lp-1:0] waddr_translated_lo, raddr_translated_lo;
 
@@ -363,7 +363,7 @@ module top_zynq
 
    bsg_axil_store_packer
     #(.axi_addr_width_p(bp_axil_addr_width_lp)
-      ,.axi_data_width_p(32)
+      ,.axi_data_width_p(bp_axil_data_width_lp)
       )
     store_packer
      (.clk_i   (s01_axi_aclk)

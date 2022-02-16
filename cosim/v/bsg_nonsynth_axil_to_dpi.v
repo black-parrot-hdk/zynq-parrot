@@ -40,7 +40,7 @@ module bsg_nonsynth_axil_to_dpi
 
     logic areset;
     bsg_nonsynth_reset_gen
-     #(.reset_cycles_lo_p(1), .reset_cycles_hi_p(10))
+     #(.reset_cycles_lo_p(0), .reset_cycles_hi_p(10))
      reset_gen
       (.clk_i(aclk_o), .async_reset_o(areset));
     assign aresetn_o = ~areset;
