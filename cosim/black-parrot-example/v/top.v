@@ -20,6 +20,8 @@ module top
 `ifdef FPGA
     input wire                                   aclk
     ,input wire                                  aresetn
+    ,input wire                                  clk250_i
+    ,input wire                                  iodelay_ref_clk_i // 200MHZ
 
     ,input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
     ,input wire [2 : 0]                          s00_axi_awprot
@@ -123,12 +125,43 @@ module top
     ,input wire [1 : 0]                          m01_axi_rresp
     ,input wire                                  m01_axi_rvalid
     ,output wire                                 m01_axi_rready
+
+     //====================== Ethernet RGMII =========================
+    ,input  logic                                rgmii_rx_clk_i
+    ,input  logic [3:0]                          rgmii_rxd_i
+    ,input  logic                                rgmii_rx_ctl_i
+    ,output logic                                rgmii_tx_clk_o
+    ,output logic [3:0]                          rgmii_txd_o
+    ,output logic                                rgmii_tx_ctl_o
+
     );
 
     assign {s00_axi_aclk, s01_axi_aclk, m00_axi_aclk, m01_axi_aclk} = {4{aclk}};
     assign {s00_axi_aresetn, s01_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn} = {4{aresetn}};
 `else
     );
+`endif
+
+    logic clk250_li;
+    logic iodelay_ref_clk_li;
+
+    bit           rgmii_rx_clk_li;
+    logic [3:0]   rgmii_rxd_li;
+    logic         rgmii_rx_ctl_li;
+    logic         rgmii_tx_clk_lo;
+    logic [3:0]   rgmii_txd_lo;
+    logic         rgmii_tx_ctl_lo;
+
+`ifdef FPGA
+    assign clk250_li          = clk250_i;
+    assign iodelay_ref_clk_li = iodelay_ref_clk_i;
+    assign rgmii_rx_clk_li    = rgmii_rx_clk_i;
+    assign rgmii_rxd_li       = rgmii_rxd_i   ;
+    assign rgmii_rx_ctl_li    = rgmii_rx_ctl_i;
+    assign rgmii_tx_clk_o     = rgmii_tx_clk_lo;
+    assign rgmii_txd_o        = rgmii_txd_lo   ;
+    assign rgmii_tx_ctl_o     = rgmii_tx_ctl_lo;
+`else
 
     logic s00_axi_aclk, s00_axi_aresetn;
     logic [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_awaddr;
@@ -348,6 +381,53 @@ module top
       ,.axi_rvalid_o  (m00_axi_rvalid)
       ,.axi_rready_i  (m00_axi_rready)
       );
+    // We pretend s01_axi_aclk is 250 MHZ
+    assign clk250_li          = s01_axi_aclk;
+    assign iodelay_ref_clk_li = s01_axi_aclk;
+
+    bit                     rgmii_rx_clk_i;
+    logic [3:0]             rgmii_rxd_i;
+    logic                   rgmii_rx_ctl_i;
+    logic                   rgmii_tx_clk_o;
+    logic [3:0]             rgmii_txd_o;
+    logic                   rgmii_tx_ctl_o;
+
+    // phy_speed ("2.5", "25", "125") (MHZ)
+    // (10M, 100M, 1000M Ethernet)
+    parameter phy_speed = "2.5";
+    logic [7:0] downsample_rate;
+
+if(phy_speed == "2.5")
+    assign downsample_rate = 8'd99;
+else if(phy_speed == "25")
+    assign downsample_rate = 8'd9;
+else if(phy_speed == "125")
+    assign downsample_rate = 8'd1;
+
+    bit downsample_clk;
+    bit [7:0] downsample_counter;
+    always @(posedge s01_axi_aclk or negedge s01_axi_aclk) begin
+      if(downsample_counter == downsample_rate) begin
+        downsample_counter <= '0;
+        downsample_clk <= ~downsample_clk;
+      end
+      else
+        downsample_counter <= downsample_counter + 1;
+    end
+    assign rgmii_rx_clk_li = downsample_clk;
+
+    rgmii_loopback_nonsynth rgmii_loopback_nonsynth
+     (.rx_rst_i(top_fpga_inst.eth_axil.eth_ctr_wrapper.eth_ctr.eth.mac.tx_rst)
+      ,.rgmii_rx_clk_i(rgmii_tx_clk_lo)
+      ,.rgmii_rxd_i(rgmii_txd_lo)
+      ,.rgmii_rx_ctl_i(rgmii_tx_ctl_lo)
+
+      ,.tx_rst_i(top_fpga_inst.eth_axil.eth_ctr_wrapper.eth_ctr.eth.mac.rx_rst)
+      ,.rgmii_tx_clk_i(rgmii_rx_clk_li)
+      ,.rgmii_txd_o(rgmii_rxd_li)
+      ,.rgmii_tx_ctl_o(rgmii_rx_ctl_li)
+     );
+
 `endif
 
    top_zynq #
@@ -471,6 +551,16 @@ module top
       ,.m01_axi_rresp  (m01_axi_rresp)
       ,.m01_axi_rvalid (m01_axi_rvalid)
       ,.m01_axi_rready (m01_axi_rready)
+
+      ,.rgmii_rx_clk_i(rgmii_rx_clk_li)
+      ,.rgmii_rxd_i(rgmii_rxd_li)
+      ,.rgmii_rx_ctl_i(rgmii_rx_ctl_li)
+      ,.rgmii_tx_clk_o(rgmii_tx_clk_lo)
+      ,.rgmii_txd_o(rgmii_txd_lo)
+      ,.rgmii_tx_ctl_o(rgmii_tx_ctl_lo)
+
+      ,.clk250_i(clk250_li)
+      ,.iodelay_ref_clk_i(iodelay_ref_clk_li)
       );
 
 `ifdef VERILATOR
