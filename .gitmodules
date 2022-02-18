@@ -6,9 +6,6 @@
 	path = cosim/import/black-parrot-sdk
 	url = https://github.com/black-parrot-sdk/black-parrot-sdk
 	branch = panic_room
-[submodule "cosim/import/rv_plic"]
-	path = cosim/import/rv_plic
-	url = https://github.com/Yuan-Mao/rv_plic.git
-[submodule "cosim/import/eth_1g_core"]
-	path = cosim/import/eth_1g_core
-	url = https://github.com/Yuan-Mao/eth_1g_core.git
+[submodule "cosim/import/black-parrot-subsystems"]
+	path = cosim/import/black-parrot-subsystems
+	url = https://github.com/black-parrot-hdk/black-parrot-subsystems.git
