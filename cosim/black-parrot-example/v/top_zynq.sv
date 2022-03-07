@@ -11,7 +11,6 @@ module top_zynq
  import bp_me_pkg::*;
  #(parameter bp_params_e bp_params_p = e_bp_default_cfg
    `declare_bp_proc_params(bp_params_p)
-   `declare_bp_bedrock_mem_if_widths(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p, uce)
 
    // NOTE these parameters are usually overridden by the parent module (top.v)
    // but we set them to make expectations consistent
@@ -181,7 +180,7 @@ module top_zynq
    logic [127:0] mem_profiler_r;
 
    logic [63:0] minstret_lo;
-   if (multicore_p)
+   if (cce_type_p != e_cce_uce)
      assign minstret_lo = blackparrot.m.multicore.cc.y[0].x[0].tile_node.tile.core.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
    else
      assign minstret_lo = blackparrot.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
