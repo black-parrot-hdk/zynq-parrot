@@ -31,7 +31,9 @@ all:
 	@echo "## See the makefile for the fun things you can do in this directory"
 
 simv: $(HOST_PROGRAM) $(FLIST)
-	$(VCS) $(VCS_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" -LDFLAGS "$(LDFLAGS)" -o $@ $<
+	$(VCS) $(VCS_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" \
+		-LDFLAGS "$(LDFLAGS)" -o $@ $< \
+		2>&1 | tee -i build.log
 
 run: simv
 	./$< $(SIM_ARGS) $(TRACE)
@@ -42,6 +44,7 @@ clean:
 	-rm -rf vc_hdrs.h
 	-rm -rf flist.vcs
 	-rm -rf simv* vcdplus.vpd
+	-rm -rf build.log
 
 view:
 	$(_DVE) -full64 -vpd vcdplus.vpd
