@@ -36,7 +36,7 @@ simv: $(HOST_PROGRAM) $(FLIST)
 		2>&1 | tee -i build.log
 
 run: simv
-	./$< $(SIM_ARGS) $(TRACE)
+	./$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i run.log
 
 clean:
 	-rm -rf csrc/
@@ -45,6 +45,7 @@ clean:
 	-rm -rf flist.vcs
 	-rm -rf simv* vcdplus.vpd
 	-rm -rf build.log
+	-rm -rf run.log
 
 view:
 	$(_DVE) -full64 -vpd vcdplus.vpd

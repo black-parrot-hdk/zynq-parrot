@@ -25,7 +25,7 @@ all:
 	@echo "## See the makefile for the fun things you can do in this directory"
 
 run: obj_dir/V$(TOP_MODULE)
-	$< $(SIM_ARGS) $(TRACE)
+	$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i run.log
 
 obj_dir/V$(TOP_MODULE): $(HOST_PROGRAM) $(FLIST)
 	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" \
@@ -36,6 +36,7 @@ clean:
 	-rm -rf flist.vcs
 	-rm -rf obj_dir/ *~ trace.fst
 	-rm -rf build.log
+	-rm -rf run.log
 
 view:
 	gtkwave -f trace.fst
