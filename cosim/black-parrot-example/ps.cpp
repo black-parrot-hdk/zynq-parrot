@@ -395,6 +395,9 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
       }
     } else if (nbf[0] == 0xfe) {
       continue;
+    } else if (nbf[0] == 0xff) {
+      bsg_pr_dbg_ps("ps.cpp: nbf finish command, line %d\n", line_count);
+      continue;
     } else {
       bsg_pr_dbg_ps("ps.cpp: unrecognized nbf command, line %d : %x\n",
                     line_count, nbf[0]);

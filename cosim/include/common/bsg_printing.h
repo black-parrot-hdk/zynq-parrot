@@ -49,8 +49,8 @@
 extern "C" {
 #endif // #if defined(__cplusplus)
 
-#define BSG_PRINT_PREFIX_DEBUG_PL "DEBUG-PL"
-#define BSG_PRINT_PREFIX_DEBUG_PS "DEBUG-PS"
+#define BSG_PRINT_PREFIX_DEBUG_PL "DEBUG-PL: "
+#define BSG_PRINT_PREFIX_DEBUG_PS "DEBUG-PS: "
 #define BSG_PRINT_PREFIX_ERROR "ERROR:   "
 #define BSG_PRINT_PREFIX_WARN "WARNING: "
 #define BSG_PRINT_PREFIX_INFO "INFO:    "

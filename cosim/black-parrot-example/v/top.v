@@ -5,7 +5,6 @@
 
 module top
   #(
-    // Parameters of Axi Slave Bus Interface S00_AXI
     parameter integer C_S00_AXI_DATA_WIDTH = 32
     , parameter integer C_S00_AXI_ADDR_WIDTH = 6
     , parameter integer C_S01_AXI_DATA_WIDTH = 32
@@ -16,7 +15,6 @@ module top
     , parameter integer C_M01_AXI_ADDR_WIDTH = 32
     )
    (
-    // Ports of Axi Slave Bus Interface S00_AXI
 `ifdef FPGA
     input wire                                   aclk
     ,input wire                                  aresetn
@@ -65,7 +63,7 @@ module top
     ,output wire                                 m00_axi_awvalid
     ,input wire                                  m00_axi_awready
     ,output wire [5:0]                           m00_axi_awid
-    ,output wire [1:0]                           m00_axi_awlock  // 1 bit bsg_cache_to_axi (AXI4); 2 bit (AXI3)
+    ,output wire [1:0]                           m00_axi_awlock  // 1 bit bsg_cache_to_axi (AXI3); 2 bit (AXI4)
     ,output wire [3:0]                           m00_axi_awcache
     ,output wire [2:0]                           m00_axi_awprot
     ,output wire [3:0]                           m00_axi_awlen   // 8 bits bsg_cache_to_axi
@@ -89,7 +87,7 @@ module top
     ,output wire                                 m00_axi_arvalid
     ,input wire                                  m00_axi_arready
     ,output wire [5:0]                           m00_axi_arid
-    ,output wire [1:0]                           m00_axi_arlock
+    ,output wire [1:0]                           m00_axi_arlock // 1 bit bsg_cache_to_axi (AXI3); 2 bit (AXI4)
     ,output wire [3:0]                           m00_axi_arcache
     ,output wire [2:0]                           m00_axi_arprot
     ,output wire [3:0]                           m00_axi_arlen
@@ -261,9 +259,6 @@ module top
        );
 
    localparam axi_id_width_p = 6;
-   localparam axi_addr_width_p = 32;
-   localparam axi_data_width_p = 64;
-   localparam axi_strb_width_p = axi_data_width_p >> 3;
    localparam axi_burst_len_p = 8;
 
    wire                                 m00_axi_aclk = s00_axi_aclk;
@@ -310,8 +305,8 @@ module top
 
    bsg_nonsynth_axi_mem
      #(.axi_id_width_p(axi_id_width_p)
-       ,.axi_addr_width_p(axi_addr_width_p)
-       ,.axi_data_width_p(axi_data_width_p)
+       ,.axi_addr_width_p(C_M00_AXI_ADDR_WIDTH)
+       ,.axi_data_width_p(C_M00_AXI_DATA_WIDTH)
        ,.axi_burst_len_p (axi_burst_len_p)
        ,.mem_els_p(2**28) // 256 MB
        ,.init_data_p('0)
