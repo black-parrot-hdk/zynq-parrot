@@ -28,11 +28,14 @@ run: obj_dir/V$(TOP_MODULE)
 	$< $(SIM_ARGS) $(TRACE)
 
 obj_dir/V$(TOP_MODULE): $(HOST_PROGRAM) $(FLIST)
-	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" -LDFLAGS "$(LDFLAGS)" $<
+	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" \
+		-LDFLAGS "$(LDFLAGS)" $< \
+		2>&1 | tee -i build.log
 
 clean:
 	-rm -rf flist.vcs
 	-rm -rf obj_dir/ *~ trace.fst
+	-rm -rf build.log
 
 view:
 	gtkwave -f trace.fst
