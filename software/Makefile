@@ -1,6 +1,8 @@
 SDK_DIR=../cosim/import/black-parrot-sdk
 NBF_DIR=../cosim/import/black-parrot/bp_common/software/py
 
+NBF_NCPUS ?= 1
+
 NCORES=20
 
 export PATH := $(SDK_DIR)/install/bin/:$(PATH)
@@ -18,12 +20,16 @@ TOP_OF_MEM_RISC_V=0x877FF000
 
 FILTER_OUT = $(foreach v,$(2),$(if $(findstring $(1),$(v)),,$(v)))
 
-riscv-binaries:=$(shell find ../. -iname "*.riscv")
+all-riscv-binaries:=$(shell find $(SDK_DIR)/prog -iname "*.riscv")
+riscv-dont-run=arch.mk Config.in
+$(warning filtering $(riscv-dont-run))
+riscv-binaries=$(filter-out $(addprefix %,$(addsuffix .riscv,$(riscv-dont-run))),$(all-riscv-binaries))
+$(warning $(riscv-binaries))
+
 all-nbf-binaries:=$(shell find . -iname "*.nbf")
 nbf-dont-run = bootrom 181.mcf 454.calculix 458.sjeng 471.omnetpp
 $(warning filtering $(nbf-dont-run))
-
-nbf-files=$(call FILTER_OUT,$(nbf-dont-run),$(all-nbf-binaries))
+nbf-files=$(call FILTER_OUT,$(addprefix %,$(addsuffix .nbf,$(nbf-dont-run))),$(all-nbf-binaries))
 $(warning $(nbf-files))
 
 
@@ -44,8 +50,9 @@ build_beebs: build_libs
 # run this after you build the beebs to create nbf files (x86 server)
 generate_and_packup_nbf: $(riscv-binaries:.riscv=.nbf)
 	mkdir -p nbf
-	-cp -f $^ nbf
-	tar -cJf nbf.tar.xz nbf
+	-mv -f $^ nbf
+
+#tar -cJf nbf.tar.xz nbf
 
 # run on Zynq board
 # expects that you transfer the nbf bundle over to the Zynq board and place in the same directory
@@ -134,7 +141,7 @@ VPATH := $(wildcard ../cosim/import/black-parrot-sdk/prog/*)
 %.nbf: %.riscv
 	$(RISCV_OBJCOPY) -O verilog $< $*.mem
 	$(SED) -i "s/@8/@0/g" $*.mem
-	python $(NBF_DIR)/nbf.py --config --mem $*.mem > $@
+	python $(NBF_DIR)/nbf.py --config --mem $*.mem --ncpus $(NBF_NCPUS) > $@
 	-rm $*.mem
 
 # if you want to run one test, then you can do:
