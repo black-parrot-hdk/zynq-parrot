@@ -52,6 +52,9 @@ inline unsigned long long get_counter_64(bp_zynq_pl *zpl, unsigned int addr) {
   } while (1);
 }
 
+// TODO: how to pass number of cores in argv/argstr?
+// needed for proper finish
+// TODO: track finish per core executing
 #ifndef VCS
 int main(int argc, char **argv) {
 #else
@@ -407,20 +410,22 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
   bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
 }
 
+// TODO: finish should set a bit in a finish vector
 bool decode_bp_output(bp_zynq_pl *zpl, int data) {
   int rd_wr = data >> 31;
   int address = (data >> 8) & 0x7FFFFF;
   int print_data = data & 0xFF;
+  int core = (address >> 3) & 0xF;
   if (rd_wr) {
     if (address == 0x101000) {
       printf("%c", print_data);
       fflush(stdout);
       return false;
-    } else if (address == 0x102000) {
+    } else if (address >= 0x102000 && address < 0x103000) {
       if (print_data == 0)
-        bsg_pr_info("\nPASS\n");
+        bsg_pr_info("\nCORE[%d] PASS\n", core);
       else
-        bsg_pr_info("\nFAIL\n");
+        bsg_pr_info("\nCORE[%d] FAIL\n", core);
       return true;
     }
 
