@@ -11,6 +11,7 @@
 #include <time.h>
 #include <queue>
 #include <unistd.h>
+#include <bitset>
 
 #include "bp_zynq_pl.h"
 #include "bsg_printing.h"
@@ -23,10 +24,14 @@
 #define ZYNQ_PL_DEBUG 0
 #endif
 
-void nbf_load(bp_zynq_pl *zpl, char *);
-bool decode_bp_output(bp_zynq_pl *zpl, int data);
+#ifndef BP_NCPUS
+#define BP_NCPUS 1
+#endif
 
-std::queue<int> getchar_queue;  
+void nbf_load(bp_zynq_pl *zpl, char *);
+bool decode_bp_output(bp_zynq_pl *zpl, int data, int* core);
+
+std::queue<int> getchar_queue;
 
 void *monitor(void *vargp) {
   int c = -1;
@@ -52,9 +57,6 @@ inline unsigned long long get_counter_64(bp_zynq_pl *zpl, unsigned int addr) {
   } while (1);
 }
 
-// TODO: how to pass number of cores in argv/argstr?
-// needed for proper finish
-// TODO: track finish per core executing
 #ifndef VCS
 int main(int argc, char **argv) {
 #else
@@ -87,7 +89,8 @@ extern "C" void cosim_main(char *argstr) {
   int val2 = 0x0;
   int mask1 = 0xf;
   int mask2 = 0xf;
-  bool done = false;
+	std::bitset<BP_NCPUS> done_vec;
+	bool core_done = false;
 
   int allocated_dram = DRAM_ALLOCATE_SIZE;
 #ifdef FPGA
@@ -275,8 +278,12 @@ extern "C" void cosim_main(char *argstr) {
     data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
     if (data != 0) {
       data = zpl->axil_read(0xC + GP0_ADDR_BASE);
-      done |= decode_bp_output(zpl, data);
-    } else if (done)
+			int core = 0;
+      core_done = decode_bp_output(zpl, data, &core);
+			if (core_done) {
+				done_vec[core] = true;
+			}
+    } else if (done_vec.all())
       break;
   }
 
@@ -410,22 +417,22 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
   bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
 }
 
-// TODO: finish should set a bit in a finish vector
-bool decode_bp_output(bp_zynq_pl *zpl, int data) {
+bool decode_bp_output(bp_zynq_pl *zpl, int data, int* core) {
   int rd_wr = data >> 31;
   int address = (data >> 8) & 0x7FFFFF;
   int print_data = data & 0xFF;
-  int core = (address >> 3) & 0xF;
   if (rd_wr) {
     if (address == 0x101000) {
       printf("%c", print_data);
       fflush(stdout);
       return false;
     } else if (address >= 0x102000 && address < 0x103000) {
-      if (print_data == 0)
-        bsg_pr_info("\nCORE[%d] PASS\n", core);
-      else
-        bsg_pr_info("\nCORE[%d] FAIL\n", core);
+      *core = ((address-0x102000) >> 3);
+      if (print_data == 0) {
+        bsg_pr_info("CORE[%d] PASS\n", *core);
+      } else {
+        bsg_pr_info("CORE[%d] FAIL\n", *core);
+      }
       return true;
     }
 
