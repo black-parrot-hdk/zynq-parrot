@@ -63,7 +63,7 @@ module top
     ,output wire                                 m00_axi_awvalid
     ,input wire                                  m00_axi_awready
     ,output wire [5:0]                           m00_axi_awid
-    ,output wire [1:0]                           m00_axi_awlock  // 1 bit bsg_cache_to_axi (AXI3); 2 bit (AXI4)
+    ,output wire [1:0]                           m00_axi_awlock  // 1 bit bsg_cache_to_axi (AXI4); 2 bit (AXI3)
     ,output wire [3:0]                           m00_axi_awcache
     ,output wire [2:0]                           m00_axi_awprot
     ,output wire [3:0]                           m00_axi_awlen   // 8 bits bsg_cache_to_axi
@@ -87,7 +87,7 @@ module top
     ,output wire                                 m00_axi_arvalid
     ,input wire                                  m00_axi_arready
     ,output wire [5:0]                           m00_axi_arid
-    ,output wire [1:0]                           m00_axi_arlock // 1 bit bsg_cache_to_axi (AXI3); 2 bit (AXI4)
+    ,output wire [1:0]                           m00_axi_arlock
     ,output wire [3:0]                           m00_axi_arcache
     ,output wire [2:0]                           m00_axi_arprot
     ,output wire [3:0]                           m00_axi_arlen
