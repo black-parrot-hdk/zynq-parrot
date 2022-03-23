@@ -38,18 +38,44 @@
 #define BP_NCPUS 1
 #endif
 
-void nbf_load(bp_zynq_pl *zpl, char *);
-bool decode_bp_output(bp_zynq_pl *zpl, long data, std::bitset<BP_NCPUS> *done_vec);
+// Helper functions
+void nbf_load(bp_zynq_pl *zpl, char *filename);
+bool decode_bp_output(bp_zynq_pl *zpl, long data);
 
+// Globals
 std::queue<int> getchar_queue;
+std::bitset<BP_NCPUS> done_vec;
 
 void *monitor(void *vargp) {
-  char c = -1;
+  char c;
   while(1) {
     c = getchar();
     if(c != -1)
       getchar_queue.push(c);
   }
+  bsg_pr_info("Exiting from pthread\n");
+
+  return NULL;
+}
+
+void *device_poll(void *vargp) {
+  bp_zynq_pl *zpl = (bp_zynq_pl *)vargp;
+  while (1) {
+#ifndef FPGA
+    zpl->axil_poll();
+#endif
+    // keep reading as long as there is data
+    if (zpl->axil_read(0x10 + gp0_addr_base) != 0) {
+      decode_bp_output(zpl, zpl->axil_read(0xC + gp0_addr_base));
+    }
+    // break loop when all cores done
+    if (done_vec.all()) {
+      break;
+    }
+  }
+  bsg_pr_info("Exiting from pthread\n");
+
+  return NULL;
 }
 
 inline uint64_t get_counter_64(bp_zynq_pl *zpl, uint64_t addr) {
@@ -99,9 +125,8 @@ extern "C" void cosim_main(char *argstr) {
   long val2 = 0x0;
   long mask1 = 0xf;
   long mask2 = 0xf;
-  std::bitset<BP_NCPUS> done_vec;
-  bool core_done = false;
 
+  pthread_t thread_id;
   long allocated_dram = DRAM_ALLOCATE_SIZE;
 #ifdef FPGA
   unsigned long phys_ptr;
@@ -270,58 +295,38 @@ extern "C" void cosim_main(char *argstr) {
 
 #endif // DRAM_TEST
 
-  bsg_pr_info("ps.cpp: Starting scan thread\n");
-  pthread_t thread_id;
-  pthread_create(&thread_id, NULL, monitor, NULL);
-
   bsg_pr_info("ps.cpp: beginning nbf load\n");
   nbf_load(zpl, argv[1]);
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
-  unsigned long long minstrret_start = get_counter_64(zpl, 0x18 + gp0_addr_base);
+  unsigned long long minstret_start = get_counter_64(zpl, 0x18 + gp0_addr_base);
   unsigned long long mtime_start = get_counter_64(zpl, 0x20000000 + 0x30bff8 + gp1_addr_base);
   bsg_pr_dbg_ps("ps.cpp: finished nbf load\n");
-  bsg_pr_info("ps.cpp: polling i/o\n");
 
-  while (1) {
-#ifndef FPGA
-    zpl->axil_poll();
-#endif
-#ifdef SIM_BACKPRESSURE_ENABLE
-    if (!(rand() % SIM_BACKPRESSURE_CHANCE)) {
-      for (int i = 0; i < SIM_BACKPRESSURE_LENGTH; i++) {
-        zpl->tick();
-      }
-    }
-#endif
+  bsg_pr_info("ps.cpp: Starting scan thread\n");
+  pthread_create(&thread_id, NULL, monitor, NULL);
 
-    // keep reading as long as there is data
-    data = zpl->axil_read(0x10 + gp0_addr_base);
-    if (data != 0) {
-      data = zpl->axil_read(0xC + gp0_addr_base);
-      decode_bp_output(zpl, data, &done_vec);
-    }
-    // break loop when all cores done
-    if (done_vec.all()) {
-      break;
-    }
-  }
+  bsg_pr_info("ps.cpp: Starting i/o polling thread\n");
+  pthread_create(&thread_id, NULL, device_poll, (void *)zpl);
+
+  bsg_pr_info("ps.cpp: waiting for i/o packet\n");
+  pthread_join(thread_id, NULL);
 
   unsigned long long mtime_stop = get_counter_64(zpl, gp1_addr_base + 0x20000000U + 0x30bff8);
 
-  unsigned long long minstrret_stop = get_counter_64(zpl, 0x18 + gp0_addr_base);
+  unsigned long long minstret_stop = get_counter_64(zpl, 0x18 + gp0_addr_base);
   // test delay for reading counter
   unsigned long long counter_data = get_counter_64(zpl, 0x18 + gp0_addr_base);
   clock_gettime(CLOCK_MONOTONIC, &end);
   setlocale(LC_NUMERIC, "");
   bsg_pr_info("ps.cpp: end polling i/o\n");
   bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
-              minstrret_start, minstrret_start);
+              minstret_start, minstret_start);
   bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
-              minstrret_stop, minstrret_stop);
-  unsigned long long minstrret_delta = minstrret_stop - minstrret_start;
+              minstret_stop, minstret_stop);
+  unsigned long long minstret_delta = minstret_stop - minstret_start;
   bsg_pr_info("ps.cpp: minstret delta:                  %'16llu (%16llx)\n",
-              minstrret_delta, minstrret_delta);
+              minstret_delta, minstret_delta);
   bsg_pr_info("ps.cpp: MTIME start:                     %'16llu (%16llx)\n",
               mtime_start, mtime_start);
   bsg_pr_info("ps.cpp: MTIME stop:                      %'16llu (%16llx)\n",
@@ -330,7 +335,7 @@ extern "C" void cosim_main(char *argstr) {
   bsg_pr_info("ps.cpp: MTIME delta (=1/8 BP cycles):    %'16llu (%16llx)\n",
               mtime_delta, mtime_delta);
   bsg_pr_info("ps.cpp: IPC        :                     %'16f\n",
-              ((double)minstrret_delta) / ((double)(mtime_delta)) / 8.0);
+              ((double)minstret_delta) / ((double)(mtime_delta)) / 8.0);
   bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
               counter_data, counter_data);
   unsigned long long diff_ns =
@@ -454,7 +459,7 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
   bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
 }
 
-bool decode_bp_output(bp_zynq_pl *zpl, long data, std::bitset<BP_NCPUS> *done_vec) {
+bool decode_bp_output(bp_zynq_pl *zpl, long data) {
   long rd_wr = data >> 31;
   long address = (data >> 8) & 0x7FFFFF;
   char print_data = data & 0xFF;
