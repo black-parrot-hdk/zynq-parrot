@@ -343,6 +343,7 @@ public:
     this->p_wready = 1;
 
     // Wait until both valids are ready
+    // TODO: AXI S write handler should support address or data arriving independently
     while (this->p_awvalid == 0 || this->p_wvalid == 0) {
 
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
