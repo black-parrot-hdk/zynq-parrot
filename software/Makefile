@@ -20,7 +20,8 @@ TOP_OF_MEM_RISC_V=0x877FF000
 
 FILTER_OUT = $(foreach v,$(2),$(if $(findstring $(1),$(v)),,$(v)))
 
-all-riscv-binaries:=$(shell find $(SDK_DIR)/prog -iname "*.riscv")
+# test command avoids error if $(SDK_DIR)/prog does not yet exist
+all-riscv-binaries:=$(shell test -d $(SDK_DIR)/prog && find $(SDK_DIR)/prog -iname "*.riscv")
 riscv-dont-run=arch.mk Config.in
 $(warning filtering $(riscv-dont-run))
 riscv-binaries=$(filter-out $(addprefix %,$(addsuffix .riscv,$(riscv-dont-run))),$(all-riscv-binaries))
@@ -45,7 +46,18 @@ build_tools: checkout_tools
 #build these after you build the tools (x86 server)
 build_beebs: build_libs
 	cd $(SDK_DIR); git submodule update --init beebs
-	$(MAKE) -C $(SDK_DIR) beebs
+	$(MAKE) -j $(NCORES) -C $(SDK_DIR) beebs
+
+build_bp-tests: build_libs
+	cd $(SDK_DIR); git submodule update --init bp-tests
+	$(MAKE) -j $(NCORES) -C $(SDK_DIR) bp-tests
+
+build_riscv-tests: build_libs
+	cd $(SDK_DIR); git submodule update --init riscv-tests
+	$(MAKE) -j $(NCORES) -C $(SDK_DIR) riscv-tests
+
+build_progs: build_libs
+	$(MAKE) -j $(NCORES) -C $(SDK_DIR) prog
 
 # run this after you build the beebs to create nbf files (x86 server)
 generate_and_packup_nbf: $(riscv-binaries:.riscv=.nbf)
