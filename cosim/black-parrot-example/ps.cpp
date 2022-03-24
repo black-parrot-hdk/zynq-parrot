@@ -89,8 +89,8 @@ extern "C" void cosim_main(char *argstr) {
   int val2 = 0x0;
   int mask1 = 0xf;
   int mask2 = 0xf;
-	std::bitset<BP_NCPUS> done_vec;
-	bool core_done = false;
+  std::bitset<BP_NCPUS> done_vec;
+  bool core_done = false;
 
   int allocated_dram = DRAM_ALLOCATE_SIZE;
 #ifdef FPGA
@@ -278,13 +278,16 @@ extern "C" void cosim_main(char *argstr) {
     data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
     if (data != 0) {
       data = zpl->axil_read(0xC + GP0_ADDR_BASE);
-			int core = 0;
+      int core = 0;
       core_done = decode_bp_output(zpl, data, &core);
-			if (core_done) {
-				done_vec[core] = true;
-			}
-    } else if (done_vec.all())
+      if (core_done) {
+        done_vec[core] = true;
+      }
+    }
+    // break loop when all cores done
+    if (done_vec.all()) {
       break;
+    }
   }
 
   unsigned long long mtime_stop = get_counter_64(zpl, 0xA0000000 + 0x30bff8);
@@ -421,6 +424,7 @@ bool decode_bp_output(bp_zynq_pl *zpl, int data, int* core) {
   int rd_wr = data >> 31;
   int address = (data >> 8) & 0x7FFFFF;
   int print_data = data & 0xFF;
+  // write from BP
   if (rd_wr) {
     if (address == 0x101000) {
       printf("%c", print_data);
@@ -439,7 +443,9 @@ bool decode_bp_output(bp_zynq_pl *zpl, int data, int* core) {
     bsg_pr_err("ps.cpp: Errant write to %x\n", address);
     return false;
   }
+  // read from BP
   else {
+    // getchar
     if (address == 0x100000) {
       if (getchar_queue.empty()) {
         zpl->axil_write(0xC + GP0_ADDR_BASE, -1, 0xf);
@@ -447,7 +453,22 @@ bool decode_bp_output(bp_zynq_pl *zpl, int data, int* core) {
         zpl->axil_write(0xC + GP0_ADDR_BASE, getchar_queue.front(), 0xf);
         getchar_queue.pop();
       }
-    } else {
+    }
+    // parameter ROM, only partially implemented
+    else if (address >= 0x20000 && address <= 0x20128) {
+      bsg_pr_dbg_ps("ps.cpp: PARAM ROM read from (%x)\n", address);
+      int offset = address - 0x20000;
+      // CC_X_DIM, return number of cores
+      if (offset == 0x0) {
+        zpl->axil_write(0xC + GP0_ADDR_BASE, BP_NCPUS, 0xf);
+      }
+      // CC_Y_DIM, just return 1 so X*Y == number of cores
+      else if (offset == 0x4) {
+        zpl->axil_write(0xC + GP0_ADDR_BASE, 1, 0xf);
+      }
+    }
+    // if not implemented, print error
+    else {
       bsg_pr_err("ps.cpp: Errant read from (%x)\n", address);
     }
     return false;
