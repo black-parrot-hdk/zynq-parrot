@@ -59,6 +59,11 @@ build_riscv-tests: build_libs
 build_progs: build_libs
 	$(MAKE) -j $(NCORES) -C $(SDK_DIR) prog
 
+# required to build linux, this builds the full gnulinux toolchain
+# takes a while
+build_gnulinux:
+	$(MAKE) -j $(NCORES) -C $(SDK_DIR) gnu
+
 build_linux: build_libs
 	$(MAKE) -j $(NCORES) -C $(SDK_DIR) linux OPENSBI_NCPUS=$(NBF_NCPUS)
 
