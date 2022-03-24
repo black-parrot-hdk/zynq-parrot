@@ -59,6 +59,9 @@ build_riscv-tests: build_libs
 build_progs: build_libs
 	$(MAKE) -j $(NCORES) -C $(SDK_DIR) prog
 
+build_linux: build_libs
+	$(MAKE) -j $(NCORES) -C $(SDK_DIR) linux OPENSBI_NCPUS=$(NBF_NCPUS)
+
 # run this after you build the beebs to create nbf files (x86 server)
 generate_and_packup_nbf: $(riscv-binaries:.riscv=.nbf)
 	mkdir -p nbf
