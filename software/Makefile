@@ -64,15 +64,14 @@ build_progs: build_libs
 build_gnulinux:
 	$(MAKE) -j $(NCORES) -C $(SDK_DIR) gnu
 
-build_linux: build_libs
+build_linux: build_libs build_gnulinux
 	$(MAKE) -j $(NCORES) -C $(SDK_DIR) linux OPENSBI_NCPUS=$(NBF_NCPUS)
 
 # run this after you build the beebs to create nbf files (x86 server)
 generate_and_packup_nbf: $(riscv-binaries:.riscv=.nbf)
 	mkdir -p nbf
 	-mv -f $^ nbf
-
-#tar -cJf nbf.tar.xz nbf
+	tar -cJf nbf.tar.xz nbf
 
 # run on Zynq board
 # expects that you transfer the nbf bundle over to the Zynq board and place in the same directory
