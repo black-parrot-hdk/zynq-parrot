@@ -16,16 +16,18 @@ SED ?= sed
 # 120 MB - 4096
 TOP_OF_MEM_RISC_V=0x877FF000
 
-FILTER_OUT = $(foreach v,$(2),$(if $(findstring $(1),$(v)),,$(v)))
+# test command avoids error if $(SDK_DIR)/prog does not yet exist
+all-riscv-binaries:=$(shell test -d $(SDK_DIR)/prog && find $(SDK_DIR)/prog -iname "*.riscv")
+riscv-dont-run=arch.mk Config.in
+$(warning filtering $(riscv-dont-run))
+riscv-binaries=$(filter-out $(addprefix %,$(addsuffix .riscv,$(riscv-dont-run))),$(all-riscv-binaries))
+$(warning $(riscv-binaries))
 
-riscv-binaries:=$(shell find ../. -iname "*.riscv")
 all-nbf-binaries:=$(shell find . -iname "*.nbf")
 nbf-dont-run = bootrom 181.mcf 454.calculix 458.sjeng 471.omnetpp
 $(warning filtering $(nbf-dont-run))
-
-nbf-files=$(call FILTER_OUT,$(nbf-dont-run),$(all-nbf-binaries))
+nbf-files=$(filter-out $(addprefix %,$(addsuffix .nbf,$(nbf-dont-run))),$(all-nbf-binaries))
 $(warning $(nbf-files))
-
 
 nothing:
 
@@ -44,7 +46,7 @@ build_beebs: build_libs
 # run this after you build the beebs to create nbf files (x86 server)
 generate_and_packup_nbf: $(riscv-binaries:.riscv=.nbf)
 	mkdir -p nbf
-	-cp -f $^ nbf
+	-mv -f $^ nbf
 	tar -cJf nbf.tar.xz nbf
 
 # run on Zynq board
