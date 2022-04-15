@@ -1,4 +1,4 @@
-[submodule "cosim/import/black-parrot"]
+[submodule "cosim/import/rtl"]
 	path = cosim/import/black-parrot
 	url = https://github.com/black-parrot/black-parrot.git
 [submodule "cosim/import/black-parrot-sdk"]
@@ -7,3 +7,6 @@
 [submodule "cosim/import/black-parrot-tools"]
 	path = cosim/import/black-parrot-tools
 	url = https://github.com/black-parrot/black-parrot-tools
+[submodule "cosim/import/black-parrot-subsystems"]
+	path = cosim/import/black-parrot-subsystems
+	url = https://github.com/black-parrot-hdk/black-parrot-subsystems
