@@ -24,6 +24,7 @@
 #endif
 
 void nbf_load(bp_zynq_pl *zpl, char *);
+void print_results(bp_zynq_pl *zpl, unsigned long long mtime_start, unsigned long long minstret_start);
 bool decode_bp_output(bp_zynq_pl *zpl, int data);
 
 std::queue<int> getchar_queue;  
@@ -35,6 +36,32 @@ void *monitor(void *vargp) {
     if(c != -1)
       getchar_queue.push(c);
   }
+}
+
+void *decode(void *vargp) {
+  bp_zynq_pl *zpl = (bp_zynq_pl *)vargp;
+  while (1) {
+#ifndef FPGA
+    zpl->axil_poll();
+#endif
+#ifdef SIM_BACKPRESSURE_ENABLE
+    if (!(rand() % SIM_BACKPRESSURE_CHANCE)) {
+      for (int i = 0; i < SIM_BACKPRESSURE_LENGTH; i++) {
+        zpl->tick();
+      }
+    }
+#endif
+
+    // keep reading as long as there is data
+    int data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
+    if (data != 0) {
+      data = zpl->axil_read(0xC + GP0_ADDR_BASE);
+      if (decode_bp_output(zpl, data)) break;
+    }
+  }
+  bsg_pr_info("Exiting from pthread\n");
+
+  return NULL;
 }
 
 inline unsigned long long get_counter_64(bp_zynq_pl *zpl, unsigned int addr) {
@@ -84,8 +111,8 @@ extern "C" void cosim_main(char *argstr) {
   int val2 = 0x0;
   int mask1 = 0xf;
   int mask2 = 0xf;
-  bool done = false;
 
+  pthread_t thread_id;
   int allocated_dram = DRAM_ALLOCATE_SIZE;
 #ifdef FPGA
   unsigned long phys_ptr;
@@ -242,56 +269,39 @@ extern "C" void cosim_main(char *argstr) {
 
 #endif // DRAM_TEST
 
-  bsg_pr_info("ps.cpp: Starting scan thread\n");
-  pthread_t thread_id;
-  pthread_create(&thread_id, NULL, monitor, NULL);
-
   bsg_pr_info("ps.cpp: beginning nbf load\n");
   nbf_load(zpl, argv[1]);
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
-  unsigned long long minstrret_start =
+  unsigned long long minstret_start =
       get_counter_64(zpl, 0x18 + GP0_ADDR_BASE);
   unsigned long long mtime_start = get_counter_64(zpl, 0xA0000000 + 0x30bff8);
   bsg_pr_dbg_ps("ps.cpp: finished nbf load\n");
-  bsg_pr_info("ps.cpp: polling i/o\n");
 
-  while (1) {
-#ifndef FPGA
-    zpl->axil_poll();
-#endif
-#ifdef SIM_BACKPRESSURE_ENABLE
-    if (!(rand() % SIM_BACKPRESSURE_CHANCE)) {
-      for (int i = 0; i < SIM_BACKPRESSURE_LENGTH; i++) {
-        zpl->tick();
-      }
-    }
-#endif
+  bsg_pr_info("ps.cpp: Starting scan thread\n");
+  pthread_create(&thread_id, NULL, monitor, NULL);
 
-    // keep reading as long as there is data
-    data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
-    if (data != 0) {
-      data = zpl->axil_read(0xC + GP0_ADDR_BASE);
-      done |= decode_bp_output(zpl, data);
-    } else if (done)
-      break;
-  }
+  bsg_pr_info("ps.cpp: Starting i/o polling thread\n");
+  pthread_create(&thread_id, NULL, decode, (void *)zpl);
+
+  bsg_pr_info("ps.cpp: waiting for i/o packet\n");
+  pthread_join(thread_id, NULL);
 
   unsigned long long mtime_stop = get_counter_64(zpl, 0xA0000000 + 0x30bff8);
 
-  unsigned long long minstrret_stop = get_counter_64(zpl, 0x18 + GP0_ADDR_BASE);
+  unsigned long long minstret_stop = get_counter_64(zpl, 0x18 + GP0_ADDR_BASE);
   // test delay for reading counter
   unsigned long long counter_data = get_counter_64(zpl, 0x18 + GP0_ADDR_BASE);
   clock_gettime(CLOCK_MONOTONIC, &end);
   setlocale(LC_NUMERIC, "");
   bsg_pr_info("ps.cpp: end polling i/o\n");
   bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
-              minstrret_start, minstrret_start);
+              minstret_start, minstret_start);
   bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
-              minstrret_stop, minstrret_stop);
-  unsigned long long minstrret_delta = minstrret_stop - minstrret_start;
+              minstret_stop, minstret_stop);
+  unsigned long long minstret_delta = minstret_stop - minstret_start;
   bsg_pr_info("ps.cpp: minstret delta:                  %'16llu (%16llx)\n",
-              minstrret_delta, minstrret_delta);
+              minstret_delta, minstret_delta);
   bsg_pr_info("ps.cpp: MTIME start:                     %'16llu (%16llx)\n",
               mtime_start, mtime_start);
   bsg_pr_info("ps.cpp: MTIME stop:                      %'16llu (%16llx)\n",
@@ -300,7 +310,7 @@ extern "C" void cosim_main(char *argstr) {
   bsg_pr_info("ps.cpp: MTIME delta (=1/8 BP cycles):    %'16llu (%16llx)\n",
               mtime_delta, mtime_delta);
   bsg_pr_info("ps.cpp: IPC        :                     %'16f\n",
-              ((double)minstrret_delta) / ((double)(mtime_delta)) / 8.0);
+              ((double)minstret_delta) / ((double)(mtime_delta)) / 8.0);
   bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
               counter_data, counter_data);
   unsigned long long diff_ns =
@@ -320,6 +330,7 @@ extern "C" void cosim_main(char *argstr) {
               zpl->axil_read(0x28 + GP0_ADDR_BASE),
               zpl->axil_read(0x24 + GP0_ADDR_BASE),
               zpl->axil_read(0x20 + GP0_ADDR_BASE));
+
 #ifdef FPGA
   // in general we do not want to free the dram; the Xilinx allocator has a
   // tendency to
