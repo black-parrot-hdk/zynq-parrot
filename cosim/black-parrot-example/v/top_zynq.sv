@@ -362,8 +362,9 @@ module top_zynq
    logic                                        s02_axi_rready;
 
    bsg_axil_store_packer
-    #(.axi_addr_width_p(bp_axil_addr_width_lp)
-      ,.axi_data_width_p(bp_axil_data_width_lp)
+    #(.axil_addr_width_p(bp_axil_addr_width_lp)
+      ,.axil_data_width_p(bp_axil_data_width_lp)
+      ,.payload_data_width_p(8)
       )
     store_packer
      (.clk_i   (s01_axi_aclk)
