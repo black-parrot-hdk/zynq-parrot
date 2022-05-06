@@ -1,15 +1,15 @@
 
-export BLACKPARROT_DIR      ?= $(COSIM_DIR)/import/black-parrot
-export BLACKPARROT_SDK_DIR  ?= $(COSIM_DIR)/import/black-parrot-sdk
-export BP_FE_DIR            ?= $(BLACKPARROT_DIR)/bp_fe
-export BP_COMMON_DIR        ?= $(BLACKPARROT_DIR)/bp_common
-export BP_BE_DIR            ?= $(BLACKPARROT_DIR)/bp_be
-export BP_ME_DIR            ?= $(BLACKPARROT_DIR)/bp_me
-export BP_TOP_DIR           ?= $(BLACKPARROT_DIR)/bp_top
-export BP_EXTERNAL_DIR      ?= $(BLACKPARROT_DIR)/external
-export BP_TOOLS_DIR         ?= $(BLACKPARROT_DIR)/tools
-export BASEJUMP_STL_DIR     ?= $(BP_EXTERNAL_DIR)/basejump_stl
-export HARDFLOAT_DIR        ?= $(BP_EXTERNAL_DIR)/HardFloat
+export BLACKPARROT_DIR       ?= $(COSIM_DIR)/import/black-parrot
+export BLACKPARROT_SDK_DIR   ?= $(COSIM_DIR)/import/black-parrot-sdk
+export BLACKPARROT_TOOLS_DIR ?= $(COSIM_DIR)/import/black-parrot-tools
+export BP_FE_DIR             ?= $(BLACKPARROT_DIR)/bp_fe
+export BP_COMMON_DIR         ?= $(BLACKPARROT_DIR)/bp_common
+export BP_BE_DIR             ?= $(BLACKPARROT_DIR)/bp_be
+export BP_ME_DIR             ?= $(BLACKPARROT_DIR)/bp_me
+export BP_TOP_DIR            ?= $(BLACKPARROT_DIR)/bp_top
+export BP_EXTERNAL_DIR       ?= $(BLACKPARROT_DIR)/external
+export BASEJUMP_STL_DIR      ?= $(BP_EXTERNAL_DIR)/basejump_stl
+export HARDFLOAT_DIR         ?= $(BP_EXTERNAL_DIR)/HardFloat
 
 export COSIM_DIR            ?= $(TOP)/cosim
 export COSIM_INCLUDE_DIR    ?= $(COSIM_DIR)/include

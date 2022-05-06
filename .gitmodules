@@ -1,8 +1,9 @@
 [submodule "cosim/import/black-parrot"]
 	path = cosim/import/black-parrot
 	url = https://github.com/black-parrot/black-parrot.git
-  branch = zynqparrot_axi_hygienic
 [submodule "cosim/import/black-parrot-sdk"]
 	path = cosim/import/black-parrot-sdk
 	url = https://github.com/black-parrot-sdk/black-parrot-sdk
-	branch = panic_room
+[submodule "cosim/import/black-parrot-tools"]
+	path = cosim/import/black-parrot-tools
+	url = https://github.com/black-parrot/black-parrot-tools
