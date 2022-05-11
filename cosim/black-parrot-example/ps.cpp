@@ -11,6 +11,7 @@
 #include <time.h>
 #include <queue>
 #include <unistd.h>
+#include <bitset>
 
 #include "bp_zynq_pl.h"
 #include "bsg_printing.h"
@@ -23,10 +24,14 @@
 #define ZYNQ_PL_DEBUG 0
 #endif
 
-void nbf_load(bp_zynq_pl *zpl, char *);
-bool decode_bp_output(bp_zynq_pl *zpl, int data);
+#ifndef BP_NCPUS
+#define BP_NCPUS 1
+#endif
 
-std::queue<int> getchar_queue;  
+void nbf_load(bp_zynq_pl *zpl, char *);
+bool decode_bp_output(bp_zynq_pl *zpl, int data, int* core);
+
+std::queue<int> getchar_queue;
 
 void *monitor(void *vargp) {
   int c = -1;
@@ -84,7 +89,8 @@ extern "C" void cosim_main(char *argstr) {
   int val2 = 0x0;
   int mask1 = 0xf;
   int mask2 = 0xf;
-  bool done = false;
+  std::bitset<BP_NCPUS> done_vec;
+  bool core_done = false;
 
   int allocated_dram = DRAM_ALLOCATE_SIZE;
 #ifdef FPGA
@@ -272,9 +278,16 @@ extern "C" void cosim_main(char *argstr) {
     data = zpl->axil_read(0x10 + GP0_ADDR_BASE);
     if (data != 0) {
       data = zpl->axil_read(0xC + GP0_ADDR_BASE);
-      done |= decode_bp_output(zpl, data);
-    } else if (done)
+      int core = 0;
+      core_done = decode_bp_output(zpl, data, &core);
+      if (core_done) {
+        done_vec[core] = true;
+      }
+    }
+    // break loop when all cores done
+    if (done_vec.all()) {
       break;
+    }
   }
 
   unsigned long long mtime_stop = get_counter_64(zpl, 0xA0000000 + 0x30bff8);
@@ -395,8 +408,11 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
       }
     } else if (nbf[0] == 0xfe) {
       continue;
+    } else if (nbf[0] == 0xff) {
+      bsg_pr_dbg_ps("ps.cpp: nbf finish command, line %d\n", line_count);
+      continue;
     } else {
-      bsg_pr_dbg_ps("ps.cpp: unrecognized nbf command, line %d : %x\n",
+      bsg_pr_dbg_ps("ps.cpp: unrecognized nbf command, line %d : %llx\n",
                     line_count, nbf[0]);
       return;
     }
@@ -404,27 +420,32 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
   bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
 }
 
-bool decode_bp_output(bp_zynq_pl *zpl, int data) {
+bool decode_bp_output(bp_zynq_pl *zpl, int data, int* core) {
   int rd_wr = data >> 31;
   int address = (data >> 8) & 0x7FFFFF;
   int print_data = data & 0xFF;
+  // write from BP
   if (rd_wr) {
     if (address == 0x101000) {
       printf("%c", print_data);
       fflush(stdout);
       return false;
-    } else if (address == 0x102000) {
-      if (print_data == 0)
-        bsg_pr_info("\nPASS\n");
-      else
-        bsg_pr_info("\nFAIL\n");
+    } else if (address >= 0x102000 && address < 0x103000) {
+      *core = ((address-0x102000) >> 3);
+      if (print_data == 0) {
+        bsg_pr_info("CORE[%d] PASS\n", *core);
+      } else {
+        bsg_pr_info("CORE[%d] FAIL\n", *core);
+      }
       return true;
     }
 
     bsg_pr_err("ps.cpp: Errant write to %x\n", address);
     return false;
   }
+  // read from BP
   else {
+    // getchar
     if (address == 0x100000) {
       if (getchar_queue.empty()) {
         zpl->axil_write(0xC + GP0_ADDR_BASE, -1, 0xf);
@@ -432,7 +453,22 @@ bool decode_bp_output(bp_zynq_pl *zpl, int data) {
         zpl->axil_write(0xC + GP0_ADDR_BASE, getchar_queue.front(), 0xf);
         getchar_queue.pop();
       }
-    } else {
+    }
+    // parameter ROM, only partially implemented
+    else if (address >= 0x120000 && address <= 0x120128) {
+      bsg_pr_dbg_ps("ps.cpp: PARAM ROM read from (%x)\n", address);
+      int offset = address - 0x120000;
+      // CC_X_DIM, return number of cores
+      if (offset == 0x0) {
+        zpl->axil_write(0xC + GP0_ADDR_BASE, BP_NCPUS, 0xf);
+      }
+      // CC_Y_DIM, just return 1 so X*Y == number of cores
+      else if (offset == 0x4) {
+        zpl->axil_write(0xC + GP0_ADDR_BASE, 1, 0xf);
+      }
+    }
+    // if not implemented, print error
+    else {
       bsg_pr_err("ps.cpp: Errant read from (%x)\n", address);
     }
     return false;
