@@ -115,6 +115,13 @@ run_all_fpga_nbf: $(nbf-files:.nbf=.fpga.log)
 #
 run_all_verilator_nbf: $(nbf-files:.nbf=.verilator.log)
 
+# run all of the nbfs in simulation with vcs, usually on your x86 build machine
+# note: requires vcs and a properly configured environment
+#
+# use -j <n cpus> to parallelize
+#
+run_all_vcs_nbf: $(nbf-files:.nbf=.vcs.log)
+
 # run on Zynq
 summarize:
 	grep --files-without-match PASS nbf/*.log
@@ -161,3 +168,12 @@ VPATH := $(wildcard ../cosim/import/black-parrot-sdk/prog/*)
 %.verilator.rerun: %.nbf
 	-rm $*.verilator.log
 	make $*.verilator.log
+
+# make nbf/<testname>.vcs.log to run on vcs (probably x86)
+
+%.vcs.log: %.nbf
+	$(MAKE) FREE_DRAM=0 -C ../cosim/black-parrot-example/vcs run NBF_FILE=$(abspath $<) | tee -i $*.vcs.log
+
+%.vcs.rerun: %.nbf
+	-rm $*.vcs.log
+	make $*.vcs.log
