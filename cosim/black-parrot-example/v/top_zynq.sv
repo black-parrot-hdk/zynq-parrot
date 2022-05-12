@@ -362,15 +362,16 @@ module top_zynq
    logic                                        s02_axi_rready;
 
    bsg_axil_store_packer
-    #(.axi_addr_width_p(bp_axil_addr_width_lp)
-      ,.axi_data_width_p(bp_axil_data_width_lp)
+    #(.axil_addr_width_p(bp_axil_addr_width_lp)
+      ,.axil_data_width_p(bp_axil_data_width_lp)
+      ,.payload_data_width_p(8)
       )
     store_packer
      (.clk_i   (s01_axi_aclk)
       ,.reset_i(~s01_axi_aresetn)
 
       ,.s_axil_awaddr_i (s02_axi_awaddr)
-      ,.s_axil_awprot_i (axi_prot_type_e'(s02_axi_awprot))
+      ,.s_axil_awprot_i (s02_axi_awprot)
       ,.s_axil_awvalid_i(s02_axi_awvalid)
       ,.s_axil_awready_o(s02_axi_awready)
 
@@ -384,7 +385,7 @@ module top_zynq
       ,.s_axil_bready_i (s02_axi_bready)
 
       ,.s_axil_araddr_i (s02_axi_araddr)
-      ,.s_axil_arprot_i (axi_prot_type_e'(s02_axi_arprot))
+      ,.s_axil_arprot_i (s02_axi_arprot)
       ,.s_axil_arvalid_i(s02_axi_arvalid)
       ,.s_axil_arready_o(s02_axi_arready)
 
@@ -542,7 +543,7 @@ module top_zynq
       ,.m_axil_wvalid_o (bp_axi_wvalid)
       ,.m_axil_wready_i (bp_axi_wready)
 
-      ,.m_axil_bresp_i  (axi_resp_type_e'(bp_axi_bresp))
+      ,.m_axil_bresp_i  (bp_axi_bresp)
       ,.m_axil_bvalid_i (bp_axi_bvalid)
       ,.m_axil_bready_o (bp_axi_bready)
 
@@ -552,14 +553,14 @@ module top_zynq
       ,.m_axil_arready_i(bp_axi_arready)
 
       ,.m_axil_rdata_i  (bp_axi_rdata)
-      ,.m_axil_rresp_i  (axi_resp_type_e'(bp_axi_rresp))
+      ,.m_axil_rresp_i  (bp_axi_rresp)
       ,.m_axil_rvalid_i (bp_axi_rvalid)
       ,.m_axil_rready_o (bp_axi_rready)
 
       // these are reads/writes into BlackParrot
       // from the Zynq PS ARM core
       ,.s_axil_awaddr_i (waddr_translated_lo)
-      ,.s_axil_awprot_i (axi_prot_type_e'(s01_axi_awprot))
+      ,.s_axil_awprot_i (s01_axi_awprot)
       ,.s_axil_awvalid_i(s01_axi_awvalid)
       ,.s_axil_awready_o(s01_axi_awready)
 
@@ -573,7 +574,7 @@ module top_zynq
       ,.s_axil_bready_i (s01_axi_bready)
 
       ,.s_axil_araddr_i (raddr_translated_lo)
-      ,.s_axil_arprot_i (axi_prot_type_e'(s01_axi_arprot))
+      ,.s_axil_arprot_i (s01_axi_arprot)
       ,.s_axil_arvalid_i(s01_axi_arvalid)
       ,.s_axil_arready_o(s01_axi_arready)
 

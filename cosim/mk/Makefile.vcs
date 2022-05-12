@@ -30,11 +30,15 @@ TRACE ?= +bsg_trace
 all:
 	@echo "## See the makefile for the fun things you can do in this directory"
 
+BUILD_LOG ?= build.log
 simv: $(HOST_PROGRAM) $(FLIST)
-	$(VCS) $(VCS_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" -LDFLAGS "$(LDFLAGS)" -o $@ $<
+	$(VCS) $(VCS_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" \
+		-LDFLAGS "$(LDFLAGS)" -o $@ $< \
+		2>&1 | tee -i $(BUILD_LOG)
 
+RUN_LOG ?= run.log
 run: simv
-	./$< $(SIM_ARGS) $(TRACE)
+	./$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
 
 clean:
 	-rm -rf csrc/
@@ -42,6 +46,8 @@ clean:
 	-rm -rf vc_hdrs.h
 	-rm -rf flist.vcs
 	-rm -rf simv* vcdplus.vpd
+	-rm -rf build.log
+	-rm -rf run.log
 
 view:
 	$(_DVE) -full64 -vpd vcdplus.vpd

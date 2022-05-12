@@ -1,6 +1,8 @@
 SDK_DIR=../cosim/import/black-parrot-sdk
 NBF_DIR=../cosim/import/black-parrot/bp_common/software/py
 
+NBF_NCPUS ?= 1
+
 NCORES=20
 
 export PATH := $(SDK_DIR)/install/bin/:$(PATH)
@@ -113,6 +115,13 @@ run_all_fpga_nbf: $(nbf-files:.nbf=.fpga.log)
 #
 run_all_verilator_nbf: $(nbf-files:.nbf=.verilator.log)
 
+# run all of the nbfs in simulation with vcs, usually on your x86 build machine
+# note: requires vcs and a properly configured environment
+#
+# use -j <n cpus> to parallelize
+#
+run_all_vcs_nbf: $(nbf-files:.nbf=.vcs.log)
+
 # run on Zynq
 summarize:
 	grep --files-without-match PASS nbf/*.log
@@ -136,7 +145,7 @@ VPATH := $(wildcard ../cosim/import/black-parrot-sdk/prog/*)
 %.nbf: %.riscv
 	$(RISCV_OBJCOPY) -O verilog $< $*.mem
 	$(SED) -i "s/@8/@0/g" $*.mem
-	python $(NBF_DIR)/nbf.py --config --boot_pc 0x80000000 --mem $*.mem > $@
+	python $(NBF_DIR)/nbf.py --config --boot_pc 0x80000000 --mem $*.mem --ncpus $(NBF_NCPUS) > $@
 	-rm $*.mem
 
 # if you want to run one test, then you can do:
@@ -145,7 +154,7 @@ VPATH := $(wildcard ../cosim/import/black-parrot-sdk/prog/*)
 
 
 %.fpga.log: %.nbf
-	$(MAKE) -C ../cosim/black-parrot-example/fpga run NBF_FILE=$(abspath $<) | tee $*.fpga.log
+	$(MAKE) -C ../cosim/black-parrot-example/fpga run NBF_FILE=$(abspath $<) | tee -i $*.fpga.log
 
 %.fpga.rerun: %.nbf
 	-rm $*.fpga.log
@@ -154,8 +163,17 @@ VPATH := $(wildcard ../cosim/import/black-parrot-sdk/prog/*)
 # make nbf/<testname>.verilator.log to run on verilator (probably x86)
 
 %.verilator.log: %.nbf
-	$(MAKE) FREE_DRAM=0 -C ../cosim/black-parrot-example/verilator run NBF_FILE=$(abspath $<) | tee $*.verilator.log
+	$(MAKE) FREE_DRAM=0 -C ../cosim/black-parrot-example/verilator run NBF_FILE=$(abspath $<) | tee -i $*.verilator.log
 
 %.verilator.rerun: %.nbf
 	-rm $*.verilator.log
 	make $*.verilator.log
+
+# make nbf/<testname>.vcs.log to run on vcs (probably x86)
+
+%.vcs.log: %.nbf
+	$(MAKE) FREE_DRAM=0 -C ../cosim/black-parrot-example/vcs run NBF_FILE=$(abspath $<) | tee -i $*.vcs.log
+
+%.vcs.rerun: %.nbf
+	-rm $*.vcs.log
+	make $*.vcs.log

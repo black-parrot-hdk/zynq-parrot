@@ -24,15 +24,21 @@ TRACE ?= +bsg_trace
 all:
 	@echo "## See the makefile for the fun things you can do in this directory"
 
+RUN_LOG ?= run.log
 run: obj_dir/V$(TOP_MODULE)
-	$< $(SIM_ARGS) $(TRACE)
+	$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
 
+BUILD_LOG ?= build.log
 obj_dir/V$(TOP_MODULE): $(HOST_PROGRAM) $(FLIST)
-	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" -LDFLAGS "$(LDFLAGS)" $<
+	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" \
+		-LDFLAGS "$(LDFLAGS)" $< \
+		2>&1 | tee -i $(BUILD_LOG)
 
 clean:
 	-rm -rf flist.vcs
 	-rm -rf obj_dir/ *~ trace.fst
+	-rm -rf build.log
+	-rm -rf run.log
 
 view:
 	gtkwave -f trace.fst

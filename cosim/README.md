@@ -10,6 +10,8 @@ Checkout these examples in this directory:
 
 - import/black-parrot
 - import/black-parrot-sdk
+- import/black-parrot-subsystems
+- import/black-parrot-tools
 - import/black-parrot/external/basejump\_stl
 - import/black-parrot/external/HardFloat
 
