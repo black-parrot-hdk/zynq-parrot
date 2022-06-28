@@ -283,7 +283,6 @@ module top
    localparam axi_addr_width_p = 32;
    localparam axi_data_width_p = 64;
    localparam axi_strb_width_p = axi_data_width_p >> 3;
-   localparam axi_burst_len_p = (ariane_pkg::ICACHE_LINE_WIDTH)/axi_data_width_p;
 
    wire                                 m00_axi_aclk = s00_axi_aclk;
    wire                                 m00_axi_aresetn = s00_axi_aresetn;
@@ -337,7 +336,7 @@ module top
      #(.axi_id_width_p(axi_id_width_p)
        ,.axi_addr_width_p(axi_addr_width_p)
        ,.axi_data_width_p(axi_data_width_p)
-       ,.axi_burst_len_p (axi_burst_len_p)
+       ,.axi_len_width_p (8)
        ,.mem_els_p(2**28) // 256 MB
        ,.init_data_p('0)
      )
@@ -347,6 +346,7 @@ module top
 
       ,.axi_awid_i    (m00_axi_awid)
       ,.axi_awaddr_i  (m00_axi_awaddr)
+      ,.axi_awlen_i   (m00_axi_awlen)
       ,.axi_awvalid_i (m00_axi_awvalid)
       ,.axi_awready_o (m00_axi_awready)
 
@@ -363,6 +363,7 @@ module top
 
       ,.axi_arid_i    (m00_axi_arid)
       ,.axi_araddr_i  (m00_axi_araddr)
+      ,.axi_arlen_i   (m00_axi_arlen)
       ,.axi_arvalid_i (m00_axi_arvalid)
       ,.axi_arready_o (m00_axi_arready)
 

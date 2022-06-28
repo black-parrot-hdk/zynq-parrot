@@ -32,6 +32,7 @@
     logic fpu_busy;
     logic amo_flush;
     logic csr_flush;
+    logic fence;
     logic exception;
     logic cmt_haz;
     logic sbuf_cmt;
@@ -41,37 +42,38 @@
 
   typedef enum logic [5:0]
   {
-     iq_full      = 6'd35
-     ,ic_invl     = 6'd34
-     ,ic_miss     = 6'd33
-     ,ic_dma      = 6'd32
-     ,ic_flush    = 6'd31
-     ,ic_atrans   = 6'd30
-     ,bp_haz      = 6'd29
-     ,ireplay     = 6'd28
-     ,realign     = 6'd27
-     ,sb_full     = 6'd26
-     ,waw_flu     = 6'd25
-     ,waw_lsu     = 6'd24
-     ,waw_fpu     = 6'd23
-     ,waw_reorder = 6'd22
-     ,raw_flu     = 6'd21
-     ,raw_lsu     = 6'd20
-     ,raw_fpu     = 6'd19
-     ,br_haz      = 6'd18
-     ,br_miss     = 6'd17
-     ,mul_haz     = 6'd16
-     ,csr_buf     = 6'd15
-     ,div_busy    = 6'd14
-     ,ld_pipe     = 6'd13
-     ,ld_grant    = 6'd12
-     ,ld_sbuf     = 6'd11
-     ,ld_dcache   = 6'd10
-     ,st_pipe     = 6'd9
-     ,sbuf_spec   = 6'd8
-     ,fpu_busy    = 6'd7
-     ,amo_flush   = 6'd6
-     ,csr_flush   = 6'd5
+     iq_full      = 6'd36
+     ,ic_invl     = 6'd35
+     ,ic_miss     = 6'd34
+     ,ic_dma      = 6'd33
+     ,ic_flush    = 6'd32
+     ,ic_atrans   = 6'd31
+     ,bp_haz      = 6'd30
+     ,ireplay     = 6'd29
+     ,realign     = 6'd28
+     ,sb_full     = 6'd27
+     ,waw_flu     = 6'd26
+     ,waw_lsu     = 6'd25
+     ,waw_fpu     = 6'd24
+     ,waw_reorder = 6'd23
+     ,raw_flu     = 6'd22
+     ,raw_lsu     = 6'd21
+     ,raw_fpu     = 6'd20
+     ,br_haz      = 6'd19
+     ,br_miss     = 6'd18
+     ,mul_haz     = 6'd17
+     ,csr_buf     = 6'd16
+     ,div_busy    = 6'd15
+     ,ld_pipe     = 6'd14
+     ,ld_grant    = 6'd13
+     ,ld_sbuf     = 6'd12
+     ,ld_dcache   = 6'd11
+     ,st_pipe     = 6'd10
+     ,sbuf_spec   = 6'd9
+     ,fpu_busy    = 6'd8
+     ,amo_flush   = 6'd7
+     ,csr_flush   = 6'd6
+     ,fence       = 6'd5
      ,exception   = 6'd4
      ,cmt_haz     = 6'd3
      ,sbuf_cmt    = 6'd2
@@ -112,7 +114,6 @@ module ariane_commit_profiler
     , input is_ack_i
     , input is_unresolved_branch_i
     , input is_sb_full_i
-    , input is_ro_mul_stall_i
     , input is_ro_stall_i
     , input is_ro_fubusy_i
     , input scoreboard_entry_t is_instr_i
@@ -123,9 +124,10 @@ module ariane_commit_profiler
     , input is_forward_rs3_i
     , input is_forward_rd_i
 
+    , input ex_mul_valid_i
     , input ex_csr_ready_i
     , input ex_div_ready_i
-    , input ex_fpu_ready_i
+    , input ex_fpu_busy_i
 
     , input wb_flu_valid_i
     , input wb_fpu_valid_i
@@ -188,11 +190,13 @@ module ariane_commit_profiler
     , output [width_p-1:0] fpu_busy_o
     , output [width_p-1:0] amo_flush_o
     , output [width_p-1:0] csr_flush_o
+    , output [width_p-1:0] fence_o
     , output [width_p-1:0] exception_o
     , output [width_p-1:0] cmt_haz_o
     , output [width_p-1:0] sbuf_cmt_o
     , output [width_p-1:0] dc_dma_o
     , output [width_p-1:0] unknown_o
+    , output [width_p-1:0] extra_cmt_o
 
     , output [width_p-1:0] wdma_cnt_o
     , output [width_p-1:0] rdma_cnt_o
@@ -245,7 +249,7 @@ module ariane_commit_profiler
   wire is_stall_li = is_valid_i & ~is_ack_i;
   wire sb_full_li = is_stall_li & is_sb_full_i;
   wire br_haz_li  = is_stall_li & is_unresolved_branch_i;
-  wire mul_haz_li = is_stall_li & is_ro_mul_stall_i;
+  wire mul_haz_li = is_stall_li & ex_mul_valid_i & (is_instr_i.fu != MULT);
   wire fu_busy_li = is_stall_li & is_ro_fubusy_i;
   wire raw_haz_li = is_stall_li & is_ro_stall_i;
   wire waw_haz_li = is_stall_li & ~sb_full_li & ~br_haz_li & ~mul_haz_li & ~raw_haz_li & ~fu_busy_li;
@@ -278,7 +282,7 @@ module ariane_commit_profiler
     ,.max_step_p(1)
    ) ld_cnt
    (.clk_i(clk_i)
-   ,.reset_i(reset_i)
+   ,.reset_i(reset_i | flush_ex_i)
    ,.down_i(ld_done_i)
    ,.up_i(pop_ld_i)
    ,.count_o(ld_cntr)
@@ -374,6 +378,7 @@ module ariane_commit_profiler
     pc.amo_flush |= flush_amo_i;
     pc.csr_flush |= flush_csr_i;
     pc.exception |= exception_i;
+    pc.fence |= flush_unissued_instr_i & ~(branch_mispredict_i | flush_amo_i | flush_csr_i | exception_i);
 
     //I$ output
     ic = (|ic_busy) ? ic_busy : pc_r;
@@ -383,6 +388,7 @@ module ariane_commit_profiler
     ic.amo_flush |= flush_amo_i;
     ic.csr_flush |= flush_csr_i;
     ic.exception |= exception_i;
+    ic.fence |= flush_unissued_instr_i & ~(branch_mispredict_i | flush_amo_i | flush_csr_i | exception_i);
 
     //Instr queue input
     re = ic_r;
@@ -391,6 +397,7 @@ module ariane_commit_profiler
     re.amo_flush |= flush_amo_i;
     re.csr_flush |= flush_csr_i;
     re.exception |= exception_i;
+    re.fence |= flush_unissued_instr_i & ~(branch_mispredict_i | flush_amo_i | flush_csr_i | exception_i);
 
     //Instr queue output
     fe = instr_qeueu_valid_i ? '0 : re_r;
@@ -401,6 +408,7 @@ module ariane_commit_profiler
     id.amo_flush |= flush_amo_i;
     id.csr_flush |= flush_csr_i;
     id.exception |= exception_i;
+    id.fence |= flush_unissued_instr_i & ~(branch_mispredict_i | flush_amo_i | flush_csr_i | exception_i);
 
     //Issue stage
     is = id_r;
@@ -425,15 +433,17 @@ module ariane_commit_profiler
     is.amo_flush    |= flush_amo_i;
     is.csr_flush    |= flush_csr_i;
     is.exception    |= exception_i;
+    is.fence |= flush_unissued_instr_i & ~(branch_mispredict_i | flush_amo_i | flush_csr_i | exception_i);
 
     //FLU
     flu = is_r;
-    flu.mul_haz     |= mul_haz_li;
+    flu.mul_haz     |= ex_mul_valid_i & ex_div_ready_i;
     flu.csr_buf     |= ~ex_csr_ready_i;
     flu.div_busy    |= ~ex_div_ready_i;
     flu.amo_flush   |= flush_amo_i;
     flu.csr_flush   |= flush_csr_i;
     flu.exception   |= exception_i;
+    flu.fence |= flush_unissued_instr_i & ~(branch_mispredict_i | flush_amo_i | flush_csr_i | exception_i);
     wb[3] = wb_flu_valid_i ? '0 : flu;
 
     //Load unit
@@ -446,12 +456,14 @@ module ariane_commit_profiler
     ld[0].amo_flush |= flush_amo_i;
     ld[0].csr_flush |= flush_csr_i;
     ld[0].exception |= exception_i;
+    ld[0].fence |= flush_unissued_instr_i & ~(branch_mispredict_i | flush_amo_i | flush_csr_i | exception_i);
 
     ld[1] = ld_r[0];
     ld[1].ld_pipe   |= ld_pipe_li;
     ld[1].amo_flush |= flush_amo_i;
     ld[1].csr_flush |= flush_csr_i;
     ld[1].exception |= exception_i;
+    ld[1].fence |= flush_unissued_instr_i & ~(branch_mispredict_i | flush_amo_i | flush_csr_i | exception_i);
     wb[2] = wb_ld_valid_i ? '0 : ld[1];
 
     //Store unit
@@ -461,20 +473,24 @@ module ariane_commit_profiler
     st.amo_flush    |= flush_amo_i;
     st.csr_flush    |= flush_csr_i;
     st.exception    |= exception_i;
+    st.fence |= flush_unissued_instr_i & ~(branch_mispredict_i | flush_amo_i | flush_csr_i | exception_i);
     wb[1] = wb_st_valid_i ? '0 : st;
 
     //FPU
+    //FPU is OOO so a valid output can still indicate a stall
     fpu = is_r;
-    fpu.fpu_busy    |= ~ex_fpu_ready_i;
+    fpu.fpu_busy    |= ex_fpu_busy_i;
     fpu.amo_flush   |= flush_amo_i;
     fpu.csr_flush   |= flush_csr_i;
     fpu.exception   |= exception_i;
-    wb[0] = wb_fpu_valid_i ? '0 : fpu;
+    fpu.fence |= flush_unissued_instr_i & ~(branch_mispredict_i | flush_amo_i | flush_csr_i | exception_i);
+    wb[0] = fpu;
 
     ex = is_r;
     ex.amo_flush    |= flush_amo_i;
     ex.csr_flush    |= flush_csr_i;
     ex.exception    |= exception_i;
+    ex.fence |= flush_unissued_instr_i & ~(branch_mispredict_i | flush_amo_i | flush_csr_i | exception_i);
 
     //Scoreboard WB
     //If this instruction is issued and was not issued in the prev cycle
@@ -565,6 +581,7 @@ module ariane_commit_profiler
   `declare_counter(amo_flush)
   `declare_counter(csr_flush)
   `declare_counter(exception)
+  `declare_counter(fence)
   `declare_counter(cmt_haz)
   `declare_counter(sbuf_cmt)
   `declare_counter(dc_dma)
@@ -577,6 +594,16 @@ module ariane_commit_profiler
    ,.clear_i(1'b0)
    ,.up_i(en_i & stall_v & ((stall_reason_enum == unknown) | ~(|commit)))
    ,.count_o(unknown_o)
+   );
+
+  bsg_counter_clear_up
+   #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p(0))
+   extra_cmt_cnt
+   (.clk_i(clk_i)
+   ,.reset_i(reset_i)
+   ,.clear_i(1'b0)
+   ,.up_i(en_i & cmt_ack_i[1])
+   ,.count_o(extra_cmt_o)
    );
 
   bsg_counter_clear_up

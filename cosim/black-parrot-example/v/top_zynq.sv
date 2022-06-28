@@ -272,7 +272,7 @@ module top_zynq
 
    // Add user logic here
 
-   `declare_bsg_cache_dma_pkt_s(caddr_width_p);
+   `declare_bsg_cache_dma_pkt_s(caddr_width_p, l2_block_size_in_words_p);
    bsg_cache_dma_pkt_s         dma_pkt_lo;
    logic                       dma_pkt_v_lo, dma_pkt_yumi_li;
    logic [l2_fill_width_p-1:0] dma_data_lo;

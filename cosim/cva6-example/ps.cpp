@@ -39,8 +39,8 @@ const char* metrics[] = {
   "br_haz", "br_miss", "mul_haz", "csr_buf", "div_busy",
   "ld_pipe", "ld_grant", "ld_sbuf", "ld_dcache",
   "st_pipe", "sbuf_spec", "fpu_busy",
-  "amo_flush", "csr_flush", "exception",
-  "cmt_haz", "sbuf_cmt", "dc_dma", "unknown",
+  "amo_flush", "csr_flush", "fence", "exception",
+  "cmt_haz", "sbuf_cmt", "dc_dma", "unknown", "extra_cmt",
   "wdma_cnt", "rdma_cnt", "wdma_wait", "rdma_wait",
   "ilong_instr", "flong_instr", "fma_instr", "aux_instr", "mem_instr"
 };

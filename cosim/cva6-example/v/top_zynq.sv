@@ -154,7 +154,7 @@ module top_zynq
 
    `define COREPATH ariane.i_ariane
 
-   localparam csr_num_lp = 47;
+   localparam csr_num_lp = 49;
    logic [csr_num_lp-1:0][64-1:0] csr_data_li;
 
   bsg_dff_reset_en #(
@@ -209,8 +209,8 @@ module top_zynq
     ,.is_ack_i(`COREPATH.issue_stage_i.decoded_instr_ack_o)
     ,.is_unresolved_branch_i(`COREPATH.issue_stage_i.i_scoreboard.unresolved_branch_i)
     ,.is_sb_full_i(`COREPATH.issue_stage_i.i_scoreboard.issue_full)
-    ,.is_ro_mul_stall_i(`COREPATH.issue_stage_i.i_issue_read_operands.mult_valid_q 
-                     & (`COREPATH.issue_stage_i.i_issue_read_operands.issue_instr_i.fu != ariane_pkg::MULT))
+//    ,.is_ro_mul_stall_i(`COREPATH.issue_stage_i.i_issue_read_operands.mult_valid_q 
+//                     & (`COREPATH.issue_stage_i.i_issue_read_operands.issue_instr_i.fu != ariane_pkg::MULT))
     ,.is_ro_stall_i(`COREPATH.issue_stage_i.i_issue_read_operands.stall)
     ,.is_ro_fubusy_i(`COREPATH.issue_stage_i.i_issue_read_operands.fu_busy)
     ,.is_instr_i(`COREPATH.issue_stage_i.i_issue_read_operands.issue_instr_i)
@@ -221,9 +221,10 @@ module top_zynq
     ,.is_forward_rs3_i(`COREPATH.issue_stage_i.i_issue_read_operands.forward_rs3)
     ,.is_forward_rd_i(|`COREPATH.issue_stage_i.i_scoreboard.rd_fwd_req)
 
+    ,.ex_mul_valid_i(`COREPATH.ex_stage_i.mult_valid_i)
     ,.ex_csr_ready_i(`COREPATH.ex_stage_i.csr_ready)
     ,.ex_div_ready_i(`COREPATH.ex_stage_i.mult_ready)
-    ,.ex_fpu_ready_i(`COREPATH.ex_stage_i.fpu_ready_o)
+    ,.ex_fpu_busy_i(`COREPATH.ex_stage_i.fpu_gen.fpu_i.fpu_gen.i_fpnew_bulk.busy_o)
 
     ,.wb_flu_valid_i(`COREPATH.ex_stage_i.flu_valid_o)
     ,.wb_fpu_valid_i(`COREPATH.ex_stage_i.fpu_valid_o)
@@ -286,20 +287,22 @@ module top_zynq
     ,.fpu_busy_o    (csr_data_li[30])
     ,.amo_flush_o   (csr_data_li[31])
     ,.csr_flush_o   (csr_data_li[32])
-    ,.exception_o   (csr_data_li[33])
-    ,.cmt_haz_o     (csr_data_li[34])
-    ,.sbuf_cmt_o    (csr_data_li[35])
-    ,.dc_dma_o      (csr_data_li[36])
-    ,.unknown_o     (csr_data_li[37])
-    ,.wdma_cnt_o    (csr_data_li[38])
-    ,.rdma_cnt_o    (csr_data_li[39])
-    ,.wdma_wait_o   (csr_data_li[40])
-    ,.rdma_wait_o   (csr_data_li[41])
-    ,.ilong_instr_o (csr_data_li[42])
-    ,.flong_instr_o (csr_data_li[43])
-    ,.fma_instr_o   (csr_data_li[44])
-    ,.aux_instr_o   (csr_data_li[45])
-    ,.mem_instr_o   (csr_data_li[46])
+    ,.fence_o       (csr_data_li[33])
+    ,.exception_o   (csr_data_li[34])
+    ,.cmt_haz_o     (csr_data_li[35])
+    ,.sbuf_cmt_o    (csr_data_li[36])
+    ,.dc_dma_o      (csr_data_li[37])
+    ,.unknown_o     (csr_data_li[38])
+    ,.extra_cmt_o   (csr_data_li[39])
+    ,.wdma_cnt_o    (csr_data_li[40])
+    ,.rdma_cnt_o    (csr_data_li[41])
+    ,.wdma_wait_o   (csr_data_li[42])
+    ,.rdma_wait_o   (csr_data_li[43])
+    ,.ilong_instr_o (csr_data_li[44])
+    ,.flong_instr_o (csr_data_li[45])
+    ,.fma_instr_o   (csr_data_li[46])
+    ,.aux_instr_o   (csr_data_li[47])
+    ,.mem_instr_o   (csr_data_li[48])
   );
 
    // use this as a way of figuring out how much memory a RISC-V program is using
