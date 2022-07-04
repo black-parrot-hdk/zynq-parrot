@@ -103,11 +103,9 @@ public:
 
 #ifdef GP0_ENABLE
     // map in first PLAXI region of physical addresses to virtual addresses
-#ifdef __arm__
     volatile int *ptr0 =
         (int *)mmap(addr0, GP0_ADDR_SIZE_BYTES, PROT_READ | PROT_WRITE,
                     MAP_SHARED, fd, (uintptr_t)addr0);
-#endif
     assert(ptr0 == addr0);
 
     // assert(ptr0 != ((void *) -1));
