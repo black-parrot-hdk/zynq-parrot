@@ -1,0 +1,66 @@
+variables:
+  GIT_STRATEGY: fetch
+  GIT_SUBMODULE_STRATEGY: none
+
+stages:
+  - all
+
+.job_template: &job_definition
+  only:
+    - ci_test
+  before_script:
+    - git submodule update --init --checkout --recursive cosim/imports/black-parrot
+#  artifacts:
+#    when: always
+#    paths:
+#      - "bp_fe/syn/reports/"
+#      - "bp_be/syn/reports/"
+#      - "bp_me/syn/reports/"
+#      - "bp_top/syn/reports/"
+#      - "bp_fe/syn/logs/"
+#      - "bp_be/syn/logs/"
+#      - "bp_me/syn/logs/"
+#      - "bp_top/syn/logs/"
+#  cache: &global_cache
+#    key: $CI_COMMIT_REF_SLUG
+#    paths:
+#      - $CI_PROJECT_DIR/sdk
+#    policy: pull
+  dependencies: []
+  retry:
+    max: 2
+    when:
+      - script_failure
+
+shell-example-verilator:
+  <<: *job_definition
+  stage: all
+  tags:
+    - verilator
+  script:
+    - make -C cosim/shell-example/verilator/ run
+
+shell-example-vcs:
+  <<: *job_definition
+  stage: all
+  tags:
+    - vcs
+  script:
+    - make -C cosim/shell-example/vcs/ run
+
+double-shell-example-verilator:
+  <<: *job_definition
+  stage: all
+  tags:
+    - verilator
+  script:
+    - make -C cosim/double-shell-example/verilator/ run
+
+double-shell-example-vcs:
+  <<: *job_definition
+  stage: all
+  tags:
+    - vcs
+  script:
+    - make -C cosim/double-shell-example/vcs/ run
+
