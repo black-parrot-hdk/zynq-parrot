@@ -2,7 +2,7 @@
 // that runs on the real Zynq chip.
 //
 
-#ifndef __arm__
+#if !defined(__arm__) && !defined(__aarch64__)
 #error this file intended only to be compiled on an ARM (Zynq) platform
 #endif
 
@@ -82,6 +82,7 @@ void _xlnk_reset();
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <stdint.h>
 using namespace std;
 
 class bp_zynq_pl {
@@ -100,13 +101,11 @@ public:
     int *addr0 = (int *)GP0_ADDR_BASE; // e.g. 0x43c00000;
     int *addr1 = (int *)GP1_ADDR_BASE; // e.g. 0x83c00000;
 
-
 #ifdef GP0_ENABLE
     // map in first PLAXI region of physical addresses to virtual addresses
-
     volatile int *ptr0 =
         (int *)mmap(addr0, GP0_ADDR_SIZE_BYTES, PROT_READ | PROT_WRITE,
-                    MAP_SHARED, fd, (int)addr0);
+                    MAP_SHARED, fd, (uintptr_t)addr0);
     assert(ptr0 == addr0);
 
     // assert(ptr0 != ((void *) -1));
@@ -120,7 +119,7 @@ public:
     // map in second PLAXI region of physical addresses to virtual addresses
     volatile int *ptr1 =
         (int *)mmap(addr1, GP1_ADDR_SIZE_BYTES, PROT_READ | PROT_WRITE,
-                    MAP_SHARED, fd, (int)addr1);
+                    MAP_SHARED, fd, (uintptr_t)addr1);
     assert(ptr1 == addr1);
 
     // assert(ptr1 != ((void *) -1));
