@@ -25,8 +25,6 @@
     logic div_busy;
     logic ld_pipe;
     logic ld_grant;
-    logic ld_sbuf;
-    logic ld_dcache;
     logic st_pipe;
     logic sbuf_spec;
     logic fpu_busy;
@@ -34,50 +32,50 @@
     logic csr_flush;
     logic fence;
     logic exception;
-    logic cmt_haz;
-    logic sbuf_cmt;
+    logic dc_pipe;
+    logic dc_miss;
     logic dc_dma;
+    logic cmt_haz;
     logic unknown;
   } stall_reason_s;
 
   typedef enum logic [5:0]
   {
-     iq_full      = 6'd36
-     ,ic_invl     = 6'd35
-     ,ic_miss     = 6'd34
-     ,ic_dma      = 6'd33
-     ,ic_flush    = 6'd32
-     ,ic_atrans   = 6'd31
-     ,bp_haz      = 6'd30
-     ,ireplay     = 6'd29
-     ,realign     = 6'd28
-     ,sb_full     = 6'd27
-     ,waw_flu     = 6'd26
-     ,waw_lsu     = 6'd25
-     ,waw_fpu     = 6'd24
-     ,waw_reorder = 6'd23
-     ,raw_flu     = 6'd22
-     ,raw_lsu     = 6'd21
-     ,raw_fpu     = 6'd20
-     ,br_haz      = 6'd19
-     ,br_miss     = 6'd18
-     ,mul_haz     = 6'd17
-     ,csr_buf     = 6'd16
-     ,div_busy    = 6'd15
-     ,ld_pipe     = 6'd14
-     ,ld_grant    = 6'd13
-     ,ld_sbuf     = 6'd12
-     ,ld_dcache   = 6'd11
-     ,st_pipe     = 6'd10
-     ,sbuf_spec   = 6'd9
-     ,fpu_busy    = 6'd8
-     ,amo_flush   = 6'd7
-     ,csr_flush   = 6'd6
-     ,fence       = 6'd5
-     ,exception   = 6'd4
-     ,cmt_haz     = 6'd3
-     ,sbuf_cmt    = 6'd2
-     ,dc_dma      = 6'd1
+     iq_full      = 6'd35
+     ,ic_invl     = 6'd34
+     ,ic_miss     = 6'd33
+     ,ic_dma      = 6'd32
+     ,ic_flush    = 6'd31
+     ,ic_atrans   = 6'd30
+     ,bp_haz      = 6'd29
+     ,ireplay     = 6'd28
+     ,realign     = 6'd27
+     ,sb_full     = 6'd26
+     ,waw_flu     = 6'd25
+     ,waw_lsu     = 6'd24
+     ,waw_fpu     = 6'd23
+     ,waw_reorder = 6'd22
+     ,raw_flu     = 6'd21
+     ,raw_lsu     = 6'd20
+     ,raw_fpu     = 6'd19
+     ,br_haz      = 6'd18
+     ,br_miss     = 6'd17
+     ,mul_haz     = 6'd16
+     ,csr_buf     = 6'd15
+     ,div_busy    = 6'd14
+     ,ld_pipe     = 6'd13
+     ,ld_grant    = 6'd12
+     ,st_pipe     = 6'd11
+     ,sbuf_spec   = 6'd10
+     ,fpu_busy    = 6'd9
+     ,amo_flush   = 6'd8
+     ,csr_flush   = 6'd7
+     ,fence       = 6'd6
+     ,exception   = 6'd5
+     ,dc_pipe     = 6'd4
+     ,dc_miss     = 6'd3
+     ,dc_dma      = 6'd2
+     ,cmt_haz     = 6'd1
      ,unknown     = 6'd0
   } stall_reason_e;
 
@@ -138,6 +136,7 @@ module ariane_commit_profiler
     , input pop_ld_i
     , input ld_done_i
     , input [3:0] ld_state_q_i
+    , input [3:0] ld_state_d_i
     , input [1:0] st_state_q_i
 
     , input issue_en_i
@@ -159,6 +158,26 @@ module ariane_commit_profiler
     , input [4:0] m_awid_i
     , input m_bvalid_i
 
+    , input icache_dreq_i_t ic_dreq_i
+    , input icache_dreq_o_t ic_dresp_i
+    , input ic_miss_i
+    , input dcache_req_i_t [2:0] dc_req_i
+    , input dcache_req_o_t [2:0] dc_resp_i
+    , input [2:0] dc_miss_gnt_i
+    , input [3:0] dc_st_state_i
+
+    , input fu_data_t bu_fu_data_i
+    , input bp_resolve_t bu_resolved_branch_i
+
+    , input [fpnew_pkg::NUM_OPGROUPS-1:0] fpu_opgrp_req_i
+    , input [fpnew_pkg::NUM_OPGROUPS-1:0] fpu_opgrp_busy_i
+
+    , input div_valid_i
+    , input div_ready_i
+
+    , output [62:0][width_p-1:0] data_o
+
+/*
     , output [width_p-1:0] iq_full_o
     , output [width_p-1:0] ic_invl_o
     , output [width_p-1:0] ic_miss_o
@@ -208,6 +227,7 @@ module ariane_commit_profiler
     , output [width_p-1:0] fma_instr_o
     , output [width_p-1:0] aux_instr_o
     , output [width_p-1:0] mem_instr_o
+*/
   );
 
   typedef enum logic [2:0] {IC_FLUSH, IC_IDLE, IC_READ, IC_MISS, IC_KILL_ATRANS, IC_KILL_MISS} icache_state_e;
@@ -261,10 +281,16 @@ module ariane_commit_profiler
   wire waw_in_ex = ~is_forward_rd_i;
   wire ld_valid_li = lsu_ctrl_i.valid & (lsu_ctrl_i.fu == LOAD);
   wire st_valid_li = lsu_ctrl_i.valid & (lsu_ctrl_i.fu == STORE);
-  wire ld_pipe_li = ld_valid_li & (ld_state_q_i inside {LD_IDLE, LD_SEND_TAG});
-  wire ld_wait_gnt_li = ld_valid_li & (ld_state_q_i == LD_WAIT_GNT);
-  wire ld_page_off_li = ld_valid_li & (ld_state_q_i == LD_WAIT_PAGE_OFFSET);
-  wire ld_in_dcache_li = (ld_cntr != '0) & ~ld_done_i;
+
+  wire ld_pipe_li     = ld_valid_li & (ld_state_q_i == LD_IDLE);
+  wire ld_wait_gnt_li = ld_valid_li & ~pop_ld_i & (ld_state_d_i == LD_WAIT_GNT) & (ld_state_q_i != LD_WAIT_PAGE_OFFSET);
+  wire ld_page_off_li = ld_valid_li & ((ld_state_q_i == LD_WAIT_PAGE_OFFSET) | (ld_state_d_i == LD_WAIT_PAGE_OFFSET));
+  wire ld_dc_miss_li  = (ld_cntr != '0) & ~ld_done_i;
+  wire lu_dc_pipe_li  = (ld_valid_li & pop_ld_i) | (ld_page_off_li & ~st_dc_miss_li & ~dc_dma_li);
+  wire lu_dc_miss_li  = (ld_dc_miss_li | (ld_page_off_li & st_dc_miss_li)) & ~dc_dma_li;
+  wire lu_dc_dma_li   = (ld_dc_miss_li | ld_page_off_li) & dc_dma_li;
+
+  wire st_dc_miss_li = (dc_st_state_i inside {4'd7, 4'd8, 4'd9});
   wire st_pipe_li = st_valid_li & (st_state_q_i inside {ST_IDLE, ST_VALID_STORE});
   wire sbuf_spec_haz_li = st_valid_li & (st_state_q_i == ST_WAIT_STORE_READY);
 
@@ -425,7 +451,8 @@ module ariane_commit_profiler
     is.csr_buf      |= flu_busy_li & ~ex_csr_ready_i;
     is.div_busy     |= flu_busy_li & ~ex_div_ready_i;
     is.ld_grant     |= lsu_busy_li & ld_wait_gnt_li;
-    is.ld_sbuf      |= lsu_busy_li & ld_page_off_li & ~dc_dma_li;
+    is.dc_pipe      |= lsu_busy_li & ld_page_off_li & ~st_dc_miss_li & ~dc_dma_li;
+    is.dc_miss      |= lsu_busy_li & ld_page_off_li & st_dc_miss_li & ~dc_dma_li;
     is.dc_dma       |= lsu_busy_li & ld_page_off_li & dc_dma_li;
     is.sbuf_spec    |= lsu_busy_li & sbuf_spec_haz_li;
     is.fpu_busy     |= fpu_busy_li;
@@ -448,11 +475,10 @@ module ariane_commit_profiler
 
     //Load unit
     ld[0] = is_r;
-    ld[0].ld_pipe   |= ld_pipe_li;
     ld[0].ld_grant  |= ld_wait_gnt_li;
-    ld[0].ld_sbuf   |= ld_page_off_li & ~dc_dma_li;
-    ld[0].ld_dcache |= ld_in_dcache_li & ~dc_dma_li;
-    ld[0].dc_dma    |= (ld_page_off_li | ld_in_dcache_li) & dc_dma_li;
+    ld[0].dc_pipe   |= lu_dc_pipe_li;
+    ld[0].dc_miss   |= lu_dc_miss_li;
+    ld[0].dc_dma    |= lu_dc_dma_li;
     ld[0].amo_flush |= flush_amo_i;
     ld[0].csr_flush |= flush_csr_i;
     ld[0].exception |= exception_i;
@@ -512,7 +538,8 @@ module ariane_commit_profiler
       commit = ex_r;
     end
 
-    commit.sbuf_cmt |= cmt_haz_li & sbuf_cmt_haz_li & ~dc_dma_li;
+    commit.dc_pipe  |= cmt_haz_li & sbuf_cmt_haz_li & ~st_dc_miss_li & ~dc_dma_li;
+    commit.dc_miss  |= cmt_haz_li & sbuf_cmt_haz_li & st_dc_miss_li & ~dc_dma_li;
     commit.dc_dma   |= cmt_haz_li & sbuf_cmt_haz_li & dc_dma_li;
     commit.cmt_haz  |= cmt_haz_li & ~sbuf_cmt_haz_li;
 
@@ -537,8 +564,8 @@ module ariane_commit_profiler
      ,.v_o(stall_reason_v)
      );
 
-  // Output generation
-  `define declare_counter(name)                              \
+  // Output stall generation
+  `define declare_stall_counter(name,i)                      \
   bsg_counter_clear_up                                       \
    #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p(0)) \
    ``name``_cnt                                              \
@@ -546,45 +573,45 @@ module ariane_commit_profiler
    ,.reset_i(reset_i)                                        \
    ,.clear_i(1'b0)                                           \
    ,.up_i(en_i & stall_v & (stall_reason_enum == ``name``))  \
-   ,.count_o(``name``_o)                                     \
+   ,.count_o(data_o[``i``])                                  \
    );
 
-  `declare_counter(iq_full)
-  `declare_counter(ic_invl)
-  `declare_counter(ic_miss)
-  `declare_counter(ic_dma)
-  `declare_counter(ic_flush)
-  `declare_counter(ic_atrans)
-  `declare_counter(bp_haz)
-  `declare_counter(ireplay)
-  `declare_counter(realign)
-  `declare_counter(sb_full)
-  `declare_counter(waw_flu)
-  `declare_counter(waw_lsu)
-  `declare_counter(waw_fpu)
-  `declare_counter(waw_reorder)
-  `declare_counter(raw_flu)
-  `declare_counter(raw_lsu)
-  `declare_counter(raw_fpu)
-  `declare_counter(br_haz)
-  `declare_counter(br_miss)
-  `declare_counter(mul_haz)
-  `declare_counter(csr_buf)
-  `declare_counter(div_busy)
-  `declare_counter(ld_pipe)
-  `declare_counter(ld_grant)
-  `declare_counter(ld_sbuf)
-  `declare_counter(ld_dcache)
-  `declare_counter(st_pipe)
-  `declare_counter(sbuf_spec)
-  `declare_counter(fpu_busy)
-  `declare_counter(amo_flush)
-  `declare_counter(csr_flush)
-  `declare_counter(exception)
-  `declare_counter(fence)
-  `declare_counter(cmt_haz)
-  `declare_counter(sbuf_cmt)
-  `declare_counter(dc_dma)
+
+  `declare_stall_counter(iq_full,0)
+  `declare_stall_counter(ic_invl,1)
+  `declare_stall_counter(ic_miss,2)
+  `declare_stall_counter(ic_dma,3)
+  `declare_stall_counter(ic_flush,4)
+  `declare_stall_counter(ic_atrans,5)
+  `declare_stall_counter(bp_haz,6)
+  `declare_stall_counter(ireplay,7)
+  `declare_stall_counter(realign,8)
+  `declare_stall_counter(sb_full,9)
+  `declare_stall_counter(waw_flu,10)
+  `declare_stall_counter(waw_lsu,11)
+  `declare_stall_counter(waw_fpu,12)
+  `declare_stall_counter(waw_reorder,13)
+  `declare_stall_counter(raw_flu,14)
+  `declare_stall_counter(raw_lsu,15)
+  `declare_stall_counter(raw_fpu,16)
+  `declare_stall_counter(br_haz,17)
+  `declare_stall_counter(br_miss,18)
+  `declare_stall_counter(mul_haz,19)
+  `declare_stall_counter(csr_buf,20)
+  `declare_stall_counter(div_busy,21)
+  `declare_stall_counter(ld_pipe,22)
+  `declare_stall_counter(ld_grant,23)
+  `declare_stall_counter(st_pipe,24)
+  `declare_stall_counter(sbuf_spec,25)
+  `declare_stall_counter(fpu_busy,26)
+  `declare_stall_counter(amo_flush,27)
+  `declare_stall_counter(csr_flush,28)
+  `declare_stall_counter(fence,29)
+  `declare_stall_counter(exception,30)
+  `declare_stall_counter(dc_pipe,31)
+  `declare_stall_counter(dc_miss,32)
+  `declare_stall_counter(dc_dma,33)
+  `declare_stall_counter(cmt_haz,34)
 
   bsg_counter_clear_up
    #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p(0))
@@ -593,7 +620,7 @@ module ariane_commit_profiler
    ,.reset_i(reset_i)
    ,.clear_i(1'b0)
    ,.up_i(en_i & stall_v & ((stall_reason_enum == unknown) | ~(|commit)))
-   ,.count_o(unknown_o)
+   ,.count_o(data_o[35])
    );
 
   bsg_counter_clear_up
@@ -603,49 +630,83 @@ module ariane_commit_profiler
    ,.reset_i(reset_i)
    ,.clear_i(1'b0)
    ,.up_i(en_i & cmt_ack_i[1])
-   ,.count_o(extra_cmt_o)
+   ,.count_o(data_o[36])
    );
 
-  bsg_counter_clear_up
-   #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p(0))
-   wdma_cnt
+  // Event profiling
+  `define declare_counter(name,up,i)                         \
+  bsg_counter_clear_up                                       \
+   #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p(0)) \
+   ``name``_cnt                                              \
+   (.clk_i(clk_i)                                            \
+   ,.reset_i(reset_i)                                        \
+   ,.clear_i(1'b0)                                           \
+   ,.up_i(en_i & ``up``)                                     \
+   ,.count_o(data_o[``i``])                                  \
+   );
+
+  // DMA metrics
+  `declare_counter(e_wdma_cnt,(m_awvalid_i & m_awready_i),37)
+  `declare_counter(e_rdma_cnt,(m_arvalid_i & m_arready_i),38)
+  `declare_counter(e_wdma_wait,wdma_pending_r,39)
+  `declare_counter(e_rdma_wait,rdma_pending_r,40)
+
+  // I$ metrics
+  logic ic_miss_pending_r;
+  bsg_dff_reset_en_bypass
+   #(.width_p(1))
+   ic_miss_pending_reg
+    (.clk_i(clk_i)
+     ,.reset_i(reset_i)
+     ,.en_i(ic_miss_i | ic_dresp_i.valid)
+     ,.data_i(ic_miss_i)
+     ,.data_o(ic_miss_pending_r)
+     );
+
+  `declare_counter(e_ic_req_cnt,ic_dresp_i.valid,41)
+  `declare_counter(e_ic_miss_cnt,ic_miss_i,42)
+  `declare_counter(e_ic_miss_wait,ic_miss_pending_r,43)
+
+  // D$ metrics
+  bsg_counter_up_down
+   #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p(0), .max_step_p(2))
+   dc_req_cnt
    (.clk_i(clk_i)
    ,.reset_i(reset_i)
-   ,.clear_i(1'b0)
-   ,.up_i(en_i & m_awvalid_i & m_awready_i)
-   ,.count_o(wdma_cnt_o)
-   );
+   ,.down_i('0)
+   ,.up_i(en_i ? (dc_resp_i[1].data_gnt + dc_resp_i[2].data_gnt) : '0)
+   ,.count_o(data_o[44])
+   ); 
 
-  bsg_counter_clear_up
-   #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p(0))
-   rdma_cnt
-   (.clk_i(clk_i)
-   ,.reset_i(reset_i)
-   ,.clear_i(1'b0)
-   ,.up_i(en_i & m_arvalid_i & m_arready_i)
-   ,.count_o(rdma_cnt_o)
-   );
+  `declare_counter(e_dc_miss_cnt,(|dc_miss_gnt_i),45)
+  `declare_counter(e_dc_miss_wait,(ld_dc_miss_li | st_dc_miss_li),46)
 
-  bsg_counter_clear_up
-   #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p(0))
-   wdma_wait_cnt
-   (.clk_i(clk_i)
-   ,.reset_i(reset_i)
-   ,.clear_i(1'b0)
-   ,.up_i(en_i & wdma_pending_r)
-   ,.count_o(wdma_wait_o)
-   );
+  // Predictor metrics
+  wire bu_is_br = bu_resolved_branch_i.valid & ariane_pkg::op_is_branch(bu_fu_data_i.operator);
+  wire bu_is_jalr = bu_resolved_branch_i.valid & (bu_fu_data_i.operator == ariane_pkg::JALR) & (bu_resolved_branch_i.cf_type != ariane_pkg::Return);
+  wire bu_is_ret = bu_resolved_branch_i.valid & (bu_fu_data_i.operator == ariane_pkg::JALR) & (bu_resolved_branch_i.cf_type == ariane_pkg::Return);
+  `declare_counter(e_br_cnt,bu_is_br,47)
+  `declare_counter(e_br_miss,(bu_is_br & bu_resolved_branch_i.is_mispredict),48)
+  `declare_counter(e_jalr_cnt,bu_is_jalr,49)
+  `declare_counter(e_jalr_miss,(bu_is_jalr & bu_resolved_branch_i.is_mispredict),50)
+  `declare_counter(e_ret_cnt,bu_is_ret,51)
+  `declare_counter(e_ret_miss,(bu_is_ret & bu_resolved_branch_i.is_mispredict),52)
 
-  bsg_counter_clear_up
-   #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p(0))
-   rdma_wait_cnt
-   (.clk_i(clk_i)
-   ,.reset_i(reset_i)
-   ,.clear_i(1'b0)
-   ,.up_i(en_i & rdma_pending_r)
-   ,.count_o(rdma_wait_o)
-   );
+  // FPU metrics
+  `declare_counter(e_fpu_addmul_cnt,fpu_opgrp_req_i[0],53)
+  `declare_counter(e_fpu_divsqrt_cnt,fpu_opgrp_req_i[1],54)
+  `declare_counter(e_fpu_noncomp_cnt,fpu_opgrp_req_i[2],55)
+  `declare_counter(e_fpu_conv_cnt,fpu_opgrp_req_i[3],56)
+  `declare_counter(e_fpu_addmul_wait,fpu_opgrp_busy_i[0],57)
+  `declare_counter(e_fpu_divsqrt_wait,fpu_opgrp_busy_i[1],58)
+  `declare_counter(e_fpu_noncomp_wait,fpu_opgrp_busy_i[2],59)
+  `declare_counter(e_fpu_conv_wait,fpu_opgrp_busy_i[3],60)
 
+  // DIV metrics
+  `declare_counter(e_div_cnt,div_valid_i,61)
+  `declare_counter(e_div_wait,(~div_ready_i),62)
+
+/*
   // Instruction profiling
   `define is_ilong(instr) ((``instr``.fu inside {MULT}) & (``instr``.op inside {DIV, DIVU, DIVW, DIVUW, REM, REMU, REMW, REMUW}))
   `define is_flong(instr) ((``instr``.fu inside {FPU}) & (``instr``.op inside {FDIV, FSQRT}))
@@ -669,5 +730,6 @@ module ariane_commit_profiler
   `declare_instr_counter(fma)
   `declare_instr_counter(aux)
   `declare_instr_counter(mem)
+*/
 
 endmodule

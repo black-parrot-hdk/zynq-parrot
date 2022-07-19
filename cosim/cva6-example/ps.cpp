@@ -37,12 +37,17 @@ const char* metrics[] = {
   "waw_flu", "waw_lsu", "waw_fpu", "waw_reorder",
   "raw_flu", "raw_lsu", "raw_fpu",
   "br_haz", "br_miss", "mul_haz", "csr_buf", "div_busy",
-  "ld_pipe", "ld_grant", "ld_sbuf", "ld_dcache",
-  "st_pipe", "sbuf_spec", "fpu_busy",
+  "ld_pipe", "ld_grant", "st_pipe", "sbuf_spec",
+  "fpu_busy",
   "amo_flush", "csr_flush", "fence", "exception",
-  "cmt_haz", "sbuf_cmt", "dc_dma", "unknown", "extra_cmt",
-  "wdma_cnt", "rdma_cnt", "wdma_wait", "rdma_wait",
-  "ilong_instr", "flong_instr", "fma_instr", "aux_instr", "mem_instr"
+  "dc_pipe", "dc_miss", "dc_dma", "cmt_haz", "unknown", "extra_cmt",
+  "e_wdma_cnt", "e_rdma_cnt", "e_wdma_wait", "e_rdma_wait",
+  "e_ic_req_cnt", "e_ic_miss_cnt", "e_ic_miss_wait",
+  "e_dc_req_cnt", "e_dc_miss_cnt", "e_dc_miss_wait",
+  "e_br_cnt", "e_br_miss", "e_jalr_cnt", "e_jalr_miss", "e_ret_cnt", "e_ret_miss",
+  "e_fpu_addmul_cnt", "e_fpu_divsqrt_cnt", "e_fpu_noncomp_cnt", "e_fpu_conv_cnt",
+  "e_fpu_addmul_wait", "e_fpu_divsqrt_wait", "e_fpu_noncomp_wait", "e_fpu_conv_wait",
+  "e_div_cnt", "e_div_wait"
 };
 
 const char* samples[] = {

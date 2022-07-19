@@ -6,7 +6,7 @@ module top_zynq
      // NOTE these parameters are usually overridden by the parent module (top.v)
      // but we set them to make expectations consistent
 
-     parameter integer C_S00_AXI_ADDR_WIDTH     = 9
+     parameter integer C_S00_AXI_ADDR_WIDTH     = 10
      , parameter integer C_S00_AXI_DATA_WIDTH   = 32
 
      , parameter integer C_S01_AXI_ADDR_WIDTH   = 32
@@ -154,7 +154,7 @@ module top_zynq
 
    `define COREPATH ariane.i_ariane
 
-   localparam csr_num_lp = 49;
+   localparam csr_num_lp = 65;
    logic [csr_num_lp-1:0][64-1:0] csr_data_li;
 
   bsg_dff_reset_en #(
@@ -176,6 +176,12 @@ module top_zynq
     .data_i(`COREPATH.csr_regfile_i.instret_q[0+:64]),
     .data_o(csr_data_li[1])
   );
+
+   logic [fpnew_pkg::NUM_OPGROUPS-1:0] fpu_opgrp_req_li;
+   for (genvar i = 0; i < fpnew_pkg::NUM_OPGROUPS; i++) begin : fpu_opgrp_sel
+     assign fpu_opgrp_req_li[i] = `COREPATH.ex_stage_i.fpu_gen.fpu_i.fpu_gen.i_fpnew_bulk.gen_operation_groups[i].in_valid
+                                & `COREPATH.ex_stage_i.fpu_gen.fpu_i.fpu_gen.i_fpnew_bulk.opgrp_in_ready[i];
+   end
 
   ariane_commit_profiler #(
     .width_p(64)
@@ -209,8 +215,6 @@ module top_zynq
     ,.is_ack_i(`COREPATH.issue_stage_i.decoded_instr_ack_o)
     ,.is_unresolved_branch_i(`COREPATH.issue_stage_i.i_scoreboard.unresolved_branch_i)
     ,.is_sb_full_i(`COREPATH.issue_stage_i.i_scoreboard.issue_full)
-//    ,.is_ro_mul_stall_i(`COREPATH.issue_stage_i.i_issue_read_operands.mult_valid_q 
-//                     & (`COREPATH.issue_stage_i.i_issue_read_operands.issue_instr_i.fu != ariane_pkg::MULT))
     ,.is_ro_stall_i(`COREPATH.issue_stage_i.i_issue_read_operands.stall)
     ,.is_ro_fubusy_i(`COREPATH.issue_stage_i.i_issue_read_operands.fu_busy)
     ,.is_instr_i(`COREPATH.issue_stage_i.i_issue_read_operands.issue_instr_i)
@@ -235,6 +239,7 @@ module top_zynq
     ,.pop_ld_i(`COREPATH.ex_stage_i.lsu_i.pop_ld)
     ,.ld_done_i(`COREPATH.ex_stage_i.lsu_i.i_load_unit.valid_o)
     ,.ld_state_q_i(`COREPATH.ex_stage_i.lsu_i.i_load_unit.state_q)
+    ,.ld_state_d_i(`COREPATH.ex_stage_i.lsu_i.i_load_unit.state_d)
     ,.st_state_q_i(`COREPATH.ex_stage_i.lsu_i.i_store_unit.state_q)
 
     ,.issue_en_i(`COREPATH.issue_stage_i.i_scoreboard.issue_en)
@@ -256,6 +261,25 @@ module top_zynq
     ,.m_awid_i(m00_axi_awid)
     ,.m_bvalid_i(m00_axi_bvalid)
 
+    ,.ic_dreq_i(`COREPATH.i_cache_subsystem.icache_dreq_i)
+    ,.ic_dresp_i(`COREPATH.i_cache_subsystem.icache_dreq_o)
+    ,.ic_miss_i(`COREPATH.i_cache_subsystem.icache_miss_o)
+    ,.dc_req_i(`COREPATH.i_cache_subsystem.dcache_req_ports_i)
+    ,.dc_resp_i(`COREPATH.i_cache_subsystem.dcache_req_ports_o)
+    ,.dc_miss_gnt_i(`COREPATH.i_cache_subsystem.i_nbdcache.miss_gnt)
+    ,.dc_st_state_i(`COREPATH.i_cache_subsystem.i_nbdcache.master_ports[2].i_cache_ctrl.state_q)
+
+    ,.bu_fu_data_i(`COREPATH.ex_stage_i.branch_unit_i.fu_data_i)
+    ,.bu_resolved_branch_i(`COREPATH.ex_stage_i.branch_unit_i.resolved_branch_o)
+
+    ,.fpu_opgrp_req_i(fpu_opgrp_req_li)
+    ,.fpu_opgrp_busy_i(`COREPATH.ex_stage_i.fpu_gen.fpu_i.fpu_gen.i_fpnew_bulk.opgrp_busy)
+
+    ,.div_valid_i(`COREPATH.ex_stage_i.i_mult.i_div.in_vld_i)
+    ,.div_ready_i(`COREPATH.ex_stage_i.i_mult.i_div.in_rdy_o)
+
+    ,.data_o(csr_data_li[csr_num_lp-1:2])
+/*
     ,.iq_full_o     (csr_data_li[2])
     ,.ic_invl_o     (csr_data_li[3])
     ,.ic_miss_o     (csr_data_li[4])
@@ -303,6 +327,7 @@ module top_zynq
     ,.fma_instr_o   (csr_data_li[46])
     ,.aux_instr_o   (csr_data_li[47])
     ,.mem_instr_o   (csr_data_li[48])
+*/
   );
 
    // use this as a way of figuring out how much memory a RISC-V program is using
