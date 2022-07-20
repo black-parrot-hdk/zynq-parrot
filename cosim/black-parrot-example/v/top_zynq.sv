@@ -17,7 +17,7 @@ module top_zynq
    // but we set them to make expectations consistent
 
    // Parameters of Axi Slave Bus Interface S00_AXI
-   , parameter integer C_S00_AXI_ADDR_WIDTH   = 9
+   , parameter integer C_S00_AXI_ADDR_WIDTH   = 10
    // needs to be updated to fit all addresses used
    // by bsg_zynq_pl_shell read_locs_lp (update in top.v as well)
    , parameter integer C_S00_AXI_DATA_WIDTH   = 32
@@ -160,7 +160,7 @@ module top_zynq
       `define L2PATH blackparrot.u.unicore.l2s
    `endif
 
-   localparam counter_num_p = 45;
+   localparam counter_num_p = 56;
    logic [counter_num_p-1:0][64-1:0] csr_data_li;
    logic [3:0][C_S00_AXI_DATA_WIDTH-1:0]        csr_data_lo;
    logic [C_S00_AXI_DATA_WIDTH-1:0]             pl_to_ps_fifo_data_li, ps_to_pl_fifo_data_lo;
@@ -607,11 +607,11 @@ module top_zynq
      assign l2_miss_done_li[i] = `L2PATH.bank[i].cache.miss_done_lo;
    end
 
-   bp_stall_counters
+   bp_commit_profiler
     #(.bp_params_p(bp_params_p)
      ,.width_p(64)
      )
-     stall_counters
+     i_profiler
      (.clk_i(s01_axi_aclk)
      ,.reset_i(bp_reset_li)
      ,.freeze_i(`COREPATH.be.calculator.pipe_sys.csr.cfg_bus_cast_i.freeze)
@@ -625,7 +625,8 @@ module top_zynq
      ,.ret_ovr_i(`COREPATH.fe.pc_gen.ovr_ret)
      ,.icache_data_v_i(`COREPATH.fe.icache.data_v_o)
 
-     ,.fe_cmd_nonattaboy_i(`COREPATH.fe.fe_cmd_yumi_o & ~`COREPATH.fe.attaboy_v)
+     ,.fe_cmd_yumi_i(`COREPATH.fe.fe_cmd_yumi_o)
+     ,.fe_cmd_i(`COREPATH.fe.fe_cmd_cast_i)
      ,.fe_cmd_fence_i(`COREPATH.be.director.suppress_iss_o)
      ,.fe_queue_empty_i(~`COREPATH.be.scheduler.fe_queue_fifo.fe_queue_v_o)
 
@@ -684,54 +685,19 @@ module top_zynq
      ,.m_awready_i(m00_axi_awready)
      ,.m_bvalid_i(m00_axi_bvalid)
 
+     ,.icache_valid_i(`COREPATH.fe.icache.v_i)
+     ,.dcache_valid_i(`COREPATH.be.calculator.pipe_mem.dcache.v_i)
+
+     ,.flong_v_i(`COREPATH.be.calculator.pipe_long.fdiv_v_li | `COREPATH.be.calculator.pipe_long.fsqrt_v_li)
+     ,.flong_ready_i(`COREPATH.be.calculator.pipe_long.fdiv_ready_lo)
+
+     ,.ilong_v_i(`COREPATH.be.calculator.pipe_long.idiv_v_li | `COREPATH.be.calculator.pipe_long.irem_v_li)
+     ,.ilong_ready_i(`COREPATH.be.calculator.pipe_long.idiv_ready_and_lo)
+
      ,.retire_pkt_i(`COREPATH.be.calculator.pipe_sys.retire_pkt)
      ,.commit_pkt_i(`COREPATH.be.calculator.pipe_sys.commit_pkt)
 
-     ,.mcycle_o               (csr_data_li[0])
-     ,.minstret_o             (csr_data_li[1])
-     ,.icache_miss_o          (csr_data_li[2])
-     ,.branch_override_o      (csr_data_li[3])
-     ,.ret_override_o         (csr_data_li[4])
-     ,.fe_cmd_o               (csr_data_li[5])
-     ,.fe_cmd_fence_o         (csr_data_li[6])
-     ,.mispredict_o           (csr_data_li[7])
-     ,.control_haz_o          (csr_data_li[8])
-     ,.long_haz_o             (csr_data_li[9])
-     ,.data_haz_o             (csr_data_li[10])
-     ,.aux_dep_o              (csr_data_li[11])
-     ,.load_dep_o             (csr_data_li[12])
-     ,.mul_dep_o              (csr_data_li[13])
-     ,.fma_dep_o              (csr_data_li[14])
-     ,.sb_iraw_dep_o          (csr_data_li[15])
-     ,.sb_fraw_dep_o          (csr_data_li[16])
-     ,.sb_iwaw_dep_o          (csr_data_li[17])
-     ,.sb_fwaw_dep_o          (csr_data_li[18])
-     ,.struct_haz_o           (csr_data_li[19])
-     ,.idiv_haz_o             (csr_data_li[20])
-     ,.fdiv_haz_o             (csr_data_li[21])
-     ,.ptw_busy_o             (csr_data_li[22])
-     ,.special_o              (csr_data_li[23])
-     ,.replay_o               (csr_data_li[24])
-     ,.exception_o            (csr_data_li[25])
-     ,._interrupt_o           (csr_data_li[26])
-     ,.itlb_miss_o            (csr_data_li[27])
-     ,.dtlb_miss_o            (csr_data_li[28])
-     ,.dcache_miss_o          (csr_data_li[29])
-     ,.l2_miss_o              (csr_data_li[30])
-     ,.dma_o                  (csr_data_li[31])
-     ,.unknown_o              (csr_data_li[32])
-     ,.mem_instr_o            (csr_data_li[33])
-     ,.aux_instr_o            (csr_data_li[34])
-     ,.fma_instr_o            (csr_data_li[35])
-     ,.ilong_instr_o          (csr_data_li[36])
-     ,.flong_instr_o          (csr_data_li[37])
-     ,.l2_miss_cnt_o          (csr_data_li[38])
-     ,.l2_miss_wait_o         (csr_data_li[39])
-     ,.wdma_cnt_o             (csr_data_li[40])
-     ,.rdma_cnt_o             (csr_data_li[41])
-     ,.wdma_wait_o            (csr_data_li[42])
-     ,.rdma_wait_o            (csr_data_li[43])
-     ,.dma_wait_o             (csr_data_li[44])
+     ,.data_o(csr_data_li[counter_num_p-1:0])
      );
 
    // synopsys translate_off

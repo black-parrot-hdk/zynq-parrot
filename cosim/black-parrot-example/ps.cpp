@@ -51,9 +51,12 @@ const char* metrics[] = {
   "struct_haz", "idiv_haz", "fdiv_haz",
   "ptw_busy", "special", "replay", "exception", "_interrupt",
   "itlb_miss", "dtlb_miss", "dcache_miss", "l2_miss", "dma", "unknown",
-  "mem_instr", "aux_instr", "fma_instr", "ilong_instr", "flong_instr",
-  "l2_miss_cnt", "l2_miss_wait",
-  "wdma_cnt", "rdma_cnt", "wdma_wait", "rdma_wait", "dma_wait"
+  "e_l2_miss_cnt", "e_l2_miss_wait",
+  "e_wdma_cnt", "e_rdma_cnt", "e_wdma_wait", "e_rdma_wait", "e_dma_wait",
+  "e_ic_req_cnt", "e_ic_miss_cnt", "e_ic_miss_wait",
+  "e_dc_req_cnt", "e_dc_miss_cnt", "e_dc_miss_wait",
+  "e_br_cnt", "e_br_miss", "e_jalr_cnt", "e_jalr_miss", "e_ret_cnt", "e_ret_miss",
+  "e_fpu_flong_cnt", "e_fpu_flong_miss", "e_div_cnt", "e_div_wait"
 };
 
 const char* samples[] = {
