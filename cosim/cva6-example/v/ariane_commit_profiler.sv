@@ -176,58 +176,6 @@ module ariane_commit_profiler
     , input div_ready_i
 
     , output [62:0][width_p-1:0] data_o
-
-/*
-    , output [width_p-1:0] iq_full_o
-    , output [width_p-1:0] ic_invl_o
-    , output [width_p-1:0] ic_miss_o
-    , output [width_p-1:0] ic_dma_o
-    , output [width_p-1:0] ic_flush_o
-    , output [width_p-1:0] ic_atrans_o
-    , output [width_p-1:0] bp_haz_o
-    , output [width_p-1:0] ireplay_o
-    , output [width_p-1:0] realign_o
-    , output [width_p-1:0] sb_full_o
-    , output [width_p-1:0] waw_flu_o
-    , output [width_p-1:0] waw_lsu_o
-    , output [width_p-1:0] waw_fpu_o
-    , output [width_p-1:0] waw_reorder_o
-    , output [width_p-1:0] raw_flu_o
-    , output [width_p-1:0] raw_lsu_o
-    , output [width_p-1:0] raw_fpu_o
-    , output [width_p-1:0] br_haz_o
-    , output [width_p-1:0] br_miss_o
-    , output [width_p-1:0] mul_haz_o
-    , output [width_p-1:0] csr_buf_o
-    , output [width_p-1:0] div_busy_o
-    , output [width_p-1:0] ld_pipe_o
-    , output [width_p-1:0] ld_grant_o
-    , output [width_p-1:0] ld_sbuf_o
-    , output [width_p-1:0] ld_dcache_o
-    , output [width_p-1:0] st_pipe_o
-    , output [width_p-1:0] sbuf_spec_o
-    , output [width_p-1:0] fpu_busy_o
-    , output [width_p-1:0] amo_flush_o
-    , output [width_p-1:0] csr_flush_o
-    , output [width_p-1:0] fence_o
-    , output [width_p-1:0] exception_o
-    , output [width_p-1:0] cmt_haz_o
-    , output [width_p-1:0] sbuf_cmt_o
-    , output [width_p-1:0] dc_dma_o
-    , output [width_p-1:0] unknown_o
-    , output [width_p-1:0] extra_cmt_o
-
-    , output [width_p-1:0] wdma_cnt_o
-    , output [width_p-1:0] rdma_cnt_o
-    , output [width_p-1:0] wdma_wait_o
-    , output [width_p-1:0] rdma_wait_o
-
-    , output [width_p-1:0] ilong_instr_o
-    , output [width_p-1:0] flong_instr_o
-    , output [width_p-1:0] fma_instr_o
-    , output [width_p-1:0] aux_instr_o
-    , output [width_p-1:0] mem_instr_o
-*/
   );
 
   typedef enum logic [2:0] {IC_FLUSH, IC_IDLE, IC_READ, IC_MISS, IC_KILL_ATRANS, IC_KILL_MISS} icache_state_e;

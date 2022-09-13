@@ -175,6 +175,7 @@ module bp_commit_profiler
 
   // L1
   logic icache_ready_r, dcache_ready_r;
+  logic dcache_valid_r, dcache_valid_rr;
   bsg_dff_reset
    #(.width_p(1))
    icache_ready_reg
@@ -193,11 +194,20 @@ module bp_commit_profiler
      ,.data_o(dcache_ready_r)
      );
 
+  bsg_dff_reset
+   #(.width_p(2))
+   dcache_valid_reg
+    (.clk_i(clk_i)
+     ,.reset_i(reset_i)
+     ,.data_i({dcache_valid_i, dcache_valid_r})
+     ,.data_o({dcache_valid_r, dcache_valid_rr})
+     );
+
   `declare_counter(e_ic_req_cnt,(icache_valid_i & icache_ready_i),40)
   `declare_counter(e_ic_miss_cnt,(~icache_ready_i & icache_ready_r),41)
   `declare_counter(e_ic_miss_wait,~icache_ready_i,42)
 
-  `declare_counter(e_dc_req_cnt,(dcache_valid_i & dcache_ready_i),43)
+  `declare_counter(e_dc_req_cnt,(dcache_valid_rr & dcache_ready_r & ~prof.commit_pkt.dcache_fail),43)
   `declare_counter(e_dc_miss_cnt,(~dcache_ready_i & dcache_ready_r),44)
   `declare_counter(e_dc_miss_wait,~dcache_ready_i,45)
 

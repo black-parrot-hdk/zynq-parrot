@@ -407,7 +407,7 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
 
   long long int nbf[3];
   int pos = 0;
-  long unsigned int address;
+  long unsigned int base_addr;
   int data;
   ifstream nbf_file(nbf_filename);
 
@@ -434,33 +434,33 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
       // to the same ARM physical addresses
       // see top_fpga.v for more details
 
-      if (nbf[1] >= 0x80000000) {
-        if (nbf[0] == 0x3) {
-          zpl->axil_write(GP1_ADDR_BASE - 0x80000000 + nbf[1], nbf[2], 0xf);
-          zpl->axil_write(GP1_ADDR_BASE - 0x80000000 + nbf[1] + 4, nbf[2] >> 32, 0xf);
-        }
-        else if (nbf[0] == 0x2) {
-          zpl->axil_write(GP1_ADDR_BASE - 0x80000000 + nbf[1], nbf[2], 0xf);
-        }
-        else if (nbf[0] == 0x1) {
-          int offset = nbf[1] % 4;
-          int shift = 2 * offset;
-          data = zpl->axil_read(GP1_ADDR_BASE - 0x80000000 + nbf[1] - offset);
-          data = data & rotl((uint32_t)0xffff0000,shift) + nbf[2] & ((uint32_t)0x0000ffff << shift);
-          zpl->axil_write(GP1_ADDR_BASE - 0x80000000 + nbf[1] - offset, data, 0xf);
-        }
-        else {
-          int offset = nbf[1] % 4;
-          int shift = 2 * offset;
-          data = zpl->axil_read(GP1_ADDR_BASE - 0x80000000 + nbf[1] - offset);
-          data = data & rotl((uint32_t)0xffffff00,shift) + nbf[2] & ((uint32_t)0x000000ff << shift);
-          zpl->axil_write(GP1_ADDR_BASE - 0x80000000 + nbf[1] - offset, data, 0xf);
-        }
-      }
       // we map BP physical address for CSRs etc (0x0000_0000 - 0x0FFF_FFFF)
       // to ARM address to 0xA0000_0000 - 0xAFFF_FFFF  (256MB)
+      if (nbf[1] >= 0x80000000)
+        base_addr = GP1_ADDR_BASE - 0x80000000;
+      else
+        base_addr = GP1_ADDR_BASE + 0x20000000;
+
+      if (nbf[0] == 0x3) {
+        zpl->axil_write(base_addr + nbf[1], nbf[2], 0xf);
+        zpl->axil_write(base_addr + nbf[1] + 4, nbf[2] >> 32, 0xf);
+      }
+      else if (nbf[0] == 0x2) {
+        zpl->axil_write(base_addr + nbf[1], nbf[2], 0xf);
+      }
+      else if (nbf[0] == 0x1) {
+        int offset = nbf[1] % 4;
+        int shift = 2 * offset;
+        data = zpl->axil_read(base_addr + nbf[1] - offset);
+        data = data & rotl((uint32_t)0xffff0000,shift) + nbf[2] & ((uint32_t)0x0000ffff << shift);
+        zpl->axil_write(base_addr + nbf[1] - offset, data, 0xf);
+      }
       else {
-        zpl->axil_write(GP1_ADDR_BASE + 0x20000000 + nbf[1], nbf[2], 0xf);
+        int offset = nbf[1] % 4;
+        int shift = 2 * offset;
+        data = zpl->axil_read(base_addr + nbf[1] - offset);
+        data = data & rotl((uint32_t)0xffffff00,shift) + nbf[2] & ((uint32_t)0x000000ff << shift);
+        zpl->axil_write(base_addr + nbf[1] - offset, data, 0xf);
       }
     }
     else if (nbf[0] == 0xfe) {
@@ -487,7 +487,10 @@ bool decode_bp_output(bp_zynq_pl *zpl, int data, int* core) {
       printf("%c", print_data);
       fflush(stdout);
       return false;
-    } else if (address >= 0x102000 && address < 0x103000) {
+    }
+    else if (address == 0x101004)
+      return false;
+    else if (address >= 0x102000 && address < 0x103000) {
       *core = ((address-0x102000) >> 3);
       if (print_data == 0) {
         bsg_pr_info("CORE[%d] PASS\n", *core);
