@@ -3,7 +3,9 @@ package bp_profiler_pkg;
 
   typedef struct packed
   {
-    logic icache_miss;
+    logic ic_miss;
+    logic ic_l2_miss;
+    logic ic_dma;
     logic branch_override;
     logic ret_override;
     logic fe_cmd;
@@ -30,45 +32,47 @@ package bp_profiler_pkg;
     logic _interrupt;
     logic itlb_miss;
     logic dtlb_miss;
-    logic dcache_miss;
-    logic l2_miss;
-    logic dma;
+    logic dc_miss;
+    logic dc_l2_miss;
+    logic dc_dma;
     logic unknown;
   }  bp_stall_reason_s;
 
-  typedef enum logic [4:0]
+  typedef enum logic [5:0]
   {
-    icache_miss          = 5'd30
-    ,branch_override     = 5'd29
-    ,ret_override        = 5'd28
-    ,fe_cmd              = 5'd27
-    ,fe_cmd_fence        = 5'd26
-    ,mispredict          = 5'd25
-    ,control_haz         = 5'd24
-    ,long_haz            = 5'd23
-    ,data_haz            = 5'd22
-    ,aux_dep             = 5'd21
-    ,load_dep            = 5'd20
-    ,mul_dep             = 5'd19
-    ,fma_dep             = 5'd18
-    ,sb_iraw_dep         = 5'd17
-    ,sb_fraw_dep         = 5'd16
-    ,sb_iwaw_dep         = 5'd15
-    ,sb_fwaw_dep         = 5'd14
-    ,struct_haz          = 5'd13
-    ,idiv_haz            = 5'd12
-    ,fdiv_haz            = 5'd11
-    ,ptw_busy            = 5'd10
-    ,special             = 5'd9
-    ,replay              = 5'd8
-    ,exception           = 5'd7
-    ,_interrupt          = 5'd6
-    ,itlb_miss           = 5'd5
-    ,dtlb_miss           = 5'd4
-    ,dcache_miss         = 5'd3
-    ,l2_miss             = 5'd2
-    ,dma                 = 5'd1
-    ,unknown             = 5'd0
+    ic_miss              = 6'd32
+    ,ic_l2_miss          = 6'd31
+    ,ic_dma              = 6'd30
+    ,branch_override     = 6'd29
+    ,ret_override        = 6'd28
+    ,fe_cmd              = 6'd27
+    ,fe_cmd_fence        = 6'd26
+    ,mispredict          = 6'd25
+    ,control_haz         = 6'd24
+    ,long_haz            = 6'd23
+    ,data_haz            = 6'd22
+    ,aux_dep             = 6'd21
+    ,load_dep            = 6'd20
+    ,mul_dep             = 6'd19
+    ,fma_dep             = 6'd18
+    ,sb_iraw_dep         = 6'd17
+    ,sb_fraw_dep         = 6'd16
+    ,sb_iwaw_dep         = 6'd15
+    ,sb_fwaw_dep         = 6'd14
+    ,struct_haz          = 6'd13
+    ,idiv_haz            = 6'd12
+    ,fdiv_haz            = 6'd11
+    ,ptw_busy            = 6'd10
+    ,special             = 6'd9
+    ,replay              = 6'd8
+    ,exception           = 6'd7
+    ,_interrupt          = 6'd6
+    ,itlb_miss           = 6'd5
+    ,dtlb_miss           = 6'd4
+    ,dc_miss             = 6'd3
+    ,dc_l2_miss          = 6'd2
+    ,dc_dma              = 6'd1
+    ,unknown             = 6'd0
   } bp_stall_reason_e;
 
 endpackage

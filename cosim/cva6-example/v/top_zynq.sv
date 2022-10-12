@@ -154,9 +154,9 @@ module top_zynq
 
    `define COREPATH ariane.i_ariane
 
-   localparam csr_num_lp = 65;
+   localparam csr_num_lp = 64;
    logic [csr_num_lp-1:0][64-1:0] csr_data_li;
-
+/*
   bsg_dff_reset_en #(
     .width_p(64)
   ) i_cycle (
@@ -176,14 +176,14 @@ module top_zynq
     .data_i(`COREPATH.csr_regfile_i.instret_q[0+:64]),
     .data_o(csr_data_li[1])
   );
-
+*/
    logic [fpnew_pkg::NUM_OPGROUPS-1:0] fpu_opgrp_req_li;
    for (genvar i = 0; i < fpnew_pkg::NUM_OPGROUPS; i++) begin : fpu_opgrp_sel
      assign fpu_opgrp_req_li[i] = `COREPATH.ex_stage_i.fpu_gen.fpu_i.fpu_gen.i_fpnew_bulk.gen_operation_groups[i].in_valid
                                 & `COREPATH.ex_stage_i.fpu_gen.fpu_i.fpu_gen.i_fpnew_bulk.opgrp_in_ready[i];
    end
 
-  ariane_commit_profiler #(
+  ariane_profiler #(
     .width_p(64)
   ) i_profiler (
     .clk_i(s01_axi_aclk)
@@ -237,10 +237,12 @@ module top_zynq
 
     ,.lsu_ctrl_i(`COREPATH.ex_stage_i.lsu_i.lsu_ctrl)
     ,.pop_ld_i(`COREPATH.ex_stage_i.lsu_i.pop_ld)
+    ,.pop_st_i(`COREPATH.ex_stage_i.lsu_i.pop_st)
     ,.ld_done_i(`COREPATH.ex_stage_i.lsu_i.i_load_unit.valid_o)
     ,.ld_state_q_i(`COREPATH.ex_stage_i.lsu_i.i_load_unit.state_q)
     ,.ld_state_d_i(`COREPATH.ex_stage_i.lsu_i.i_load_unit.state_d)
     ,.st_state_q_i(`COREPATH.ex_stage_i.lsu_i.i_store_unit.state_q)
+    ,.st_state_d_i(`COREPATH.ex_stage_i.lsu_i.i_store_unit.state_d)
 
     ,.issue_en_i(`COREPATH.issue_stage_i.i_scoreboard.issue_en)
     ,.issue_pointer_q_i(`COREPATH.issue_stage_i.i_scoreboard.issue_pointer_q)
@@ -278,56 +280,7 @@ module top_zynq
     ,.div_valid_i(`COREPATH.ex_stage_i.i_mult.i_div.in_vld_i)
     ,.div_ready_i(`COREPATH.ex_stage_i.i_mult.i_div.in_rdy_o)
 
-    ,.data_o(csr_data_li[csr_num_lp-1:2])
-/*
-    ,.iq_full_o     (csr_data_li[2])
-    ,.ic_invl_o     (csr_data_li[3])
-    ,.ic_miss_o     (csr_data_li[4])
-    ,.ic_dma_o      (csr_data_li[5])
-    ,.ic_flush_o    (csr_data_li[6])
-    ,.ic_atrans_o   (csr_data_li[7])
-    ,.bp_haz_o      (csr_data_li[8])
-    ,.ireplay_o     (csr_data_li[9])
-    ,.realign_o     (csr_data_li[10])
-    ,.sb_full_o     (csr_data_li[11])
-    ,.waw_flu_o     (csr_data_li[12])
-    ,.waw_lsu_o     (csr_data_li[13])
-    ,.waw_fpu_o     (csr_data_li[14])
-    ,.waw_reorder_o (csr_data_li[15])
-    ,.raw_flu_o     (csr_data_li[16])
-    ,.raw_lsu_o     (csr_data_li[17])
-    ,.raw_fpu_o     (csr_data_li[18])
-    ,.br_haz_o      (csr_data_li[19])
-    ,.br_miss_o     (csr_data_li[20])
-    ,.mul_haz_o     (csr_data_li[21])
-    ,.csr_buf_o     (csr_data_li[22])
-    ,.div_busy_o    (csr_data_li[23])
-    ,.ld_pipe_o     (csr_data_li[24])
-    ,.ld_grant_o    (csr_data_li[25])
-    ,.ld_sbuf_o     (csr_data_li[26])
-    ,.ld_dcache_o   (csr_data_li[27])
-    ,.st_pipe_o     (csr_data_li[28])
-    ,.sbuf_spec_o   (csr_data_li[29])
-    ,.fpu_busy_o    (csr_data_li[30])
-    ,.amo_flush_o   (csr_data_li[31])
-    ,.csr_flush_o   (csr_data_li[32])
-    ,.fence_o       (csr_data_li[33])
-    ,.exception_o   (csr_data_li[34])
-    ,.cmt_haz_o     (csr_data_li[35])
-    ,.sbuf_cmt_o    (csr_data_li[36])
-    ,.dc_dma_o      (csr_data_li[37])
-    ,.unknown_o     (csr_data_li[38])
-    ,.extra_cmt_o   (csr_data_li[39])
-    ,.wdma_cnt_o    (csr_data_li[40])
-    ,.rdma_cnt_o    (csr_data_li[41])
-    ,.wdma_wait_o   (csr_data_li[42])
-    ,.rdma_wait_o   (csr_data_li[43])
-    ,.ilong_instr_o (csr_data_li[44])
-    ,.flong_instr_o (csr_data_li[45])
-    ,.fma_instr_o   (csr_data_li[46])
-    ,.aux_instr_o   (csr_data_li[47])
-    ,.mem_instr_o   (csr_data_li[48])
-*/
+    ,.data_o(csr_data_li[csr_num_lp-1:0])
   );
 
    // use this as a way of figuring out how much memory a RISC-V program is using

@@ -44,13 +44,15 @@ bool run = true;
 
 const char* metrics[] = {
   "mcycle", "minstret",
-  "icache_miss", "branch_override", "ret_override", "fe_cmd", "fe_cmd_fence",
+  "ic_miss", "ic_l2_miss", "ic_dma",
+  "branch_override", "ret_override", "fe_cmd", "fe_cmd_fence",
   "mispredict", "control_haz", "long_haz", "data_haz",
   "aux_dep", "load_dep", "mul_dep", "fma_dep", "sb_iraw_dep",
   "sb_fraw_dep", "sb_iwaw_dep", "sb_fwaw_dep",
   "struct_haz", "idiv_haz", "fdiv_haz",
   "ptw_busy", "special", "replay", "exception", "_interrupt",
-  "itlb_miss", "dtlb_miss", "dcache_miss", "l2_miss", "dma", "unknown",
+  "itlb_miss", "dtlb_miss",
+  "dc_miss", "dc_l2_miss", "dc_dma", "unknown",
   "e_l2_miss_cnt", "e_l2_miss_wait",
   "e_wdma_cnt", "e_rdma_cnt", "e_wdma_wait", "e_rdma_wait", "e_dma_wait",
   "e_ic_req_cnt", "e_ic_miss_cnt", "e_ic_miss_wait",

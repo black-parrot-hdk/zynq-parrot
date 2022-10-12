@@ -1,74 +1,3 @@
-/*
-  typedef struct packed
-  {
-    logic icache_miss;
-    logic branch_override;
-    logic ret_override;
-    logic fe_cmd;
-    logic fe_cmd_fence;
-    logic mispredict;
-    logic control_haz;
-    logic long_haz;
-    logic data_haz;
-    logic aux_dep;
-    logic load_dep;
-    logic mul_dep;
-    logic fma_dep;
-    logic sb_iraw_dep;
-    logic sb_fraw_dep;
-    logic sb_iwaw_dep;
-    logic sb_fwaw_dep;
-    logic struct_haz;
-    logic idiv_haz;
-    logic fdiv_haz;
-    logic ptw_busy;
-    logic special;
-    logic replay;
-    logic exception;
-    logic _interrupt;
-    logic itlb_miss;
-    logic dtlb_miss;
-    logic dcache_miss;
-    logic l2_miss;
-    logic dma;
-    logic unknown;
-  }  bp_stall_reason_s;
-
-  typedef enum logic [4:0]
-  {
-    icache_miss          = 5'd30
-    ,branch_override     = 5'd29
-    ,ret_override        = 5'd28
-    ,fe_cmd              = 5'd27
-    ,fe_cmd_fence        = 5'd26
-    ,mispredict          = 5'd25
-    ,control_haz         = 5'd24
-    ,long_haz            = 5'd23
-    ,data_haz            = 5'd22
-    ,aux_dep             = 5'd21
-    ,load_dep            = 5'd20
-    ,mul_dep             = 5'd19
-    ,fma_dep             = 5'd18
-    ,sb_iraw_dep         = 5'd17
-    ,sb_fraw_dep         = 5'd16
-    ,sb_iwaw_dep         = 5'd15
-    ,sb_fwaw_dep         = 5'd14
-    ,struct_haz          = 5'd13
-    ,idiv_haz            = 5'd12
-    ,fdiv_haz            = 5'd11
-    ,ptw_busy            = 5'd10
-    ,special             = 5'd9
-    ,replay              = 5'd8
-    ,exception           = 5'd7
-    ,_interrupt          = 5'd6
-    ,itlb_miss           = 5'd5
-    ,dtlb_miss           = 5'd4
-    ,dcache_miss         = 5'd3
-    ,l2_miss             = 5'd2
-    ,dma                 = 5'd1
-    ,unknown             = 5'd0
-  } bp_stall_reason_e;
-*/
 // The BlackParrot core pipeline is a mostly non-stalling pipeline, decoupled between the front-end
 // and back-end.
 `include "bp_common_defines.svh"
@@ -131,6 +60,7 @@ module bp_nonsynth_core_profiler
 
     , input [lg_l2_banks_lp-1:0] l2_bank_i
     , input [l2_banks_p-1:0] l2_ready_i
+    , input l2_serving_dcache_i
 
     , input m_arvalid_i
     , input m_arready_i
@@ -210,6 +140,7 @@ module bp_nonsynth_core_profiler
      ,.data_o(wdma_pending_r)
      );
 
+  wire fe_cmd_nonattaboy_li = fe_cmd_yumi_i & (fe_cmd_li.opcode != e_op_attaboy);
   wire fe_cmd_br_mispredict_li = fe_cmd_yumi_i & (fe_cmd_li.opcode == e_op_pc_redirection)
                                & (fe_cmd_li.operands.pc_redirect_operands.subopcode == e_subop_branch_mispredict);
 
@@ -217,32 +148,32 @@ module bp_nonsynth_core_profiler
     begin
       // IF0
       stall_stage_n[0]                    = '0;
-      stall_stage_n[0].fe_cmd            |= fe_cmd_yumi_i & ~fe_cmd_br_mispredict_li;
-      stall_stage_n[0].mispredict        |= fe_cmd_yumi_i & fe_cmd_br_mispredict_li;
-      stall_stage_n[0].icache_miss       |= (~icache_ready_i | (if2_v_i & ~icache_data_v_i));
-      stall_stage_n[0].l2_miss           |= ~icache_ready_i & ~l2_ready_li;
-      stall_stage_n[0].dma               |= ~icache_ready_i & ~l2_ready_li & dma_pending_li;
+      stall_stage_n[0].fe_cmd            |= fe_cmd_nonattaboy_li & ~fe_cmd_br_mispredict_li;
+      stall_stage_n[0].mispredict        |= fe_cmd_nonattaboy_li & fe_cmd_br_mispredict_li;
+      stall_stage_n[0].ic_miss           |= (~icache_ready_i | (if2_v_i & ~icache_data_v_i));
+      stall_stage_n[0].ic_l2_miss        |= ~icache_ready_i & ~l2_ready_li & ~l2_serving_dcache_i;
+      stall_stage_n[0].ic_dma            |= ~icache_ready_i & ~l2_ready_li & ~l2_serving_dcache_i & dma_pending_li;
 
       // IF1
       stall_stage_n[1]                    = stall_stage_r[0];
-      stall_stage_n[1].fe_cmd            |= fe_cmd_yumi_i & ~fe_cmd_br_mispredict_li;
-      stall_stage_n[1].mispredict        |= fe_cmd_yumi_i & fe_cmd_br_mispredict_li;
-      stall_stage_n[1].icache_miss       |= if2_v_i & ~icache_data_v_i;
+      stall_stage_n[1].fe_cmd            |= fe_cmd_nonattaboy_li & ~fe_cmd_br_mispredict_li;
+      stall_stage_n[1].mispredict        |= fe_cmd_nonattaboy_li & fe_cmd_br_mispredict_li;
+      stall_stage_n[1].ic_miss           |= if2_v_i & ~icache_data_v_i;
       stall_stage_n[1].branch_override   |= br_ovr_i;
       stall_stage_n[1].ret_override      |= ret_ovr_i;
 
       // IF2
       stall_stage_n[2]                    = stall_stage_r[1];
-      stall_stage_n[2].fe_cmd            |= fe_cmd_yumi_i & ~fe_cmd_br_mispredict_li;
-      stall_stage_n[2].mispredict        |= fe_cmd_yumi_i & fe_cmd_br_mispredict_li;
-      stall_stage_n[2].icache_miss       |= if2_v_i & ~icache_data_v_i;
+      stall_stage_n[2].fe_cmd            |= fe_cmd_nonattaboy_li & ~fe_cmd_br_mispredict_li;
+      stall_stage_n[2].mispredict        |= fe_cmd_nonattaboy_li & fe_cmd_br_mispredict_li;
+      stall_stage_n[2].ic_miss           |= if2_v_i & ~icache_data_v_i;
 
       // ISD
       // Dispatch stalls
       stall_stage_n[3]                    = fe_queue_empty_i ? stall_stage_r[2] : '0;
       stall_stage_n[3].fe_cmd_fence      |= fe_cmd_fence_i & ~mispredict_r;
       stall_stage_n[3].mispredict        |= mispredict_i | (fe_cmd_fence_i & mispredict_r);
-      stall_stage_n[3].dcache_miss       |= ~dcache_ready_i;
+      stall_stage_n[3].dc_miss           |= ~dcache_ready_i;
       stall_stage_n[3].data_haz          |= data_haz_i;
       stall_stage_n[3].aux_dep           |= aux_dep_i;
       stall_stage_n[3].load_dep          |= load_dep_i;
@@ -264,11 +195,11 @@ module bp_nonsynth_core_profiler
       stall_stage_n[3].exception         |= commit_pkt.exception;
       stall_stage_n[3]._interrupt        |= commit_pkt._interrupt;
       stall_stage_n[3].itlb_miss         |= commit_pkt.itlb_miss | commit_pkt.itlb_fill_v;
-      stall_stage_n[3].icache_miss       |= commit_pkt.icache_miss;
+      stall_stage_n[3].ic_miss           |= commit_pkt.icache_miss;
       stall_stage_n[3].dtlb_miss         |= commit_pkt.dtlb_load_miss | commit_pkt.dtlb_store_miss | commit_pkt.dtlb_fill_v;
-      stall_stage_n[3].dcache_miss       |= commit_pkt.dcache_miss | commit_pkt.dcache_fail;
-      stall_stage_n[3].l2_miss           |= ~dcache_ready_i & ~l2_ready_li;
-      stall_stage_n[3].dma               |= ~dcache_ready_i & ~l2_ready_li & dma_pending_li;
+      stall_stage_n[3].dc_miss           |= commit_pkt.dcache_miss | commit_pkt.dcache_fail;
+      stall_stage_n[3].dc_l2_miss        |= ~dcache_ready_i & ~l2_ready_li & l2_serving_dcache_i;
+      stall_stage_n[3].dc_dma            |= ~dcache_ready_i & ~l2_ready_li & l2_serving_dcache_i & dma_pending_li;
 
       // EX1
       // BE exception stalls
@@ -278,9 +209,9 @@ module bp_nonsynth_core_profiler
       stall_stage_n[4].exception         |= commit_pkt.exception;
       stall_stage_n[4]._interrupt        |= commit_pkt._interrupt;
       stall_stage_n[4].itlb_miss         |= commit_pkt.itlb_miss | commit_pkt.itlb_fill_v;
-      stall_stage_n[4].icache_miss       |= commit_pkt.icache_miss;
+      stall_stage_n[4].ic_miss           |= commit_pkt.icache_miss;
       stall_stage_n[4].dtlb_miss         |= commit_pkt.dtlb_load_miss | commit_pkt.dtlb_store_miss | commit_pkt.dtlb_fill_v;
-      stall_stage_n[4].dcache_miss       |= commit_pkt.dcache_miss | commit_pkt.dcache_fail;
+      stall_stage_n[4].dc_miss           |= commit_pkt.dcache_miss | commit_pkt.dcache_fail;
 
       // EX2
       // BE exception stalls
@@ -290,9 +221,9 @@ module bp_nonsynth_core_profiler
       stall_stage_n[5].exception         |= commit_pkt.exception;
       stall_stage_n[5]._interrupt        |= commit_pkt._interrupt;
       stall_stage_n[5].itlb_miss         |= commit_pkt.itlb_miss | commit_pkt.itlb_fill_v;
-      stall_stage_n[5].icache_miss       |= commit_pkt.icache_miss;
+      stall_stage_n[5].ic_miss           |= commit_pkt.icache_miss;
       stall_stage_n[5].dtlb_miss         |= commit_pkt.dtlb_load_miss | commit_pkt.dtlb_store_miss | commit_pkt.dtlb_fill_v;
-      stall_stage_n[5].dcache_miss       |= commit_pkt.dcache_miss | commit_pkt.dcache_fail;
+      stall_stage_n[5].dc_miss           |= commit_pkt.dcache_miss | commit_pkt.dcache_fail;
 
       // EX3
       // BE exception stalls
@@ -302,9 +233,9 @@ module bp_nonsynth_core_profiler
       stall_stage_n[6].exception         |= commit_pkt.exception;
       stall_stage_n[6]._interrupt        |= commit_pkt._interrupt;
       stall_stage_n[6].itlb_miss         |= commit_pkt.itlb_miss | commit_pkt.itlb_fill_v;
-      stall_stage_n[6].icache_miss       |= commit_pkt.icache_miss;
+      stall_stage_n[6].ic_miss           |= commit_pkt.icache_miss;
       stall_stage_n[6].dtlb_miss         |= commit_pkt.dtlb_load_miss | commit_pkt.dtlb_store_miss | commit_pkt.dtlb_fill_v;
-      stall_stage_n[6].dcache_miss       |= commit_pkt.dcache_miss | commit_pkt.dcache_fail;
+      stall_stage_n[6].dc_miss           |= commit_pkt.dcache_miss | commit_pkt.dcache_fail;
 
     end
 

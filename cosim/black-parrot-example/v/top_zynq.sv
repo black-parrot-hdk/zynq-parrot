@@ -160,7 +160,7 @@ module top_zynq
       `define L2PATH blackparrot.u.unicore.l2s
    `endif
 
-   localparam counter_num_p = 56;
+   localparam counter_num_p = 58;
    logic [counter_num_p-1:0][64-1:0] csr_data_li;
    logic [3:0][C_S00_AXI_DATA_WIDTH-1:0]        csr_data_lo;
    logic [C_S00_AXI_DATA_WIDTH-1:0]             pl_to_ps_fifo_data_li, ps_to_pl_fifo_data_lo;
@@ -604,7 +604,9 @@ module top_zynq
       ,.m_axi_rresp_i    (m00_axi_rresp)
       );
 
+   logic l2_serving_dcache_li;
    logic [l2_banks_p-1:0] l2_ready_li, l2_miss_done_li;
+   assign l2_serving_dcache_li = `L2PATH.cce_to_cache.mem_resp_header_lo.payload.lce_id[0];
    for (genvar i = 0; i < l2_banks_p; i++) begin : bank_sel
      assign l2_ready_li[i] = `L2PATH.bank[i].cache.ready_o;
      assign l2_miss_done_li[i] = `L2PATH.bank[i].cache.miss_done_lo;
@@ -680,6 +682,7 @@ module top_zynq
      ,.l2_bank_i(`L2PATH.cce_to_cache.cache_resp_bank_lo)
      ,.l2_ready_i(l2_ready_li)
      ,.l2_miss_done_i(l2_miss_done_li)
+     ,.l2_serving_dcache_i(l2_serving_dcache_li)
 
      ,.m_arvalid_i(m00_axi_arvalid)
      ,.m_arready_i(m00_axi_arready)
