@@ -20,3 +20,5 @@ See [Tynqer with PYNQ](https://docs.google.com/document/d/1U9XIxLkjbI1vQR5hxjk8S
 All of the FPGA versions here build automatically from script (except simple-example), and do not require any other repos except the submodules above.
 
 See [The ZynqParrot Co-simulation Development Flow](https://docs.google.com/document/d/1mBLb9BgQSIv25p59MPj0a4c-TfvwlfqXeuFlZFBVzAY/edit) for the architecture of the BSG ZynqParrot shell and how it is integrated with BlackParrot.
+
+To install Verilator, see [Installation -- Verilator](https://verilator.org/guide/latest/install.html).
