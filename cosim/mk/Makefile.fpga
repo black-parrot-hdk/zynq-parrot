@@ -46,7 +46,7 @@ fpga_build_ip: clean_fpga_build $(FLIST)
 	-@tail -n5 vivado.log
 
 fpga_build: fpga_build_ip
-	$(VIVADO) -source $(CURR)/vivado-create-block.tcl -mode $(MODE)
+	$(XILINX_ENV) && $(VIVADO) -source $(CURR)/vivado-create-block.tcl -mode $(MODE)
 	$(MAKE) fpga_report_build_block
 
 pack_bitstream:
