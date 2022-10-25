@@ -1,6 +1,8 @@
 
 include $(TOP)/cosim/mk/Makefile.common
 
+SHELL := /bin/bash
+
 MODE ?= tcl
 
 # update this with a pointer to your vivado install
