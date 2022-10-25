@@ -1,13 +1,17 @@
 
 include $(TOP)/cosim/mk/Makefile.common
 
-SHELL := /bin/bash
-
 MODE ?= tcl
 
+SHELL := /bin/bash
+
+# current supported 2019.1 and 2022.1
+# VIVADO_VER=2019.1
+VIVADO_VER=2022.1
+
 # update this with a pointer to your vivado install
-#XILINX_ENV=source /tools/Xilinx/Vivado/2019.1/settings64.sh
-XILINX_ENV=source /gro/cad/Xilinx/Vivado/2019.1/settings64.sh
+XILINX_ENV=source /tools/Xilinx/Vivado/$(VIVADO_VER)/settings64.sh
+#XILINX_ENV=source /gro/cad/Xilinx/Vivado/$(VIVADO_VER)/settings64.sh
 
 CFLAGS += -O2
 CFLAGS += -lcma -lpthread
@@ -46,11 +50,21 @@ fpga_build_ip: clean_fpga_build $(FLIST)
 	-@tail -n5 vivado.log
 
 fpga_build: fpga_build_ip
-	$(XILINX_ENV) && $(VIVADO) -source $(CURR)/vivado-create-block.tcl -mode $(MODE)
+	$(XILINX_ENV) && $(VIVADO) -source $(CURR)/vivado-create-block.$(VIVADO_VER).tcl -mode $(MODE)
 	$(MAKE) fpga_report_build_block
 
+# we are looking for a *_bd_1.bit, *_bd_1_bd.tcl, *_bd_1.hwh
+# 
+#
+
 pack_bitstream:
+ifeq ($(VIVADO_VER),2019.1)
 	cp $(BASENAME)_bd_proj.srcs/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1* .
+endif
+ifeq ($(VIVADO_VER),2022.1)
+	cp $(BASENAME)_bd_proj.gen/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1.hwh .
+	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.tcl $(BASENAME)_bd_1_bd.tcl
+endif
 	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.bit $(BASENAME)_bd_1.bit
 	tar -Jc $(BASENAME)_bd_1* | base64 > $(BASENAME)_bd_1.tar.xz.b64
 
