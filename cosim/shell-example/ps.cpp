@@ -7,8 +7,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "bp_zynq_pl.h"
+#include "bsg_printing.h"
+#include "bsg_argparse.h"
 
-#ifdef VERILATOR
+#ifndef VCS
 int main(int argc, char **argv) {
 #else
 extern "C" void cosim_main(char *argstr) {
@@ -16,6 +18,11 @@ extern "C" void cosim_main(char *argstr) {
   char *argv[argc];
   get_argv(argstr, argc, argv);
 #endif
+  // this ensures that even with tee, the output is line buffered
+  // so that we can see what is happening in real time
+
+  setvbuf(stdout, NULL, _IOLBF, 0);
+
   bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
 
   // the read memory map is essentially
@@ -108,6 +115,8 @@ extern "C" void cosim_main(char *argstr) {
   assert((zpl->axil_read(0x18 + GP0_ADDR_BASE) == (0)));
   assert((zpl->axil_read(0x1C + GP0_ADDR_BASE) == (0)));
 
+
+  printf("## everything passed; at end of test\n");
   zpl->done();
 
   delete zpl;
