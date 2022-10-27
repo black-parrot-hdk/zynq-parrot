@@ -1,4 +1,4 @@
-Support for rapid design iteration of BlackParrot on Zynq FPGAs.
+Support for rapid design iteration of BlackParrot and Accelerators more broadly on Zynq FPGAs.
 
 See cosim directory for more instructions.
 
