@@ -177,7 +177,7 @@ module ariane_profiler
     , input div_valid_i
     , input div_ready_i
 
-    , output [63:0][width_p-1:0] data_o
+    , output [69:0][width_p-1:0] data_o
   );
 
   typedef enum logic [2:0] {IC_FLUSH, IC_IDLE, IC_READ, IC_MISS, IC_KILL_ATRANS, IC_KILL_MISS} icache_state_e;
@@ -617,10 +617,16 @@ module ariane_profiler
 
   // Event profiling
   // DMA metrics
-  `declare_counter(e_wdma_cnt,(m_awvalid_i & m_awready_i),38)
-  `declare_counter(e_rdma_cnt,(m_arvalid_i & m_arready_i),39)
-  `declare_counter(e_wdma_wait,wdma_pending_r,40)
-  `declare_counter(e_rdma_wait,rdma_pending_r,41)
+  `declare_counter(e_ic_wdma_cnt,(m_awvalid_i & m_awready_i & ic_dma_li),38)
+  `declare_counter(e_ic_rdma_cnt,(m_arvalid_i & m_arready_i & ic_dma_li),39)
+  `declare_counter(e_dc_wdma_cnt,(m_awvalid_i & m_awready_i & dc_dma_li),40)
+  `declare_counter(e_dc_rdma_cnt,(m_arvalid_i & m_arready_i & dc_dma_li),41)
+  `declare_counter(e_ic_wdma_wait,(wdma_pending_r & ic_dma_li),42)
+  `declare_counter(e_ic_rdma_wait,(rdma_pending_r & ic_dma_li),43)
+  `declare_counter(e_dc_wdma_wait,(wdma_pending_r & dc_dma_li),44)
+  `declare_counter(e_dc_rdma_wait,(rdma_pending_r & dc_dma_li),45)
+  `declare_counter(e_ic_dma_wait,ic_dma_li,46)
+  `declare_counter(e_dc_dma_wait,dc_dma_li,47)
 
   // I$ metrics
   logic ic_miss_pending_r;
@@ -634,9 +640,9 @@ module ariane_profiler
      ,.data_o(ic_miss_pending_r)
      );
 
-  `declare_counter(e_ic_req_cnt,ic_dresp_i.valid,42)
-  `declare_counter(e_ic_miss_cnt,ic_miss_i,43)
-  `declare_counter(e_ic_miss_wait,ic_miss_pending_r,44)
+  `declare_counter(e_ic_req_cnt,ic_dresp_i.valid,48)
+  `declare_counter(e_ic_miss_cnt,ic_miss_i,49)
+  `declare_counter(e_ic_miss_wait,ic_miss_pending_r,50)
 
   // D$ metrics
   bsg_counter_up_down
@@ -646,36 +652,36 @@ module ariane_profiler
    ,.reset_i(reset_i)
    ,.down_i('0)
    ,.up_i(en_i ? (dc_resp_i[1].data_gnt + dc_resp_i[2].data_gnt) : '0)
-   ,.count_o(data_o[45])
+   ,.count_o(data_o[51])
    ); 
 
-  `declare_counter(e_dc_miss_cnt,(|dc_miss_gnt_i),46)
-  `declare_counter(e_dc_miss_wait,(ld_dc_miss_li | st_dc_miss_li),47)
+  `declare_counter(e_dc_miss_cnt,(|dc_miss_gnt_i),52)
+  `declare_counter(e_dc_miss_wait,(ld_dc_miss_li | st_dc_miss_li),53)
 
   // Predictor metrics
   wire bu_is_br = bu_resolved_branch_i.valid & ariane_pkg::op_is_branch(bu_fu_data_i.operator);
   wire bu_is_jalr = bu_resolved_branch_i.valid & (bu_fu_data_i.operator == ariane_pkg::JALR) & (bu_resolved_branch_i.cf_type != ariane_pkg::Return);
   wire bu_is_ret = bu_resolved_branch_i.valid & (bu_fu_data_i.operator == ariane_pkg::JALR) & (bu_resolved_branch_i.cf_type == ariane_pkg::Return);
-  `declare_counter(e_br_cnt,bu_is_br,48)
-  `declare_counter(e_br_miss,(bu_is_br & bu_resolved_branch_i.is_mispredict),49)
-  `declare_counter(e_jalr_cnt,bu_is_jalr,50)
-  `declare_counter(e_jalr_miss,(bu_is_jalr & bu_resolved_branch_i.is_mispredict),51)
-  `declare_counter(e_ret_cnt,bu_is_ret,52)
-  `declare_counter(e_ret_miss,(bu_is_ret & bu_resolved_branch_i.is_mispredict),53)
+  `declare_counter(e_br_cnt,bu_is_br,54)
+  `declare_counter(e_br_miss,(bu_is_br & bu_resolved_branch_i.is_mispredict),55)
+  `declare_counter(e_jalr_cnt,bu_is_jalr,56)
+  `declare_counter(e_jalr_miss,(bu_is_jalr & bu_resolved_branch_i.is_mispredict),57)
+  `declare_counter(e_ret_cnt,bu_is_ret,58)
+  `declare_counter(e_ret_miss,(bu_is_ret & bu_resolved_branch_i.is_mispredict),59)
 
   // FPU metrics
-  `declare_counter(e_fpu_addmul_cnt,fpu_opgrp_req_i[0],54)
-  `declare_counter(e_fpu_divsqrt_cnt,fpu_opgrp_req_i[1],55)
-  `declare_counter(e_fpu_noncomp_cnt,fpu_opgrp_req_i[2],56)
-  `declare_counter(e_fpu_conv_cnt,fpu_opgrp_req_i[3],57)
-  `declare_counter(e_fpu_addmul_wait,fpu_opgrp_busy_i[0],58)
-  `declare_counter(e_fpu_divsqrt_wait,fpu_opgrp_busy_i[1],59)
-  `declare_counter(e_fpu_noncomp_wait,fpu_opgrp_busy_i[2],60)
-  `declare_counter(e_fpu_conv_wait,fpu_opgrp_busy_i[3],61)
+  `declare_counter(e_fpu_addmul_cnt,fpu_opgrp_req_i[0],60)
+  `declare_counter(e_fpu_divsqrt_cnt,fpu_opgrp_req_i[1],61)
+  `declare_counter(e_fpu_noncomp_cnt,fpu_opgrp_req_i[2],62)
+  `declare_counter(e_fpu_conv_cnt,fpu_opgrp_req_i[3],63)
+  `declare_counter(e_fpu_addmul_wait,fpu_opgrp_busy_i[0],64)
+  `declare_counter(e_fpu_divsqrt_wait,fpu_opgrp_busy_i[1],65)
+  `declare_counter(e_fpu_noncomp_wait,fpu_opgrp_busy_i[2],66)
+  `declare_counter(e_fpu_conv_wait,fpu_opgrp_busy_i[3],67)
 
   // DIV metrics
-  `declare_counter(e_div_cnt,div_valid_i,62)
-  `declare_counter(e_div_wait,(~div_ready_i),63)
+  `declare_counter(e_div_cnt,div_valid_i,68)
+  `declare_counter(e_div_wait,(~div_ready_i),69)
 
 /*
   // Instruction profiling

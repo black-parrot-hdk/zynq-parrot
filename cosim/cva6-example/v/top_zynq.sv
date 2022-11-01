@@ -154,7 +154,7 @@ module top_zynq
 
    `define COREPATH ariane.i_ariane
 
-   localparam csr_num_lp = 64;
+   localparam csr_num_lp = 70;
    logic [csr_num_lp-1:0][64-1:0] csr_data_li;
 /*
   bsg_dff_reset_en #(
