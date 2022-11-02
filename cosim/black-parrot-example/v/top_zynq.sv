@@ -679,6 +679,13 @@ module top_zynq
      ,.fdiv_haz_i(~`COREPATH.be.detector.fdiv_ready_i & `COREPATH.be.detector.isd_status_cast_i.long_v)
      ,.ptw_busy_i(`COREPATH.be.detector.ptw_busy_i)
 
+     ,.sb_int_v_i(`COREPATH.be.detector.score_int_v_li)
+     ,.sb_int_clr_i(`COREPATH.be.detector.clear_int_v_li)
+     ,.sb_rs1_i(`COREPATH.be.detector.score_rs1_li)
+     ,.sb_rs2_i(`COREPATH.be.detector.score_rs2_li)
+     ,.sb_rd_i(`COREPATH.be.detector.score_rd_li)
+     ,.sb_irs_match_i(`COREPATH.be.detector.irs_match_lo)
+
      ,.l2_bank_i(`L2PATH.cce_to_cache.cache_resp_bank_lo)
      ,.l2_ready_i(l2_ready_li)
      ,.l2_miss_done_i(l2_miss_done_li)
@@ -702,6 +709,7 @@ module top_zynq
 
      ,.retire_pkt_i(`COREPATH.be.calculator.pipe_sys.retire_pkt)
      ,.commit_pkt_i(`COREPATH.be.calculator.pipe_sys.commit_pkt)
+     ,.iwb_pkt_i(`COREPATH.be.calculator.pipe_sys.iwb_pkt)
 
      ,.data_o(csr_data_li[counter_num_p-1:0])
      );

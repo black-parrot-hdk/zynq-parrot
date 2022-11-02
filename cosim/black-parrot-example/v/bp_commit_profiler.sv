@@ -14,6 +14,7 @@ module bp_commit_profiler
 
     , localparam commit_pkt_width_lp = `bp_be_commit_pkt_width(vaddr_width_p, paddr_width_p)
     , localparam retire_pkt_width_lp = `bp_be_retire_pkt_width(vaddr_width_p)
+    , localparam wb_pkt_width_lp     = `bp_be_wb_pkt_width(vaddr_width_p)
     , localparam lg_l2_banks_lp = `BSG_SAFE_CLOG2(l2_banks_p)
     )
    (input clk_i
@@ -52,6 +53,13 @@ module bp_commit_profiler
     , input fdiv_haz_i
     , input ptw_busy_i
 
+    , input sb_int_v_i
+    , input sb_int_clr_i
+    , input [reg_addr_width_gp-1:0] sb_rs1_i
+    , input [reg_addr_width_gp-1:0] sb_rs2_i
+    , input [reg_addr_width_gp-1:0] sb_rd_i
+    , input [1:0] sb_irs_match_i
+
     , input [lg_l2_banks_lp-1:0] l2_bank_i
     , input [l2_banks_p-1:0] l2_ready_i
     , input [l2_banks_p-1:0] l2_miss_done_i
@@ -75,6 +83,7 @@ module bp_commit_profiler
 
     , input [retire_pkt_width_lp-1:0] retire_pkt_i
     , input [commit_pkt_width_lp-1:0] commit_pkt_i
+    , input [wb_pkt_width_lp-1:0]     iwb_pkt_i
 
     , output [64:0][width_p-1:0] data_o
     );

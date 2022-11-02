@@ -19,6 +19,7 @@ module bp_nonsynth_core_profiler
     , localparam dispatch_pkt_width_lp = `bp_be_dispatch_pkt_width(vaddr_width_p)
     , localparam commit_pkt_width_lp = `bp_be_commit_pkt_width(vaddr_width_p, paddr_width_p)
     , localparam retire_pkt_width_lp = `bp_be_retire_pkt_width(vaddr_width_p)
+    , localparam wb_pkt_width_lp     = `bp_be_wb_pkt_width(vaddr_width_p)
     , localparam lg_l2_banks_lp = `BSG_SAFE_CLOG2(l2_banks_p)
     )
    (input clk_i
@@ -58,6 +59,13 @@ module bp_nonsynth_core_profiler
     , input fdiv_haz_i
     , input ptw_busy_i
 
+    , input sb_int_v_i
+    , input sb_int_clr_i
+    , input [reg_addr_width_gp-1:0] sb_rs1_i
+    , input [reg_addr_width_gp-1:0] sb_rs2_i
+    , input [reg_addr_width_gp-1:0] sb_rd_i
+    , input [1:0] sb_irs_match_i
+
     , input [lg_l2_banks_lp-1:0] l2_bank_i
     , input [l2_banks_p-1:0] l2_ready_i
     , input l2_serving_dcache_i
@@ -71,6 +79,7 @@ module bp_nonsynth_core_profiler
 
     , input [retire_pkt_width_lp-1:0] retire_pkt_i
     , input [commit_pkt_width_lp-1:0] commit_pkt_i
+    , input [wb_pkt_width_lp-1:0]     iwb_pkt_i
     );
 
   `declare_bp_be_internal_if_structs(vaddr_width_p, paddr_width_p, asid_width_p, branch_metadata_fwd_width_p);
@@ -80,9 +89,11 @@ module bp_nonsynth_core_profiler
 
   bp_be_commit_pkt_s commit_pkt;
   bp_be_retire_pkt_s retire_pkt;
+  bp_be_wb_pkt_s iwb_pkt;
   bp_fe_cmd_s fe_cmd_li;
   assign retire_pkt = retire_pkt_i;
   assign commit_pkt = commit_pkt_i;
+  assign iwb_pkt = iwb_pkt_i;
   assign fe_cmd_li = fe_cmd_i;
 
   wire l2_ready_li = l2_ready_i[l2_bank_i];
@@ -140,6 +151,23 @@ module bp_nonsynth_core_profiler
      ,.data_o(wdma_pending_r)
      );
 
+  wire sb_dc_miss_w_li = sb_int_v_i & (commit_pkt.dcache_miss & commit_pkt.instr.t.fmatype.opcode inside {`RV64_LOAD_OP, `RV64_AMO_OP});
+  wire sb_dc_miss_clr_li = sb_int_clr_i & (iwb_pkt.rd_addr == sb_dc_miss_rd_lo);
+  logic [reg_addr_width_gp-1:0] sb_dc_miss_rd_lo;
+  bsg_dff_reset_en
+   #(.width_p(reg_addr_width_gp))
+   sb_dc_miss_reg
+    (.clk_i(clk_i)
+     ,.reset_i(reset_i)
+     ,.en_i(sb_dc_miss_w_li | sb_dc_miss_clr_li)
+     ,.data_i(sb_dc_miss_w_li ? sb_rd_i : '0)
+     ,.data_o(sb_dc_miss_rd_lo)
+     );
+
+  wire sb_iraw_dc_miss_li = sb_iraw_dep_i & (sb_dc_miss_rd_lo == (sb_irs_match_i[0] ? sb_rs1_i : sb_rs2_i));
+  wire sb_iwaw_dc_miss_li = sb_iwaw_dep_i & (sb_dc_miss_rd_lo == sb_rd_i);
+  wire sb_dc_miss_li = (sb_iraw_dc_miss_li | sb_iwaw_dc_miss_li);
+
   wire fe_cmd_nonattaboy_li = fe_cmd_yumi_i & (fe_cmd_li.opcode != e_op_attaboy);
   wire fe_cmd_br_mispredict_li = fe_cmd_yumi_i & (fe_cmd_li.opcode == e_op_pc_redirection)
                                & (fe_cmd_li.operands.pc_redirect_operands.subopcode == e_subop_branch_mispredict);
@@ -173,15 +201,14 @@ module bp_nonsynth_core_profiler
       stall_stage_n[3]                    = fe_queue_empty_i ? stall_stage_r[2] : '0;
       stall_stage_n[3].fe_cmd_fence      |= fe_cmd_fence_i & ~mispredict_r;
       stall_stage_n[3].mispredict        |= mispredict_i | (fe_cmd_fence_i & mispredict_r);
-      stall_stage_n[3].dc_miss           |= ~dcache_ready_i;
       stall_stage_n[3].data_haz          |= data_haz_i;
       stall_stage_n[3].aux_dep           |= aux_dep_i;
       stall_stage_n[3].load_dep          |= load_dep_i;
       stall_stage_n[3].mul_dep           |= mul_dep_i;
       stall_stage_n[3].fma_dep           |= fma_dep_i;
-      stall_stage_n[3].sb_iraw_dep       |= sb_iraw_dep_i;
+      stall_stage_n[3].sb_iraw_dep       |= sb_iraw_dep_i & ~sb_iraw_dc_miss_li;
       stall_stage_n[3].sb_fraw_dep       |= sb_fraw_dep_i;
-      stall_stage_n[3].sb_iwaw_dep       |= sb_iwaw_dep_i;
+      stall_stage_n[3].sb_iwaw_dep       |= sb_iwaw_dep_i & ~sb_iwaw_dc_miss_li;
       stall_stage_n[3].sb_fwaw_dep       |= sb_fwaw_dep_i;
       stall_stage_n[3].struct_haz        |= struct_haz_i;
       stall_stage_n[3].idiv_haz          |= idiv_haz_i;
@@ -198,8 +225,9 @@ module bp_nonsynth_core_profiler
       stall_stage_n[3].ic_miss           |= commit_pkt.icache_miss;
       stall_stage_n[3].dtlb_miss         |= commit_pkt.dtlb_load_miss | commit_pkt.dtlb_store_miss | commit_pkt.dtlb_fill_v;
       stall_stage_n[3].dc_miss           |= commit_pkt.dcache_miss | commit_pkt.dcache_fail;
-      stall_stage_n[3].dc_l2_miss        |= ~dcache_ready_i & ~l2_ready_li & l2_serving_dcache_i;
-      stall_stage_n[3].dc_dma            |= ~dcache_ready_i & ~l2_ready_li & l2_serving_dcache_i & dma_pending_li;
+      stall_stage_n[3].dc_miss           |= (~dcache_ready_i | sb_dc_miss_li);
+      stall_stage_n[3].dc_l2_miss        |= (~dcache_ready_i | sb_dc_miss_li) & ~l2_ready_li & l2_serving_dcache_i;
+      stall_stage_n[3].dc_dma            |= (~dcache_ready_i | sb_dc_miss_li) & ~l2_ready_li & l2_serving_dcache_i & dma_pending_li;
 
       // EX1
       // BE exception stalls
