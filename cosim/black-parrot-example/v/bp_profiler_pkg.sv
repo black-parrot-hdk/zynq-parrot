@@ -35,43 +35,45 @@ package bp_profiler_pkg;
     logic dc_miss;
     logic dc_l2_miss;
     logic dc_dma;
+    logic dc_fail;
     logic unknown;
   }  bp_stall_reason_s;
 
   typedef enum logic [5:0]
   {
-    ic_miss              = 6'd32
-    ,ic_l2_miss          = 6'd31
-    ,ic_dma              = 6'd30
-    ,branch_override     = 6'd29
-    ,ret_override        = 6'd28
-    ,fe_cmd              = 6'd27
-    ,fe_cmd_fence        = 6'd26
-    ,mispredict          = 6'd25
-    ,control_haz         = 6'd24
-    ,long_haz            = 6'd23
-    ,data_haz            = 6'd22
-    ,aux_dep             = 6'd21
-    ,load_dep            = 6'd20
-    ,mul_dep             = 6'd19
-    ,fma_dep             = 6'd18
-    ,sb_iraw_dep         = 6'd17
-    ,sb_fraw_dep         = 6'd16
-    ,sb_iwaw_dep         = 6'd15
-    ,sb_fwaw_dep         = 6'd14
-    ,struct_haz          = 6'd13
-    ,idiv_haz            = 6'd12
-    ,fdiv_haz            = 6'd11
-    ,ptw_busy            = 6'd10
-    ,special             = 6'd9
-    ,replay              = 6'd8
-    ,exception           = 6'd7
-    ,_interrupt          = 6'd6
-    ,itlb_miss           = 6'd5
-    ,dtlb_miss           = 6'd4
-    ,dc_miss             = 6'd3
-    ,dc_l2_miss          = 6'd2
-    ,dc_dma              = 6'd1
+    ic_miss              = 6'd33
+    ,ic_l2_miss          = 6'd32
+    ,ic_dma              = 6'd31
+    ,branch_override     = 6'd30
+    ,ret_override        = 6'd29
+    ,fe_cmd              = 6'd28
+    ,fe_cmd_fence        = 6'd27
+    ,mispredict          = 6'd26
+    ,control_haz         = 6'd25
+    ,long_haz            = 6'd24
+    ,data_haz            = 6'd23
+    ,aux_dep             = 6'd22
+    ,load_dep            = 6'd21
+    ,mul_dep             = 6'd20
+    ,fma_dep             = 6'd19
+    ,sb_iraw_dep         = 6'd18
+    ,sb_fraw_dep         = 6'd17
+    ,sb_iwaw_dep         = 6'd16
+    ,sb_fwaw_dep         = 6'd15
+    ,struct_haz          = 6'd14
+    ,idiv_haz            = 6'd13
+    ,fdiv_haz            = 6'd12
+    ,ptw_busy            = 6'd11
+    ,special             = 6'd10
+    ,replay              = 6'd9
+    ,exception           = 6'd8
+    ,_interrupt          = 6'd7
+    ,itlb_miss           = 6'd6
+    ,dtlb_miss           = 6'd5
+    ,dc_miss             = 6'd4
+    ,dc_l2_miss          = 6'd3
+    ,dc_dma              = 6'd2
+    ,dc_fail             = 6'd1
     ,unknown             = 6'd0
   } bp_stall_reason_e;
 

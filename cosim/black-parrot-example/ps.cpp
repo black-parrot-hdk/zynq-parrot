@@ -52,7 +52,7 @@ const char* metrics[] = {
   "struct_haz", "idiv_haz", "fdiv_haz",
   "ptw_busy", "special", "replay", "exception", "_interrupt",
   "itlb_miss", "dtlb_miss",
-  "dc_miss", "dc_l2_miss", "dc_dma", "unknown",
+  "dc_miss", "dc_l2_miss", "dc_dma", "dc_fail", "unknown",
   "e_ic_l2_miss_cnt", "e_ic_l2_miss_wait", "e_dc_l2_miss_cnt", "e_dc_l2_miss_wait",
   "e_ic_wdma_cnt", "e_ic_rdma_cnt", "e_dc_wdma_cnt", "e_dc_rdma_cnt",
   "e_ic_wdma_wait", "e_ic_rdma_wait", "e_dc_wdma_wait", "e_dc_rdma_wait",
