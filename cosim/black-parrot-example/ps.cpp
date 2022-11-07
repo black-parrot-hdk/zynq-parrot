@@ -280,6 +280,9 @@ extern "C" void cosim_main(char *argstr) {
   pthread_t thread_id;
   pthread_create(&thread_id, NULL, monitor, NULL);
 
+  bsg_pr_info("ps.cpp: asserting counter enable\n");
+  zpl->axil_write(0xC + GP0_ADDR_BASE, 0x1, mask1);
+
   bsg_pr_info("ps.cpp: beginning nbf load\n");
   nbf_load(zpl, argv[1]);
   struct timespec start, end;
@@ -288,9 +291,6 @@ extern "C" void cosim_main(char *argstr) {
   unsigned long long mcycle_start = get_counter_64(zpl, 0x2C + GP0_ADDR_BASE);
   unsigned long long minstret_start = get_counter_64(zpl, 0x34 + GP0_ADDR_BASE);
   bsg_pr_dbg_ps("ps.cpp: finished nbf load\n");
-
-  bsg_pr_info("ps.cpp: asserting counter enable\n");
-  zpl->axil_write(0xC + GP0_ADDR_BASE, 0x1, mask1);
 
   bsg_pr_info("ps.cpp: polling i/o\n");
 
