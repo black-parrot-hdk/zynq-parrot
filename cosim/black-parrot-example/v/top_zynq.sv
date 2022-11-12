@@ -160,7 +160,7 @@ module top_zynq
       `define L2PATH blackparrot.u.unicore.l2s
    `endif
 
-   localparam counter_num_p = 66;
+   localparam counter_num_p = 79;
    logic [counter_num_p-1:0][64-1:0] csr_data_li;
    logic [3:0][C_S00_AXI_DATA_WIDTH-1:0]        csr_data_lo;
    logic [C_S00_AXI_DATA_WIDTH-1:0]             pl_to_ps_fifo_data_li, ps_to_pl_fifo_data_lo;
@@ -604,9 +604,13 @@ module top_zynq
       ,.m_axi_rresp_i    (m00_axi_rresp)
       );
 
-   logic l2_serving_dcache_li;
+   logic l2_cmd_v_li, l2_backlog_li, l2_serving_ic_li, l2_serving_dc_li, l2_serving_evict_li;
    logic [l2_banks_p-1:0] l2_ready_li, l2_miss_done_li;
-   assign l2_serving_dcache_li = `L2PATH.cce_to_cache.mem_resp_header_lo.payload.lce_id[0];
+   assign l2_cmd_v_li = `L2PATH.cce_to_cache.mem_cmd_new_lo & `L2PATH.cce_to_cache.mem_cmd_yumi_li;
+   assign l2_backlog_li = ~`L2PATH.cce_to_cache.mem_cmd_ready_and_o;
+   assign l2_serving_ic_li = `L2PATH.cce_to_cache.mem_cmd_v_lo & ~`L2PATH.cce_to_cache.mem_cmd_header_lo.payload.lce_id[0];
+   assign l2_serving_dc_li = `L2PATH.cce_to_cache.mem_cmd_v_lo & `L2PATH.cce_to_cache.mem_cmd_header_lo.payload.lce_id[0];
+   assign l2_serving_evict_li = l2_serving_dc_li & (`L2PATH.cce_to_cache.mem_cmd_header_lo.msg_type.mem == e_bedrock_mem_wr);
    for (genvar i = 0; i < l2_banks_p; i++) begin : bank_sel
      assign l2_ready_li[i] = `L2PATH.bank[i].cache.ready_o;
      assign l2_miss_done_li[i] = `L2PATH.bank[i].cache.miss_done_lo;
@@ -689,7 +693,15 @@ module top_zynq
      ,.l2_bank_i(`L2PATH.cce_to_cache.cache_resp_bank_lo)
      ,.l2_ready_i(l2_ready_li)
      ,.l2_miss_done_i(l2_miss_done_li)
-     ,.l2_serving_dcache_i(l2_serving_dcache_li)
+     ,.l2_cmd_v_i(l2_cmd_v_li)
+     ,.l2_backlog_i(l2_backlog_li)
+     ,.l2_serving_ic_i(l2_serving_ic_li)
+     ,.l2_serving_dc_i(l2_serving_dc_li)
+     ,.l2_serving_evict_i(l2_serving_evict_li)
+
+     ,.dc_miss_i(`COREPATH.be.calculator.pipe_mem.dcache.is_miss)
+     ,.dc_late_i(`COREPATH.be.calculator.pipe_mem.dcache.is_late)
+     ,.dc_busy_i(`COREPATH.be.calculator.pipe_mem.dcache.is_ready & `COREPATH.be.calculator.pipe_mem.dcache.cache_req_busy_i)
 
      ,.m_arvalid_i(m00_axi_arvalid)
      ,.m_arready_i(m00_axi_arready)

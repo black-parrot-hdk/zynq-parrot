@@ -314,6 +314,7 @@ module top
        ,.axi_data_width_p(axi_data_width_p)
        ,.axi_len_width_p(4)
        ,.mem_els_p(2**28) // 256 MB
+       ,.delay_p(31)
        ,.init_data_p('0)
      )
    axi_mem

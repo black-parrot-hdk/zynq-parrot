@@ -68,7 +68,7 @@ module bp_nonsynth_core_profiler
 
     , input [lg_l2_banks_lp-1:0] l2_bank_i
     , input [l2_banks_p-1:0] l2_ready_i
-    , input l2_serving_dcache_i
+    , input l2_serving_dc_i
 
     , input m_arvalid_i
     , input m_arready_i
@@ -179,8 +179,8 @@ module bp_nonsynth_core_profiler
       stall_stage_n[0].fe_cmd            |= fe_cmd_nonattaboy_li & ~fe_cmd_br_mispredict_li;
       stall_stage_n[0].mispredict        |= fe_cmd_nonattaboy_li & fe_cmd_br_mispredict_li;
       stall_stage_n[0].ic_miss           |= (~icache_ready_i | (if2_v_i & ~icache_data_v_i));
-      stall_stage_n[0].ic_l2_miss        |= ~icache_ready_i & ~l2_ready_li & ~l2_serving_dcache_i;
-      stall_stage_n[0].ic_dma            |= ~icache_ready_i & ~l2_ready_li & ~l2_serving_dcache_i & dma_pending_li;
+      stall_stage_n[0].ic_l2_miss        |= ~icache_ready_i & ~l2_ready_li & ~l2_serving_dc_i;
+      stall_stage_n[0].ic_dma            |= ~icache_ready_i & ~l2_ready_li & ~l2_serving_dc_i & dma_pending_li;
 
       // IF1
       stall_stage_n[1]                    = stall_stage_r[0];
@@ -226,8 +226,8 @@ module bp_nonsynth_core_profiler
       stall_stage_n[3].dtlb_miss         |= commit_pkt.dtlb_load_miss | commit_pkt.dtlb_store_miss | commit_pkt.dtlb_fill_v;
       stall_stage_n[3].dc_miss           |= commit_pkt.dcache_miss;
       stall_stage_n[3].dc_miss           |= (~dcache_ready_i | sb_dc_miss_li);
-      stall_stage_n[3].dc_l2_miss        |= (~dcache_ready_i | sb_dc_miss_li) & ~l2_ready_li & l2_serving_dcache_i;
-      stall_stage_n[3].dc_dma            |= (~dcache_ready_i | sb_dc_miss_li) & ~l2_ready_li & l2_serving_dcache_i & dma_pending_li;
+      stall_stage_n[3].dc_l2_miss        |= (~dcache_ready_i | sb_dc_miss_li) & ~l2_ready_li & l2_serving_dc_i;
+      stall_stage_n[3].dc_dma            |= (~dcache_ready_i | sb_dc_miss_li) & ~l2_ready_li & l2_serving_dc_i & dma_pending_li;
       stall_stage_n[3].dc_fail           |= commit_pkt.dcache_fail;
 
       // EX1

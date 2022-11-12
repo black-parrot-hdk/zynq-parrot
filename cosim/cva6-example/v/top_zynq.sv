@@ -235,6 +235,8 @@ module top_zynq
     ,.wb_ld_valid_i(`COREPATH.ex_stage_i.load_valid_o)
     ,.wb_st_valid_i(`COREPATH.ex_stage_i.store_valid_o)
 
+    ,.lsu_ready_i(`COREPATH.ex_stage_i.lsu_i.lsu_ready_o)
+    ,.lsu_req_i(`COREPATH.ex_stage_i.lsu_i.lsu_req_i)
     ,.lsu_ctrl_i(`COREPATH.ex_stage_i.lsu_i.lsu_ctrl)
     ,.pop_ld_i(`COREPATH.ex_stage_i.lsu_i.pop_ld)
     ,.pop_st_i(`COREPATH.ex_stage_i.lsu_i.pop_st)
@@ -263,13 +265,20 @@ module top_zynq
     ,.m_awid_i(m00_axi_awid)
     ,.m_bvalid_i(m00_axi_bvalid)
 
+    ,.axi_req_i(`COREPATH.i_cache_subsystem.axi_req_o)
+    ,.axi_resp_i(`COREPATH.i_cache_subsystem.axi_resp_i)
+
     ,.ic_dreq_i(`COREPATH.i_cache_subsystem.icache_dreq_i)
     ,.ic_dresp_i(`COREPATH.i_cache_subsystem.icache_dreq_o)
     ,.ic_miss_i(`COREPATH.i_cache_subsystem.icache_miss_o)
     ,.dc_req_i(`COREPATH.i_cache_subsystem.dcache_req_ports_i)
     ,.dc_resp_i(`COREPATH.i_cache_subsystem.dcache_req_ports_o)
+    ,.dc_miss_req_valid_i(`COREPATH.i_cache_subsystem.i_nbdcache.i_miss_handler.miss_req_valid)
     ,.dc_miss_gnt_i(`COREPATH.i_cache_subsystem.i_nbdcache.miss_gnt)
-    ,.dc_st_state_i(`COREPATH.i_cache_subsystem.i_nbdcache.master_ports[2].i_cache_ctrl.state_q)
+    ,.dc_ld_state_q_i(`COREPATH.i_cache_subsystem.i_nbdcache.master_ports[1].i_cache_ctrl.state_q)
+    ,.dc_ld_state_d_i(`COREPATH.i_cache_subsystem.i_nbdcache.master_ports[1].i_cache_ctrl.state_d)
+    ,.dc_st_state_q_i(`COREPATH.i_cache_subsystem.i_nbdcache.master_ports[2].i_cache_ctrl.state_q)
+    ,.dc_mshr_i(`COREPATH.i_cache_subsystem.i_nbdcache.i_miss_handler.mshr_q)
 
     ,.bu_fu_data_i(`COREPATH.ex_stage_i.branch_unit_i.fu_data_i)
     ,.bu_resolved_branch_i(`COREPATH.ex_stage_i.branch_unit_i.resolved_branch_o)

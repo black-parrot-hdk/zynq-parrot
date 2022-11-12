@@ -63,7 +63,15 @@ module bp_commit_profiler
     , input [lg_l2_banks_lp-1:0] l2_bank_i
     , input [l2_banks_p-1:0] l2_ready_i
     , input [l2_banks_p-1:0] l2_miss_done_i
-    , input l2_serving_dcache_i
+    , input l2_cmd_v_i
+    , input l2_backlog_i
+    , input l2_serving_ic_i
+    , input l2_serving_dc_i
+    , input l2_serving_evict_i
+
+    , input dc_miss_i
+    , input dc_late_i
+    , input dc_busy_i
 
     , input m_arvalid_i
     , input m_arready_i
@@ -85,7 +93,7 @@ module bp_commit_profiler
     , input [commit_pkt_width_lp-1:0] commit_pkt_i
     , input [wb_pkt_width_lp-1:0]     iwb_pkt_i
 
-    , output [65:0][width_p-1:0] data_o
+    , output [78:0][width_p-1:0] data_o
     );
 
   `declare_bp_core_if(vaddr_width_p, paddr_width_p, asid_width_p, branch_metadata_fwd_width_p);
@@ -177,23 +185,6 @@ module bp_commit_profiler
   `declare_counter(minstret,prof.commit_pkt.instret,1)
 
   // Metrics
-  // L2 and DMA
-  // TODO: works only for 1 bank L2
-  `declare_counter(e_ic_l2_miss_cnt,(l2_miss_done_i[l2_bank_i] & ~l2_serving_dcache_i),36)
-  `declare_counter(e_ic_l2_miss_wait,(~l2_ready_i[l2_bank_i] & ~l2_serving_dcache_i),37)
-  `declare_counter(e_dc_l2_miss_cnt,(l2_miss_done_i[l2_bank_i] & l2_serving_dcache_i),38)
-  `declare_counter(e_dc_l2_miss_wait,(~l2_ready_i[l2_bank_i] & l2_serving_dcache_i),39)
-  `declare_counter(e_ic_wdma_cnt,(m_awvalid_i & m_awready_i & ~l2_serving_dcache_i),40)
-  `declare_counter(e_ic_rdma_cnt,(m_arvalid_i & m_arready_i & ~l2_serving_dcache_i),41)
-  `declare_counter(e_dc_wdma_cnt,(m_awvalid_i & m_awready_i & l2_serving_dcache_i),42)
-  `declare_counter(e_dc_rdma_cnt,(m_arvalid_i & m_arready_i & l2_serving_dcache_i),43)
-  `declare_counter(e_ic_wdma_wait,(prof.wdma_pending_r & ~l2_serving_dcache_i),44)
-  `declare_counter(e_ic_rdma_wait,(prof.rdma_pending_r & ~l2_serving_dcache_i),45)
-  `declare_counter(e_dc_wdma_wait,(prof.wdma_pending_r & l2_serving_dcache_i),46)
-  `declare_counter(e_dc_rdma_wait,(prof.rdma_pending_r & l2_serving_dcache_i),47)
-  `declare_counter(e_ic_dma_wait,((prof.wdma_pending_r | prof.rdma_pending_r) & ~l2_serving_dcache_i),48)
-  `declare_counter(e_dc_dma_wait,((prof.wdma_pending_r | prof.rdma_pending_r) & l2_serving_dcache_i),49)
-
   // L1
   logic icache_ready_r, dcache_ready_r;
   logic dcache_valid_r, dcache_valid_rr;
@@ -224,29 +215,91 @@ module bp_commit_profiler
      ,.data_o({dcache_valid_r, dcache_valid_rr})
      );
 
-  `declare_counter(e_ic_req_cnt,(icache_valid_i & icache_ready_i),50)
-  `declare_counter(e_ic_miss_cnt,(~icache_ready_i & icache_ready_r),51)
-  `declare_counter(e_ic_miss_wait,~icache_ready_i,52)
+  `declare_counter(e_ic_req_cnt,(icache_valid_i & icache_ready_i),36)
+  `declare_counter(e_ic_miss_cnt,(~icache_ready_i & icache_ready_r),37)
+  `declare_counter(e_ic_miss,~icache_ready_i,38)
 
-  `declare_counter(e_dc_req_cnt,(dcache_valid_rr & dcache_ready_r & ~prof.commit_pkt.dcache_fail),53)
-  `declare_counter(e_dc_miss_cnt,(~dcache_ready_i & dcache_ready_r),54)
-  `declare_counter(e_dc_miss_wait,~dcache_ready_i,55)
+  `declare_counter(e_dc_req_cnt,(dcache_valid_rr & dcache_ready_r & ~prof.commit_pkt.dcache_fail),39)
+  `declare_counter(e_dc_miss_cnt,(~dcache_ready_i & dcache_ready_r),40)
+  `declare_counter(e_dc_miss,~dcache_ready_i,41)
 
+  // L2 and DMA
+  // TODO: works only for 1 bank L2
+  // L2 under L1 miss
+  `declare_counter(e_ic_miss_l2_ic,(~icache_ready_i & l2_serving_ic_i),42)
+  `declare_counter(e_ic_miss_l2_dc_fetch,(~icache_ready_i & l2_backlog_i & l2_serving_dc_i & ~l2_serving_evict_i),43)
+  `declare_counter(e_ic_miss_l2_dc_evict,(~icache_ready_i & l2_backlog_i & l2_serving_dc_i & l2_serving_evict_i),44)
+
+  `declare_counter(e_dc_miss_l2_ic,(~dcache_ready_i & l2_backlog_i & l2_serving_ic_i),45)
+  `declare_counter(e_dc_miss_l2_dc_fetch,(~dcache_ready_i & l2_serving_dc_i & ~l2_serving_evict_i),46)
+  `declare_counter(e_dc_miss_l2_dc_evict,(~dcache_ready_i & l2_backlog_i & l2_serving_dc_i & l2_serving_evict_i),47)
+ 
+  `declare_counter(e_dc_miss_is_miss,(~dcache_ready_i & dc_miss_i),75)
+  `declare_counter(e_dc_miss_is_late,(~dcache_ready_i & dc_late_i),76)
+  `declare_counter(e_dc_miss_is_busy_cnt,(~dcache_ready_i & dcache_ready_r & dc_busy_i),77)
+  `declare_counter(e_dc_miss_is_busy,(~dcache_ready_i & dc_busy_i),78)
+
+  // L2 miss
+  `declare_counter(e_l2_ic_cnt,l2_cmd_v_i & l2_serving_ic_i,48)
+  `declare_counter(e_l2_dc_fetch_cnt,l2_cmd_v_i & l2_serving_dc_i & ~l2_serving_evict_i,49)
+  `declare_counter(e_l2_dc_evict_cnt,l2_cmd_v_i & l2_serving_dc_i & l2_serving_evict_i,50)
+
+  `declare_counter(e_l2_ic,l2_serving_ic_i,51)
+  `declare_counter(e_l2_dc_fetch,l2_serving_dc_i & ~l2_serving_evict_i,52)
+  `declare_counter(e_l2_dc_evict,l2_serving_dc_i & l2_serving_evict_i,53)
+
+  `declare_counter(e_l2_ic_miss_cnt,(l2_miss_done_i[l2_bank_i] & l2_serving_ic_i),54)
+  `declare_counter(e_l2_dc_fetch_miss_cnt,(l2_miss_done_i[l2_bank_i] & l2_serving_dc_i & ~l2_serving_evict_i),55)
+  `declare_counter(e_l2_dc_evict_miss_cnt,(l2_miss_done_i[l2_bank_i] & l2_serving_dc_i & l2_serving_evict_i),56)
+
+  `declare_counter(e_l2_ic_miss,~l2_ready_i[l2_bank_i] & l2_serving_ic_i,57)
+  `declare_counter(e_l2_dc_fetch_miss,~l2_ready_i[l2_bank_i] & l2_serving_dc_i & ~l2_serving_evict_i,58)
+  `declare_counter(e_l2_dc_evict_miss,~l2_ready_i[l2_bank_i] & l2_serving_dc_i & l2_serving_evict_i,59)
+
+  // DMA under L2 miss
+  `declare_counter(e_l2_ic_dma,(~l2_ready_i[l2_bank_i] & prof.dma_pending_li & l2_serving_ic_i),60)
+  `declare_counter(e_l2_dc_fetch_dma,(~l2_ready_i[l2_bank_i] & prof.dma_pending_li & l2_serving_dc_i & ~l2_serving_evict_i),61)
+  `declare_counter(e_l2_dc_evict_dma,(~l2_ready_i[l2_bank_i] & prof.dma_pending_li & l2_serving_dc_i & l2_serving_evict_i),62)
+
+  // DMA
+  //`declare_counter(e_wdma_cnt,(m_awvalid_i & m_awready_i),63)
+  //`declare_counter(e_rdma_cnt,(m_arvalid_i & m_arready_i),64)
+  //`declare_counter(e_wdma,prof.wdma_pending_r,65)
+  //`declare_counter(e_rdma,prof.rdma_pending_r,66)
+  //`declare_counter(e_dma,prof.dma_pending_li,67)
+
+  `declare_counter(e_wdma_ic_cnt,(m_awvalid_i & m_awready_i & l2_serving_ic_i),63)
+  `declare_counter(e_rdma_ic_cnt,(m_arvalid_i & m_arready_i & l2_serving_ic_i),64)
+  `declare_counter(e_wdma_ic,(prof.wdma_pending_r & l2_serving_ic_i),65)
+  `declare_counter(e_rdma_ic,(prof.rdma_pending_r & l2_serving_ic_i),66)
+  `declare_counter(e_dma_ic,(prof.dma_pending_li & l2_serving_ic_i),67)
+
+  `declare_counter(e_wdma_dc_fetch_cnt,(m_awvalid_i & m_awready_i & l2_serving_dc_i & ~l2_serving_evict_i),68)
+  `declare_counter(e_rdma_dc_fetch_cnt,(m_arvalid_i & m_arready_i & l2_serving_dc_i & ~l2_serving_evict_i),69)
+  `declare_counter(e_wdma_dc_fetch,(prof.wdma_pending_r & l2_serving_dc_i & ~l2_serving_evict_i),70)
+  `declare_counter(e_rdma_dc_fetch,(prof.rdma_pending_r & l2_serving_dc_i & ~l2_serving_evict_i),71)
+  `declare_counter(e_dma_dc_fetch,(prof.dma_pending_li & l2_serving_dc_i & ~l2_serving_evict_i),72)
+
+  `declare_counter(e_wdma_dc_evict_cnt,(m_awvalid_i & m_awready_i & l2_serving_dc_i & l2_serving_evict_i),73)
+  `declare_counter(e_wdma_dc_evict,(prof.dma_pending_li & l2_serving_dc_i & l2_serving_evict_i),74)
+
+/*
   // Prediction
-  `declare_counter(e_br_cnt,((br_mispredict_li | attaboy_li) & br_metadata.is_br),56)
-  `declare_counter(e_br_miss,(br_mispredict_li & br_metadata.is_br),57)
-  `declare_counter(e_jalr_cnt,((br_mispredict_li | attaboy_li) & br_metadata.is_jalr & ~br_metadata.is_ret),58)
-  `declare_counter(e_jalr_miss,(br_mispredict_li & br_metadata.is_jalr & ~br_metadata.is_ret),59)
-  `declare_counter(e_ret_cnt,((br_mispredict_li | attaboy_li) & br_metadata.is_ret),60)
-  `declare_counter(e_ret_miss,(br_mispredict_li & br_metadata.is_ret),61)
+  `declare_counter(e_br_cnt,((br_mispredict_li | attaboy_li) & br_metadata.is_br),64)
+  `declare_counter(e_br_miss,(br_mispredict_li & br_metadata.is_br),65)
+  `declare_counter(e_jalr_cnt,((br_mispredict_li | attaboy_li) & br_metadata.is_jalr & ~br_metadata.is_ret),66)
+  `declare_counter(e_jalr_miss,(br_mispredict_li & br_metadata.is_jalr & ~br_metadata.is_ret),67)
+  `declare_counter(e_ret_cnt,((br_mispredict_li | attaboy_li) & br_metadata.is_ret),68)
+  `declare_counter(e_ret_miss,(br_mispredict_li & br_metadata.is_ret),69)
 
   // FPU
-  `declare_counter(e_fpu_flong_cnt,(flong_v_i & flong_ready_i),62)
-  `declare_counter(e_fpu_flong_wait,(~flong_ready_i),63)
+  `declare_counter(e_fpu_flong_cnt,(flong_v_i & flong_ready_i),70)
+  `declare_counter(e_fpu_flong_wait,(~flong_ready_i),71)
 
   // DIV
-  `declare_counter(e_div_cnt,(ilong_v_i & ilong_ready_i),64)
-  `declare_counter(e_div_wait,(~ilong_ready_i),65)
+  `declare_counter(e_div_cnt,(ilong_v_i & ilong_ready_i),72)
+  `declare_counter(e_div_wait,(~ilong_ready_i),73)
+*/
 
 /*
    rv64_instr_fmatype_s instr;

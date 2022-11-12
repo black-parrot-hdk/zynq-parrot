@@ -32,25 +32,35 @@ bool run = true;
 
 const char* metrics[] = {
   "mcycle", "minstret",
-  "iq_full", "ic_invl", "ic_miss", "ic_dma", "ic_flush", "ic_atrans",
+  "iq_full", "ic_invl", "ic_miss", "ic_flush", "ic_atrans",
   "bp_haz", "ireplay", "realign", "sb_full",
   "waw_flu", "waw_lsu", "waw_fpu", "waw_reorder",
   "raw_flu", "raw_lsu", "raw_fpu",
   "br_haz", "br_miss", "mul_haz", "csr_buf",
   "div_busy", "fpu_busy",
   "ld_grant", "ld_pipe", "st_pipe", "sbuf_spec",
-  "dc_pipe", "dc_miss", "dc_dma",
+  "dc_pipe", "dc_miss_is_ld", "dc_miss_is_st",
+  "dc_miss_ex_ld", "dc_miss_ex_st", "dc_miss_cmt",
   "amo_flush", "csr_flush", "fence", "exception",
   "unknown", "extra_cmt",
-  "e_ic_wdma_cnt", "e_ic_rdma_cnt", "e_dc_wdma_cnt", "e_dc_rdma_cnt",
-  "e_ic_wdma_wait", "e_ic_rdma_wait", "e_dc_wdma_wait", "e_dc_rdma_wait",
-  "e_ic_dma_wait", "e_dc_dma_wait",
-  "e_ic_req_cnt", "e_ic_miss_cnt", "e_ic_miss_wait",
-  "e_dc_req_cnt", "e_dc_miss_cnt", "e_dc_miss_wait",
+
+  "e_rdma_ic_cnt", "e_wdma_dc_cnt", "e_rdma_dc_cnt",
+  "e_rdma_ic", "e_wdma_dc", "e_rdma_dc", "e_dma_dc",
+  "e_wdma_ld", "e_rdma_ld", "e_wdma_st", "e_rdma_st",
+  "e_ic_rdma", "e_ld_wdma", "e_ld_rdma", "e_st_wdma", "e_st_rdma",
+
+  "e_ic_req_cnt", "e_ic_miss_cnt", "e_ic_miss",
+
+  "e_dc_req_cnt", "e_ld_miss_cnt", "e_st_miss_cnt",
+  "e_ld_miss", "e_ld_mshr_miss", "e_ld_st_wait_miss",
+  "e_st_miss", "e_st_mshr_miss", "e_st_ld_wait_miss", "e_st_pgoff_miss",
+  "e_lu_miss"
+/*
   "e_br_cnt", "e_br_miss", "e_jalr_cnt", "e_jalr_miss", "e_ret_cnt", "e_ret_miss",
   "e_fpu_addmul_cnt", "e_fpu_divsqrt_cnt", "e_fpu_noncomp_cnt", "e_fpu_conv_cnt",
   "e_fpu_addmul_wait", "e_fpu_divsqrt_wait", "e_fpu_noncomp_wait", "e_fpu_conv_wait",
   "e_div_cnt", "e_div_wait"
+*/
 };
 
 const char* samples[] = {

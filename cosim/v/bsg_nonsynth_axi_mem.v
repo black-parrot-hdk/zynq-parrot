@@ -9,6 +9,7 @@ module bsg_nonsynth_axi_mem
     , parameter `BSG_INV_PARAM(axi_len_width_p)
     , parameter `BSG_INV_PARAM(mem_els_p)
     , parameter init_data_p = 32'hdead_beef // 32 bits
+    , parameter delay_p = 0
 
     , parameter lg_mem_els_lp=`BSG_SAFE_CLOG2(mem_els_p)
     , parameter axi_strb_width_lp=(axi_data_width_p>>3)
@@ -52,10 +53,11 @@ module bsg_nonsynth_axi_mem
 
   // write channel
   //
-  typedef enum logic [1:0] {
+  typedef enum logic [2:0] {
     WR_RESET,
     WR_WAIT_ADDR,
     WR_WAIT_DATA,
+    WR_DELAY,
     WR_RESP
   } wr_state_e;
 
@@ -66,6 +68,9 @@ module bsg_nonsynth_axi_mem
 
   assign wr_ram_idx = awaddr_r[`BSG_SAFE_CLOG2(axi_data_width_p>>3)+:lg_mem_els_lp];
 
+  logic wr_cnt_clr_li, wr_cnt_up_li;
+  logic [`BSG_SAFE_CLOG2(delay_p)-1:0] wr_cnt_lo;
+
   always_comb begin
 
     axi_awready_o = 1'b0;
@@ -75,6 +80,9 @@ module bsg_nonsynth_axi_mem
     axi_bid_o = awid_r;
     axi_bresp_o = '0;
     axi_bvalid_o = 1'b0;
+
+    wr_cnt_clr_li = 1'b0;
+    wr_cnt_up_li = 1'b0;
 
     case (wr_state_r)
       WR_RESET: begin
@@ -98,12 +106,22 @@ module bsg_nonsynth_axi_mem
       
       WR_WAIT_DATA: begin
         axi_wready_o = 1'b1;
+        wr_cnt_clr_li = 1'b1;
         awaddr_n = axi_wvalid_i
           ? awaddr_r + (1 << `BSG_SAFE_CLOG2(axi_data_width_p>>3))
           : awaddr_r;
         wr_state_n = axi_wvalid_i & axi_wlast_i
-          ? WR_RESP
+          ? ((delay_p== 0)
+            ? WR_RESP
+            : WR_DELAY)
           : WR_WAIT_DATA;
+      end
+
+      WR_DELAY: begin
+        wr_cnt_up_li = 1'b1;
+        wr_state_n = (wr_cnt_lo == delay_p-1)
+          ? WR_RESP
+          : WR_DELAY;
       end
 
       WR_RESP: begin
@@ -120,6 +138,7 @@ module bsg_nonsynth_axi_mem
   typedef enum logic [1:0] {
     RD_RESET
     ,RD_WAIT_ADDR
+    ,RD_DELAY
     ,RD_SEND_DATA
   } rd_state_e;
 
@@ -143,6 +162,9 @@ module bsg_nonsynth_axi_mem
   end
 
   //assign axi_rdata_o = ram[rd_ram_idx];
+
+  logic rd_cnt_clr_li, rd_cnt_up_li;
+  logic [`BSG_SAFE_CLOG2(delay_p)-1:0] rd_cnt_lo;
  
   always_comb begin
 
@@ -151,6 +173,9 @@ module bsg_nonsynth_axi_mem
     axi_rid_o = arid_r;
     axi_rresp_o = '0;
     axi_arready_o = 1'b0;
+
+    rd_cnt_clr_li = 1'b0;
+    rd_cnt_up_li = 1'b0;
 
     case (rd_state_r)
       RD_RESET: begin
@@ -161,6 +186,8 @@ module bsg_nonsynth_axi_mem
 
       RD_WAIT_ADDR: begin
         axi_arready_o = 1'b1;
+
+        rd_cnt_clr_li = 1'b1;
 
         arid_n = axi_arvalid_i
           ? axi_arid_i
@@ -175,8 +202,18 @@ module bsg_nonsynth_axi_mem
           : rd_burst_r;
         
         rd_state_n = axi_arvalid_i
-          ? RD_SEND_DATA
+          ? ((delay_p == 0)
+            ? RD_SEND_DATA
+            : RD_DELAY)
           : RD_WAIT_ADDR;
+      end
+
+      RD_DELAY: begin
+        rd_cnt_up_li = 1'b1;
+
+        rd_state_n = (rd_cnt_lo == delay_p-1)
+          ? RD_SEND_DATA
+          : RD_DELAY;
       end
 
       RD_SEND_DATA: begin
@@ -233,7 +270,27 @@ module bsg_nonsynth_axi_mem
       
     end
   end
-  
+
+  bsg_counter_clear_up
+   #(.max_val_p(delay_p), .init_val_p(0))
+   rd_cnt
+   (.clk_i(clk_i)
+   ,.reset_i(reset_i)
+   ,.clear_i(rd_cnt_clr_li)
+   ,.up_i(rd_cnt_up_li)
+   ,.count_o(rd_cnt_lo)
+   );
+
+  bsg_counter_clear_up
+   #(.max_val_p(delay_p), .init_val_p(0))
+   wr_cnt
+   (.clk_i(clk_i)
+   ,.reset_i(reset_i)
+   ,.clear_i(wr_cnt_clr_li)
+   ,.up_i(wr_cnt_up_li)
+   ,.count_o(wr_cnt_lo)
+   );
+
 endmodule
 
 `BSG_ABSTRACT_MODULE(bsg_nonsynth_axi_mem)

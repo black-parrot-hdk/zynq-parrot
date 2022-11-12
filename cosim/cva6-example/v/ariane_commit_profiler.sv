@@ -249,7 +249,7 @@ module ariane_commit_profiler
   // DMA stalls
   wire ic_dma_li = rdma_pending_r & (rdma_id_r == 5'b00000);
   wire dc_dma_li = (rdma_pending_r & (rdma_id_r == 5'b01100)) | (wdma_pending_r & (wdma_id_r == 5'b01100));
-
+/
   bsg_counter_up_down
    #(.max_val_p(3)
     ,.init_val_p(0)
@@ -598,6 +598,12 @@ module ariane_commit_profiler
   `declare_counter(e_rdma_cnt,(m_arvalid_i & m_arready_i),38)
   `declare_counter(e_wdma_wait,wdma_pending_r,39)
   `declare_counter(e_rdma_wait,rdma_pending_r,40)
+  `declare_counter(e_dma_wait,(wdma_pending_r | rdma_pending_r),40)
+  `declare_counter(e_dma_ic_wait,ic_dma_li,40)
+  `declare_counter(e_dma_dc_wait,dc_dma_li,40)
+  `declare_counter(e_ic_dma_wait,(icache_miss & ic_dma_li),40)
+  `declare_counter(e_dc_dma_wait,((ld_dc_miss_li | st_dc_miss_li) & dc_dma_li),40)
+
 
   // I$ metrics
   logic ic_miss_pending_r;
