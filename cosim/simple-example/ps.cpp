@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include "bp_zynq_pl.h"
 
-#ifdef VERILATOR
+#ifndef VCS
 int main(int argc, char **argv) {
 #else
 extern "C" void cosim_main(char *argstr) {

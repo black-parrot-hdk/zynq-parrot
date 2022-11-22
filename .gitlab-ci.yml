@@ -1,0 +1,114 @@
+variables:
+  GIT_STRATEGY: fetch
+  GIT_SUBMODULE_STRATEGY: none
+
+stages:
+  - all
+
+.job_template: &job_definition
+  only:
+    - ci_test
+  before_script:
+    - git submodule update --init --checkout --recursive cosim/import/black-parrot
+    - cp -r $CI_RTL_INSTALL_DIR install/
+  artifacts:
+    when: always
+    paths:
+      - "cosim/shell-example/verilator/"
+      - "cosim/double-shell-example/verilator/"
+      - "cosim/shell-example/vcs/"
+      - "cosim/double-shell-example/vcs/"
+  dependencies: []
+  retry:
+    max: 2
+    when:
+      - script_failure
+
+simple-example-verilator:
+  <<: *job_definition
+  stage: all
+  tags:
+    - verilator
+  script:
+    - make -C cosim/simple-example/verilator/ run
+    - grep "bp_zynq_pl:.*done() called, exiting" cosim/simple-example/verilator/run.log
+
+simple-example-vcs:
+  <<: *job_definition
+  stage: all
+  tags:
+    - vcs
+  script:
+    - make -C cosim/simple-example/vcs/ run
+    - grep "bp_zynq_pl:.*done() called, exiting" cosim/simple-example/vcs/run.log
+
+simple-example-vivado:
+  <<: *job_definition
+  stage: all
+  tags:
+    - vivado
+  script:
+    - echo "Simple example does not have a vivado script"
+
+simple-example-fpga:
+  <<: *job_definition
+  stage: all
+  tags:
+    - fpga
+  script:
+    - echo "Simple example
+
+shell-example-verilator:
+  <<: *job_definition
+  stage: all
+  tags:
+    - verilator
+  script:
+    - make -C cosim/shell-example/verilator/ run
+    - grep "bp_zynq_pl:.*done() called, exiting" cosim/shell-example/verilator/run.log
+
+shell-example-vcs:
+  <<: *job_definition
+  stage: all
+  tags:
+    - vcs
+  script:
+    - make -C cosim/shell-example/vcs/ run
+    - grep "bp_zynq_pl:.*done() called, exiting" cosim/shell-example/vcs/run.log
+
+double-shell-example-verilator:
+  <<: *job_definition
+  stage: all
+  tags:
+    - verilator
+  script:
+    - make -C cosim/double-shell-example/verilator/ run
+    - grep "bp_zynq_pl:.*done() called, exiting" cosim/double-shell-example/verilator/run.log
+
+double-shell-example-vcs:
+  <<: *job_definition
+  stage: all
+  tags:
+    - vcs
+  script:
+    - make -C cosim/double-shell-example/vcs/ run
+    - grep "bp_zynq_pl:.*done() called, exiting" cosim/double-shell-example/vcs/run.log
+
+black-parrot-example-verilator:
+  <<: *job_definition
+  stage: all
+  tags:
+    - verilator
+  script:
+    - make -C cosim/black-parrot-example/verilator/ run
+    - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/verilator/run.log
+
+black-parrot-example-vcs:
+  <<: *job_definition
+  stage: all
+  tags:
+    - vcs
+  script:
+    - make -C cosim/black-parrot-example/vcs/ run
+    - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/vcs/run.log
+
