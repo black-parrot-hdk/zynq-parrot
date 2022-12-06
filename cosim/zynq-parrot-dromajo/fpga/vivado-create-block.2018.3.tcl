@@ -9,8 +9,7 @@ set_property ip_repo_paths fpga_build [current_project]
 update_ip_catalog
 
 startgroup
-# Vivado 2022.2 uses v 3.4 below; earlier versions (upto 2020.1) use 3.3
-create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.4 zynq_ultra_ps_e_0
+create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.3 zynq_ultra_ps_e_0
 set_property -dict [list CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {50}] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP0 {1} CONFIG.PSU__MAXIGP0__DATA_WIDTH {32}] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP1 {1} CONFIG.PSU__MAXIGP1__DATA_WIDTH {32}] [get_bd_cells zynq_ultra_ps_e_0]
@@ -75,14 +74,13 @@ create_bd_addr_seg -range 0x00002000 -offset 0x10000000 [get_bd_addr_spaces top_
 
 assign_bd_address
 set_property offset 0x400000000 [get_bd_addr_segs {zynq_ultra_ps_e_0/Data/SEG_top_0_reg0}]
-set_property offset 0x500000000 [get_bd_addr_segs {zynq_ultra_ps_e_0/Data/SEG_top_0_reg0_1}]
+set_property offset 0x500000000 [get_bd_addr_segs {zynq_ultra_ps_e_0/Data/SEG_top_0_reg01}]
 # Vivado 2019.2 uses reg04; 2018.3 uses reg01; 2022.2 uses reg0_1; check by typing 
 #      get_bd_addr_segs {zynq_ultra_ps_e_0/Data/SEG_top_0_reg*}
 # in the vivado interactive command line when this fails
-#set_property offset 0x500000000 [get_bd_addr_segs {zynq_ultra_ps_e_0/Data/SEG_top_0_reg01}]
 set_property range 4K [get_bd_addr_segs {zynq_ultra_ps_e_0/Data/SEG_top_0_reg0}]
-set_property range 1G [get_bd_addr_segs {zynq_ultra_ps_e_0/Data/SEG_top_0_reg0_1}]
-#set_property range 1G [get_bd_addr_segs {zynq_ultra_ps_e_0/Data/SEG_top_0_reg01}]
+set_property range 1G [get_bd_addr_segs {zynq_ultra_ps_e_0/Data/SEG_top_0_reg01}]
+
 validate_bd_design
 
 make_wrapper -files [get_files ${project_name}.srcs/sources_1/bd/blackparrot_bd_1/blackparrot_bd_1.bd] -top

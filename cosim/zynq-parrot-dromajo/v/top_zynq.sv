@@ -55,7 +55,7 @@ module top_zynq
   , output wire                                 s00_axi_rvalid
   , input wire                                  s00_axi_rready
 
-  , (* gated_clock = "yes" *) input wire       s01_axi_aclk
+  , (* gated_clock = "true" *) input wire       s01_axi_aclk
   , input wire                                  s01_axi_aresetn
   , input wire [C_S01_AXI_ADDR_WIDTH-1 : 0]     s01_axi_awaddr
   , input wire [2 : 0]                          s01_axi_awprot
@@ -165,7 +165,7 @@ module top_zynq
       else if(gate_r & (commit_fifo_sync.unhardened.un.fifo.ft.empty_o & ird_fifo_sync.unhardened.un.fifo.ft.empty_o & frd_fifo_sync.unhardened.un.fifo.ft.empty_o ) | ~gate_en_li[0])
         gate_r <= '0;
 
-  (* gated_clock = "yes" *) wire s01_gated_aclk;
+  (* gated_clock = "true" *) wire s01_gated_aclk;
 
 `ifdef VERILATOR
    assign s01_gated_aclk = s01_axi_aclk & ~gate_r;
