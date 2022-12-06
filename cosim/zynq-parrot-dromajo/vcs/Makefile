@@ -1,6 +1,5 @@
-TOP  := /mnt/users/ssd2/homes/mysanoop/test/zynq-parrot
+TOP  := $(shell git rev-parse --show-toplevel)
 CURR := $(shell pwd)
-FPGA_COSIM=1
 
 #############################
 # Project Settings
@@ -10,7 +9,7 @@ export TOP_MODULE ?= top
 #############################
 # Accelerator Software Settings
 #############################
-export NBF_FILE     ?= $(abspath ../prog.nbf)
+export NBF_FILE     ?= $(abspath ../hello.nbf)
 export HOST_PROGRAM ?= $(abspath ../ps.cpp)
 export BASE_FLIST   ?= $(abspath ../flist.vcs)
 export FLIST        ?= $(abspath flist.vcs)
