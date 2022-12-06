@@ -35,9 +35,6 @@ dromajo_install: cmake3_install
 
 all: dromajo_install
 	if [ -z "$(FPGA)" ]; then \
-		echo "Make sure you have updated the git submodules in <root>/cosim/import/* as per <root>/cosim/README.md"; \
+		echo "Make sure you have updated all the git submodules in <root>/cosim/import/* as per <root>/cosim/README.md"; \
 		cp files/x86_host/bp_axi_top.sv ../import/black-parrot-subsystems/axi/v/bp_axi_top.sv; \
 	fi
-	# extracting riscv-tests and beebs testsuite
-	tar -xzf files/common/beebs.tar.gz -C .
-	tar -xzf files/common/riscv-tests.tar.gz -C .
