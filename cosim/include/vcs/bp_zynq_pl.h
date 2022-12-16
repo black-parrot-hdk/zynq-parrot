@@ -78,6 +78,7 @@ public:
         STRINGIFY(GP1_HIER_BASE));
     axi_gp1->reset(tick);
 #endif
+
 #ifdef HP0_ENABLE
     axi_hp0 = std::make_unique<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> >(
         STRINGIFY(HP0_HIER_BASE));
@@ -93,7 +94,7 @@ public:
 
   void axil_write(unsigned int address, int data, int wstrb=0xF) {
     int address_orig = address;
-    int index;
+    int index = -1;
 
     // we subtract the bases to make it consistent with the Zynq AXI IPI
     // implementation
@@ -122,7 +123,7 @@ public:
 
   int axil_read(unsigned int address) {
     int address_orig = address;
-    int index = 0;
+    int index = -1;
     int data;
 
     // we subtract the bases to make it consistent with the Zynq AXI IPI
