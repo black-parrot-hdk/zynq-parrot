@@ -3,8 +3,6 @@ NBF_DIR=../cosim/import/black-parrot/bp_common/software/py
 
 NBF_NCPUS ?= 1
 
-NCORES=20
-
 SUITE ?= beebs
 
 export PATH := $(SDK_DIR)/install/bin/:$(PATH)
@@ -19,7 +17,7 @@ checkout_tools:
 
 #build once (x86 server); takes about 15 minutes
 build_tools: checkout_tools
-	$(MAKE) -j $(NCORES) -C $(SDK_DIR) panic_room PLATFORM=zynqparrot
+	$(MAKE) -C $(SDK_DIR) panic_room PLATFORM=zynqparrot
 
 # run on x86
 build_libs: build_tools
