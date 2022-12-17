@@ -99,7 +99,7 @@ public:
   ~bp_zynq_pl(void) {}
 
   void axil_write(unsigned int address, int data, int wstrb=0xF) {
-    int address_orig = address;
+    unsigned int address_orig = address;
     int index = -1;
 
     // we subtract the bases to make it consistent with the Zynq AXI IPI
@@ -128,7 +128,7 @@ public:
   }
 
   int axil_read(unsigned int address) {
-    int address_orig = address;
+    unsigned int address_orig = address;
     int index = -1;
     int data;
 
@@ -147,6 +147,7 @@ public:
       bsg_pr_err("  bp_zynq: unsupported AXIL port %d\n", index);
     }
 
+
     if (index == 0) {
       data = axi_gp0->axil_read_helper(address, tick);
     } else if (index == 1) {
@@ -159,7 +160,21 @@ public:
     return data;
   }
 
-  void axil_poll() {
+  void peripheral_write_sim(unsigned int address, int data, int wstrb=0xF) {
+    bsg_pr_dbg_pl("  bp_zynq_pl: Peripheral AXI writing [%x] with %8.8x\n",
+                  address, data);
+    axi_gp2->axil_write_helper(address, data, wstrb, tick);
+  }
+
+  void peripheral_read_sim(unsigned int address) {
+    int data;
+    data = axi_gp2->axil_read_helper(address, tick);
+    bsg_pr_dbg_pl("  bp_zynq_pl: Peripheral AXI reading [%x] with %8.8x\n",
+                  address, data);
+  }
+
+  void peripheral_poll_sim() {
+#if defined(HP0_ENABLE) && defined(SCRATCHPAD_ENABLE)
     if (axi_hp0->p_awvalid && (axi_hp0->p_awaddr >= SCRATCHPAD_BASE) && (axi_hp0->p_awaddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {
       axi_hp0->axil_write_helper((axil_device *)scratchpad.get(), tick);
     } else if (axi_hp0->p_arvalid && (axi_hp0->p_araddr >= SCRATCHPAD_BASE) && (axi_hp0->p_araddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {
@@ -172,6 +187,7 @@ public:
       bsg_pr_err("  bp_zynq_pl: Unsupported AXI device read at [%x]\n", araddr);
     }
   }
+#endif
 };
 
 std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > bp_zynq_pl::axi_gp0;
