@@ -99,10 +99,12 @@ clean_logs:
 
 # run on x86
 VPATH := $(wildcard ../cosim/import/black-parrot-sdk/prog/*)
+# FPGAs should not skip zeros
+#SKIP_ZEROS ?= --skip_zeros
 %.nbf: %.riscv
 	$(RISCV_OBJCOPY) -O verilog $< $*.mem
 	$(SED) -i "s/@8/@0/g" $*.mem
-	python $(NBF_DIR)/nbf.py --config --boot_pc 0x80000000 --mem $*.mem --ncpus $(NBF_NCPUS) > $@
+	python $(NBF_DIR)/nbf.py $(SKIP_ZEROS) --config --boot_pc 0x80000000 --mem $*.mem --ncpus $(NBF_NCPUS) > $@
 	-rm $*.mem
 
 # if you want to run one test, then you can do:

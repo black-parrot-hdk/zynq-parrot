@@ -1,5 +1,5 @@
 
-$BLACKPARROT_SUB_DIR/axi/v/bsg_axi_pkg.v
+$BASEJUMP_STL_DIR/bsg_axi/bsg_axi_pkg.v
 
 $BASEJUMP_STL_DIR/bsg_cache/bsg_cache_to_axi.v
 $BASEJUMP_STL_DIR/bsg_cache/bsg_cache_to_axi_rx.v
