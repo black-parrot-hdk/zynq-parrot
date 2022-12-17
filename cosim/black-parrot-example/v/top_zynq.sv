@@ -9,7 +9,6 @@ module top_zynq
  import bp_common_pkg::*;
  import bp_be_pkg::*;
  import bp_me_pkg::*;
- import bsg_axi_pkg::*;
  #(parameter bp_params_e bp_params_p = e_bp_default_cfg
    `declare_bp_proc_params(bp_params_p)
    `declare_bp_bedrock_mem_if_widths(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p)
@@ -457,7 +456,7 @@ module top_zynq
     (.clk_i(s01_axi_aclk)
      ,.reset_i(~s01_axi_aresetn)
      ,.s00_axil_awaddr (s01_waddr_translated_lo)
-     ,.s00_axil_awprot (axi_prot_type_e'(s01_axi_awprot))
+     ,.s00_axil_awprot (s01_axi_awprot)
      ,.s00_axil_awvalid(s01_axi_awvalid)
      ,.s00_axil_awready(s01_axi_awready)
      ,.s00_axil_wdata  (s01_axi_wdata)
@@ -468,7 +467,7 @@ module top_zynq
      ,.s00_axil_bvalid (s01_axi_bvalid)
      ,.s00_axil_bready (s01_axi_bready)
      ,.s00_axil_araddr (s01_raddr_translated_lo)
-     ,.s00_axil_arprot (axi_prot_type_e'(s01_axi_arprot))
+     ,.s00_axil_arprot (s01_axi_arprot)
      ,.s00_axil_arvalid(s01_axi_arvalid)
      ,.s00_axil_arready(s01_axi_arready)
      ,.s00_axil_rdata  (s01_axi_rdata)
@@ -657,7 +656,7 @@ module top_zynq
       ,.m_axil_wvalid_o (bp_m_axil_wvalid)
       ,.m_axil_wready_i (bp_m_axil_wready)
 
-      ,.m_axil_bresp_i  (axi_resp_type_e'(bp_m_axil_bresp))
+      ,.m_axil_bresp_i  (bp_m_axil_bresp)
       ,.m_axil_bvalid_i (bp_m_axil_bvalid)
       ,.m_axil_bready_o (bp_m_axil_bready)
 
@@ -667,7 +666,7 @@ module top_zynq
       ,.m_axil_arready_i(bp_m_axil_arready)
 
       ,.m_axil_rdata_i  (bp_m_axil_rdata)
-      ,.m_axil_rresp_i  (axi_resp_type_e'(bp_m_axil_rresp))
+      ,.m_axil_rresp_i  (bp_m_axil_rresp)
       ,.m_axil_rvalid_i (bp_m_axil_rvalid)
       ,.m_axil_rready_o (bp_m_axil_rready)
 
