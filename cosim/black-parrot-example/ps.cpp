@@ -18,6 +18,7 @@
 #include "bsg_argparse.h"
 
 #define FREE_DRAM 0
+#define ZERO_DRAM 0
 #define DRAM_ALLOCATE_SIZE 120 * 1024 * 1024
 
 #ifndef ZYNQ_PL_DEBUG
@@ -195,6 +196,18 @@ extern "C" void cosim_main(char *argstr) {
 
   bsg_pr_info("ps.cpp: reading mtimecmp\n");
   assert(zpl->axil_read(0xA0000000U + 0x304000) == y + 1);
+
+#ifdef FPGA
+  // Must zero DRAM for FPGA Linux boot, because opensbi payload mode
+  //   obliterates the section names of the payload (Linux)
+  if (ZERO_DRAM) {
+    bsg_pr_info("ps.cpp: Zero-ing DRAM (%d bytes)\n", DRAM_ALLOCATE_SIZE);
+    for (int i = 0; i < DRAM_ALLOCATE_SIZE; i+=4) {
+      if (i % (1024*1024) == 0) bsg_pr_info("ps.cpp: zero-d %d MB\n", i/(1024*1024));
+      zpl->axil_write(GP1_ADDR_BASE + i, 0x0, mask1);
+    }
+  }
+#endif
 
 #ifdef DRAM_TEST
 

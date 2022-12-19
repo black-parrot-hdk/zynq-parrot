@@ -11,7 +11,7 @@ export BASENAME   ?= blackparrot
 #############################
 # Accelerator Software Settings
 #############################
-export NBF_FILE     ?= $(abspath ../prog.nbf)
+export NBF_FILE     ?= $(abspath ../hello_world.nbf)
 export HOST_PROGRAM ?= $(abspath ../ps.cpp)
 export BASE_FLIST   ?= $(abspath ../flist.vcs)
 export FLIST        ?= $(abspath flist.vcs)
