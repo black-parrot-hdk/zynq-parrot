@@ -249,8 +249,6 @@ module bsg_zynq_pl_shell #
    // and the slave is ready to accept the write address and write data.
    assign slv_reg_wren = axi_wready && S_AXI_WVALID && axi_awready && S_AXI_AWVALID;
 
-   genvar k;
-
    wire [read_locs_lp-1:0] slv_rd_sel_one_hot;
    wire [write_locs_lp-1:0] slv_wr_sel_one_hot;
 
@@ -274,7 +272,7 @@ module bsg_zynq_pl_shell #
    logic [num_regs_ps_to_pl_p-1:0][C_S_AXI_DATA_WIDTH-1:0] slv_r;
 
    // instantiate user read/write CSRs
-   for (k=0; k < num_regs_ps_to_pl_p; k++)
+   for (genvar k=0; k < num_regs_ps_to_pl_p; k++)
      begin: rof
         bsg_dff_reset_en #(.width_p(C_S_AXI_DATA_WIDTH)) slv_reg
           (.clk_i(S_AXI_ACLK)
@@ -291,7 +289,7 @@ module bsg_zynq_pl_shell #
    wire [num_fifo_ps_to_pl_p-1:0][C_S_AXI_DATA_WIDTH-1:0] ps_to_pl_fifo_ctrs_full;
 
    // instantiate in (PS to PL) FIFOs
-   for (k=0; k < num_fifo_ps_to_pl_p; k++)
+   for (genvar k=0; k < num_fifo_ps_to_pl_p; k++)
      begin: rof2
         assign ps_to_pl_fifo_ctrs_full[k] = (C_S_AXI_DATA_WIDTH) ' (ps_to_pl_fifo_ctrs[k]);
 
@@ -338,21 +336,21 @@ module bsg_zynq_pl_shell #
    logic [num_fifo_pl_to_ps_p-1:0][`BSG_WIDTH(4)-1:0]      pl_to_ps_fifo_ctrs;
    logic [num_fifo_pl_to_ps_p-1:0][C_S_AXI_DATA_WIDTH-1:0] pl_to_ps_fifo_ctrs_full;
 
-   for (k=0; k < num_fifo_pl_to_ps_p; k++)
+   for (genvar k=0; k < num_fifo_pl_to_ps_p; k++)
      begin: rof4
         assign pl_to_ps_fifo_data_li[k]  = pl_to_ps_fifo_data_i  [k];
         assign pl_to_ps_fifo_valid_li[k] = pl_to_ps_fifo_v_i     [k];
         assign pl_to_ps_fifo_ready_o[k]  = pl_to_ps_fifo_ready_lo[k];
      end
 
-   for (k=0; k < num_fifo_ps_to_pl_p; k++)
+   for (genvar k=0; k < num_fifo_ps_to_pl_p; k++)
      begin: rof1
         assign ps_to_pl_fifo_yumi_li[k] = ps_to_pl_fifo_yumi_i  [k];
         assign ps_to_pl_fifo_data_o[k]  = ps_to_pl_fifo_data_lo [k];
         assign ps_to_pl_fifo_v_o[k]     = ps_to_pl_fifo_valid_lo[k];
      end
 
-   for (k=0; k < num_regs_ps_to_pl_p; k++)
+   for (genvar k=0; k < num_regs_ps_to_pl_p; k++)
      begin: rof5
         assign csr_data_o[k] = slv_r[k];
      end
@@ -361,7 +359,7 @@ module bsg_zynq_pl_shell #
 
    // instantiate out (pl_to_ps) FIFOs
 
-   for (k=0; k < num_fifo_pl_to_ps_p; k++)
+   for (genvar k=0; k < num_fifo_pl_to_ps_p; k++)
      begin: pl_to_ps
 
         assign pl_to_ps_fifo_ctrs_full[k] = (C_S_AXI_DATA_WIDTH) ' (pl_to_ps_fifo_ctrs[k]);
@@ -511,34 +509,32 @@ module bsg_zynq_pl_shell #
 
    initial
      begin: info
-        integer k;
-
         $display("-------------------------------");
         $display("BSG: Zynq Shell PL Read Offsets (%m)");
 
-        for (k = 0; k < num_regs_ps_to_pl_p; k++)
+        for (integer k = 0; k < num_regs_ps_to_pl_p; k++)
           $display("%3h: ps_to_pl register %2d",k << 2, k);
 
-        for (k = 0; k < num_fifo_pl_to_ps_p; k++)
+        for (integer k = 0; k < num_fifo_pl_to_ps_p; k++)
           $display("%3h: pl_to_ps fifo #%2d data",(num_regs_ps_to_pl_p << 2)+(k<<2),k);
 
-        for (k = 0; k < num_fifo_pl_to_ps_p; k++)
+        for (integer k = 0; k < num_fifo_pl_to_ps_p; k++)
           $display("%3h: pl_to_ps fifo #%2d count",((num_fifo_pl_to_ps_p+num_regs_ps_to_pl_p) << 2)+(k<<2),k);
 
-        for (k = 0; k < num_fifo_ps_to_pl_p; k++)
+        for (integer k = 0; k < num_fifo_ps_to_pl_p; k++)
           $display("%3h: ps_to_pl fifo #%2d count",((num_fifo_pl_to_ps_p*2+num_regs_ps_to_pl_p) << 2)+(k<<2),k);
 
-        for (k = 0; k < num_regs_pl_to_ps_p; k++)
+        for (integer k = 0; k < num_regs_pl_to_ps_p; k++)
           $display("%3h: pl_to_ps register %2d"
                    ,((num_fifo_pl_to_ps_p*2+num_regs_ps_to_pl_p+num_fifo_ps_to_pl_p) << 2)+(k<<2),k);
 
         $display("-------------------------------");
         $display("BSG: Zynq Shell PL Write Offsets (%m)");
 
-        for (k = 0; k < num_regs_ps_to_pl_p; k++)
+        for (integer k = 0; k < num_regs_ps_to_pl_p; k++)
           $display("%3h: ps_to_pl register %2d",k << 2, k);
 
-        for (k = 0; k < num_fifo_ps_to_pl_p; k++)
+        for (integer k = 0; k < num_fifo_ps_to_pl_p; k++)
           $display("%3h: ps_to_pl fifo #%2d data",((num_regs_ps_to_pl_p) << 2)+(k<<2),k);
      end
 

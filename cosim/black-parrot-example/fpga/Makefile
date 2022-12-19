@@ -11,7 +11,7 @@ export BASENAME   ?= blackparrot
 #############################
 # Accelerator Software Settings
 #############################
-export NBF_FILE     ?= $(abspath ../prog.nbf)
+export NBF_FILE     ?= $(abspath ../hello_world.nbf)
 export HOST_PROGRAM ?= $(abspath ../ps.cpp)
 export BASE_FLIST   ?= $(abspath ../flist.vcs)
 export FLIST        ?= $(abspath flist.vcs)
@@ -32,10 +32,10 @@ include $(TOP)/cosim/mk/Makefile.fpga
 # Modify base flist
 #############################
 $(FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs $(BASE_FLIST)
-	echo "+incdir+$(CURR_SRC_DIR)" > $@
+	cat $^ | envsubst > $@
+	echo "+incdir+$(CURR_SRC_DIR)" >> $@
 	echo "+incdir+$(COSIM_DIR)/include/fpga" >> $@
 	# Replace hardened memory which is incorrectly inferred on some Xilinx FPGAs
-	cat $^ | envsubst >> $@
 	sed -i "/bsg_mem_1rw_sync_mask_write_bit.v/d" $@
 	sed -i "/bsg_mem_1rw_sync_mask_write_bit_synth.v/d" $@
 	echo "$(BASEJUMP_STL_DIR)/hard/ultrascale_plus/bsg_mem/bsg_mem_1rw_sync_mask_write_bit.v" >> $@

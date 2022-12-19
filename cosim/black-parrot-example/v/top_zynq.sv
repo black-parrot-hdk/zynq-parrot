@@ -176,6 +176,20 @@ module top_zynq
    localparam debug_lp = 0;
    localparam memory_upper_limit_lp = 120*1024*1024;
 
+   // BlackParrot reset signal is connected to a CSR (along with
+   // the AXI interface reset) so that a regression can be launched
+   // without having to reload the bitstream
+   wire bp_reset_li = (~csr_data_lo[0][0]) || (~s01_axi_aresetn);
+
+   if (cce_type_p != e_cce_uce) begin
+     assign csr_data_li[0] = blackparrot.m.multicore.cc.y[0].x[0].tile_node.tile.core.core_lite.core_minimal.be.calculator.pipe_sys.csr.mcycle_lo;
+     assign csr_data_li[1] = blackparrot.m.multicore.cc.y[0].x[0].tile_node.tile.core.core_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
+   end
+   else begin
+     assign csr_data_li[0] = blackparrot.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.mcycle_lo;
+     assign csr_data_li[1] = blackparrot.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
+   end
+
    // use this as a way of figuring out how much memory a RISC-V program is using
    // each bit corresponds to a region of memory
    logic [127:0] mem_profiler_r;
