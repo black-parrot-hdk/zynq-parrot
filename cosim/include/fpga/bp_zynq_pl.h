@@ -163,6 +163,15 @@ public:
 
   bool done(void) { printf("bp_zynq_pl: done() called, exiting\n"); }
 
+#if 0
+  inline volatile int * axil_get_ptr(unsigned int address, int data) {
+    if (address >= GP1_ADDR_BASE)
+      return (int *) address + gp1_base_offset;
+    else
+      return (int *) address + gp0_base_offset;
+  }
+#endif
+  
   inline void axil_write(unsigned int address, int data, int wstrb=0xF) {
     if (BP_ZYNQ_PL_DEBUG)
       printf("  bp_zynq_pl: AXI writing [%x]=%8.8x mask %x\n", address, data,
