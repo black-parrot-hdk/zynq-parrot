@@ -9,7 +9,7 @@ export TOP_MODULE ?= top
 #############################
 # Accelerator Software Settings
 #############################
-export NBF_FILE     ?= $(abspath ../hello.nbf)
+export NBF_FILE     ?= $(abspath ../hello_world.nbf)
 export HOST_PROGRAM ?= $(abspath ../ps.cpp)
 export BASE_FLIST   ?= $(abspath ../flist.vcs)
 export FLIST        ?= $(abspath flist.vcs)
@@ -38,11 +38,11 @@ include $(TOP)/cosim/mk/Makefile.verilator
 # Modify base flist
 #############################
 $(FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs $(BASE_FLIST)
-	echo "+incdir+$(CURR_SRC_DIR)" > $@
+	cat $^ | envsubst > $@
+	echo "+incdir+$(CURR_SRC_DIR)" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.v " >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.v " >> $@
 	echo "$(COSIM_SRC_DIR)/bsg_nonsynth_dpi_to_axil.v" >> $@
 	echo "$(COSIM_SRC_DIR)/bsg_nonsynth_axil_to_dpi.v" >> $@
-	cat $^ | envsubst >> $@
 

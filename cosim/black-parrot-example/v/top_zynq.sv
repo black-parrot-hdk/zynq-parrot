@@ -182,9 +182,14 @@ module top_zynq
 
    logic [63:0] minstret_lo;
    if (cce_type_p != e_cce_uce)
-     assign minstret_lo = blackparrot.m.multicore.cc.y[0].x[0].tile_node.tile.core.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
+     assign minstret_lo = blackparrot.m.multicore.cc.y[0].x[0].tile_node.tile_node.tile.core.core_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
    else
      assign minstret_lo = blackparrot.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
+
+   // BlackParrot reset signal is connected to a CSR (along with
+   // the AXI interface reset) so that a regression can be launched
+   // without having to reload the bitstream
+   wire bp_reset_li = (~csr_data_lo[0][0]) || (~s01_axi_aresetn);
 
    // Connect Shell to AXI Bus Interface S00_AXI
    bsg_zynq_pl_shell #
@@ -262,7 +267,7 @@ module top_zynq
 
    // Add user logic here
 
-   `declare_bsg_cache_dma_pkt_s(caddr_width_p);
+   `declare_bsg_cache_dma_pkt_s(caddr_width_p, l2_block_size_in_words_p);
    bsg_cache_dma_pkt_s dma_pkt_lo;
    logic                       dma_pkt_v_lo, dma_pkt_yumi_li;
    logic [l2_fill_width_p-1:0] dma_data_lo;
@@ -505,11 +510,6 @@ module top_zynq
        if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_araddr,m00_axi_araddr);
 
    // synopsys translate_on
-   // BlackParrot reset signal is connected to a CSR (along with
-   // the AXI interface reset) so that a regression can be launched
-   // without having to reload the bitstream
-   wire bp_reset_li = (~csr_data_lo[0][0]) || (~s01_axi_aresetn);
-
 
    bsg_dff_reset #(.width_p(128)) dff
      (.clk_i(s01_axi_aclk)
@@ -583,6 +583,7 @@ module top_zynq
       ,.s_axil_rvalid_o (s01_axi_rvalid)
       ,.s_axil_rready_i (s01_axi_rready)
 
+      // BlackParrot DRAM memory system (output of bsg_cache_to_axi)
       ,.m_axi_awaddr_o   (axi_awaddr)
       ,.m_axi_awvalid_o  (m00_axi_awvalid)
       ,.m_axi_awready_i  (m00_axi_awready)
