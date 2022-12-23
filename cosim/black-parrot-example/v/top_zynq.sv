@@ -583,6 +583,7 @@ module top_zynq
       ,.s_axil_rvalid_o (s01_axi_rvalid)
       ,.s_axil_rready_i (s01_axi_rready)
 
+      // BlackParrot DRAM memory system (output of bsg_cache_to_axi)
       ,.m_axi_awaddr_o   (axi_awaddr)
       ,.m_axi_awvalid_o  (m00_axi_awvalid)
       ,.m_axi_awready_i  (m00_axi_awready)
