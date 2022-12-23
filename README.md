@@ -1,8 +1,8 @@
-Support for rapid design iteration of BlackParrot on Zynq FPGAs.
+Support for rapid design iteration of BlackParrot and Accelerators more broadly on Zynq FPGAs.
 
 See cosim directory for more instructions.
 
-Suggested projects for contributors:
+Suggested projects for contributors to the BlackParrot example:
 
 - We would like to support OpenOCD to our Zynq Shell. 
 - One route:

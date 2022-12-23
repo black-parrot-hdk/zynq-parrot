@@ -10,6 +10,18 @@
 #include "bsg_printing.h"
 #include "bsg_argparse.h"
 
+#include <sys/time.h>
+
+#if 0
+uint64_t get_microseconds()
+{
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+}
+#endif
+
+
 #ifndef VCS
 int main(int argc, char **argv) {
 #else
@@ -53,6 +65,34 @@ extern "C" void cosim_main(char *argstr) {
   assert(zpl->axil_read(0x30 + GP0_ADDR_BASE) == 0x4);
   // 8,12
 
+#if 0
+  uint64_t start=get_microseconds();
+  int limit = 1000;
+  for (int i = 0; i < limit; i++)
+    {
+      volatile int *p = axil_get_ptr(0x0+GP0_ADDR_BASE);
+      *p = i;
+      *p = i;
+      *p = i;
+      *p = i;      
+      *p = i;
+      *p = i;
+      *p = i;
+      *p = i;      
+      *p = i;
+      *p = i;
+      *p = i;
+      *p = i;      
+      *p = i;
+      *p = i;
+      *p = i;
+      *p = i;      
+    }
+  uint64_t net=get_microseconds()-start;
+
+  print("%ull microseconds for %d words: %f words per microsecond\n",net,limit*16,(double) (limit * 16) / (double) net );
+#endif
+  
   // check output fifo counters
   assert((zpl->axil_read(0x18 + GP0_ADDR_BASE) == 0));
   assert((zpl->axil_read(0x1C + GP0_ADDR_BASE) == 0));
