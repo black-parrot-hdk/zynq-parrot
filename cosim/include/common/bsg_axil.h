@@ -63,6 +63,7 @@ public:
   virtual void write(int address, int data, void (*tick)()) = 0;
 };
 
+
 // A = axil address width
 // D = axil data width
 template <unsigned int A, unsigned int D> class axilm {

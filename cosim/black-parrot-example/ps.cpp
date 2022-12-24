@@ -281,12 +281,7 @@ extern "C" void cosim_main(char *argstr) {
 
   while (1) {
 #ifndef FPGA
-    zpl->peripheral_poll_sim();
-    {
-      static unsigned int cnt = 0;
-      if((cnt++ % 1024) == 0)
-        zpl->peripheral_write_sim(0x101000U, 'D');
-    }
+    zpl->peripherals_sim_poll();
 #endif
 #ifdef SIM_BACKPRESSURE_ENABLE
     if (!(rand() % SIM_BACKPRESSURE_CHANCE)) {
