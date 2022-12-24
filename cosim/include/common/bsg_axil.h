@@ -57,7 +57,7 @@ public:
   }
 };
 
-class axil_device {
+class axils_device {
 public:
   virtual int read(int address, void (*tick)()) = 0;
   virtual void write(int address, int data, void (*tick)()) = 0;
@@ -297,7 +297,7 @@ public:
     printf("bp_zynq_pl: Exiting reset\n");
   }
 
-  void axil_read_helper(axil_device *p, void (*tick)()) {
+  void axil_read_helper(axils_device *p, void (*tick)()) {
     int timeout_counter = 0;
     int data;
 
@@ -334,7 +334,7 @@ public:
     return;
   }
 
-  int axil_write_helper(axil_device *p, void (*tick)()) {
+  int axil_write_helper(axils_device *p, void (*tick)()) {
     int timeout_counter = 0;
 
     assert(this->p_wstrb == 0xf); // we only support full int writes right now

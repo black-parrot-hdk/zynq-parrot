@@ -30,7 +30,7 @@ using namespace bsg_nonsynth_dpi;
 // Scratchpad
 #define SCRATCHPAD_BASE 0x1000000
 #define SCRATCHPAD_SIZE 0x100000
-class zynq_scratchpad : public axil_device {
+class zynq_scratchpad : public axils_device {
   std::vector<int> mem;
 
 public:
@@ -176,9 +176,9 @@ public:
   void peripheral_poll_sim() {
 #if defined(HP0_ENABLE) && defined(SCRATCHPAD_ENABLE)
     if (axi_hp0->p_awvalid && (axi_hp0->p_awaddr >= SCRATCHPAD_BASE) && (axi_hp0->p_awaddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {
-      axi_hp0->axil_write_helper((axil_device *)scratchpad.get(), tick);
+      axi_hp0->axil_write_helper((axils_device *)scratchpad.get(), tick);
     } else if (axi_hp0->p_arvalid && (axi_hp0->p_araddr >= SCRATCHPAD_BASE) && (axi_hp0->p_araddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {
-      axi_hp0->axil_read_helper((axil_device *)scratchpad.get(), tick);
+      axi_hp0->axil_read_helper((axils_device *)scratchpad.get(), tick);
     } else if (axi_hp0->p_awvalid) {
       int awaddr = axi_hp0->p_awaddr;
       bsg_pr_err("  bp_zynq_pl: Unsupported AXI device write at [%x]\n", awaddr);
