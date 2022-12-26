@@ -96,6 +96,7 @@ public:
 
     // open memory device
     int fd = open("/dev/mem", O_RDWR | O_SYNC);
+    //    int fd = open("/dev/mem", O_RDWR);
     assert(fd != 0);
 
     int *addr0 = (int *)GP0_ADDR_BASE; // e.g. 0x43c00000;
@@ -163,8 +164,8 @@ public:
 
   bool done(void) { printf("bp_zynq_pl: done() called, exiting\n"); }
 
-#if 0
-  inline volatile int * axil_get_ptr(unsigned int address, int data) {
+#if 1
+  inline volatile int * axil_get_ptr(unsigned int address) {
     if (address >= GP1_ADDR_BASE)
       return (int *) address + gp1_base_offset;
     else
