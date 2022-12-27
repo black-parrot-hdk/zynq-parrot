@@ -1,4 +1,6 @@
-Support for rapid design iteration of BlackParrot and Accelerators more broadly on Zynq FPGAs.
+# Overview
+
+zynq-parrot supports for rapid design iteration of Accelerators (including the BlackParrot RISC-V processor) on Zynq FPGAs.
 
 **See [cosim](https://github.com/black-parrot-hdk/zynq-parrot/tree/master/cosim) directory for  instructions.**
 
