@@ -1,4 +1,4 @@
-This directory contains:
+This directory only pertains to the Black Parrot example and contains:
 
 1) support for cross-compiling RISC-V programs on X86 and NBF generation.
 
