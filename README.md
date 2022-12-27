@@ -1,6 +1,6 @@
 Support for rapid design iteration of BlackParrot and Accelerators more broadly on Zynq FPGAs.
 
-**See [cosim](https://github.com/black-parrot-hdk/zynq-parrot/cosim) directory for  instructions.**
+**See [cosim](https://github.com/black-parrot-hdk/zynq-parrot/tree/master/cosim) directory for  instructions.**
 
 Suggested projects for contributors to the BlackParrot example:
 
