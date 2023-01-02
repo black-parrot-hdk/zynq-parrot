@@ -107,7 +107,9 @@ public:
   }
   void poll(tick_fn_t tick) {
     if(has_write())
-      write(0x101000U, 'W', tick); // write to PL to PS FIFO; 'W' stands for 'Woof'
+      write(0x101000, 'W', tick); // write to PL to PS FIFO; 'W' stands for 'Woof'
+    if(has_read())
+      read(0x0, tick); // read not implemented
   }
 };
 
