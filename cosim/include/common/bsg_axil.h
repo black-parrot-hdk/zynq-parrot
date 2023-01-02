@@ -22,6 +22,8 @@
 using namespace std;
 using namespace bsg_nonsynth_dpi;
 
+typedef void (*tick_fn_t)(void);
+
 // W = width of pin
 template <unsigned int W> class pin {
   std::unique_ptr<dpi_gpio<W> > gpio;
@@ -57,10 +59,10 @@ public:
   }
 };
 
-class axils_device {
+class axil_device {
 public:
-  virtual int read(int address, void (*tick)()) = 0;
-  virtual void write(int address, int data, void (*tick)()) = 0;
+  virtual int read(int address, tick_fn_t tick) = 0;
+  virtual void write(int address, int data, tick_fn_t tick, int wstrb=0xf) = 0;
 };
 
 
@@ -118,7 +120,7 @@ public:
   }
 
   // Wait for (low true) reset to be asserted by the testbench
-  void reset(void (*tick)()) {
+  void reset(tick_fn_t tick) {
     printf("bp_zynq_pl: Entering reset\n");
     while (this->p_aresetn == 1) {
       tick();
@@ -126,7 +128,7 @@ public:
     printf("bp_zynq_pl: Exiting reset\n");
   }
 
-  int axil_read_helper(unsigned int address, void (*tick)()) {
+  int axil_read_helper(unsigned int address, tick_fn_t tick) {
     int data;
     int timeout_counter = 0;
 
@@ -172,7 +174,7 @@ public:
   }
 
   void axil_write_helper(unsigned int address, int data, int wstrb,
-                         void (*tick)()) {
+                         tick_fn_t tick) {
     int timeout_counter = 0;
 
     assert(wstrb == 0xf); // we only support full int writes right now
@@ -290,7 +292,7 @@ public:
   }
 
   // Wait for (low true) reset to be asserted by the testbench
-  void reset(void (*tick)()) {
+  void reset(tick_fn_t tick) {
     printf("bp_zynq_pl: Entering reset\n");
     while (this->p_aresetn == 1) {
       tick();
@@ -298,7 +300,7 @@ public:
     printf("bp_zynq_pl: Exiting reset\n");
   }
 
-  void axil_read_helper(axils_device *p, void (*tick)()) {
+  void axil_read_helper(axil_device *p, tick_fn_t tick) {
     int timeout_counter = 0;
     int data;
 
@@ -335,7 +337,7 @@ public:
     return;
   }
 
-  int axil_write_helper(axils_device *p, void (*tick)()) {
+  int axil_write_helper(axil_device *p, tick_fn_t tick) {
     int timeout_counter = 0;
 
     assert(this->p_wstrb == 0xf); // we only support full int writes right now

@@ -27,12 +27,10 @@ extern "C" { void bsg_dpi_next(); }
 using namespace std;
 using namespace bsg_nonsynth_dpi;
 
-typedef void (*tick_fn_t)(void);
-
 // Scratchpad
 #define SCRATCHPAD_BASE 0x1000000
 #define SCRATCHPAD_SIZE 0x100000
-class zynq_scratchpad_sim : public axils_device {
+class zynq_scratchpad_sim : public axil_device {
   std::vector<int> mem;
   std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> > axi_hp0;
 public:
@@ -51,7 +49,8 @@ public:
     return mem.at(final_addr);
   }
 
-  void write(int address, int data, tick_fn_t tick) {
+  void write(int address, int data, tick_fn_t tick, int wstrb=0xF) {
+    assert(wstrb == 0xF); // we only support full int writes right now
     int final_addr = ((address-SCRATCHPAD_BASE) + SCRATCHPAD_SIZE) % SCRATCHPAD_SIZE;
     bsg_pr_dbg_pl("  bp_zynq_pl: scratchpad_sim write [%x] <- %x\n", final_addr, data);
     mem.at(final_addr) = data;
@@ -60,9 +59,9 @@ public:
   void poll(tick_fn_t tick) {
 #if defined(HP0_ENABLE) && defined(PERIPHERAL_ENABLE)
     if (axi_hp0->p_awvalid && (axi_hp0->p_awaddr >= SCRATCHPAD_BASE) && (axi_hp0->p_awaddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {
-      axi_hp0->axil_write_helper((axils_device *)this, tick);
+      axi_hp0->axil_write_helper((axil_device *)this, tick);
     } else if (axi_hp0->p_arvalid && (axi_hp0->p_araddr >= SCRATCHPAD_BASE) && (axi_hp0->p_araddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {
-      axi_hp0->axil_read_helper((axils_device *)this, tick);
+      axi_hp0->axil_read_helper((axil_device *)this, tick);
     } else if (axi_hp0->p_awvalid) {
       int awaddr = axi_hp0->p_awaddr;
       bsg_pr_err("  scratchpad_sim: Unsupported AXI device write at [%x]\n", awaddr);
@@ -74,14 +73,15 @@ public:
 #endif
 };
 
-class zynq_watchdog_sim {
+class zynq_watchdog_sim : public axil_device {
   std::unique_ptr<axilm<GP2_ADDR_WIDTH, GP2_DATA_WIDTH> > axi_gp2;
   unsigned int write_timer;
 public:
   int has_write() {
     return (((write_timer++) % 1024U) == 0);
   }
-  void write(unsigned int address, int data, tick_fn_t tick, int wstrb=0xF) {
+  void write(int address, int data, tick_fn_t tick, int wstrb=0xF) {
+    assert(wstrb == 0xF); // we only support full int writes right now
     bsg_pr_dbg_pl("  watchdog_sim: Peripheral AXI writing [%x] with %8.8x\n",
                   address, data);
     axi_gp2->axil_write_helper(address, data, wstrb, tick);
@@ -89,7 +89,7 @@ public:
   int has_read() {
     return 0; // read not implemented
   }
-  int read(unsigned int address, tick_fn_t tick) {
+  int read(int address, tick_fn_t tick) {
     int data;
     data = axi_gp2->axil_read_helper(address, tick);
     bsg_pr_dbg_pl("  watchdog_sim: Peripheral AXI reading [%x] with %8.8x\n",
