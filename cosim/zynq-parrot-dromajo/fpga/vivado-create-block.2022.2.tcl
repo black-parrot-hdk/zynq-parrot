@@ -92,8 +92,6 @@ save_bd_design
 # change this to a 0 to have it stop before synthesis and implementation
 # so you can inspect the design with the GUI
 set_property STEPS.SYNTH_DESIGN.ARGS.GATED_CLOCK_CONVERSION on [get_runs synth_1]
-# this is probably only applicable in 2022.2, check for equivalent settings for not missing out on critical warnings 
-set_property STEPS.SYNTH_DESIGN.ARGS.BUFG 40 [get_runs synth_1]
 if {1} {
 launch_runs impl_1 -to_step write_bitstream -jobs 4
 wait_on_run impl_1
