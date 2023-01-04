@@ -3,3 +3,5 @@ vivado_*
 blackparrot*
 flist.vcs
 fpga_build/
+beebs/
+prog.*

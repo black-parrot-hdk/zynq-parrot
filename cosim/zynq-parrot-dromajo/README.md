@@ -1,6 +1,6 @@
 ## Dromajo FPGA-cosimulation
 This repo is a cosimulation framework with:
-- Dromajo VM on ARM PS of Ultra96 (and soon, PynqZ2) -- running prog.riscv
+- Dromajo VM on ARM PS of Ultra96 -- running prog.riscv
 - BlackParrot on PL -- running prog.nbf
 
 #### Instructions
