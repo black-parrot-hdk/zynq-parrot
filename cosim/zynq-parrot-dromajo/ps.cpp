@@ -135,7 +135,7 @@ extern "C" void cosim_main(char *argstr) {
   zpl->axil_write(get_addr(w_ps2pl_reg, 3), 0x1, mask);
 
   bsg_pr_dbg_ps("ps.cpp: unfreezing BP\n");
-  zpl->axil_write(GP1_ADDR_BASE+0x20000000 +0x200004, 0x0, mask);
+  zpl->axil_write(GP1_ADDR_BASE+0x20000000 +0x200008, 0x0, mask);
 
   // debug prints to verify fifo existence; 
   // messes up the subsequent loop, so comment it after testing
@@ -253,7 +253,7 @@ extern "C" void cosim_main(char *argstr) {
 
     bsg_pr_dbg_ps("ps.cpp: minstret: dromajo %08x | bp %16llx\n", dromajo_instret, zpl->axil_read(get_addr(r_pl2ps_reg)));
 
-    uint32_t machine_state = zpl->axil_read(get_addr(r_pl2ps_reg, 2));
+    uint32_t machine_state = zpl->axil_read(get_addr(r_pl2ps_reg, 1));
     bsg_pr_dbg_ps("ps.cpp: machine state = %x\n", machine_state);
     int cache_req_sent = machine_state & 0x3f;
     machine_state = machine_state >> 6;
@@ -262,13 +262,14 @@ extern "C" void cosim_main(char *argstr) {
     //TODO clean unused registers
 
     // cause is only updated on exception | irreproducible interrupts
-    bsg_pr_dbg_ps("ps.cpp: Dromajo expecting to execute PC 0x%016llx\n", ((RISCVMachine *)dromajo_pointer)->cpu_state[0]->pc);
-    if(!cause.empty() && (epc.front() == ((RISCVMachine *)dromajo_pointer)->cpu_state[0]->pc)) {
+    bsg_pr_dbg_ps("ps.cpp: Dromajo expecting to execute PC 0x%016llx\n", dromajo_get_pc());
+    while(1)
+      if(!cause.empty() && (epc.front() == dromajo_get_pc())) {
       // TODO this is incorrect!! Gotta compare minstret too! For that, collect dromajo minstret
-      bsg_pr_info("ps.cpp: Taking the trap now; cause 0x%016llx | epc 0x%016llx!\n", cause.front(), epc.front());
-      dromajo_trap(0, cause.front()); // updates virt_machine state
-      cause.pop(); epc.pop();
-    }
+        bsg_pr_info("ps.cpp: Taking the trap now; cause 0x%016llx | epc 0x%016llx!\n", cause.front(), epc.front());
+        dromajo_trap(0, cause.front()); // updates virt_machine state
+        cause.pop(); epc.pop();
+      } else break;
 
     if(!insn.empty()) {
       bsg_pr_dbg_ps("New entries: %x; cause size: %d\n", insn.size(), cause.size());
@@ -302,13 +303,6 @@ extern "C" void cosim_main(char *argstr) {
           dromajo_instret++;
           bsg_pr_dbg_ps("++++++ MATCH ++++++\n");
         } else {
-          //bsg_pr_dbg_ps("IRF and FRF dump:\n");
-          //for(int e=0; e<32; e++)
-          //  printf("%2d               ", e);
-          //printf("\n");
-          //for(int e=0; e<32; e++)
-          //  printf("%16x ", ird[e].front());
-          //printf("\n");
           for(int e=0; e<5; e++)
             bsg_pr_info("-----------------------\n");
           bsg_pr_info("------ MISMATCH -------\n");

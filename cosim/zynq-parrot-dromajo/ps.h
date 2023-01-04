@@ -49,7 +49,7 @@ N1*4             ps to pl fifo         N3
 
 #define PS2PL_REGS  4
 #define PS2PL_FIFOS 1
-#define PL2PS_REGS  3
+#define PL2PS_REGS  2
 #define PL2PS_FIFOS 17
 
 #ifndef ZYNQ_PL_DEBUG
@@ -196,7 +196,7 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
 
   long long int nbf[3];
   int pos = 0;
-  long unsigned int address;
+  long unsigned int base_addr;
   int data;
   ifstream nbf_file(nbf_filename);
 
@@ -206,7 +206,7 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
     exit(-1);
   }
 
-  int line_count=0;
+  int line_count = 0;
   while (getline(nbf_file, nbf_command)) {
     line_count++;
     int i = 0;
@@ -218,55 +218,57 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
     }
     nbf[i] = std::stoull(nbf_command, nullptr, 16);
 
-    if(nbf[0] == 0x3 && nbf[1] == 0x200004 && nbf[2] == 0) {
+    if(nbf[0] == 0x2 && nbf[1] == 0x200008 && nbf[2] == 0) {
       printf("[INFO] Ignoring the unfreeze instruction; will be manually handled in the code.\n");
       continue;
+#ifdef FPGA
     }
+#else
+    } else if(nbf[2] == 0)
+      continue;
+#endif
 
     if (nbf[0] == 0x3 || nbf[0] == 0x2 || nbf[0] == 0x1 || nbf[0] == 0x0) {
       // we map BP physical addresses for DRAM (0x8000_0000 - 0x9FFF_FFFF) (256MB)
       // to the same ARM physical addresses
       // see top_fpga.v for more details
 
-      if (nbf[1] >= 0x80000000) {
-        if (nbf[0] == 0x3) {
-          zpl->axil_write(GP1_ADDR_BASE - 0x80000000 + nbf[1], nbf[2], 0xf);
-          zpl->axil_write(GP1_ADDR_BASE - 0x80000000 + nbf[1] + 4, nbf[2] >> 32, 0xf);
-        }
-        else if (nbf[0] == 0x2) {
-          zpl->axil_write(GP1_ADDR_BASE - 0x80000000 + nbf[1], nbf[2], 0xf);
-        }
-        else if (nbf[0] == 0x1) {
-          int offset = nbf[1] % 4;
-          int shift = 2 * offset;
-          data = zpl->axil_read(GP1_ADDR_BASE - 0x80000000 + nbf[1] - offset);
-          data = data & rotl((uint32_t)0xffff0000,shift) + nbf[2] & ((uint32_t)0x0000ffff << shift);
-          zpl->axil_write(GP1_ADDR_BASE - 0x80000000 + nbf[1] - offset, data, 0xf);
-        }
-        else {
-          int offset = nbf[1] % 4;
-          int shift = 2 * offset;
-          data = zpl->axil_read(GP1_ADDR_BASE - 0x80000000 + nbf[1] - offset);
-          data = data & rotl((uint32_t)0xffffff00,shift) + nbf[2] & ((uint32_t)0x000000ff << shift);
-          zpl->axil_write(GP1_ADDR_BASE - 0x80000000 + nbf[1] - offset, data, 0xf);
-        }
-      }
       // we map BP physical address for CSRs etc (0x0000_0000 - 0x0FFF_FFFF)
       // to ARM address to 0xA0000_0000 - 0xAFFF_FFFF  (256MB)
+      if (nbf[1] >= 0x80000000)
+        base_addr = GP1_ADDR_BASE - 0x80000000;
+      else
+        base_addr = GP1_ADDR_BASE + 0x20000000;
+
+      if (nbf[0] == 0x3) {
+        zpl->axil_write(base_addr + nbf[1], nbf[2], 0xf);
+        zpl->axil_write(base_addr + nbf[1] + 4, nbf[2] >> 32, 0xf);
+      }
+      else if (nbf[0] == 0x2) {
+        zpl->axil_write(base_addr + nbf[1], nbf[2], 0xf);
+      }
+      else if (nbf[0] == 0x1) {
+        int offset = nbf[1] % 4;
+        int shift = 2 * offset;
+        data = zpl->axil_read(base_addr + nbf[1] - offset);
+        data = data & rotl((uint32_t)0xffff0000,shift) + nbf[2] & ((uint32_t)0x0000ffff << shift);
+        zpl->axil_write(base_addr + nbf[1] - offset, data, 0xf);
+      }
       else {
-        zpl->axil_write(GP1_ADDR_BASE + 0x20000000 + nbf[1], nbf[2], 0xf);
+        int offset = nbf[1] % 4;
+        int shift = 2 * offset;                                                                                                                                                                                                                                                                                                     data = zpl->axil_read(base_addr + nbf[1] - offset);
+        data = data & rotl((uint32_t)0xffffff00,shift) + nbf[2] & ((uint32_t)0x000000ff << shift);
+        zpl->axil_write(base_addr + nbf[1] - offset, data, 0xf);
       }
     }
     else if (nbf[0] == 0xfe) {
       continue;
-    }
-    else if (nbf[0] == 0xff) {
-      bsg_pr_dbg_ps("ps.h: finished loading %d lines of nbf.\n", line_count);
-      return;
-    }
-    else {
-      bsg_pr_dbg_ps("ps.h: unrecognized nbf command, line %d : %x\n",
-          line_count, nbf[0]);
+    } else if (nbf[0] == 0xff) {
+      bsg_pr_dbg_ps("ps.h: nbf finish command, line %d\n", line_count);
+      continue;
+    } else {
+      bsg_pr_dbg_ps("ps.h: unrecognized nbf command, line %d : %llx\n",
+                    line_count, nbf[0]);
       return;
     }
   }

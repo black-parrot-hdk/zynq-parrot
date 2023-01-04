@@ -170,23 +170,14 @@ module top_zynq
 `ifdef VERILATOR
    assign s01_gated_aclk = s01_axi_aclk & ~gate_r;
 `else
-  // BUFGCE: General Clock Buffer with Clock Enable
-  //         UltraScale
-  // Xilinx HDL Language Template, version 2021.1
-  
-  BUFGCE #(
-     .CE_TYPE("SYNC"),
-     .IS_CE_INVERTED(1'b0),
-     .IS_I_INVERTED(1'b0),
-     .SIM_DEVICE("ULTRASCALE_PLUS")
-  )
-  BUFGCE_inst (
-     .O(s01_gated_aclk),
-     .CE(~gate_r),
-     .I(s01_axi_aclk)
-  );
-  
-  // End of BUFGCE_inst instantiation
+  // xilinx macro replacement for FPGA
+  bsg_clkgate_optional
+    gate_macro
+    (  
+       .clk_i(s01_axi_aclk)
+      ,.en_i(~gate_r)
+      ,.gated_clock_o(s01_gated_aclk)
+    );
 `endif
 
   logic s01_gated_aresetn;
@@ -223,15 +214,14 @@ module top_zynq
      );
 
   logic cache_req_complete_r, cache_req_v_r;
-  wire cache_req_v_li = `UC.be.calculator.pipe_mem.dcache.cache_req_yumi_i & ~`UC.be.calculator.pipe_mem.dcache.nonblocking_req;
+  wire cache_req_v_li = `UC.be.calculator.pipe_mem.dcache.cache_req_ready_and_i & ~`UC.be.calculator.pipe_mem.dcache.nonblocking_req;
   bsg_dff_chain
   #(.width_p(2), .num_stages_p(2))
   cache_req_reg
     (.clk_i(s01_gated_aclk)
 
      ,.data_i({`UC.be.calculator.pipe_mem.dcache.cache_req_complete_i
-               , `UC.be.calculator.pipe_mem.dcache.cache_req_yumi_i
-                 & ~`UC.be.calculator.pipe_mem.dcache.nonblocking_req})
+               , cache_req_v_li})
                
      ,.data_o({cache_req_complete_r, cache_req_v_r})
      );  
@@ -444,7 +434,6 @@ module top_zynq
      ,.fflags_o()
      );
 
-
   // We don't need to cross domains explicitly here, because using the slower clock is conservative
   logic [`BSG_WIDTH(128)-1:0] req_cnt_lo, req_complete_lo, cache_done_crossed_lo, cache_req_crossed_lo;
   wire freeze_lo = `UC.be.calculator.pipe_sys.csr.cfg_bus_cast_i.freeze;
@@ -475,7 +464,7 @@ module top_zynq
 
      ,.up_i(cache_req_complete_r)
      ,.down_i(1'b0)
-                                                                                                                                                                 ,.count_o(req_complete_lo)
+     ,.count_o(req_complete_lo)
      );
 
   bsg_sync_sync #(.width_p(`BSG_WIDTH(128)))
@@ -491,6 +480,18 @@ module top_zynq
   logic                                        pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
   logic                                        ps_to_pl_fifo_v_lo, ps_to_pl_fifo_ready_li;
 
+  reg end_r;
+  always@(posedge s01_axi_aclk)
+    if(~s01_axi_aresetn)
+      end_r <= 1'b0;
+    else 
+      if(pl_to_ps_fifo_v_li & pl_to_ps_fifo_ready_lo) begin
+        $display("Device communication %x\n", pl_to_ps_fifo_data_li);
+        if(pl_to_ps_fifo_data_li == 32'h90200000) begin
+          $display("End of cosimulation\n");
+          end_r <= 1'b1;
+        end
+      end
   // Connect Shell to AXI Bus Interface S00_AXI
   bsg_zynq_pl_shell #
      (
@@ -506,7 +507,7 @@ module top_zynq
       .num_regs_ps_to_pl_p (4)
       ,.num_fifo_ps_to_pl_p(1)
       ,.num_fifo_pl_to_ps_p(17)
-      ,.num_regs_pl_to_ps_p(3)
+      ,.num_regs_pl_to_ps_p(2)
       ,.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH)
       ,.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
       ) zps
@@ -517,12 +518,9 @@ module top_zynq
                     })
 
         ,.csr_data_i({
-                     { 20'b0
-                        , cache_req_crossed_lo[5:0] // having the counters presented to PS helps with debug
-                        , cache_done_crossed_lo[5:0]
-                        }
-                     , 32'h0 // would otherwise hold debug status (reserved for now))
-                     , {gate_r  // gate_r needs to be with minstret for easy debuggability
+                      { 20'b0, cache_req_crossed_lo[5:0] /* having the counters presented to PS helps with debug */
+                        , cache_done_crossed_lo[5:0]}
+                     ,{gate_r  /* gate_r needs to be with minstret for debuggability */
                         , minstret_lo[30:0]}
                      })
 
@@ -630,7 +628,7 @@ module top_zynq
 
   // Add user logic here
 
-  `declare_bsg_cache_dma_pkt_s(caddr_width_p);
+  `declare_bsg_cache_dma_pkt_s(caddr_width_p, l2_block_size_in_words_p);
   bsg_cache_dma_pkt_s dma_pkt_lo;
   logic                       dma_pkt_v_lo, dma_pkt_yumi_li;
   logic [l2_fill_width_p-1:0] dma_data_lo;
@@ -639,7 +637,6 @@ module top_zynq
   logic                       dma_data_v_li, dma_data_ready_and_lo;
 
   logic [bp_axil_addr_width_lp-1:0] waddr_translated_lo, raddr_translated_lo;
-  logic [31:0] waddr_offset, raddr_offset;
 
   always_comb
      begin
@@ -684,8 +681,8 @@ module top_zynq
       ,.payload_data_width_p(8)
       )
     store_packer
-     (.clk_i   (s01_gated_aclk)
-      ,.reset_i(~s01_gated_aresetn)
+     (.clk_i   (s01_axi_aclk)
+      ,.reset_i(~s01_axi_aresetn)
 
       ,.s_axil_awaddr_i (s02_axi_awaddr)
       ,.s_axil_awprot_i (s02_axi_awprot)
@@ -727,8 +724,8 @@ module top_zynq
      ,.split_addr_p(32'h0020_0000)
      )
   axil_demux
-    (.clk_i(s01_gated_aclk)
-     ,.reset_i(~s01_gated_aresetn)
+    (.clk_i(s01_axi_aclk)
+     ,.reset_i(~s01_axi_aresetn)
 
      ,.s00_axil_awaddr(bp_axi_awaddr)
      ,.s00_axil_awprot(bp_axi_awprot)
@@ -800,7 +797,7 @@ module top_zynq
   // we xor-subtract the BP DRAM base address (32'h8000_0000) and add the
   // ARM PS allocated memory space physical address.
 
-  always @(negedge s01_gated_aclk)
+  always @(negedge s01_axi_aclk)
      begin
         if (m00_axi_awvalid && ((axi_awaddr ^ 32'h8000_0000) >= memory_upper_limit_lp))
           $display("top_zynq: unexpectedly high DRAM write: %x",axi_awaddr);
@@ -817,7 +814,7 @@ module top_zynq
      if (m00_axi_awvalid & m00_axi_awready)
        if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_awaddr,m00_axi_awaddr);
 
-  always @(negedge s01_gated_aclk)
+  always @(negedge s01_axi_aclk)
      if (m00_axi_arvalid & m00_axi_arready)
        if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_araddr,m00_axi_araddr);
 
@@ -860,10 +857,10 @@ module top_zynq
       )
   blackparrot
      (
-      .clk_i           (s01_gated_aclk)
-      ,.reset_i        (bp_reset_gated_li)
-      ,.aclk_i         (s01_axi_aclk)
-      ,.areset_i       (bp_reset_li)
+      .clk_i            (s01_gated_aclk)
+      ,.reset_i         (bp_reset_gated_li)
+      ,.aclk_i          (s01_axi_aclk)
+      ,.areset_i        (bp_reset_li)
 
       // these are reads/write from BlackParrot
       ,.m_axil_awaddr_o (bp_axi_awaddr)
@@ -916,6 +913,7 @@ module top_zynq
       ,.s_axil_rvalid_o (s01_axi_rvalid)
       ,.s_axil_rready_i (s01_axi_rready)
 
+      // BlackParrot DRAM memory system (output of bsg_cache_to_axi)
       ,.m_axi_awaddr_o   (axi_awaddr)
       ,.m_axi_awvalid_o  (m00_axi_awvalid)
       ,.m_axi_awready_i  (m00_axi_awready)
@@ -961,15 +959,15 @@ module top_zynq
       );
 
   // synopsys translate_off
-  always @(negedge s01_gated_aclk)
+  always @(negedge s01_gated_aclk) //TODO
     if (s01_axi_awvalid & s01_axi_awready)
       if (debug_lp) $display("top_zynq: AXI Write Addr %x -> %x (BP)",s01_axi_awaddr,waddr_translated_lo);
 
-  always @(negedge s01_gated_aclk)
+  always @(negedge s01_gated_aclk) //TODO
     if (s01_axi_arvalid & s01_axi_arready)
       if (debug_lp) $display("top_zynq: AXI Read Addr %x -> %x (BP)",s01_axi_araddr,raddr_translated_lo);
   // synopsys translate_on
 
-
+//COVERAGE_MACRO
 endmodule
 
