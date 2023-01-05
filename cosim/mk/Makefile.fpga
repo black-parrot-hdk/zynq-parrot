@@ -1,17 +1,12 @@
 
 include $(TOP)/Makefile.common
 
-MODE ?= tcl
-
-SHELL := /bin/bash
-
-# current supported 2019.1 and 2022.1
-# VIVADO_VER=2019.1
-VIVADO_VER=2022.1
-
 # update this with a pointer to your vivado install
-XILINX_ENV=source /tools/Xilinx/Vivado/$(VIVADO_VER)/settings64.sh
-#XILINX_ENV=source /gro/cad/Xilinx/Vivado/$(VIVADO_VER)/settings64.sh
+# current supported 2019.1 and 2022.1
+VIVADO_VERSION ?= 2022.1
+XILINX_ENV ?= $(VIVADO_PATH)/$(VIVADO_VERSION)/settings64.sh
+# TCL to pause after every step, batch to continue through
+VIVADO_MODE ?= tcl
 
 CFLAGS += -O2
 CFLAGS += -lcma -lpthread
@@ -46,13 +41,13 @@ fpga_report_build_block:
 # on the x86 server
 fpga_build_ip: clean_fpga_build $(FLIST)
 	mkdir fpga_build
-	$(XILINX_ENV) && $(VIVADO) -source $(COSIM_TCL_DIR)/vivado-build-ip.tcl -mode $(MODE)
+	source $(XILINX_ENV) && $(VIVADO) -source $(COSIM_TCL_DIR)/vivado-build-ip.tcl -mode $(VIVADO_MODE)
 	-@grep --color "CRITICAL WARNING" vivado.log
 	-@grep --color "ERROR" vivado.log
 	-@tail -n5 vivado.log
 
 fpga_build: fpga_build_ip
-	$(XILINX_ENV) && $(VIVADO) -source $(CURR)/vivado-create-block.$(VIVADO_VER).tcl -mode $(MODE)
+	source $(XILINX_ENV) && $(VIVADO) -source $(CURR)/vivado-create-block.$(VIVADO_VER).tcl -mode $(VIVADO_MODE)
 	$(MAKE) fpga_report_build_block
 
 # we are looking for a *_bd_1.bit, *_bd_1_bd.tcl, *_bd_1.hwh
