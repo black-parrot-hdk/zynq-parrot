@@ -160,9 +160,9 @@ module top_zynq
     if(~s01_axi_aresetn)
       gate_r <= '0;
     else
-      if(~gate_r & (commit_fifo_sync.unhardened.un.fifo.ft.full_o | ird_fifo_sync.unhardened.un.fifo.ft.full_o | frd_fifo_sync.unhardened.un.fifo.ft.full_o ) & gate_en_li[0])
+      if(~gate_r & (~commit_fifo_ready_async_li | ~ird_async_ready_li | ~frd_async_ready_li) & gate_en_li[0])
         gate_r <= '1;
-      else if(gate_r & (commit_fifo_sync.unhardened.un.fifo.ft.empty_o & ird_fifo_sync.unhardened.un.fifo.ft.empty_o & frd_fifo_sync.unhardened.un.fifo.ft.empty_o ) | ~gate_en_li[0])
+      else if(gate_r & (~commit_fifo_v_lo & ~pl2ps_ird_v_lo & ~pl2ps_ird_v_lo) | ~gate_en_li[0])
         gate_r <= '0;
 
   (* gated_clock = "true" *) wire s01_gated_aclk;
