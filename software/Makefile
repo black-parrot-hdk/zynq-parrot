@@ -17,7 +17,7 @@ checkout_tools:
 
 #build once (x86 server); takes about 15 minutes
 build_tools: checkout_tools
-	$(MAKE) -C $(SDK_DIR) panic_room PLATFORM=zynqparrot
+	$(MAKE) -C $(SDK_DIR) panic_room
 
 # run on x86
 build_libs: build_tools

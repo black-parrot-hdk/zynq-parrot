@@ -1,5 +1,5 @@
 
-include $(TOP)/cosim/mk/Makefile.common
+include $(TOP)/Makefile.common
 
 VCS_OPTS += -full64
 VCS_OPTS += -notice

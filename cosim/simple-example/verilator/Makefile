@@ -25,4 +25,5 @@ include $(TOP)/cosim/mk/Makefile.verilator
 $(FLIST): $(BASE_FLIST)
 	cat $< | envsubst > $@
 	echo "$(COSIM_SRC_DIR)/bsg_nonsynth_dpi_to_axil.v" >> $@
+	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp" >> $@
 

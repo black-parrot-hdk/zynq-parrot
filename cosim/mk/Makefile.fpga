@@ -1,5 +1,5 @@
 
-include $(TOP)/cosim/mk/Makefile.common
+include $(TOP)/Makefile.common
 
 MODE ?= tcl
 

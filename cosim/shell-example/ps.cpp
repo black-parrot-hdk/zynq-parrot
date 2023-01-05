@@ -4,7 +4,9 @@
 // the API we provide abstracts away the
 // communication plumbing differences.
 
+#ifdef FPGA
 #include "arm_neon.h"
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include "bp_zynq_pl.h"
@@ -21,11 +23,6 @@ uint64_t get_microseconds()
     struct timeval tv;
     gettimeofday(&tv,NULL);
     return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
-}
-
-inline uint32x4_t set4(uint32_t a, uint32_t b, uint32_t c, uint32_t d) {
-  uint32_t array[4] = {a, b, c, d};
-  return vld1q_u32(array);
 }
 
 #ifndef VCS
@@ -65,6 +62,11 @@ extern "C" void cosim_main(char *argstr) {
 
 #ifdef FPGA
 
+inline uint32x4_t set4(uint32_t a, uint32_t b, uint32_t c, uint32_t d) {
+  uint32_t array[4] = {a, b, c, d};
+  return vld1q_u32(array);
+}
+
 #define TEST_LOOP    \
   *p = val;          \
   /* this will show the last address written; a good test for whether NEON is working */ \
@@ -81,7 +83,6 @@ extern "C" void cosim_main(char *argstr) {
   uint64_t net=get_microseconds()-start;\
   /* * 16 because of unroll factor */   \
   printf("%s: %llu microseconds for %d xfers: %f words per microsecond\n",label,net,limit*16,((double) (limit * 16 * words_per_xfer)) / ((double) net) ); 
-#endif
 
   {
     volatile uint32x4_t *p =  (uint32x4_t *) zpl->axil_get_ptr(0x0+GP0_ADDR_BASE);
@@ -97,6 +98,8 @@ extern "C" void cosim_main(char *argstr) {
     const char *label="int32    :";
     TEST_LOOP
   }
+
+#endif
 
   // write to two registers, checking our address snoop to see
   // actual address that was received over the AXI bus
