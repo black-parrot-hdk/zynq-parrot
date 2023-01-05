@@ -213,19 +213,15 @@ module top_zynq
      ,.data_o({is_debug_mode_r, commit_pkt_r})
      );
 
-  logic cache_req_complete_r, cache_req_v_r;
+  logic cache_req_v_r;
   wire cache_req_v_li = `UC.be.calculator.pipe_mem.dcache.cache_req_ready_and_i & ~`UC.be.calculator.pipe_mem.dcache.nonblocking_req;
   bsg_dff_chain
-  #(.width_p(2), .num_stages_p(2))
+  #(.width_p(1), .num_stages_p(2))
   cache_req_reg
     (.clk_i(s01_gated_aclk)
-
-     ,.data_i({`UC.be.calculator.pipe_mem.dcache.cache_req_complete_i
-               , cache_req_v_li})
-               
-     ,.data_o({cache_req_complete_r, cache_req_v_r})
-     );  
-
+     ,.data_i(cache_req_v_li)
+     ,.data_o(cache_req_v_r)
+     );
 
   // commit info gathering -- gated to ungated
   wire                      commit_fifo_async_v_li    = instret_v_li | trap_v_li;
@@ -434,46 +430,6 @@ module top_zynq
      ,.fflags_o()
      );
 
-  // We don't need to cross domains explicitly here, because using the slower clock is conservative
-  logic [`BSG_WIDTH(128)-1:0] req_cnt_lo, req_complete_lo, cache_done_crossed_lo, cache_req_crossed_lo;
-  wire freeze_lo = `UC.be.calculator.pipe_sys.csr.cfg_bus_cast_i.freeze;
-  bsg_counter_up_down
-  #(.max_val_p(128), .init_val_p(0), .max_step_p(1))
-  req_counter
-    (.clk_i(s01_gated_aclk)
-     ,.reset_i(~s01_gated_aresetn | freeze_lo)
-
-     ,.up_i(cache_req_v_r)
-     ,.down_i(1'b0)
-
-     ,.count_o(req_cnt_lo)
-     );
-
-  bsg_sync_sync #(.width_p(6))
-    cache_req_crossing
-    (.oclk_i(s01_axi_aclk)
-     ,.iclk_data_i(req_cnt_lo[5:0])
-     ,.oclk_data_o(cache_req_crossed_lo)
-    );
-
-  bsg_counter_up_down
-  #(.max_val_p(128), .init_val_p(0), .max_step_p(1))
-  complete_req_counter
-    (.clk_i(s01_gated_aclk)
-     ,.reset_i(~s01_gated_aresetn | freeze_lo)
-
-     ,.up_i(cache_req_complete_r)
-     ,.down_i(1'b0)
-     ,.count_o(req_complete_lo)
-     );
-
-  bsg_sync_sync #(.width_p(`BSG_WIDTH(128)))
-    cache_complete_crossing
-    (.oclk_i(s01_axi_aclk)
-     ,.iclk_data_i(req_complete_lo)
-     ,.oclk_data_o(cache_done_crossed_lo)
-    );
-
   // rest of the code
   logic [2:0][C_S00_AXI_DATA_WIDTH-1:0]        csr_data_lo;
   logic [C_S00_AXI_DATA_WIDTH-1:0]             pl_to_ps_fifo_data_li, ps_to_pl_fifo_data_lo;
@@ -507,7 +463,7 @@ module top_zynq
       .num_regs_ps_to_pl_p (4)
       ,.num_fifo_ps_to_pl_p(1)
       ,.num_fifo_pl_to_ps_p(17)
-      ,.num_regs_pl_to_ps_p(2)
+      ,.num_regs_pl_to_ps_p(1)
       ,.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH)
       ,.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
       ) zps
@@ -517,12 +473,8 @@ module top_zynq
                     , csr_data_lo
                     })
 
-        ,.csr_data_i({
-                      { 20'b0, cache_req_crossed_lo[5:0] /* having the counters presented to PS helps with debug */
-                        , cache_done_crossed_lo[5:0]}
-                     ,{gate_r  /* gate_r needs to be with minstret for debuggability */
-                        , minstret_lo[30:0]}
-                     })
+        ,.csr_data_i({gate_r  /* gate_r needs to be with minstret for debuggability */
+                        , minstret_lo[30:0]})
 
         ,.pl_to_ps_fifo_data_i ({
                                   pl2ps_xcpt_v_lo ? epc_lo[63:32] : '1

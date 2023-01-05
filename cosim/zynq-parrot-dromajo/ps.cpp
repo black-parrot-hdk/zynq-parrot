@@ -112,8 +112,6 @@ extern "C" void cosim_main(char *argstr) {
   std::queue<dep> deps; // TODO eliminate this via dromajo hooks
   bool cosim_status = false;
   bool cosimulation_done = false;
-  int watchdog = 0;
-  int req_correction = 0;
   int self_destruct = 0;
 
   // refer to the README file for why disabling gating here is necessary.
@@ -176,13 +174,15 @@ extern "C" void cosim_main(char *argstr) {
       cosimulation_done |= decode_bp_output(zpl, data);
     } 
     if (cosimulation_done) {
-      // TODO at this point, sum(size(pl_ps_fifo+async_cmt_fifo+sync_cmt_fifo)) commits will be dropped!!
+      // TODO at this point, sum(size(pl_ps_fifo+async_cmt_fifo+sync_cmt_fifo)) commits will be dropped
+			// we could countdown so many commits assuming the fifos are full at this point,
+			// or detect end of program in hardware and enqueue a tag to stop
       bsg_pr_info("ps.cpp: cosimulation complete; either exiting gracefully or waiting for dromajo to catch up\n");
-      self_destruct++; //TODO this is a bad solution
-      //break;
-    }
-    if(self_destruct == 0xfff)
+      //self_destruct++; //TODO this is a bad solution
       break;
+    }
+    //if(self_destruct == 0xfff)
+    //  break;
 
     // commit_fifo
     data = zpl->axil_read(get_addr(r_pl2ps_cnt, 1));
@@ -253,14 +253,6 @@ extern "C" void cosim_main(char *argstr) {
 
     bsg_pr_dbg_ps("ps.cpp: minstret: dromajo %08x | bp %16llx\n", dromajo_instret, zpl->axil_read(get_addr(r_pl2ps_reg)));
 
-    uint32_t machine_state = zpl->axil_read(get_addr(r_pl2ps_reg, 1));
-    bsg_pr_dbg_ps("ps.cpp: machine state = %x\n", machine_state);
-    int cache_req_sent = machine_state & 0x3f;
-    machine_state = machine_state >> 6;
-    int cache_req_done = machine_state & 0x3f;
-    bsg_pr_dbg_ps("ps.cpp: cache_req_sent 0x%x done 0x%x\n", cache_req_sent, cache_req_done);
-    //TODO clean unused registers
-
     // cause is only updated on exception | irreproducible interrupts
     bsg_pr_dbg_ps("ps.cpp: Dromajo expecting to execute PC 0x%016llx\n", dromajo_get_pc());
     while(1)
@@ -275,10 +267,11 @@ extern "C" void cosim_main(char *argstr) {
       bsg_pr_dbg_ps("New entries: %x; cause size: %d\n", insn.size(), cause.size());
       dep d = deps.front();
       if(
-          !(d.idep || d.fdep || d.cdep)                                     // no dependancy
-          || d.idep && !ird[d.rfaddr].empty()                               // ird dependancy
-          || d.fdep && !frd[d.rfaddr].empty()                               // frd dependancy
-          || d.cdep && (cache_req_sent + req_correction == cache_req_done)  // cache dependancy
+          !(d.idep || d.fdep || d.cdep)        // no dependancy
+          || d.idep && !ird[d.rfaddr].empty()  // ird dependancy
+          || d.fdep && !frd[d.rfaddr].empty()  // frd dependancy
+          || d.cdep && !ird[d.rfaddr].empty()  // cache dependancy
+					//TODO reason if cache dependancy can stipulate on FP RF
         ) {
         bsg_pr_dbg_ps("Cosimulatable because: %d %d %d %d\n", !(d.idep || d.fdep || d.cdep),
             d.idep && !ird[d.rfaddr].empty(), d.fdep && !frd[d.rfaddr].empty(), d.cdep);
@@ -311,18 +304,7 @@ extern "C" void cosim_main(char *argstr) {
           //break;
         }
         pc.pop(); insn.pop(); deps.pop(); mstatus.pop(); 
-        watchdog = 0;
       } else { // dependancy not satisfied; cannot cosimulate
-        // TODO req_correction isn't needed if the req_dones are updated at negedge -- check!
-        if(watchdog > 0xfff) {
-          req_correction = cache_req_done - cache_req_sent;
-          bsg_pr_info("[CRITICAL] correcting cache_req_done; check correctness!\n");
-        }
-        if(watchdog > 0xffff) {
-          bsg_pr_info("[ERROR] Hasn't simulated in 0xff iters; Exiting!\n");
-          break;
-        }
-        watchdog++;
         bsg_pr_dbg_ps("Not cosimulatable because:\n");
         bsg_pr_dbg_ps("deps: i,f,c :: %d,%d,%d\n", d.idep, d.fdep, d.cdep);
         bsg_pr_dbg_ps("addr: 0x%x contents: %d %d\n", d.rfaddr, ird[d.rfaddr].size(), frd[d.rfaddr].size());

@@ -49,7 +49,7 @@ N1*4             ps to pl fifo         N3
 
 #define PS2PL_REGS  4
 #define PS2PL_FIFOS 1
-#define PL2PS_REGS  2
+#define PL2PS_REGS  1
 #define PL2PS_FIFOS 17
 
 #ifndef ZYNQ_PL_DEBUG
@@ -152,7 +152,7 @@ bool dromajo_step(int hartid, uint64_t pc, uint32_t insn,
       else {
         bsg_pr_dbg_ps("Dromajo VM henceforth in-sync\n");
         dromajo_instret++;
-        return true;
+        return false;
       }
       dromajo_instret++;
     }
