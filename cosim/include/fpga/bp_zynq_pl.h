@@ -162,7 +162,7 @@ public:
     cma_free(virtual_ptr);
   }
 
-  bool done(void) { printf("bp_zynq_pl: done() called, exiting\n"); }
+  bool done(void) { printf("bp_zynq_pl: done() called, exiting\n"); return true; }
 
 #if 1
   inline volatile int * axil_get_ptr(unsigned int address) {

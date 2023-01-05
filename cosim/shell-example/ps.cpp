@@ -4,7 +4,7 @@
 // the API we provide abstracts away the
 // communication plumbing differences.
 
-#ifdef FPGA
+#ifdef NEON
 #include "arm_neon.h"
 #endif
 #include <stdlib.h>
@@ -24,6 +24,15 @@ uint64_t get_microseconds()
     gettimeofday(&tv,NULL);
     return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
 }
+
+#ifdef NEON
+
+inline uint32x4_t set4(uint32_t a, uint32_t b, uint32_t c, uint32_t d) {
+  uint32_t array[4] = {a, b, c, d};
+  return vld1q_u32(array);
+}
+
+#endif
 
 #ifndef VCS
 int main(int argc, char **argv) {
@@ -60,12 +69,7 @@ extern "C" void cosim_main(char *argstr) {
   int mask1 = 0xf;
   int mask2 = 0xf;
 
-#ifdef FPGA
-
-inline uint32x4_t set4(uint32_t a, uint32_t b, uint32_t c, uint32_t d) {
-  uint32_t array[4] = {a, b, c, d};
-  return vld1q_u32(array);
-}
+#ifdef NEON
 
 #define TEST_LOOP    \
   *p = val;          \
