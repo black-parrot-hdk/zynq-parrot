@@ -1,6 +1,4 @@
 
-include $(TOP)/Makefile.common
-
 VV_OPTS += --cc --sv
 VV_OPTS += --build --exe
 VV_OPTS += --trace-fst --trace-structs

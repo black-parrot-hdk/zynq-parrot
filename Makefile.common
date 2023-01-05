@@ -2,6 +2,8 @@
 # need to set the shell so that source works
 export SHELL := /bin/bash
 
+export CURR_SRC_DIR          ?= $(CURR)/../v
+
 export COSIM_DIR             ?= $(TOP)/cosim
 export COSIM_INCLUDE_DIR     ?= $(COSIM_DIR)/include
 export COSIM_SRC_DIR         ?= $(COSIM_DIR)/v
@@ -25,6 +27,7 @@ export BP_TOOLS_DIR          ?= $(BLACKPARROT_TOOLS_DIR)
 
 export SOFTWARE_DIR          ?= $(TOP)/software
 export SOFTWARE_IMPORT_DIR   ?= $(SOFTWARE_DIR)/import
+export SOFTWARE_NBF_DIR      ?= $(SOFTWARE_DIR)/nbf
 export BLACKPARROT_SDK_DIR   ?= $(SOFTWARE_IMPORT_DIR)/black-parrot-sdk
 # Override to zynq-parrot version
 export BP_SDK_DIR            ?= $(BLACKPARROT_SDK_DIR)
@@ -32,7 +35,6 @@ export PLATFORM              ?= zynqparrot
 
 # Set up cad tools if using a non-bsg_cadenv environment
 export BSG_CADENV_DIR ?= $(BP_TOOLS_DIR)/bsg_cadenv
--include $(BSG_CADENV_DIR)/cadenv.mk
 
 # TODO: Check verilator version
 ifeq ($(shell /usr/bin/arch),armv7l)
@@ -42,6 +44,7 @@ else ifeq ($(shell /usr/bin/arch),aarch64)
 export ARM=1
 export VERILATOR=/usr/local/bin/verilator
 else
+-include $(BSG_CADENV_DIR)/cadenv.mk
 export ARM=0
 export VERILATOR ?= verilator
 endif
@@ -50,6 +53,12 @@ export VCS       ?= vcs
 export _DVE      ?= dve
 export GCC       ?= g++
 export PYTHON    ?= PYTHONPATH=$(COSIM_PY_DIR) python
+
+export PYTHON2_VERSION ?= 2.6
+export PYTHON2         ?= PYTHONPATH=$(COSIM_PY_DIR) python$(PYTHON2_VERSION)
+export PYTHON3_VERSION ?= 3.10
+export PYTHON3         ?= PYTHONPATH=$(COSIM_PY_DIR) python$(PYTHON3_VERSION)
+export PYTHON          ?= $(PYTHON3)
 
 export PATH := $(BP_TOOLS_DIR)/install/bin:$(BP_SDK_DIR)/install/bin:$(COSIM_PY_DIR):$(PATH)
 

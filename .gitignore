@@ -14,4 +14,9 @@ DVEfiles
 stack.info*
 bsg_cadenv/
 *.nbf
-nbf.tar.xz
+*.nbf.tar.xz
+*.tar.xz.b64
+*.bit
+*.hwh
+*.tcl
+runme
