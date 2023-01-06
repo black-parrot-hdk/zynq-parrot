@@ -1,6 +1,4 @@
-TOP  := $(shell git rev-parse --show-toplevel)
-CURR := $(shell pwd)
-include $(TOP)/Makefile.common
+include Makefile.design
 
 #############################
 # Accelerator Software Settings

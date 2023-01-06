@@ -18,5 +18,5 @@ bsg_cadenv/
 *.tar.xz.b64
 *.bit
 *.hwh
-*.tcl
-runme
+control-program
+sds_trace_data.dat

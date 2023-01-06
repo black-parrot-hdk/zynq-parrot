@@ -1,11 +1,4 @@
-TOP  := $(shell git rev-parse --show-toplevel)
-CURR := $(shell pwd)
-include $(TOP)/Makefile.common
-
-#############################
-# Project Settings
-#############################
-TOP_MODULE ?= top
+include ../Makefile.design
 
 #############################
 # Accelerator Software Settings
