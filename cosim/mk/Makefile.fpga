@@ -29,7 +29,7 @@ unpack_bitstream:
 
 # load the bitstream on the Zynq board (copy the .b64 file into this dir first)
 # make sure to unpack it first
-load_bitstream: $(EXE)
+load_bitstream:
 	echo 'import pprint; from pynq import Overlay; overlay=Overlay("$(BASENAME)_bd_1.bit"); print (overlay.__doc__); pprint.pprint(overlay.ip_dict,width=1); pprint.pprint(overlay.clock_dict,width=1);' | sudo -E $(PYTHON3)
 
 # load the bitstream and then don't do anything

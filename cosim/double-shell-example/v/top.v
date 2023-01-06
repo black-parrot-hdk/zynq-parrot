@@ -70,8 +70,8 @@ module top #
     output wire                                 s01_axi_rvalid,
     input wire                                  s01_axi_rready
     );
-    assign {s01_axi_aclk, s00_axi_aclk} = {2{axi_aclk}};
-    assign {s01_axi_aresetn, s00_axi_aresetn} = {2{axi_aresetn}};
+    assign {s01_axi_aclk, s00_axi_aclk} = {2{aclk}};
+    assign {s01_axi_aresetn, s00_axi_aresetn} = {2{aresetn}};
 `else
     );
     logic s00_axi_aclk, s00_axi_aresetn;

@@ -17,9 +17,18 @@
 #include "bsg_printing.h"
 #include "bsg_argparse.h"
 
+#ifndef FREE_DRAM
 #define FREE_DRAM 0
+#endif
+
+#ifndef ZERO_DRAM
 #define ZERO_DRAM 0
-#define DRAM_ALLOCATE_SIZE 120 * 1024 * 1024
+#endif
+
+#ifndef DRAM_ALLOCATE_SIZE_MB
+#define DRAM_ALLOCATE_SIZE_MB 128
+#endif
+#define DRAM_ALLOCATE_SIZE (DRAM_ALLOCATE_SIZE_MB * 1024 * 1024)
 
 #ifndef ZYNQ_PL_DEBUG
 #define ZYNQ_PL_DEBUG 0
