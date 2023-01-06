@@ -213,15 +213,6 @@ module top_zynq
      ,.data_o({is_debug_mode_r, commit_pkt_r})
      );
 
-  logic cache_req_v_r;
-  wire cache_req_v_li = `UC.be.calculator.pipe_mem.dcache.cache_req_ready_and_i & ~`UC.be.calculator.pipe_mem.dcache.nonblocking_req;
-  bsg_dff_chain
-  #(.width_p(1), .num_stages_p(2))
-  cache_req_reg
-    (.clk_i(s01_gated_aclk)
-     ,.data_i(cache_req_v_li)
-     ,.data_o(cache_req_v_r)
-     );
 
   // commit info gathering -- gated to ungated
   wire                      commit_fifo_async_v_li    = instret_v_li | trap_v_li;
@@ -232,7 +223,6 @@ module top_zynq
   wire [instr_width_gp-1:0] commit_instr_li     = commit_pkt_r.instr;
   wire                      commit_ird_w_v_li   = instret_v_li & (decode_r.irf_w_v | decode_r.late_iwb_v);
   wire                      commit_frd_w_v_li   = instret_v_li & (decode_r.frf_w_v | decode_r.late_fwb_v);
-  wire                      commit_req_v_li     = instret_v_li & cache_req_v_r;
   wire                      trap_v_li           = commit_pkt_r.exception | commit_pkt_r._interrupt;
   wire [dword_width_gp-1:0] cause_li            = (`UC.be.calculator.pipe_sys.csr.priv_mode_r == `PRIV_MODE_M) 
                                                   ? `UC.be.calculator.pipe_sys.csr.mcause_lo : `UC.be.calculator.pipe_sys.csr.scause_lo;
@@ -248,7 +238,6 @@ module top_zynq
   rv64_instr_fmatype_s      commit_instr_async_lo;
   wire                      commit_ird_w_v_async_lo;
   wire                      commit_frd_w_v_async_lo;
-  wire                      commit_req_v_async_lo;
   wire [dword_width_gp-1:0] cause_async_lo, mstatus_async_lo;
 
   wire                      commit_fifo_ready_async_li;
@@ -262,13 +251,12 @@ module top_zynq
   rv64_instr_fmatype_s      commit_instr_r;
   wire                      commit_ird_w_v_r;
   wire                      commit_frd_w_v_r;
-  wire                      commit_req_v_r;
   wire [dword_width_gp-1:0] cause_r, mstatus_r;
 
   wire                      commit_fifo_v_lo, commit_fifo_yumi_li;
 
   bsg_async_fifo
-  #(.width_p(3+2*vaddr_width_p+instr_width_gp+3+2*dword_width_gp), .lg_size_p(5))
+  #(.width_p(3+2*vaddr_width_p+instr_width_gp+2+2*dword_width_gp), .lg_size_p(5))
   commit_fifo_async
     (.w_clk_i(s01_gated_aclk)
      ,.w_reset_i(~s01_gated_aresetn)
@@ -276,7 +264,7 @@ module top_zynq
      ,.w_enq_i(commit_fifo_async_v_li & ~commit_fifo_async_full_lo)
      ,.w_data_i({is_debug_mode_r, instret_v_li, trap_v_li, commit_pc_li, 
                   commit_instr_li, commit_ird_w_v_li, commit_frd_w_v_li, 
-                  commit_req_v_li, cause_li, epc_li, mstatus_li})
+                  cause_li, epc_li, mstatus_li})
      ,.w_full_o(commit_fifo_async_full_lo)
 
      ,.r_clk_i(s00_axi_aclk)
@@ -285,8 +273,7 @@ module top_zynq
      ,.r_deq_i(commit_fifo_ready_async_li & commit_fifo_v_async_lo)
      ,.r_data_o({commit_debug_async_lo, instret_v_async_lo, trap_v_async_lo,
                   commit_pc_async_lo, commit_instr_async_lo, commit_ird_w_v_async_lo, 
-                  commit_frd_w_v_async_lo, commit_req_v_async_lo, cause_async_lo, 
-                  epc_async_lo, mstatus_async_lo})
+                  commit_frd_w_v_async_lo, cause_async_lo, epc_async_lo, mstatus_async_lo})
      ,.r_valid_o(commit_fifo_v_async_lo)
      );
 
@@ -294,7 +281,7 @@ module top_zynq
   // the async before also serves to act as a buffer to next commits
   bsg_fifo_1r1w_small 
     #(
-        .width_p(3+2*vaddr_width_p+instr_width_gp+3+2*dword_width_gp)
+        .width_p(3+2*vaddr_width_p+instr_width_gp+2+2*dword_width_gp)
       , .els_p(16)
     )
     commit_fifo_sync
@@ -306,13 +293,11 @@ module top_zynq
       , .ready_o(commit_fifo_ready_async_li)
       , .data_i({commit_debug_async_lo, instret_v_async_lo, trap_v_async_lo, 
                   commit_pc_async_lo, commit_instr_async_lo, commit_ird_w_v_async_lo, 
-                  commit_frd_w_v_async_lo, commit_req_v_async_lo, cause_async_lo, 
-                  epc_async_lo, mstatus_async_lo})
+                  commit_frd_w_v_async_lo, cause_async_lo, epc_async_lo, mstatus_async_lo})
 
       , .v_o(commit_fifo_v_lo)
       , .data_o({commit_debug_r, instret_v_r, trap_v_r, commit_pc_r, commit_instr_r, 
-                  commit_ird_w_v_r, commit_frd_w_v_r, commit_req_v_r, cause_r, 
-                  epc_r, mstatus_r})
+                  commit_ird_w_v_r, commit_frd_w_v_r, cause_r, epc_r, mstatus_r})
       , .yumi_i(commit_fifo_yumi_li & commit_fifo_v_lo)
     );
 
@@ -324,9 +309,8 @@ module top_zynq
 
   wire [31:0] metadata_lo;
   assign metadata_lo = {
-                        24'b0    
+                        25'b0    
                         , commit_instr_r.rd_addr[4:0]
-                        , commit_req_v_r
                         , commit_frd_w_v_r 
                         , commit_ird_w_v_r  
                       };

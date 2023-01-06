@@ -102,14 +102,13 @@ extern "C" void cosim_main(char *argstr) {
   typedef struct {
     bool idep;
     bool fdep;
-    bool cdep;
     uint8_t rfaddr;
   } dep;
   dep bp_deps;
 
   std::queue<uint64_t> ird[32], frd[32], pc, mstatus, cause, epc;
   std::queue<uint32_t> insn;
-  std::queue<dep> deps; // TODO eliminate this via dromajo hooks
+  std::queue<dep> deps; // TODO eliminate this via dromajo hooks -- Dromajo doesn't seem to present dest reg dependancies
   bool cosim_status = false;
   bool cosimulation_done = false;
   int self_destruct = 0;
@@ -144,7 +143,7 @@ extern "C" void cosim_main(char *argstr) {
   //  }
 
   // initialize dromajo VM
-  dromajo_init(0, 1, 256); // TODO
+  dromajo_init(0, 1, 256); // TODO draw parameters from shell?
 
   bsg_pr_info("ps.cpp: polling i/o\n");
   while (max_insns > 0) {
@@ -193,11 +192,8 @@ extern "C" void cosim_main(char *argstr) {
       insn.push(bp_insn);
 
       uint32_t bp_md = zpl->axil_read(get_addr(r_pl2ps, 2));
-      bp_deps = {.idep = (bool)(bp_md & 1), .fdep = (bool)(bp_md & 2), .cdep = (bool)(bp_md & 4)};
-      if(bp_deps.cdep)
-        for(int k=0; k<5; k++)
-          bsg_pr_dbg_ps("##############\n");
-      bp_deps.rfaddr = (bp_md & 0xf8) >> 3;
+      bp_deps = {.idep = (bool)(bp_md & 1), .fdep = (bool)(bp_md & 2)};
+      bp_deps.rfaddr = (bp_md & 0x7c) >> 2;
       deps.push(bp_deps);
 
       bp_pc = ((uint64_t)zpl->axil_read(get_addr(r_pl2ps, 4)) << 32) | (uint32_t)zpl->axil_read(get_addr(r_pl2ps, 3));
@@ -267,22 +263,18 @@ extern "C" void cosim_main(char *argstr) {
       bsg_pr_dbg_ps("New entries: %x; cause size: %d\n", insn.size(), cause.size());
       dep d = deps.front();
       if(
-          !(d.idep || d.fdep || d.cdep)        // no dependancy
+          !(d.idep || d.fdep)                  // no dependancy
           || d.idep && !ird[d.rfaddr].empty()  // ird dependancy
           || d.fdep && !frd[d.rfaddr].empty()  // frd dependancy
-          || d.cdep && !ird[d.rfaddr].empty()  // cache dependancy
-					//TODO reason if cache dependancy can stipulate on FP RF
         ) {
-        bsg_pr_dbg_ps("Cosimulatable because: %d %d %d %d\n", !(d.idep || d.fdep || d.cdep),
-            d.idep && !ird[d.rfaddr].empty(), d.fdep && !frd[d.rfaddr].empty(), d.cdep);
+        bsg_pr_dbg_ps("Cosimulatable because: %d %d %d\n", !(d.idep || d.fdep),
+            d.idep && !ird[d.rfaddr].empty(), d.fdep && !frd[d.rfaddr].empty());
         if(d.idep) {
           wdata = ird[d.rfaddr].front();
           ird[d.rfaddr].pop();
         } else if(d.fdep) {
           wdata = frd[d.rfaddr].front();
           frd[d.rfaddr].pop();
-        } else if(d.cdep) {
-          bsg_pr_dbg_ps("ps.cpp: Cache dependancy got accounted for\n");
         } else
           wdata = 0;
 
@@ -306,7 +298,7 @@ extern "C" void cosim_main(char *argstr) {
         pc.pop(); insn.pop(); deps.pop(); mstatus.pop(); 
       } else { // dependancy not satisfied; cannot cosimulate
         bsg_pr_dbg_ps("Not cosimulatable because:\n");
-        bsg_pr_dbg_ps("deps: i,f,c :: %d,%d,%d\n", d.idep, d.fdep, d.cdep);
+        bsg_pr_dbg_ps("deps: i,f,c :: %d,%d\n", d.idep, d.fdep);
         bsg_pr_dbg_ps("addr: 0x%x contents: %d %d\n", d.rfaddr, ird[d.rfaddr].size(), frd[d.rfaddr].size());
         bsg_pr_dbg_ps("pc.front(): 0x%llx\n", pc.front());
       }
