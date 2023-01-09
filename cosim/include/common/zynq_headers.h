@@ -22,17 +22,21 @@
 #ifndef GP0_ADDR_SIZE_BYTES
 #define GP0_ADDR_SIZE_BYTES (1 << GP0_ADDR_WIDTH)
 #endif
+static uintptr_t gp0_addr_size_bytes = (uintptr_t) GP0_ADDR_SIZE_BYTES;
 
 #ifndef GP0_ADDR_BASE
 #error GP0_ADDR_BASE must be defined
 #endif
+static uintptr_t gp0_addr_base = (uintptr_t) GP0_ADDR_BASE;
 
 #ifndef GP0_DATA_WIDTH
 #error GP0_DATA_WIDTH must be defined
 #endif
 
 #ifndef GP0_HIER_BASE
+#ifndef FPGA
 #error GP0_HIER_BASE must be defined
+#endif
 #endif
 
 #ifndef GP1_ENABLE
@@ -48,17 +52,21 @@
 #ifndef GP1_ADDR_SIZE_BYTES
 #define GP1_ADDR_SIZE_BYTES (1 << GP1_ADDR_WIDTH)
 #endif
+static uintptr_t gp1_addr_size_bytes = (uintptr_t) GP1_ADDR_SIZE_BYTES;
 
 #ifndef GP1_ADDR_BASE
 #error GP1_ADDR_BASE must be defined
 #endif
+static uintptr_t gp1_addr_base = (uintptr_t) GP1_ADDR_BASE;
 
 #ifndef GP1_DATA_WIDTH
 #error GP1_DATA_WIDTH must be defined
 #endif
 
 #ifndef GP1_HIER_BASE
+#ifndef FPGA
 #error GP1_HIER_BASE must be defined
+#endif
 #endif
 
 #ifndef HP0_ENABLE
@@ -74,17 +82,21 @@
 #ifndef HP0_ADDR_SIZE_BYTES
 #define HP0_ADDR_SIZE_BYTES (1 << HP0_ADDR_WIDTH)
 #endif
+static uintptr_t hp0_addr_size_bytes = (uintptr_t) HP0_ADDR_SIZE_BYTES;
 
 #ifndef HP0_ADDR_BASE
 #error HP0_ADDR_BASE must be defined
 #endif
+static uintptr_t hp0_addr_base = (uintptr_t) HP0_ADDR_BASE;
 
 #ifndef HP0_DATA_WIDTH
 #error HP0_DATA_WIDTH must be defined
 #endif
 
 #ifndef HP0_HIER_BASE
+#ifndef FPGA
 #error HP0_HIER_BASE must be defined
+#endif
 #endif
 
 #endif

@@ -1,13 +1,4 @@
-TOP   := $(shell git rev-parse --show-toplevel)
-CURR  := $(shell pwd)
-include $(TOP)/Makefile.common
-
-#############################
-# Project Settings
-#############################
-PART       ?= xc7z020clg400-1
-TOP_MODULE ?= top
-BASENAME   ?= double_shell
+include ../Makefile.design
 
 #############################
 # Modify base flist

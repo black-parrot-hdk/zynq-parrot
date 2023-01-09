@@ -35,6 +35,7 @@ export PLATFORM              ?= zynqparrot
 
 # Set up cad tools if using a non-bsg_cadenv environment
 export BSG_CADENV_DIR ?= $(BP_TOOLS_DIR)/bsg_cadenv
+-include $(BSG_CADENV_DIR)/cadenv.mk
 
 # TODO: Check verilator version
 ifeq ($(shell /usr/bin/arch),armv7l)
@@ -54,10 +55,8 @@ export _DVE      ?= dve
 export GCC       ?= g++
 export PYTHON    ?= PYTHONPATH=$(COSIM_PY_DIR) python
 
-export PYTHON2_VERSION ?= 2.6
-export PYTHON2         ?= PYTHONPATH=$(COSIM_PY_DIR) python$(PYTHON2_VERSION)
-export PYTHON3_VERSION ?= 3.10
-export PYTHON3         ?= PYTHONPATH=$(COSIM_PY_DIR) python$(PYTHON3_VERSION)
+export PYTHON2         ?= PYTHONPATH=$(COSIM_PY_DIR) python2
+export PYTHON3         ?= PYTHONPATH=$(COSIM_PY_DIR) python3
 export PYTHON          ?= $(PYTHON3)
 
 export PATH := $(BP_TOOLS_DIR)/install/bin:$(BP_SDK_DIR)/install/bin:$(COSIM_PY_DIR):$(PATH)
