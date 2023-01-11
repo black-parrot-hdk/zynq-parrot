@@ -55,7 +55,7 @@ simple-example-fpga:
   stage: all
   tags:
     - fpga
-  prescript:
+  before_script:
     - $CI_PROJECT_DIR/ci/pre-script.sh
   script:
     - ssh xilinx@$CI_PYNQZ2_IP 'echo "xilinx" | sudo -Sv && bash -s' < $CI_PROJECT_DIR/ci/simple-example.sh
