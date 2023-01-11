@@ -55,8 +55,10 @@ simple-example-fpga:
   stage: all
   tags:
     - fpga
+  prescript:
+    - $CI_PROJECT_DIR/ci/pre-script.sh
   script:
-    - echo "Simple example
+    - ssh xilinx@$CI_PYNQZ2_IP 'echo "xilinx" | sudo -Sv && bash -s' < $CI_PROJECT_DIR/ci/simple-example.sh
 
 shell-example-verilator:
   <<: *job_definition
