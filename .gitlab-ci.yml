@@ -103,7 +103,7 @@ black-parrot-example-verilator:
   tags:
     - verilator
   script:
-    - make -C cosim/black-parrot-example/verilator/ run
+    - make -C cosim/black-parrot-example/verilator/ run NBF_FILE=$SOFTWARE_NBF_DIR/bp-tests/hello_world.nbf
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/verilator/run.log
 
 black-parrot-example-vcs:
@@ -112,6 +112,6 @@ black-parrot-example-vcs:
   tags:
     - vcs
   script:
-    - make -C cosim/black-parrot-example/vcs/ run
+    - make -C cosim/black-parrot-example/vcs/ run NBF_FILE=$SOFTWARE_NBF_DIR/bp-tests/hello_world.nbf
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/vcs/run.log
 
