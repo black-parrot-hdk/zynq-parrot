@@ -54,7 +54,6 @@ simple-example-fpga:
   <<: *job_definition
   stage: all
   tags:
-    - bsg
     - fpga
   before_script:
     - $CI_PROJECT_DIR/ci/pre-script.sh
@@ -78,6 +77,14 @@ shell-example-vcs:
   script:
     - make -C cosim/shell-example/vcs/ run
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/shell-example/vcs/run.log
+
+shell-example-vivado:
+  <<: *job_definition
+  stage: all
+  tags:
+    - vivado
+  script:
+    - make -C cosim/shell-example/vivado clean fpga_build BOARDNAME=pynqz2 VIVADO_VERSION=2022.1 VIVADO_MODE=batch
 
 double-shell-example-verilator:
   <<: *job_definition
