@@ -134,7 +134,7 @@ module top
     localparam rt_clk_period_lp = 2500000;
     logic rt_clk;
     bsg_nonsynth_clock_gen
-     #(.cycle_time_p(`RT_CLK_FREQ))
+     #(.cycle_time_p(rt_clk_period_lp))
      rt_clk_gen
       (.o(rt_clk));
 
