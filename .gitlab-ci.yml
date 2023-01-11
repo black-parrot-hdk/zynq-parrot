@@ -9,7 +9,7 @@ stages:
   only:
     - ci_test
   before_script:
-    - git submodule update --init --checkout --recursive cosim/import/black-parrot
+    - git submodule update --init --checkout --recursive cosim/import
     - cp -r $CI_RTL_INSTALL_DIR install/
   artifacts:
     when: always
@@ -54,6 +54,7 @@ simple-example-fpga:
   <<: *job_definition
   stage: all
   tags:
+    - bsg
     - fpga
   before_script:
     - $CI_PROJECT_DIR/ci/pre-script.sh
