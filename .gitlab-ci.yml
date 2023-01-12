@@ -86,6 +86,7 @@ simple-example-fpga:
 
 shell-example-verilator:
   <<: *job_definition
+  when: manual
   stage: verilator
   tags:
     - verilator
@@ -95,6 +96,7 @@ shell-example-verilator:
 
 shell-example-vcs:
   <<: *job_definition
+  when: manual
   stage: verilator
   tags:
     - vcs
@@ -104,6 +106,7 @@ shell-example-vcs:
 
 shell-example-vivado:
   <<: *job_definition
+  when: manual
   stage: vivado
   tags:
     - vivado
@@ -115,6 +118,7 @@ shell-example-vivado:
 
 shell-example-fpga:
   <<: *job_definition
+  when: manual
   stage: fpga
   tags:
     - fpga
@@ -133,6 +137,7 @@ shell-example-fpga:
 
 double-shell-example-verilator:
   <<: *job_definition
+  when: manual
   stage: verilator
   tags:
     - verilator
@@ -142,6 +147,7 @@ double-shell-example-verilator:
 
 double-shell-example-vcs:
   <<: *job_definition
+  when: manual
   stage: vcs
   tags:
     - vcs
@@ -151,6 +157,7 @@ double-shell-example-vcs:
 
 black-parrot-example-verilator:
   <<: *job_definition
+  when: manual
   stage: verilator
   tags:
     - verilator
@@ -160,6 +167,7 @@ black-parrot-example-verilator:
 
 black-parrot-example-vcs:
   <<: *job_definition
+  when: manual
   stage: vcs
   tags:
     - vcs
