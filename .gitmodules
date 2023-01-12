@@ -7,6 +7,6 @@
 [submodule "cosim/import/black-parrot-subsystems"]
 	path = cosim/import/black-parrot-subsystems
 	url = https://github.com/black-parrot-hdk/black-parrot-subsystems
-[submodule "cosim/import/black-parrot-sdk"]
+[submodule "software/import/black-parrot-sdk"]
 	path = software/import/black-parrot-sdk
 	url = https://github.com/black-parrot-sdk/black-parrot-sdk
