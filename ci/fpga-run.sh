@@ -18,4 +18,6 @@ echo "Loading bitstream"
 make -C cosim/${BASENAME}-example/fpga load_bitstream
 echo "Running test"
 make -C cosim/${BASENAME}-example/fpga run
+echo "Copying result from mount"
+cp /home/xilinx/mnt/zynq-parrot/cosim/${BASENAME}-example/fpga/run.log cosim/${BASENAME}-example/fpga/run.log
 
