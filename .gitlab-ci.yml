@@ -16,7 +16,6 @@ stages:
     - git submodule update --init --checkout --recursive cosim/import
     - cp -r $CI_RTL_INSTALL_DIR install/
   variables:
-    BOARDNAME: "pynqz2"
     VIVADO_VERSION: "2022.1"
     VIVADO_MODE: "batch"
   retry:
@@ -26,7 +25,7 @@ stages:
 
 simple-example-verilator:
   <<: *job_definition
-  stage: all
+  stage: verilator
   tags:
     - verilator
   script:
@@ -39,7 +38,7 @@ simple-example-verilator:
 
 simple-example-vcs:
   <<: *job_definition
-  stage: all
+  stage: vcs
   tags:
     - vcs
   script:
@@ -52,9 +51,12 @@ simple-example-vcs:
 
 simple-example-vivado:
   <<: *job_definition
-  stage: all
+  stage: vivado
   tags:
     - vivado
+  variables:
+    BASENAME: "simple"
+    BOARDNAME: "pynqz2"
   script:
     - echo "Simple example does not have a vivado script, copying from local copy"
     - cp $CI_MISC_DIR/simple_bd_1.pynqz2.tar.xz.b64 cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
@@ -67,7 +69,7 @@ simple-example-vivado:
 
 simple-example-fpga:
   <<: *job_definition
-  stage: all
+  stage: fpga
   tags:
     - fpga
   variables:
@@ -84,7 +86,7 @@ simple-example-fpga:
 
 shell-example-verilator:
   <<: *job_definition
-  stage: all
+  stage: verilator
   tags:
     - verilator
   script:
@@ -93,7 +95,7 @@ shell-example-verilator:
 
 shell-example-vcs:
   <<: *job_definition
-  stage: all
+  stage: verilator
   tags:
     - vcs
   script:
@@ -102,15 +104,18 @@ shell-example-vcs:
 
 shell-example-vivado:
   <<: *job_definition
-  stage: all
+  stage: vivado
   tags:
     - vivado
+  variables:
+    BASENAME: "shell"
+    BOARDNAME: "pynqz2"
   script:
-    - make -C cosim/shell-example/vivado clean fpga_build BOARDNAME=pynqz2 VIVADO_VERSION=2022.1 VIVADO_MODE=batch
+    - make -C cosim/shell-example/vivado clean fpga_build
 
 double-shell-example-verilator:
   <<: *job_definition
-  stage: all
+  stage: verilator
   tags:
     - verilator
   script:
@@ -119,7 +124,7 @@ double-shell-example-verilator:
 
 double-shell-example-vcs:
   <<: *job_definition
-  stage: all
+  stage: vcs
   tags:
     - vcs
   script:
@@ -128,7 +133,7 @@ double-shell-example-vcs:
 
 black-parrot-example-verilator:
   <<: *job_definition
-  stage: all
+  stage: verilator
   tags:
     - verilator
   script:
@@ -137,7 +142,7 @@ black-parrot-example-verilator:
 
 black-parrot-example-vcs:
   <<: *job_definition
-  stage: all
+  stage: vcs
   tags:
     - vcs
   script:
