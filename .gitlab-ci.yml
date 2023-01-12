@@ -125,7 +125,7 @@ shell-example-fpga:
     BASENAME: "shell"
   before_script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
-    - scp $CI_PROJECT_DIR/ci/fpga-run.sh xilinx@$CI_PYNQZ2_IP:~
+    - scp $CI_PROJECT_DIR/ci/fpga-run.sh xilinx@$CI_PYNQZ2_IP:~ >/dev/null 2>&1 </dev/null
   script:
     - ssh xilinx@$CI_PYNQZ2_IP 'sudo ~/fpga-setup.sh' >/dev/null 2>&1 </dev/null
   artifacts:
