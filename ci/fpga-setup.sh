@@ -16,8 +16,3 @@ cd $CI_MOUNT_DIR/zynq-parrot
 git checkout $CI_COMMIT_SHA
 git submodule update --init cosim/imports
 
-# Copying collateral
-cp $CI_MISC_DIR/simple_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
-cp $CI_MISC_DIR/simple_bd_1.ultra96v2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/simple-example/simple_bd_1.ultra96v2.tar.xz.b64
-
-

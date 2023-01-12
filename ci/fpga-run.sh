@@ -11,11 +11,11 @@ cd /home/xilinx/mnt/zynq-parrot
 echo "Sourcing python environment"
 source /etc/profile.d/pynq_venv.sh
 echo "Setting up Pynq Z2"
-cp cosim/simple-example/{simple_bd_1.pynqz2.tar.xz.b64,simple_bd_1.tar.xz.b64}
+cp cosim/${BASENAME}-example/{${BASENAME}_bd_1.pynqz2.tar.xz.b64,${BASENAME}_bd_1.tar.xz.b64}
 echo "Unpacking bitstream"
-make -C cosim/simple-example/fpga clean unpack_bitstream
+make -C cosim/${BASENAME}-example/fpga clean unpack_bitstream
 echo "Loading bitstream"
-make -C cosim/simple-example/fpga load_bitstream
+make -C cosim/${BASENAME}-example/fpga load_bitstream
 echo "Running test"
-make -C cosim/simple-example/fpga run
+make -C cosim/${BASENAME}-example/fpga run
 

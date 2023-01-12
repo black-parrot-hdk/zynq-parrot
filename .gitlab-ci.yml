@@ -3,6 +3,10 @@ variables:
   GIT_SUBMODULE_STRATEGY: none
 
 stages:
+  - verilator
+  - vcs
+  - vivado
+  - fpga
   - all
 
 .job_template: &job_definition
@@ -11,14 +15,10 @@ stages:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - cp -r $CI_RTL_INSTALL_DIR install/
-  artifacts:
-    when: always
-    paths:
-      - "cosim/shell-example/verilator/"
-      - "cosim/double-shell-example/verilator/"
-      - "cosim/shell-example/vcs/"
-      - "cosim/double-shell-example/vcs/"
-  dependencies: []
+  variables:
+    BOARDNAME: pynqz2
+    VIVADO_VERSION: 2022.1
+    VIVADO_MODE: batch
   retry:
     max: 2
     when:
@@ -32,6 +32,10 @@ simple-example-verilator:
   script:
     - make -C cosim/simple-example/verilator/ run
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/simple-example/verilator/run.log
+  artifacts:
+    paths:
+      - cosim/simple-example/verilator/run.log
+  dependencies: []
 
 simple-example-vcs:
   <<: *job_definition
@@ -41,6 +45,10 @@ simple-example-vcs:
   script:
     - make -C cosim/simple-example/vcs/ run
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/simple-example/vcs/run.log
+  artifacts:
+    paths:
+      - cosim/simple-example/vcs/run.log
+  dependencies: []
 
 simple-example-vivado:
   <<: *job_definition
@@ -48,17 +56,31 @@ simple-example-vivado:
   tags:
     - vivado
   script:
-    - echo "Simple example does not have a vivado script"
+    - echo "Simple example does not have a vivado script, copying from local copy"
+    - cp $CI_MISC_DIR/simple_bd_1.pynqz2.tar.xz.b64 cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_MISC_DIR/simple_bd_1.ultra96v2.tar.xz.b64 cosim/simple-example/simple_bd_1.ultra96v2.tar.xz.b64
+  artifacts:
+    paths:
+      - cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
+      - cosim/simple-example/simple_bd_1.ultra96v2.tar.xz.b64
+  dependencies: []
 
 simple-example-fpga:
   <<: *job_definition
   stage: all
   tags:
     - fpga
+  variables:
+    BASENAME: simple
   before_script:
-    - $CI_PROJECT_DIR/ci/pre-script.sh
+    - $CI_PROJECT_DIR/ci/fpga-setup.sh
   script:
-    - ssh xilinx@$CI_PYNQZ2_IP 'echo "xilinx" | sudo -Sv && bash -s' < $CI_PROJECT_DIR/ci/simple-example.sh
+    - ssh xilinx@$CI_PYNQZ2_IP 'echo "xilinx" | sudo -Sv && bash -s' < $CI_PROJECT_DIR/ci/fpga-run.sh | tee cosim/simple-example/fpga/run.log
+  artifacts:
+    paths:
+      - cosim/simple-example/fpga/run.log
+  dependencies:
+    - simple-example-vivado
 
 shell-example-verilator:
   <<: *job_definition
