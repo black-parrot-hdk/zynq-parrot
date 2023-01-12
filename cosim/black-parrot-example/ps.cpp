@@ -42,9 +42,11 @@
 #define GP0_MEM_PROFILER_2     0x28
 #define GP0_MEM_PROFILER_3     0x2C
 
-// BP Address in PS
-#define BP_L2_ADDR  0x80000000U
-#define BP_CSR_ADDR 0xA0000000U
+#define DRAM_BASE_ADDR  0x80000000U
+#define DRAM_MAX_ALLOC_SIZE 0x20000000U
+#define GP1_DRAM_BASE_ADDR GP1_ADDR_BASE
+#define GP1_CSR_BASE_ADDR (GP1_ADDR_BASE + DRAM_MAX_ALLOC_SIZE)
+
 
 void nbf_load(bp_zynq_pl *zpl, char *);
 bool decode_bp_output(bp_zynq_pl *zpl, int data, int* core);
@@ -195,10 +197,10 @@ extern "C" void cosim_main(char *argstr) {
               "increase monotonically  (testing ARM GP1 connections)\n");
 
   for (int q = 0; q < 10; q++) {
-    int z = zpl->axil_read(BP_CSR_ADDR + 0x30bff8);
+    int z = zpl->axil_read(GP1_CSR_BASE_ADDR + 0x30bff8);
     // bsg_pr_dbg_ps("ps.cpp: %d%c",z,(q % 8) == 7 ? '\n' : ' ');
     // read second 32-bits
-    int z2 = zpl->axil_read(BP_CSR_ADDR + 0x30bff8 + 4);
+    int z2 = zpl->axil_read(GP1_CSR_BASE_ADDR + 0x30bff8 + 4);
     // bsg_pr_dbg_ps("ps.cpp: %d%c",z2,(q % 8) == 7 ? '\n' : ' ');
   }
 
@@ -206,13 +208,13 @@ extern "C" void cosim_main(char *argstr) {
               "(testing ARM GP1 connections)\n");
 
   bsg_pr_info("ps.cpp: reading mtimecmp\n");
-  int y = zpl->axil_read(BP_CSR_ADDR + 0x304000);
+  int y = zpl->axil_read(GP1_CSR_BASE_ADDR + 0x304000);
 
   bsg_pr_info("ps.cpp: writing mtimecmp\n");
-  zpl->axil_write(BP_CSR_ADDR + 0x304000, y + 1, mask1);
+  zpl->axil_write(GP1_CSR_BASE_ADDR + 0x304000, y + 1, mask1);
 
   bsg_pr_info("ps.cpp: reading mtimecmp\n");
-  assert(zpl->axil_read(BP_CSR_ADDR + 0x304000) == y + 1);
+  assert(zpl->axil_read(GP1_CSR_BASE_ADDR + 0x304000) == y + 1);
 
 #ifdef FPGA
   // Must zero DRAM for FPGA Linux boot, because opensbi payload mode
@@ -233,11 +235,11 @@ extern "C" void cosim_main(char *argstr) {
       "ps.cpp: attempting to write L2 %d times over %d MB (testing ARM GP1 "
       "and HP0 connections)\n",
       num_times * outer, (allocated_dram) >> 20);
-  zpl->axil_write(BP_L2_ADDR, 0x12345678, mask1);
+  zpl->axil_write(GP1_DRAM_BASE_ADDR, 0x12345678, mask1);
 
   for (int s = 0; s < outer; s++)
     for (int t = 0; t < num_times; t++) {
-      zpl->axil_write(BP_L2_ADDR + 32768 * t + s * 4, 0x1ADACACA + t + s,
+      zpl->axil_write(GP1_DRAM_BASE_ADDR + 32768 * t + s * 4, 0x1ADACACA + t + s,
                       mask1);
     }
   bsg_pr_info("ps.cpp: finished write L2 %d times over %d MB\n",
@@ -266,7 +268,7 @@ extern "C" void cosim_main(char *argstr) {
       num_times * outer, (allocated_dram) >> 20);
   for (int s = 0; s < outer; s++)
     for (int t = 0; t < num_times; t++)
-      if (zpl->axil_read(BP_L2_ADDR + 32768 * t + s * 4) == 0x1ADACACA + t + s)
+      if (zpl->axil_read(GP1_DRAM_BASE_ADDR + 32768 * t + s * 4) == 0x1ADACACA + t + s)
         matches++;
       else
         mismatches++;
@@ -288,7 +290,7 @@ extern "C" void cosim_main(char *argstr) {
   clock_gettime(CLOCK_MONOTONIC, &start);
   unsigned long long minstrret_start =
       get_counter_64(zpl, GP0_MINSTRET + GP0_ADDR_BASE);
-  unsigned long long mtime_start = get_counter_64(zpl, BP_CSR_ADDR + 0x30bff8);
+  unsigned long long mtime_start = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
   bsg_pr_dbg_ps("ps.cpp: finished nbf load\n");
   bsg_pr_info("ps.cpp: polling i/o\n");
 
@@ -320,7 +322,7 @@ extern "C" void cosim_main(char *argstr) {
     }
   }
 
-  unsigned long long mtime_stop = get_counter_64(zpl, BP_CSR_ADDR + 0x30bff8);
+  unsigned long long mtime_stop = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
 
   unsigned long long minstrret_stop = get_counter_64(zpl, GP0_MINSTRET + GP0_ADDR_BASE);
   // test delay for reading counter
@@ -425,10 +427,10 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
 
       // we map BP physical address for CSRs etc (0x0000_0000 - 0x0FFF_FFFF)
       // to ARM address to 0xA0000_0000 - 0xAFFF_FFFF  (256MB)
-      if (nbf[1] >= BP_L2_ADDR)
-        base_addr = GP1_ADDR_BASE - BP_L2_ADDR;
+      if (nbf[1] >= DRAM_BASE_ADDR)
+        base_addr = GP1_ADDR_BASE - DRAM_BASE_ADDR;
       else
-        base_addr = GP1_ADDR_BASE + 0x20000000;
+        base_addr = GP1_CSR_BASE_ADDR;
 
       if (nbf[0] == 0x3) {
         zpl->axil_write(base_addr + nbf[1], nbf[2], 0xf);
