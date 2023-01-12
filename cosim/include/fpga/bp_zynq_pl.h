@@ -25,52 +25,6 @@ extern "C" {
 void _xlnk_reset();
 };
 
-#ifndef GP0_ENABLE
-#define GP0_ADDR_WIDTH 0
-#define GP0_DATA_WIDTH 0
-#define GP0_ADDR_BASE 0
-#define GP0_ADDR_SIZE_BYTES 0
-#endif
-
-#ifndef GP0_ADDR_WIDTH
-#error GP0_ADDR_WIDTH must be defined
-#endif
-
-#ifndef GP0_ADDR_SIZE_BYTES
-#error GP0_ADDR_SIZE_BYTES must be defined
-#endif
-
-#ifndef GP0_ADDR_BASE
-#error GP0_ADDR_BASE must be defined
-#endif
-
-#ifndef GP0_DATA_WIDTH
-#error GP0_DATA_WIDTH must be defined
-#endif
-
-#ifndef GP1_ENABLE
-#define GP1_ADDR_WIDTH 0
-#define GP1_DATA_WIDTH 0
-#define GP1_ADDR_BASE 0
-#define GP1_ADDR_SIZE_BYTES 0
-#endif
-
-#ifndef GP1_ADDR_WIDTH
-#error GP1_ADDR_WIDTH must be defined
-#endif
-
-#ifndef GP1_ADDR_SIZE_BYTES
-#error GP1_ADDR_SIZE_BYTES must be defined
-#endif
-
-#ifndef GP1_ADDR_BASE
-#error GP1_ADDR_BASE must be defined
-#endif
-
-#ifndef GP1_DATA_WIDTH
-#error GP1_DATA_WIDTH must be defined
-#endif
-
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -82,52 +36,45 @@ void _xlnk_reset();
 #include <string>
 #include <fstream>
 #include <iostream>
-#include <stdint.h>
+#include <cstdint>
+#include <inttypes.h>
+#include "bsg_argparse.h"
+#include "bsg_printing.h"
+#include "zynq_headers.h"
 using namespace std;
 
 class bp_zynq_pl {
 public:
-  unsigned int BP_ZYNQ_PL_DEBUG = 0;
-  unsigned int gp0_base_offset = 0;
-  unsigned int gp1_base_offset = 0;
+  bool debug = ZYNQ_PL_DEBUG;
+  uintptr_t gp0_base_offset = 0;
+  uintptr_t gp1_base_offset = 0;
 
   bp_zynq_pl(int argc, char *argv[]) {
     printf("// bp_zynq_pl: be sure to run as root\n");
 
     // open memory device
     int fd = open("/dev/mem", O_RDWR | O_SYNC);
-    //    int fd = open("/dev/mem", O_RDWR);
     assert(fd != 0);
-
-    int *addr0 = (int *)GP0_ADDR_BASE; // e.g. 0x43c00000;
-    int *addr1 = (int *)GP1_ADDR_BASE; // e.g. 0x83c00000;
 
 #ifdef GP0_ENABLE
     // map in first PLAXI region of physical addresses to virtual addresses
-    volatile int *ptr0 =
-        (int *)mmap(addr0, GP0_ADDR_SIZE_BYTES, PROT_READ | PROT_WRITE,
-                    MAP_SHARED, fd, (uintptr_t)addr0);
-    assert(ptr0 == addr0);
+    volatile uintptr_t ptr0 =
+        (uintptr_t)mmap((void *)gp0_addr_base, gp0_addr_size_bytes, PROT_READ | PROT_WRITE,
+                    MAP_SHARED, fd, gp0_addr_base);
+    assert(ptr0 == (uintptr_t)gp0_addr_base);
 
-    // assert(ptr0 != ((void *) -1));
-    // if (ptr0 != addr0)
-    //  gp0_base_offset = ( (unsigned int) ptr0 - GP0_ADDR_BASE);
-    printf("// bp_zynq_pl: mmap returned %p (offset %x) errno=%x\n", ptr0,
+    printf("// bp_zynq_pl: mmap returned %" PRIxPTR " (offset %" PRIxPTR ") errno=%x\n", ptr0,
            gp0_base_offset, errno);
 #endif
     
 #ifdef GP1_ENABLE
     // map in second PLAXI region of physical addresses to virtual addresses
-    volatile int *ptr1 =
-        (int *)mmap(addr1, GP1_ADDR_SIZE_BYTES, PROT_READ | PROT_WRITE,
-                    MAP_SHARED, fd, (uintptr_t)addr1);
-    assert(ptr1 == addr1);
+    volatile uintptr_t ptr1 =
+        (uintptr_t)mmap((void *)gp1_addr_base, gp1_addr_size_bytes, PROT_READ | PROT_WRITE,
+                    MAP_SHARED, fd, gp1_addr_base);
+    assert(ptr1 == (uintptr_t)gp1_addr_base);
 
-    // assert(ptr1 != ((void *) -1));
-    // if (ptr1 != addr1)
-    //  gp1_base_offset = ( (unsigned int) ptr1 - GP1_ADDR_BASE);
-
-    printf("// bp_zynq_pl: mmap returned %p (offset %x) errno=%x\n", ptr1,
+    printf("// bp_zynq_pl: mmap returned %" PRIxPTR " (offset %" PRIxPTR ") errno=%x\n", ptr1,
            gp1_base_offset, errno);
 
 #endif
@@ -138,7 +85,7 @@ public:
   ~bp_zynq_pl(void) {}
 
   // returns virtual pointer, writes physical parameter into arguments
-  void *allocate_dram(uint32_t len_in_bytes, unsigned long *physical_ptr) {
+  void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) {
 
     // resets all CMA buffers across system (eek!)
     _xlnk_reset();
@@ -151,7 +98,7 @@ public:
         cma_alloc(len_in_bytes, 0); // 1 = cacheable, 0 = uncacheable
     assert(virtual_ptr != NULL);
     *physical_ptr = cma_get_phy_addr(virtual_ptr);
-    printf("bp_zynq_pl: allocate_dram() called with size %d bytes --> virtual "
+    printf("bp_zynq_pl: allocate_dram() called with size %ld bytes --> virtual "
            "ptr=%p, physical ptr=0x%8.8lx\n",
            len_in_bytes, virtual_ptr, *physical_ptr);
     return virtual_ptr;
@@ -162,47 +109,68 @@ public:
     cma_free(virtual_ptr);
   }
 
-  bool done(void) { printf("bp_zynq_pl: done() called, exiting\n"); }
+  bool done(void) { printf("bp_zynq_pl: done() called, exiting\n"); return true; }
 
-#if 1
-  inline volatile int * axil_get_ptr(unsigned int address) {
-    if (address >= GP1_ADDR_BASE)
-      return (int *) address + gp1_base_offset;
+  inline volatile void *axil_get_ptr(uintptr_t address) {
+    if (address >= gp1_addr_base)
+      return (void *)(address + gp1_base_offset);
     else
-      return (int *) address + gp0_base_offset;
+      return (void *)(address + gp0_base_offset);
   }
-#endif
   
-  inline void axil_write(unsigned int address, int data, int wstrb=0xF) {
-    if (BP_ZYNQ_PL_DEBUG)
-      printf("  bp_zynq_pl: AXI writing [%x]=%8.8x mask %x\n", address, data,
+  inline volatile uint64_t *axil_get_ptr64(uintptr_t address) {
+    return (uint64_t *)axil_get_ptr(address);
+  }
+
+  inline volatile uint32_t *axil_get_ptr32(uintptr_t address) {
+    return (uint32_t *)axil_get_ptr(address);
+  }
+
+  inline volatile uint16_t *axil_get_ptr16(uintptr_t address) {
+    return (uint16_t *)axil_get_ptr(address);
+  }
+
+  inline volatile uint8_t *axil_get_ptr8(uintptr_t address) {
+    return (uint8_t *)axil_get_ptr(address);
+  }
+
+  inline void axil_write(uintptr_t address, long data, uint8_t wstrb=0xF) {
+    if (debug)
+      printf("  bp_zynq_pl: AXI writing [%" PRIxPTR "]=%8.8ld mask %u\n", address, data,
              wstrb);
 
-    // assert(address >= ADDR_BASE && (address - ADDR_BASE < ADDR_SIZE_BYTES));
-    // // "address is not in the correct range?"
-
     // for now we don't support alternate write strobes
-    assert(wstrb == 0XF);
-    volatile int *ptr;
-    if (address >= GP1_ADDR_BASE)
-      ptr = (int *)address + gp1_base_offset;
-    else
-      ptr = (int *)address + gp0_base_offset;
-    ptr[0] = data;
+    assert(wstrb == 0XF || wstrb == 0x3 || wstrb == 0x1);
+
+    if (wstrb == 0xFF) {
+      volatile uint64_t *ptr64 = axil_get_ptr64(address);
+      *ptr64 = data;
+    } else if (wstrb == 0xF) {
+      volatile uint32_t *ptr32 = axil_get_ptr32(address);
+      *ptr32 = data;
+    } else if (wstrb == 0x3) {
+      volatile uint16_t *ptr16 = axil_get_ptr16(address);
+      *ptr16 = data;
+    } else if (wstrb == 0x1) {
+      volatile uint8_t *ptr8 = axil_get_ptr8(address);
+      *ptr8 = data;
+    } else {
+      assert(false); // Illegal write strobe
+    }
   }
 
-  inline int axil_read(unsigned int address) {
-    volatile int *ptr;
-    if (address >= GP1_ADDR_BASE)
-      ptr = (int *)address + gp1_base_offset;
-    else
-      ptr = (int *)address + gp0_base_offset;
+  inline long axil_read(uintptr_t address) {
+    // Only aligned 32B reads are currently supported
+    assert (alignof(address) >= 4);
 
-    int data = ptr[0];
+    // We use unsigned here because the data is sign extended from the AXI bus
+    volatile uint32_t *ptr32 = axil_get_ptr32(address);
+    uint32_t data = *ptr32;
 
-    if (BP_ZYNQ_PL_DEBUG)
-      printf("  bp_zynq_pl: AXI reading [%x]->%8.8x\n", address, data);
+    if (debug)
+      printf("  bp_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n", address, data);
 
     return data;
   }
 };
+

@@ -1,0 +1,102 @@
+
+
+#############################
+# Project Settings
+#############################
+# TCL to pause between stages, batch to proceed straight through
+VIVADO_MODE ?= tcl
+
+# ultra96v2, pynqz2
+ifeq ($(BOARDNAME),ultra96v2)
+PART ?= xczu3eg-sbva484-1-e
+else ifeq ($(BOARDNAME),pynqz2)
+PART ?= xc7z020clg400-1
+else
+$(error Invalid BOARDNAME)
+endif
+
+ifeq (,$(TOP_MODULE))
+$(error TOP_MODULE should be set by makefile)
+endif
+ifeq (,$(BASENAME))
+$(error BASENAME should be set by makefile)
+endif
+
+#############################
+# Environment Settings
+#############################
+# These are set by bsg_cadenv but can be overridden
+VIVADO_PATH ?= /tools/Xilinx/Vivado
+# current supported 2019.1 and 2022.1
+VIVADO_VERSION ?= 2022.1
+# Path to specific Vivado install
+XILINX_VIVADO ?= $(VIVADO_PATH)/$(VIVADO_VERSION)
+# update this with a pointer to your vivado install
+XILINX_SETTINGS ?= $(XILINX_VIVADO)/settings64.sh
+
+#############################
+# Export to TCL
+#############################
+export BOARDNAME
+export PART
+export BASENAME
+export TOP_MODULE
+
+all:
+	@echo "Rules for Vivado; see $(TOP)/cosim/mk/Makefile.vivado for more:"
+	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.vivado
+
+fpga_report_build_block:
+	-@grep --color "CRITICAL WARNING" vivado.log
+	-@grep --color "ERROR" vivado.log
+	-@tail -n5 vivado.log
+	-@grep --color "ERROR" `find . -iname "*.log"`
+	-@grep -m 1 -A 3 WNS $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper_timing_summary_routed.rpt
+	-@echo "## See $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper_timing_summary_routed.rpt for timing report."
+
+# this packages the IP, but does not continue to synthesis, pnr and bitfile generation
+# on the x86 server
+fpga_build_ip: $(FLIST)
+	mkdir fpga_build
+	source $(XILINX_SETTINGS) && $(VIVADO) -source $(COSIM_TCL_DIR)/vivado-build-ip.tcl -mode $(VIVADO_MODE)
+	-@grep --color "CRITICAL WARNING" vivado.log
+	-@grep --color "ERROR" vivado.log
+	-@tail -n5 vivado.log
+
+fpga_build: fpga_build_ip
+	source $(XILINX_SETTINGS) && $(VIVADO) -source $(CURR)/vivado-create-block.$(BOARDNAME).$(VIVADO_VERSION).tcl -mode $(VIVADO_MODE)
+	$(MAKE) fpga_report_build_block
+
+# we are looking for a *_bd_1.bit, *_bd_1_bd.tcl, *_bd_1.hwh
+# 
+#
+
+pack_bitstream:
+ifeq ($(VIVADO_VERSION),2019.1)
+	cp $(BASENAME)_bd_proj.srcs/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1*.hwh .
+	cp $(BASENAME)_bd_proj.srcs/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1*.tcl .
+	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.bit ../$(BASENAME)_bd_1.bit
+endif
+ifeq ($(VIVADO_VERSION),2020.1)
+	cp $(BASENAME)_bd_proj.srcs/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1*.hwh .
+	cp $(BASENAME)_bd_proj.srcs/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1*.tcl .
+	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.bit $(BASENAME)_bd_1.bit
+endif
+ifeq ($(VIVADO_VERSION),2022.1)
+	cp $(BASENAME)_bd_proj.gen/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1.hwh .
+	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.tcl $(BASENAME)_bd_1_bd.tcl
+	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.bit $(BASENAME)_bd_1.bit
+endif
+	tar -Jc $(BASENAME)_bd_1* | base64 > ../$(BASENAME)_bd_1.tar.xz.b64
+
+clean:
+	rm -rf flist.vcs
+	rm -rf *.fpga
+	rm -rf *.log
+	rm -rf *.jou
+	rm -rf *.b64
+	rm -rf $(BASENAME)_ip_proj*
+	rm -rf fpga_build
+	rm -rf $(BASENAME)_bd_proj*
+	rm -rf $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.hwh $(BASENAME)_bd_1_bd.tcl
+

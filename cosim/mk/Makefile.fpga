@@ -1,92 +1,47 @@
 
-include $(TOP)/cosim/mk/Makefile.common
+ifeq ($(shell /usr/bin/arch),armv7l)
+else ifeq ($(shell /usr/bin/arch),aarch64)
+else
+$(error FPGA code should be run on the PS, not x86)
+endif
 
-MODE ?= tcl
-
-SHELL := /bin/bash
-
-# current supported 2019.1 and 2022.1
-# VIVADO_VER=2019.1
-VIVADO_VER=2022.1
-
-# update this with a pointer to your vivado install
-XILINX_ENV=source /tools/Xilinx/Vivado/$(VIVADO_VER)/settings64.sh
-#XILINX_ENV=source /gro/cad/Xilinx/Vivado/$(VIVADO_VER)/settings64.sh
-
+CFLAGS += -DFPGA
 CFLAGS += -O2
 CFLAGS += -lcma -lpthread
-CFLAGS += $(SIM_DEFINES)
 CFLAGS += -std=c++14
 
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/fpga
 
-PYTHON3=python3.10
-
 all:
 	@echo "Rules for FPGA; see $(TOP)/cosim/mk/Makefile.fpga for more:"
 	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.fpga
 
-EXE ?= runme
+EXE ?= control-program
 run: $(EXE)
 	sudo ./$< $(SIM_ARGS)
 
 $(EXE): $(HOST_PROGRAM)
 	$(GCC) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $(CSOURCES) $< $(CFLAGS) $(LDFLAGS) -o $@
 
-fpga_report_build_block:
-	-@grep --color "CRITICAL WARNING" vivado.log
-	-@grep --color "ERROR" vivado.log
-	-@tail -n5 vivado.log
-	-@grep --color "ERROR" `find . -iname "*.log"`
-	-@grep -m 1 -A 3 WNS $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper_timing_summary_routed.rpt
-	-@echo "## See $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper_timing_summary_routed.rpt for timing report."
-
-# this packages the IP, but does not continue to synthesis, pnr and bitfile generation
-# on the x86 server
-fpga_build_ip: clean_fpga_build $(FLIST)
-	mkdir fpga_build
-	$(XILINX_ENV) && $(VIVADO) -source $(COSIM_TCL_DIR)/vivado-build-ip.tcl -mode $(MODE)
-	-@grep --color "CRITICAL WARNING" vivado.log
-	-@grep --color "ERROR" vivado.log
-	-@tail -n5 vivado.log
-
-fpga_build: fpga_build_ip
-	$(XILINX_ENV) && $(VIVADO) -source $(CURR)/vivado-create-block.$(VIVADO_VER).tcl -mode $(MODE)
-	$(MAKE) fpga_report_build_block
-
-# we are looking for a *_bd_1.bit, *_bd_1_bd.tcl, *_bd_1.hwh
-# 
-#
-
-pack_bitstream:
-ifeq ($(VIVADO_VER),2019.1)
-	cp $(BASENAME)_bd_proj.srcs/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1* .
-endif
-ifeq ($(VIVADO_VER),2022.1)
-	cp $(BASENAME)_bd_proj.gen/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1.hwh .
-	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.tcl $(BASENAME)_bd_1_bd.tcl
-endif
-	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.bit $(BASENAME)_bd_1.bit
-	tar -Jc $(BASENAME)_bd_1* | base64 > $(BASENAME)_bd_1.tar.xz.b64
-
 unpack_bitstream:
-	base64 -d $(BASENAME)_bd_1.tar.xz.b64 | tar xvJ
+	base64 -d ../$(BASENAME)_bd_1.tar.xz.b64 | tar xvJ
 
 # load the bitstream on the Zynq board (copy the .b64 file into this dir first)
 # make sure to unpack it first
-
-load_bitstream: $(EXE)
+load_bitstream:
 	echo 'import pprint; from pynq import Overlay; overlay=Overlay("$(BASENAME)_bd_1.bit"); print (overlay.__doc__); pprint.pprint(overlay.ip_dict,width=1); pprint.pprint(overlay.clock_dict,width=1);' | sudo -E $(PYTHON3)
-	#@echo 'allocating memory and sleeping...'
-	#sudo ./$(EXE) &
+
+# load the bitstream and then don't do anything
+load_and_sleep: load_bitstream
+	@echo 'allocating memory and sleeping...'
+	sudo ./$(EXE) &
 
 # use this instead if you have already loaded the bitstream this will load the bitstream, but transfer
 # over the physical memory pointer that was written into the accelerator before
 # this way we do not need to reallocate dram on the zynq board
 # note: this rule is only currently necessary and only works with blackparrot, but with standardization
 # of addresses could apply to other DRAM-using accelerators
-
 reload_bitstream_keep_dram:
 	echo 'import pprint; from pynq import Overlay, MMIO; mmio=MMIO(0x40000000,0x1000); val4 = mmio.read(0x4); val8 = mmio.read(0x8);  overlay=Overlay("$(BASENAME)_bd_1.bit"); print("transferring over: ", hex(val4), hex(val8)); mmio.write(0x4,val4); mmio.write(0x8,val8);  print (overlay.__doc__); pprint.pprint(overlay.ip_dict,width=1); pprint.pprint(overlay.clock_dict,width=1)' | sudo -E $(PYTHON3)
 
@@ -96,19 +51,8 @@ print_clocks:
 %.set_clock:
 	echo 'from pynq import Clocks;  Clocks.fclk0_mhz = $*; print("PL Clock Set To:: ",Clocks.fclk0_mhz,"MHz"); ' | sudo -E $(PYTHON3)
 
-clean_fpga_build:
-	rm -rf flist.vcs
-	rm -rf *.fpga
-	rm -rf *.log
-	rm -rf *.jou
-	rm -rf *.b64
-	rm -rf $(BASENAME)_ip_proj*
-	rm -rf fpga_build
-	rm -rf $(BASENAME)_bd_proj*
-	rm -rf $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.hwh $(BASENAME)_bd_1_bd.tcl
-
-clean: clean_fpga_build
+clean:
 	rm -rf $(EXE)
 	rm -rf sds_trace_data.dat
-	rm -rf control-program
+	rm -rf $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.hwh $(BASENAME)_bd_1_bd.tcl
 

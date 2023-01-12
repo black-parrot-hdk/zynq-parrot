@@ -1,16 +1,21 @@
-set project_name blackparrot_bd_proj
+set project_name $::env(BASENAME)_bd_proj
+set project_part $::env(PART)
+set project_bd   $::env(BASENAME)_bd_1
 
-create_project -force ${project_name} [pwd] -part xc7z020clg400-1
-create_bd_design "blackparrot_bd_1"
+create_project -force ${project_name} [pwd] -part ${project_part}
+create_bd_design "${project_bd}"
 update_compile_order -fileset sources_1
 startgroup
 create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0
 set_property -dict [list CONFIG.PCW_USE_M_AXI_GP1 {1}] [get_bd_cells processing_system7_0]
+set_property -dict [list CONFIG.PCW_EN_CLK0_PORT {1}] [get_bd_cells processing_system7_0]
 set_property -dict [list CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {20}] [get_bd_cells processing_system7_0]
+set_property -dict [list CONFIG.PCW_EN_CLK1_PORT {1}] [get_bd_cells processing_system7_0]
+set_property -dict [list CONFIG.PCW_FPGA1_PERIPHERAL_FREQMHZ {0.4}] [get_bd_cells processing_system7_0]
 set_property -dict [list CONFIG.PCW_USE_S_AXI_HP0 {1}] [get_bd_cells processing_system7_0]
 endgroup
 apply_bd_automation -rule xilinx.com:bd_rule:processing_system7 -config {make_external "FIXED_IO, DDR" Master "Disable" Slave "Disable" }  [get_bd_cells processing_system7_0]
-open_bd_design ${project_name}.srcs/sources_1/bd/blackparrot_bd_1/blackparrot_bd_1.bd}
+open_bd_design ${project_name}.srcs/sources_1/bd/${project_bd}/${project_bd}.bd}
 set_property  ip_repo_paths  fpga_build [current_project]
 update_ip_catalog
 
@@ -27,6 +32,8 @@ endgroup
 
 startgroup
 create_bd_cell -type ip -vlnv user.org:user:top:1.0 top_0
+set_property -dict [list CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ [get_bd_pins /processing_system7_0/FCLK_CLK0]]] [get_bd_pins top_0/aclk]
+set_property -dict [list CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ [get_bd_pins /processing_system7_0/FCLK_CLK1]]] [get_bd_pins top_0/rt_clk]
 endgroup
 startgroup
 create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_0
@@ -59,6 +66,7 @@ apply_bd_automation -rule xilinx.com:bd_rule:board -config { Manual_Source {Auto
 endgroup
 
 connect_bd_net [get_bd_pins /axi_bram_ctrl_0/s_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
+connect_bd_net [get_bd_pins top_0/rt_clk] [get_bd_pins processing_system7_0/FCLK_CLK1]
 
 create_bd_addr_seg -range 0x00002000 -offset 0x10000000 [get_bd_addr_spaces top_0/m01_axi] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] SEG_axi_bram_ctrl_0_Mem0
 assign_bd_address
@@ -68,15 +76,19 @@ assign_bd_address
 # and select "Address Segment Properties..." to see what name to use in these commands.
 
 set_property offset 0x40000000 [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg0}]
-set_property offset 0x80000000 [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg03}]
+#set_property offset 0x80000000 [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg03}]
+set_property offset 0x80000000 [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg0_1}]
 set_property range 4K [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg0}]
-set_property range 1G [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg03}]
+#set_property range 1G [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg03}]
+set_property range 1G [get_bd_addr_segs {processing_system7_0/Data/SEG_top_0_reg0_1}]
 
 validate_bd_design
-make_wrapper -files [get_files ${project_name}.srcs/sources_1/bd/blackparrot_bd_1/blackparrot_bd_1.bd] -top
-add_files -norecurse ${project_name}.srcs/sources_1/bd/blackparrot_bd_1/hdl/blackparrot_bd_1_wrapper.v
-delete_bd_objs [get_bd_nets reset_rtl_0_1] [get_bd_ports reset_rtl_0]
-connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins proc_sys_reset_0/ext_reset_in]
+make_wrapper -files [get_files ${project_name}.srcs/sources_1/bd/${project_bd}/${project_bd}.bd] -top
+add_files -norecurse ${project_name}.srcs/sources_1/bd/${project_bd}/hdl/${project_bd}_wrapper.v
+
+#delete_bd_objs [get_bd_nets reset_rtl_0_1] [get_bd_ports reset_rtl_0]
+#connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins proc_sys_reset_0/ext_reset_in]
+
 save_bd_design
 
 # change this to a 0 to have it stop before synthesis and implementation
