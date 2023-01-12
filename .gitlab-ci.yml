@@ -113,6 +113,24 @@ shell-example-vivado:
   script:
     - make -C cosim/shell-example/vivado clean fpga_build
 
+shell-example-fpga:
+  <<: *job_definition
+  stage: fpga
+  tags:
+    - fpga
+  variables:
+    BASENAME: "shell"
+  before_script:
+    - $CI_PROJECT_DIR/ci/fpga-setup.sh
+  script:
+    - ssh xilinx@$CI_PYNQZ2_IP 'echo "xilinx" | sudo -Sv && bash -s' < $CI_PROJECT_DIR/ci/fpga-run.sh
+  artifacts:
+    paths:
+      - cosim/shell-example/fpga/run.log
+  dependencies:
+    - shell-example-vivado
+    - simple-example-fpga
+
 double-shell-example-verilator:
   <<: *job_definition
   stage: verilator
