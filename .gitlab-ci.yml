@@ -16,9 +16,9 @@ stages:
     - git submodule update --init --checkout --recursive cosim/import
     - cp -r $CI_RTL_INSTALL_DIR install/
   variables:
-    BOARDNAME: pynqz2
-    VIVADO_VERSION: 2022.1
-    VIVADO_MODE: batch
+    BOARDNAME: "pynqz2"
+    VIVADO_VERSION: "2022.1"
+    VIVADO_MODE: "batch"
   retry:
     max: 2
     when:
@@ -71,7 +71,7 @@ simple-example-fpga:
   tags:
     - fpga
   variables:
-    BASENAME: simple
+    BASENAME: "simple"
   before_script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
   script:
