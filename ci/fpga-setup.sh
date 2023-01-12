@@ -14,5 +14,5 @@ echo "Checking out commit: $CI_COMMIT_SHA"
 git clone https://github.com/black-parrot-hdk/zynq-parrot.git $CI_MOUNT_DIR/zynq-parrot
 cd $CI_MOUNT_DIR/zynq-parrot
 git checkout $CI_COMMIT_SHA
-git submodule update --init cosim/imports
+git submodule update --init cosim/import
 
