@@ -18,10 +18,8 @@ stages:
   variables:
     VIVADO_VERSION: "2022.1"
     VIVADO_MODE: "batch"
-  retry:
-    max: 2
-    when:
-      - script_failure
+  artifacts:
+    name: $CI_JOB_ID
 
 simple-example-verilator:
   <<: *job_definition
