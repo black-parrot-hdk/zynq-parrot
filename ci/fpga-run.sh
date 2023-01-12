@@ -23,3 +23,5 @@ echo "Running part of script..."
 #echo "Copying result from mount"
 #cp /home/xilinx/mnt/zynq-parrot/cosim/${BASENAME}-example/fpga/run.log cosim/${BASENAME}-example/fpga/run.log
 
+exit 0
+

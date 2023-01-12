@@ -16,3 +16,5 @@ cd $CI_MOUNT_DIR/zynq-parrot
 git checkout $CI_COMMIT_SHA
 git submodule update --init cosim/import
 
+exit 0
+
