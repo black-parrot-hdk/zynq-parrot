@@ -74,10 +74,10 @@ simple-example-fpga:
     BASENAME: "simple"
   before_script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
-#    - scp $CI_PROJECT_DIR/ci/fpga-run.sh xilinx@$CI_PYNQZ2_IP:~
+    - scp -vvv $CI_PROJECT_DIR/ci/fpga-run.sh xilinx@$CI_PYNQZ2_IP:~
   script:
-    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s 1>&2' < $CI_PROJECT_DIR/ci/fpga-run.sh
-#    - ssh xilinx@$CI_PYNQZ2_IP 'sudo ~/fpga-setup.sh' >/dev/null 2>&1 </dev/null
+#    - ssh -vvv xilinx@$CI_PYNQZ2_IP 'bash -s 1>&2' < $CI_PROJECT_DIR/ci/fpga-run.sh
+    - ssh -vvv xilinx@$CI_PYNQZ2_IP 'sudo ~/fpga-setup.sh >/dev/null 2>&1 </dev/null'
   artifacts:
     paths:
       - cosim/simple-example/fpga/run.log
