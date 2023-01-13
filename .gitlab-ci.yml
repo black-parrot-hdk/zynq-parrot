@@ -225,9 +225,9 @@ dram-example-fpga:
   tags:
     - fpga
   variables:
-    - BASENAME: "dram"
-    - BOARDNAME: "pynqz2"
-    - VIVADO_VERSION: "2022.1"
+    BASENAME: "dram"
+    BOARDNAME: "pynqz2"
+    VIVADO_VERSION: "2022.1"
   before_script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
