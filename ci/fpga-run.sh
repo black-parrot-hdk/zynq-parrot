@@ -20,8 +20,6 @@ echo "Loading bitstream"
 make -C cosim/${BASENAME}-example/fpga load_bitstream
 echo "Running test"
 make -C cosim/${BASENAME}-example/fpga run
-echo "Unmounting current mount"
-sudo umount -f /home/xilinx/mnt
 
 exit 0
 
