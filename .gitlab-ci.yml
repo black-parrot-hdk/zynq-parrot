@@ -74,7 +74,7 @@ simple-example-fpga:
   before_script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
   script:
-    - ssh $CI_SSH_VERBOSITY xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run.sh
+    - ssh -oStrictHostKeyChecking=no $CI_SSH_VERBOSITY xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run.sh
   artifacts:
     paths:
       - cosim/simple-example/fpga/run.log
@@ -131,7 +131,7 @@ shell-example-fpga:
   before_script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
   script:
-    - ssh $CI_SSH_VERBOSITY xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run.sh
+    - ssh -oStrictHostKeyChecking=no $CI_SSH_VERBOSITY xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run.sh
   artifacts:
     paths:
       - cosim/shell-example/fpga/run.log
