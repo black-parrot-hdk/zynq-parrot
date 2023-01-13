@@ -58,11 +58,9 @@ simple-example-vivado:
   script:
     - echo "Simple example does not have a vivado script, copying from local copy"
     - cp $CI_MISC_DIR/simple_bd_1.pynqz2.tar.xz.b64 cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
-    - cp $CI_MISC_DIR/simple_bd_1.ultra96v2.tar.xz.b64 cosim/simple-example/simple_bd_1.ultra96v2.tar.xz.b64
   artifacts:
     paths:
       - cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
-      - cosim/simple-example/simple_bd_1.ultra96v2.tar.xz.b64
   dependencies: []
 
 simple-example-fpga:
@@ -72,15 +70,11 @@ simple-example-fpga:
     - fpga
   variables:
     BASENAME: "simple"
+    BOARDNAME: "pynqz2"
   before_script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
-    #- scp -vvv $CI_PROJECT_DIR/ci/fpga-run.sh xilinx@$CI_PYNQZ2_IP:~
   script:
-    - echo "my name is"
-    - echo $UID
-    - id
-    - ssh -vvv xilinx@$CI_PYNQZ2_IP 'bash -s 1>&2' < $CI_PROJECT_DIR/ci/fpga-run.sh
-    #- ssh -vvv xilinx@$CI_PYNQZ2_IP 'sudo ~/fpga-setup.sh >/dev/null 2>&1 </dev/null'
+    - ssh $CI_SSH_VERBOSITY xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run.sh
   artifacts:
     paths:
       - cosim/simple-example/fpga/run.log
@@ -117,7 +111,13 @@ shell-example-vivado:
     BASENAME: "shell"
     BOARDNAME: "pynqz2"
   script:
+    - echo "Building shell-example for Pynq Z2"
     - make -C cosim/shell-example/vivado clean fpga_build
+    - echo "Packing up bitstream"
+    - make -C cosim/shell-example/vivado pack_bitstream
+  artifacts:
+    paths:
+      - cosim/shell-example/shell_bd_1.pynqz2.tar.xz.b64
 
 shell-example-fpga:
   <<: *job_definition
@@ -127,11 +127,11 @@ shell-example-fpga:
     - fpga
   variables:
     BASENAME: "shell"
+    BOARDNAME: "pynqz2"
   before_script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
-    - scp $CI_PROJECT_DIR/ci/fpga-run.sh xilinx@$CI_PYNQZ2_IP:~ >/dev/null 2>&1 </dev/null
   script:
-    - ssh xilinx@$CI_PYNQZ2_IP 'sudo ~/fpga-setup.sh' >/dev/null 2>&1 </dev/null
+    - ssh $CI_SSH_VERBOSITY xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run.sh
   artifacts:
     paths:
       - cosim/shell-example/fpga/run.log
