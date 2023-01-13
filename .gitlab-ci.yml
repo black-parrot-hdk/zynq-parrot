@@ -20,6 +20,7 @@ stages:
     VIVADO_MODE: "batch"
   artifacts:
     name: $CI_JOB_ID
+  dependencies: []
 
 simple-example-verilator:
   <<: *job_definition
@@ -32,7 +33,6 @@ simple-example-verilator:
   artifacts:
     paths:
       - cosim/simple-example/verilator/run.log
-  dependencies: []
 
 simple-example-vcs:
   <<: *job_definition
@@ -45,7 +45,6 @@ simple-example-vcs:
   artifacts:
     paths:
       - cosim/simple-example/vcs/run.log
-  dependencies: []
 
 simple-example-vivado:
   <<: *job_definition
@@ -60,8 +59,8 @@ simple-example-vivado:
     - cp $CI_MISC_DIR/simple_bd_1.pynqz2.tar.xz.b64 cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
   artifacts:
     paths:
+      - cosim/simple-example/vivado/vivado.log
       - cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
-  dependencies: []
 
 simple-example-fpga:
   <<: *job_definition
@@ -92,6 +91,9 @@ shell-example-verilator:
   script:
     - make -C cosim/shell-example/verilator/ run
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/shell-example/verilator/run.log
+  artifacts:
+    paths:
+      - cosim/shell-example/verilator/run.log
 
 shell-example-vcs:
   <<: *job_definition
@@ -101,6 +103,9 @@ shell-example-vcs:
   script:
     - make -C cosim/shell-example/vcs/ run
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/shell-example/vcs/run.log
+  artifacts:
+    paths:
+      - cosim/shell-example/vcs/run.log
 
 shell-example-vivado:
   <<: *job_definition
@@ -115,8 +120,10 @@ shell-example-vivado:
     - make -C cosim/shell-example/vivado clean fpga_build
     - echo "Packing up bitstream"
     - make -C cosim/shell-example/vivado pack_bitstream
+    - mv shell_bd_1.tar.xz.b64 shell_bd_1.pynqz2.tar.xz.b64
   artifacts:
     paths:
+      - cosim/shell-example/vivado/vivado.log
       - cosim/shell-example/shell_bd_1.pynqz2.tar.xz.b64
 
 shell-example-fpga:
@@ -150,6 +157,9 @@ double-shell-example-verilator:
   script:
     - make -C cosim/double-shell-example/verilator/ run
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/double-shell-example/verilator/run.log
+  artifacts:
+    paths:
+      - cosim/double-shell-example/verilator/run.log
 
 double-shell-example-vcs:
   <<: *job_definition
@@ -159,6 +169,9 @@ double-shell-example-vcs:
   script:
     - make -C cosim/double-shell-example/vcs/ run
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/double-shell-example/vcs/run.log
+  artifacts:
+    paths:
+      - cosim/double-shell-example/vcs/run.log
 
 double-shell-example-vivado:
   <<: *job_definition
@@ -175,6 +188,7 @@ double-shell-example-vivado:
     - make -C cosim/double-shell-example/vivado pack_bitstream
   artifacts:
     paths:
+      - cosim/double-shell-example/vivado/vivado.log
       - cosim/double-shell-example/double-shell_bd_1.pynqz2.tar.xz.b64
 
 double-shell-example-fpga:
@@ -208,6 +222,9 @@ black-parrot-example-verilator:
   script:
     - make -C cosim/black-parrot-example/verilator/ run NBF_FILE=$SOFTWARE_NBF_DIR/bp-tests/hello_world.nbf
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/verilator/run.log
+  artifacts:
+    paths:
+      - cosim/black-parrot-example/verilator/run.log
 
 black-parrot-example-vcs:
   <<: *job_definition
@@ -217,4 +234,7 @@ black-parrot-example-vcs:
   script:
     - make -C cosim/black-parrot-example/vcs/ run NBF_FILE=$SOFTWARE_NBF_DIR/bp-tests/hello_world.nbf
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/vcs/run.log
+  artifacts:
+    paths:
+      - cosim/black-parrot-example/vcs/run.log
 

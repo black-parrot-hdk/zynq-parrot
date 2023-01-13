@@ -25,7 +25,7 @@ $(EXE): $(HOST_PROGRAM)
 	$(GCC) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $(CSOURCES) $< $(CFLAGS) $(LDFLAGS) -o $@
 
 unpack_bitstream:
-	base64 -d ../$(BASENAME)_bd_1.tar.xz.b64 | tar xvJ
+	base64 -d ../$(BASENAME)_bd_1.$(BOARDNAME).tar.xz.b64 | tar xvJ
 
 # load the bitstream on the Zynq board (copy the .b64 file into this dir first)
 # make sure to unpack it first
