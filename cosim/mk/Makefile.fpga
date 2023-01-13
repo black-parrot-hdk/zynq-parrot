@@ -19,7 +19,7 @@ all:
 
 EXE ?= control-program
 run: $(EXE)
-	sudo ./$< $(SIM_ARGS)
+	sudo ./$< $(SIM_ARGS) | tee run.log
 
 $(EXE): $(HOST_PROGRAM)
 	$(GCC) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $(CSOURCES) $< $(CFLAGS) $(LDFLAGS) -o $@
