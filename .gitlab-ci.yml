@@ -73,8 +73,11 @@ simple-example-fpga:
     BOARDNAME: "pynqz2"
   before_script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
+    - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
   script:
-    - ssh $CI_SSH_VERBOSITY xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run.sh
+    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
+  after_script:
+    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/simple-example/fpga/run.log $CI_PROJECT_DIR/cosim/simple-example/fpga/run.log
   artifacts:
     paths:
       - cosim/simple-example/fpga/run.log
@@ -130,13 +133,17 @@ shell-example-fpga:
     BOARDNAME: "pynqz2"
   before_script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
+    - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
   script:
-    - ssh $CI_SSH_VERBOSITY xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run.sh
+    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run.sh
+  after_script:
+    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/shell-example/fpga/run.log $CI_PROJECT_DIR/cosim/shell-example/fpga/run.log
   artifacts:
     paths:
       - cosim/shell-example/fpga/run.log
   dependencies:
     - shell-example-vivado
+    # We make this a dependency so we only run one at a time
     - simple-example-fpga
 
 double-shell-example-verilator:
