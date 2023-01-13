@@ -179,7 +179,7 @@ double-shell-example-vivado:
   tags:
     - vivado
   variables:
-    BASENAME: "double-shell"
+    BASENAME: "double_shell"
     BOARDNAME: "pynqz2"
   script:
     - echo "Building double-shell-example for Pynq Z2"
@@ -197,7 +197,7 @@ double-shell-example-fpga:
   tags:
     - fpga
   variables:
-    BASENAME: "double-shell"
+    BASENAME: "double_shell"
     BOARDNAME: "pynqz2"
   before_script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
