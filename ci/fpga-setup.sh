@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "Executing script as: $USER"
+
 if [ -z "$CI_MOUNT_DIR" ]
 then
   echo "CI_MOUNT_DIR not set; exiting"

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+echo "Executing scripts as: $USER"
 echo "Running part of script..."
 
 #echo "Unmounting current mount"
