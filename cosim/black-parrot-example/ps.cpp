@@ -44,7 +44,7 @@ bool run = true;
 
 const char* metrics[] = {
   "mcycle", "minstret",
-  "ic_miss", "ic_l2_miss", "ic_dma",
+  "ic_miss",
   "branch_override", "ret_override", "fe_cmd", "fe_cmd_fence",
   "mispredict", "control_haz", "long_haz", "data_haz",
   "aux_dep", "load_dep", "mul_dep", "fma_dep", "sb_iraw_dep",
@@ -52,13 +52,15 @@ const char* metrics[] = {
   "struct_haz", "idiv_haz", "fdiv_haz",
   "ptw_busy", "special", "replay", "exception", "_interrupt",
   "itlb_miss", "dtlb_miss",
-  "dc_miss", "dc_l2_miss", "dc_dma", "dc_fail", "unknown",
+  "dc_miss", "dc_fail", "unknown",
 
   "e_ic_req_cnt", "e_ic_miss_cnt", "e_ic_miss",
   "e_dc_req_cnt", "e_dc_miss_cnt", "e_dc_miss",
 
   "e_ic_miss_l2_ic", "e_ic_miss_l2_dc_fetch", "e_ic_miss_l2_dc_evict",
   "e_dc_miss_l2_ic", "e_dc_miss_l2_dc_fetch", "e_dc_miss_l2_dc_evict",
+
+  "e_dc_is_miss", "e_dc_is_late", "e_dc_is_busy_cnt", "e_dc_is_busy",
 
   "e_l2_ic_cnt", "e_l2_dc_fetch_cnt", "e_l2_dc_evict_cnt",
   "e_l2_ic", "e_l2_dc_fetch", "e_l2_dc_evict",
@@ -79,7 +81,6 @@ const char* metrics[] = {
   "e_wdma_dc_fetch_cnt", "e_rdma_dc_fetch_cnt", "e_wdma_dc_fetch", "e_rdma_dc_fetch", "e_dma_dc_fetch",
   "e_wdma_dc_evict_cnt", "e_wdma_dc_evict",
 
-  "e_dc_is_miss", "e_dc_is_late", "e_dc_is_busy_cnt", "e_dc_is_busy"
 /*
   "e_br_cnt", "e_br_miss", "e_jalr_cnt", "e_jalr_miss", "e_ret_cnt", "e_ret_miss",
   "e_fpu_flong_cnt", "e_fpu_flong_miss", "e_div_cnt", "e_div_wait"

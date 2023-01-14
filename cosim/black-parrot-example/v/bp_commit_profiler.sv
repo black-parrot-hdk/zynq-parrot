@@ -93,7 +93,7 @@ module bp_commit_profiler
     , input [commit_pkt_width_lp-1:0] commit_pkt_i
     , input [wb_pkt_width_lp-1:0]     iwb_pkt_i
 
-    , output [78:0][width_p-1:0] data_o
+    , output [74:0][width_p-1:0] data_o
     );
 
   `declare_bp_core_if(vaddr_width_p, paddr_width_p, asid_width_p, branch_metadata_fwd_width_p);
@@ -135,39 +135,39 @@ module bp_commit_profiler
    );
 
   `declare_stall_counter(ic_miss,2)
-  `declare_stall_counter(ic_l2_miss,3)
-  `declare_stall_counter(ic_dma,4)
-  `declare_stall_counter(branch_override,5)
-  `declare_stall_counter(ret_override,6)
-  `declare_stall_counter(fe_cmd,7)
-  `declare_stall_counter(fe_cmd_fence,8)
-  `declare_stall_counter(mispredict,9)
-  `declare_stall_counter(control_haz,10)
-  `declare_stall_counter(long_haz,11)
-  `declare_stall_counter(data_haz,12)
-  `declare_stall_counter(aux_dep,13)
-  `declare_stall_counter(load_dep,14)
-  `declare_stall_counter(mul_dep,15)
-  `declare_stall_counter(fma_dep,16)
-  `declare_stall_counter(sb_iraw_dep,17)
-  `declare_stall_counter(sb_fraw_dep,18)
-  `declare_stall_counter(sb_iwaw_dep,19)
-  `declare_stall_counter(sb_fwaw_dep,20)
-  `declare_stall_counter(struct_haz,21)
-  `declare_stall_counter(idiv_haz,22)
-  `declare_stall_counter(fdiv_haz,23)
-  `declare_stall_counter(ptw_busy,24)
-  `declare_stall_counter(special,25)
-  `declare_stall_counter(replay,26)
-  `declare_stall_counter(exception,27)
-  `declare_stall_counter(_interrupt,28)
-  `declare_stall_counter(itlb_miss,29)
-  `declare_stall_counter(dtlb_miss,30)
-  `declare_stall_counter(dc_miss,31)
-  `declare_stall_counter(dc_l2_miss,32)
-  `declare_stall_counter(dc_dma,33)
-  `declare_stall_counter(dc_fail,34)
-  `declare_stall_counter(unknown,35)
+  //`declare_stall_counter(ic_l2_miss,3)
+  //`declare_stall_counter(ic_dma,4)
+  `declare_stall_counter(branch_override,3)
+  `declare_stall_counter(ret_override,4)
+  `declare_stall_counter(fe_cmd,5)
+  `declare_stall_counter(fe_cmd_fence,6)
+  `declare_stall_counter(mispredict,7)
+  `declare_stall_counter(control_haz,8)
+  `declare_stall_counter(long_haz,9)
+  `declare_stall_counter(data_haz,10)
+  `declare_stall_counter(aux_dep,11)
+  `declare_stall_counter(load_dep,12)
+  `declare_stall_counter(mul_dep,13)
+  `declare_stall_counter(fma_dep,14)
+  `declare_stall_counter(sb_iraw_dep,15)
+  `declare_stall_counter(sb_fraw_dep,16)
+  `declare_stall_counter(sb_iwaw_dep,17)
+  `declare_stall_counter(sb_fwaw_dep,18)
+  `declare_stall_counter(struct_haz,19)
+  `declare_stall_counter(idiv_haz,20)
+  `declare_stall_counter(fdiv_haz,21)
+  `declare_stall_counter(ptw_busy,22)
+  `declare_stall_counter(special,23)
+  `declare_stall_counter(replay,24)
+  `declare_stall_counter(exception,25)
+  `declare_stall_counter(_interrupt,26)
+  `declare_stall_counter(itlb_miss,27)
+  `declare_stall_counter(dtlb_miss,28)
+  `declare_stall_counter(dc_miss,29)
+  //`declare_stall_counter(dc_l2_miss,32)
+  //`declare_stall_counter(dc_dma,33)
+  `declare_stall_counter(dc_fail,30)
+  `declare_stall_counter(unknown,31)
 
 
   `define declare_counter(name,up,i)                                \
@@ -215,29 +215,29 @@ module bp_commit_profiler
      ,.data_o({dcache_valid_r, dcache_valid_rr})
      );
 
-  `declare_counter(e_ic_req_cnt,(icache_valid_i & icache_ready_i),36)
-  `declare_counter(e_ic_miss_cnt,(~icache_ready_i & icache_ready_r),37)
-  `declare_counter(e_ic_miss,~icache_ready_i,38)
+  `declare_counter(e_ic_req_cnt,(icache_valid_i & icache_ready_i),32)
+  `declare_counter(e_ic_miss_cnt,(~icache_ready_i & icache_ready_r),33)
+  `declare_counter(e_ic_miss,~icache_ready_i,34)
 
-  `declare_counter(e_dc_req_cnt,(dcache_valid_rr & dcache_ready_r & ~prof.commit_pkt.dcache_fail),39)
-  `declare_counter(e_dc_miss_cnt,(~dcache_ready_i & dcache_ready_r),40)
-  `declare_counter(e_dc_miss,~dcache_ready_i,41)
+  `declare_counter(e_dc_req_cnt,(dcache_valid_rr & dcache_ready_r & ~prof.commit_pkt.dcache_fail),35)
+  `declare_counter(e_dc_miss_cnt,(~dcache_ready_i & dcache_ready_r),36)
+  `declare_counter(e_dc_miss,~dcache_ready_i,37)
 
   // L2 and DMA
   // TODO: works only for 1 bank L2
   // L2 under L1 miss
-  `declare_counter(e_ic_miss_l2_ic,(~icache_ready_i & l2_serving_ic_i),42)
-  `declare_counter(e_ic_miss_l2_dc_fetch,(~icache_ready_i & l2_backlog_i & l2_serving_dc_i & ~l2_serving_evict_i),43)
-  `declare_counter(e_ic_miss_l2_dc_evict,(~icache_ready_i & l2_backlog_i & l2_serving_dc_i & l2_serving_evict_i),44)
+  `declare_counter(e_ic_miss_l2_ic,(~icache_ready_i & l2_serving_ic_i),38)
+  `declare_counter(e_ic_miss_l2_dc_fetch,(~icache_ready_i & l2_backlog_i & l2_serving_dc_i & ~l2_serving_evict_i),39)
+  `declare_counter(e_ic_miss_l2_dc_evict,(~icache_ready_i & l2_backlog_i & l2_serving_dc_i & l2_serving_evict_i),40)
 
-  `declare_counter(e_dc_miss_l2_ic,(~dcache_ready_i & l2_backlog_i & l2_serving_ic_i),45)
-  `declare_counter(e_dc_miss_l2_dc_fetch,(~dcache_ready_i & l2_serving_dc_i & ~l2_serving_evict_i),46)
-  `declare_counter(e_dc_miss_l2_dc_evict,(~dcache_ready_i & l2_backlog_i & l2_serving_dc_i & l2_serving_evict_i),47)
+  `declare_counter(e_dc_miss_l2_ic,(~dcache_ready_i & l2_backlog_i & l2_serving_ic_i),41)
+  `declare_counter(e_dc_miss_l2_dc_fetch,(~dcache_ready_i & l2_serving_dc_i & ~l2_serving_evict_i),42)
+  `declare_counter(e_dc_miss_l2_dc_evict,(~dcache_ready_i & l2_backlog_i & l2_serving_dc_i & l2_serving_evict_i),43)
  
-  `declare_counter(e_dc_miss_is_miss,(~dcache_ready_i & dc_miss_i),75)
-  `declare_counter(e_dc_miss_is_late,(~dcache_ready_i & dc_late_i),76)
-  `declare_counter(e_dc_miss_is_busy_cnt,(~dcache_ready_i & dcache_ready_r & dc_busy_i),77)
-  `declare_counter(e_dc_miss_is_busy,(~dcache_ready_i & dc_busy_i),78)
+  `declare_counter(e_dc_miss_is_miss,(~dcache_ready_i & dc_miss_i),44)
+  `declare_counter(e_dc_miss_is_late,(~dcache_ready_i & dc_late_i),45)
+  `declare_counter(e_dc_miss_is_busy_cnt,(~dcache_ready_i & dcache_ready_r & dc_busy_i),46)
+  `declare_counter(e_dc_miss_is_busy,(~dcache_ready_i & dc_busy_i),47)
 
   // L2 miss
   `declare_counter(e_l2_ic_cnt,l2_cmd_v_i & l2_serving_ic_i,48)
