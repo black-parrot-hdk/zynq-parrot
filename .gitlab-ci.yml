@@ -121,7 +121,6 @@ shell-example-vivado:
     - make -C cosim/shell-example/vivado clean fpga_build
     - echo "Packing up bitstream"
     - make -C cosim/shell-example/vivado pack_bitstream
-    - mv shell_bd_1.tar.xz.b64 shell_bd_1.pynqz2.tar.xz.b64
   artifacts:
     paths:
       - cosim/shell-example/vivado/vivado.log
