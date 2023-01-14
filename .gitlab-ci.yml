@@ -139,7 +139,7 @@ shell-example-fpga:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
   script:
-    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run.sh
+    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/shell-example/fpga/run.log $CI_PROJECT_DIR/cosim/shell-example/fpga/run.log
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/shell-example/fpga/run.log
   artifacts:
@@ -206,7 +206,7 @@ double-shell-example-fpga:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
   script:
-    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run.sh
+    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/double-shell-example/fpga/run.log $CI_PROJECT_DIR/cosim/double-shell-example/fpga/run.log
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/double-shell-example/fpga/run.log
   artifacts:
@@ -228,7 +228,6 @@ dram-example-fpga:
     VIVADO_VERSION: "2022.1"
   before_script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
-    - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
   script:
     - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/dram-example-run.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/dram-example/fpga/run.log $CI_PROJECT_DIR/cosim/dram-example/fpga/run.log
@@ -296,7 +295,7 @@ black-parrot-example-fpga:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
   script:
-    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run.sh
+    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/fpga/run.log $CI_PROJECT_DIR/cosim/black-parrot-example/fpga/run.log
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/fpga/run.log
   artifacts:
