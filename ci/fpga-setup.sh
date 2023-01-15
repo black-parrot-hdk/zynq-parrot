@@ -1,6 +1,7 @@
 #!/bin/bash
 
 echo "Executing script as: $USER"
+echo "$CI_MOUNT_DIR $CI_COMMIT_SHA"
 
 if [ -z "$CI_MOUNT_DIR" ]
 then

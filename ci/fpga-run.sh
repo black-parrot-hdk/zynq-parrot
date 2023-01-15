@@ -1,6 +1,7 @@
 #!/bin/bash
 
 echo "Executing scripts as: $USER"
+echo "$CI_LOCAL_IP:$CI_MOUNT_DIR ${BASENAME}"
 
 echo "Unmounting current mount"
 sudo umount -f /home/xilinx/mnt
