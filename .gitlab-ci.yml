@@ -59,7 +59,6 @@ simple-example-vivado:
     - cp $CI_MISC_DIR/simple_bd_1.pynqz2.tar.xz.b64 cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
   artifacts:
     paths:
-      - cosim/simple-example/vivado/vivado.log
       - cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
 
 simple-example-fpga:
@@ -73,7 +72,7 @@ simple-example-fpga:
   before_script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosm/simple-example/simple_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
   script:
     - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/simple-example/fpga/run.log $CI_PROJECT_DIR/cosim/simple-example/fpga/run.log
@@ -139,7 +138,7 @@ shell-example-fpga:
   before_script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosm/shell-example/shell_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/shell-example/shell_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/shell-example/shell_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/shell-example/shell_bd_1.pynqz2.tar.xz.b64
   script:
     - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/shell-example/fpga/run.log $CI_PROJECT_DIR/cosim/shell-example/fpga/run.log
@@ -207,7 +206,7 @@ double-shell-example-fpga:
   before_script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosm/double-shell-example/double-shell_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/double-shell-example/double-shell_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/double-shell-example/double-shell_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/double-shell-example/double-shell_bd_1.pynqz2.tar.xz.b64
   script:
     - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/double-shell-example/fpga/run.log $CI_PROJECT_DIR/cosim/double-shell-example/fpga/run.log
@@ -301,7 +300,7 @@ black-parrot-example-fpga:
   before_script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosm/black-parrot-example/blackparrot_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/blackparrot_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/black-parrot-example/blackparrot_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/blackparrot_bd_1.pynqz2.tar.xz.b64
   script:
     - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/fpga/run.log $CI_PROJECT_DIR/cosim/black-parrot-example/fpga/run.log
