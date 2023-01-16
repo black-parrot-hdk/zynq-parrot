@@ -51,38 +51,23 @@ include $(TOP)/cosim/mk/Makefile.verilator
 #############################
 # Regression routines
 #############################
-SUITE=
-PROG=
+SUITE ?=
+PROG  ?=
 test:
 	mkdir -p $(SUITE)
-	RISCV_FILE=$(BLACKPARROT_SDK_DIR)/prog/$(SUITE)/$(PROG).riscv
-	echo $(RISCV_FILE)
-	NBF_FILE=$(SOFTWARE_NBF_DIR)/$(SUITE)/$(PROG).nbf
-	echo $(NBF_FILE)
-	$(BLACKPARROT_SDK_DIR)/install/bin/riscv64-unknown-elf-dramfs-objdump -D $(SUITE)/$(PROG).riscv > $(SUITE)/$(PROG).dump
-	echo "Cosimulating $(SUITE): $(PROG).riscv"
+	$(eval RISCV_FILE=$(BLACKPARROT_SDK_DIR)/prog/$(SUITE)/$(PROG).riscv)
+	$(eval NBF_FILE=$(SOFTWARE_NBF_DIR)/$(SUITE)/$(PROG).nbf)
+	$(BLACKPARROT_SDK_DIR)/install/bin/riscv64-unknown-elf-dramfs-objdump -D $(RISCV_FILE) > $(SUITE)/$(PROG).dump
+	@echo "Cosimulating $(SUITE): $(PROG).riscv"
 	$(MAKE) run
-	mv run.log $(SUITE)/$(PROG).log
-	ifeq ($(shell grep -cE "FAIL|MISMATCH" $(SUITE)/$(PROG).log), 0)
-		echo PASS
-	else
-		echo FAIL or MISMATCH
-		mv $(SUITE)/$(PROG).log $(SUITE)/FAIL_$(PROG).log
-	endif
-
-test_all:
-	echo "Example usage: make SUITE=beebs [ PROG=aha-compress ]"
-	mkdir -p $(SUITE)
-	echo "Running regression with $(SUITE)"
-	for f in $(BLACKPARROT_SDK_DIR)/prog/$(SUITE)/*.riscv; do \
-		f1=$${f##*/}; \
-		PROG=$${f1%%.*}; \
-		NBF_FILE=$(SOFTWARE_NBF_DIR)/$(SUITE)/$(PROG); \
-		NBF_FILE+='.nbf'; \
-		RISCV_FILE=$$f; \
-		echo Cosimulating $(SUITE)/$$PROG.riscv; \
-		echo $(NBF_FILE); \
-		echo $(RISCV_FILE); \
-		$(MAKE) run; \
-		mv run.log $(SUITE)/$(PROG).log; \
-	done
+	if [[ $(shell grep -cE "FAIL|MISMATCH" run.log) -gt 0 ]]; then \
+		echo Cosimulation failed;               \
+		cp run.log $(SUITE)/FAIL_$(PROG).log;   \
+	fi
+	if [[ $(shell grep -c  "PASS" run.log) -gt 0 ]]; then \
+		echo Cosimulation passed;               \
+		cp run.log $(SUITE)/PASS_$(PROG).log;   \
+	else                                      \
+		echo Cosimulation flopped;              \
+		cp run.log $(SUITE)/FLOP_$(PROG).log;   \
+	fi
