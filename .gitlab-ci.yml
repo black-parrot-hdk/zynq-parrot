@@ -26,6 +26,7 @@ simple-example-verilator:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="simple"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
+    - export EXAMPLE_NAME="simple-example"
   script:
     - make -C cosim/simple-example/verilator/ run
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/simple-example/verilator/run.log
@@ -41,6 +42,7 @@ simple-example-vcs:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="simple"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
+    - export EXAMPLE_NAME="simple-example"
   script:
     - make -C cosim/simple-example/vcs/ run
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/simple-example/vcs/run.log
@@ -56,6 +58,7 @@ simple-example-vivado:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="simple"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
+    - export EXAMPLE_NAME="simple-example"
   script:
     - echo "Simple example does not have a vivado script, copying from local copy"
     - cp $CI_MISC_DIR/simple_bd_1.pynqz2.tar.xz.b64 cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
@@ -71,6 +74,7 @@ simple-example-fpga:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="simple"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
+    - export EXAMPLE_NAME="simple-example"
   script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
@@ -92,6 +96,7 @@ shell-example-verilator:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
+    - export EXAMPLE_NAME="shell-example"
   script:
     - make -C cosim/shell-example/verilator/ run
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/shell-example/verilator/run.log
@@ -107,6 +112,7 @@ shell-example-vcs:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
+    - export EXAMPLE_NAME="shell-example"
   script:
     - make -C cosim/shell-example/vcs/ run
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/shell-example/vcs/run.log
@@ -122,6 +128,7 @@ shell-example-vivado:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
+    - export EXAMPLE_NAME="shell-example"
   script:
     - echo "Building shell-example for Pynq Z2"
     - make -C cosim/shell-example/vivado clean fpga_build
@@ -140,6 +147,7 @@ shell-example-fpga:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
+    - export EXAMPLE_NAME="shell-example"
   script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
@@ -163,6 +171,7 @@ double-shell-example-verilator:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="double_shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2020.1"
+    - export EXAMPLE_NAME="double-shell-example"
   script:
     - make -C cosim/double-shell-example/verilator/ run
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/double-shell-example/verilator/run.log
@@ -178,6 +187,7 @@ double-shell-example-vcs:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="double_shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2020.1"
+    - export EXAMPLE_NAME="double-shell-example"
   script:
     - make -C cosim/double-shell-example/vcs/ run
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/double-shell-example/vcs/run.log
@@ -193,6 +203,7 @@ double-shell-example-vivado:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="double_shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2020.1"
+    - export EXAMPLE_NAME="double-shell-example"
   script:
     - echo "Building double-shell-example for Pynq Z2"
     - make -C cosim/double-shell-example/vivado clean fpga_build
@@ -211,6 +222,7 @@ double-shell-example-fpga:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="double_shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2020.1"
+    - export EXAMPLE_NAME="double-shell-example"
   script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
@@ -234,6 +246,7 @@ dram-example-fpga:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="dram"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
+    - export EXAMPLE_NAME="dram-example"
   script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/dram-run.sh | envsubst > $CI_PROJECT_DIR/ci/dram-run-envsubst.sh
@@ -256,6 +269,7 @@ black-parrot-example-verilator:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
+    - export EXAMPLE_NAME="black-parrot-example"
   script:
     - make -C cosim/black-parrot-example/verilator/ run NBF_FILE=$SOFTWARE_NBF_DIR/bp-tests/hello_world.nbf
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/verilator/run.log
@@ -272,6 +286,7 @@ black-parrot-example-vcs:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
+    - export EXAMPLE_NAME="black-parrot-example"
   script:
     - make -C cosim/black-parrot-example/vcs/ run NBF_FILE=$SOFTWARE_NBF_DIR/bp-tests/hello_world.nbf
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/vcs/run.log
@@ -288,6 +303,7 @@ black-parrot-example-vivado:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
+    - export EXAMPLE_NAME="black-parrot-example"
   script:
     - echo "Building black-parrot-example for Pynq Z2"
     - make -C cosim/black-parrot-example/vivado clean fpga_build
@@ -307,6 +323,7 @@ black-parrot-example-fpga:
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
+    - export EXAMPLE_NAME="black-parrot-example"
   script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh

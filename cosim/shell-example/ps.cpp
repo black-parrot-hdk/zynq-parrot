@@ -74,29 +74,29 @@ extern "C" void cosim_main(char *argstr) {
 #define TEST_LOOP    \
   *p = val;          \
   /* this will show the last address written; a good test for whether NEON is working */ \
-  printf("received %x\n",zpl->axil_read(0x30 + GP0_ADDR_BASE)); \
-  uint64_t start=get_microseconds();                            \
-  int limit = 100000; \
-  for (int i = 0; i < limit; i++) \
-    { \
-      *p = val;      *p = val;      *p = val;      *p = val;      \
-      *p = val;      *p = val;      *p = val;      *p = val;      \
-      *p = val;      *p = val;      *p = val;      *p = val;      \
-      *p = val;      *p = val;      *p = val;      *p = val;      \
-    }\
-  uint64_t net=get_microseconds()-start;\
-  /* * 16 because of unroll factor */   \
+  printf("received %lx\n",zpl->axil_read(0x30 + GP0_ADDR_BASE)); \
+  uint64_t start=get_microseconds();                             \
+  int limit = 100000;                                            \
+  for (int i = 0; i < limit; i++)                                \
+    {                                                            \
+      *p = val;      *p = val;      *p = val;      *p = val;     \
+      *p = val;      *p = val;      *p = val;      *p = val;     \
+      *p = val;      *p = val;      *p = val;      *p = val;     \
+      *p = val;      *p = val;      *p = val;      *p = val;     \
+    }                                                            \
+  uint64_t net=get_microseconds()-start;                         \
+  /* * 16 because of unroll factor */                            \
   printf("%s: %llu microseconds for %d xfers: %f words per microsecond\n",label,net,limit*16,((double) (limit * 16 * words_per_xfer)) / ((double) net) ); 
 
   {
-    volatile uint32x4_t *p =  (uint32x4_t *) zpl->axil_get_ptr(0x0+GP0_ADDR_BASE);
+    volatile uint32x4_t *p =  (uint32x4_t *)zpl->axil_get_ptr(0x0+GP0_ADDR_BASE);
     uint32x4_t val = set4(23,12,1,43);
     uint32_t words_per_xfer = 4;
     const char *label="neon 4x32:";
     TEST_LOOP
   }
   {
-    volatile int *p = (volatile int *p)zpl->axil_get_ptr(0x0+GP0_ADDR_BASE); 
+    volatile int *p = (volatile int *)zpl->axil_get_ptr(0x0+GP0_ADDR_BASE);
     uint32_t val = 23;
     uint32_t words_per_xfer = 1;
     const char *label="int32    :";
@@ -118,7 +118,7 @@ extern "C" void cosim_main(char *argstr) {
   assert((zpl->axil_read(0x1C + GP0_ADDR_BASE) == 0));
 
   // check input fifo counters
-  bsg_pr_dbg_ps("%x\n", zpl->axil_read(0x20 + GP0_ADDR_BASE));
+  bsg_pr_dbg_ps("%lx\n", zpl->axil_read(0x20 + GP0_ADDR_BASE));
   assert((zpl->axil_read(0x20 + GP0_ADDR_BASE) == 4));
   assert((zpl->axil_read(0x24 + GP0_ADDR_BASE) == 4));
   assert((zpl->axil_read(0x28 + GP0_ADDR_BASE) == 4));
