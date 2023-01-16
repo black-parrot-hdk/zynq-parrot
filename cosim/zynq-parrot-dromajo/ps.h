@@ -107,7 +107,7 @@ static inline double get_current_time_in_seconds(void) {
   return ts.tv_sec + ts.tv_nsec * 1e-9;
 }
 
-void dromajo_init(int hartid, int ncpus, int memory_size) {
+void dromajo_init(int hartid, int ncpus, int memory_size, char *prog_str) {
   if (!hartid) {
     if (!init) {
       init = 1;
@@ -131,10 +131,8 @@ void dromajo_init(int hartid, int ncpus, int memory_size) {
       sprintf(mulh_str, "--enable_mulh");
       char trace_str[50]; // reserved for later
       sprintf(trace_str, "--trace=0");
-      char prog_str[50];
-      sprintf(prog_str, "../prog.riscv");
 
-      char* argv[] = {dromajo_str, ncpus_str, memsize_str, mmio_str, prog_str, amo_str, mulh_str};
+      char* argv[] = {dromajo_str, ncpus_str, memsize_str, mmio_str, amo_str, mulh_str, prog_str};
       dromajo_pointer = dromajo_cosim_init(sizeof(argv)/sizeof(char *), argv);
     }
   }

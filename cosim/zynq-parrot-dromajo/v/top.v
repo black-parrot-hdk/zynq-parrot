@@ -20,6 +20,7 @@ module top
 `ifdef FPGA
     input wire                                   aclk
     ,input wire                                  aresetn
+    ,input wire                                  rt_clk
 
     ,input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
     ,input wire [2 : 0]                          s00_axi_awprot
@@ -129,6 +130,13 @@ module top
     assign {s00_axi_aresetn, s01_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn} = {4{aresetn}};
 `else
     );
+
+    localparam rt_clk_period_lp = 2500000;
+    logic rt_clk;
+    bsg_nonsynth_clock_gen
+     #(.cycle_time_p(rt_clk_period_lp))
+     rt_clk_gen
+      (.o(rt_clk));
 
     logic s00_axi_aclk, s00_axi_aresetn;
     logic [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_awaddr;
@@ -365,7 +373,9 @@ module top
       ,.C_M01_AXI_ADDR_WIDTH(C_M01_AXI_ADDR_WIDTH)
       )
      top_fpga_inst
-     (.s00_axi_aclk    (s00_axi_aclk)
+     (.rt_clk          (rt_clk)
+
+      ,.s00_axi_aclk   (s00_axi_aclk)
       ,.s00_axi_aresetn(s00_axi_aresetn)
       ,.s00_axi_awaddr (s00_axi_awaddr)
       ,.s00_axi_awprot (s00_axi_awprot)

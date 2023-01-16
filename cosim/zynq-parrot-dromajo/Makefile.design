@@ -1,0 +1,11 @@
+TOP  := $(shell git rev-parse --show-toplevel)
+CURR := $(shell pwd)
+include $(TOP)/Makefile.common
+
+#############################
+# Design Settings
+#############################
+BOARDNAME  ?= ultra96
+TOP_MODULE ?= top
+BASENAME   ?= blackparrot
+

@@ -1,20 +1,12 @@
-TOP  := $(shell git rev-parse --show-toplevel)
-CURR := $(shell pwd)
-
-#############################
-# Project Settings
-#############################
-export TOP_MODULE ?= top
+include ../Makefile.design
 
 #############################
 # Accelerator Software Settings
 #############################
-export NBF_FILE     ?= $(abspath ../prog.nbf)
-export HOST_PROGRAM ?= $(abspath ../ps.cpp)
-export BASE_FLIST   ?= $(abspath ../flist.vcs)
-export FLIST        ?= $(abspath flist.vcs)
-export SIM_ARGS     += $(NBF_FILE)
-export SIM_DEFINES  += -DVERILATOR
+NBF_FILE     ?= $(abspath ../prog.nbf)
+RISCV_FILE   ?= $(abspath ../prog.riscv)
+HOST_PROGRAM ?= $(abspath ../ps.cpp)
+SIM_ARGS     += $(NBF_FILE) $(RISCV_FILE)
 
 SKIP_DRAM ?= -DSKIP_DRAM_TESTING
 BP_NCPUS ?= 1
@@ -35,22 +27,62 @@ LDFLAGS += -L$(BLACKPARROT_TOOLS_DIR)/dromajo/build/ -ldromajo_cosim
 #CFLAGS += -DSIM_BACKPRESSURE_CHANCE=5
 #CFLAGS += -DSIM_BACKPRESSURE_LENGTH=100
 
-include $(TOP)/cosim/mk/Makefile.verilator
-
 #############################
 # Modify base flist
 #############################
+BASE_FLIST ?= $(abspath ../flist.vcs)
+FLIST      ?= $(abspath flist.vcs)
 $(FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs $(BASE_FLIST)
-	echo "+incdir+$(CURR_SRC_DIR)" > $@
+	cat $^ | envsubst > $@
+	echo "+incdir+$(CURR_SRC_DIR)" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.v " >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.v " >> $@
 	echo "$(COSIM_SRC_DIR)/bsg_nonsynth_dpi_to_axil.v" >> $@
 	echo "$(COSIM_SRC_DIR)/bsg_nonsynth_axil_to_dpi.v" >> $@
-	cat $^ | envsubst >> $@
 	# Replace hardened memory which is incorrectly inferred on some Xilinx FPGAs
 	sed -i "/bsg_mem_1rw_sync_mask_write_bit.v/d" $@
 	sed -i "/bsg_mem_1rw_sync_mask_write_bit_synth.v/d" $@
 	echo "$(BASEJUMP_STL_DIR)/hard/ultrascale_plus/bsg_mem/bsg_mem_1rw_sync_mask_write_bit.v" >> $@
 	sed -i "s|.*/bsg_clkgate_optional.v|$(BASEJUMP_STL_DIR)/hard/ultrascale_plus/bsg_misc/bsg_clkgate_optional.v|" $@
 
+include $(TOP)/cosim/mk/Makefile.verilator
+
+#############################
+# Regression routines
+#############################
+SUITE=
+PROG=
+test:
+	mkdir -p $(SUITE)
+	RISCV_FILE=$(BLACKPARROT_SDK_DIR)/prog/$(SUITE)/$(PROG).riscv
+	echo $(RISCV_FILE)
+	NBF_FILE=$(SOFTWARE_NBF_DIR)/$(SUITE)/$(PROG).nbf
+	echo $(NBF_FILE)
+	$(BLACKPARROT_SDK_DIR)/install/bin/riscv64-unknown-elf-dramfs-objdump -D $(SUITE)/$(PROG).riscv > $(SUITE)/$(PROG).dump
+	echo "Cosimulating $(SUITE): $(PROG).riscv"
+	$(MAKE) run
+	mv run.log $(SUITE)/$(PROG).log
+	ifeq ($(shell grep -cE "FAIL|MISMATCH" $(SUITE)/$(PROG).log), 0)
+		echo PASS
+	else
+		echo FAIL or MISMATCH
+		mv $(SUITE)/$(PROG).log $(SUITE)/FAIL_$(PROG).log
+	endif
+
+test_all:
+	echo "Example usage: make SUITE=beebs [ PROG=aha-compress ]"
+	mkdir -p $(SUITE)
+	echo "Running regression with $(SUITE)"
+	for f in $(BLACKPARROT_SDK_DIR)/prog/$(SUITE)/*.riscv; do \
+		f1=$${f##*/}; \
+		PROG=$${f1%%.*}; \
+		NBF_FILE=$(SOFTWARE_NBF_DIR)/$(SUITE)/$(PROG); \
+		NBF_FILE+='.nbf'; \
+		RISCV_FILE=$$f; \
+		echo Cosimulating $(SUITE)/$$PROG.riscv; \
+		echo $(NBF_FILE); \
+		echo $(RISCV_FILE); \
+		$(MAKE) run; \
+		mv run.log $(SUITE)/$(PROG).log; \
+	done

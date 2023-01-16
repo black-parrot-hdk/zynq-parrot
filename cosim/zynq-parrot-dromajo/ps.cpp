@@ -76,6 +76,11 @@ extern "C" void cosim_main(char *argstr) {
     sleep(1 << 31);
     delete zpl;
     exit(0);
+  } else if(argc == 2) {
+    bsg_pr_warn(
+        "No riscv file specified; exiting cosimulation\n");
+    delete zpl;
+    exit(0);
   }
 
   // assert reset, we do it repeatedly just to make sure that enough cycles pass
@@ -143,7 +148,7 @@ extern "C" void cosim_main(char *argstr) {
   //  }
 
   // initialize dromajo VM
-  dromajo_init(0, 1, 256); // TODO draw parameters from shell?
+  dromajo_init(0, 1, 256, argv[2]); // TODO draw parameters from shell?
 
   bsg_pr_info("ps.cpp: polling i/o\n");
   while (max_insns > 0) {
