@@ -150,6 +150,7 @@ module top_zynq
    localparam bp_axi_addr_width_lp  = 32;
    localparam bp_axi_data_width_lp  = 64;
 
+   logic [2:0]                                  csr_data_v_lo;
    logic [2:0][C_S00_AXI_DATA_WIDTH-1:0]        csr_data_lo;
    logic [C_S00_AXI_DATA_WIDTH-1:0]             pl_to_ps_fifo_data_li, ps_to_pl_fifo_data_lo;
    logic                                        pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
@@ -213,7 +214,8 @@ module top_zynq
       ,.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
       ) zps
        (
-        .csr_data_o(csr_data_lo)
+        .csr_data_v_o(csr_data_v_lo)
+        ,.csr_data_o(csr_data_lo)
 
         // (MBT)
         // note: this ability to probe into the core is not supported in ASIC toolflows but
