@@ -263,7 +263,6 @@ dram-example-fpga:
 black-parrot-example-verilator:
   <<: *job_definition
   stage: verilator
-  when: manual
   tags:
     - verilator
   before_script:
@@ -280,7 +279,6 @@ black-parrot-example-verilator:
 black-parrot-example-vcs:
   <<: *job_definition
   stage: vcs
-  when: manual
   tags:
     - vcs
   before_script:
@@ -297,7 +295,6 @@ black-parrot-example-vcs:
 black-parrot-example-vivado:
   <<: *job_definition
   stage: vivado
-  when: manual
   tags:
     - vivado
   before_script:
@@ -317,7 +314,6 @@ black-parrot-example-vivado:
 black-parrot-example-fpga:
   <<: *job_definition
   stage: fpga
-  when: manual
   tags:
     - fpga
   before_script:
