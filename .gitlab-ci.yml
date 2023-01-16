@@ -320,11 +320,13 @@ black-parrot-example-fpga:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="black-parrot-example"
+    - export NBF_FILE=/home/xilinx/mnt/zynqparrot_nbf/bp-tests/hello_world.nbf
   script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
-    - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
+    - cat $CI_PROJECT_DIR/ci/blackparrot-run.sh | envsubst > $CI_PROJECT_DIR/ci/blackparrot-run-envsubst.sh
     - cp $CI_PROJECT_DIR/cosim/black-parrot-example/blackparrot_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/blackparrot_bd_1.pynqz2.tar.xz.b64
-    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
+    - cp -r $SOFTWARE_NBF_DIR $CI_MOUNT_DIR/zynqparrot_nbf
+    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/blackparrot-run-envsubst.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/fpga/run.log $CI_PROJECT_DIR/cosim/black-parrot-example/fpga/run.log
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/fpga/run.log
   artifacts:
