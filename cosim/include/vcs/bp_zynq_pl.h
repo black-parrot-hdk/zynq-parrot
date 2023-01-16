@@ -51,12 +51,15 @@ public:
   }
 };
 
+class bsg_tag_bitbang;
+
 class bp_zynq_pl {
-public:
+
   std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > axi_gp0;
   std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > axi_gp1;
   std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> > axi_hp0;
-
+public:
+  std::unique_ptr<bsg_tag_bitbang> tag;
   std::unique_ptr<zynq_scratchpad> scratchpad;
 
   // Move the simulation forward to the next DPI event
@@ -66,7 +69,9 @@ public:
 
   bp_zynq_pl(int argc, char *argv[]) {
     tick();
-
+#ifdef BITBANG_ENABLE
+    tag = std::make_unique<bsg_tag_bitbang>();
+#endif
 #ifdef GP0_ENABLE
     axi_gp0 = std::make_unique<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> >(
         STRINGIFY(GP0_HIER_BASE));

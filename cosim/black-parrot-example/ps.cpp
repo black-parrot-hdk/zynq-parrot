@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <bitset>
 
+#include "bsg_tag_bitbang.h"
 #include "bp_zynq_pl.h"
 #include "bsg_printing.h"
 #include "bsg_argparse.h"
@@ -39,7 +40,7 @@
 #endif
 
 // GP0 Read Memory Map
-#define GP0_RD_CSR_RESET       0x0
+#define GP0_RD_CSR_BITBANG     0x0
 #define GP0_RD_CSR_DRAM_INITED 0x4
 #define GP0_RD_CSR_DRAM_BASE   0x8
 #define GP0_RD_PL2PS_FIFO_DATA 0xC
@@ -52,15 +53,19 @@
 #define GP0_RD_MEM_PROF_3      0x2C
 
 // GP0 Write Memory Map
-#define GP0_WR_CSR_RESET           GP0_RD_CSR_RESET
+#define GP0_WR_CSR_BITBANG         GP0_RD_CSR_BITBANG
 #define GP0_WR_CSR_DRAM_INITED     GP0_RD_CSR_DRAM_INITED
 #define GP0_WR_CSR_DRAM_BASE       GP0_RD_CSR_DRAM_BASE
 #define GP0_WR_PS2PL_FIFO_DATA 0xC
 
+// DRAM
 #define DRAM_BASE_ADDR  0x80000000U
 #define DRAM_MAX_ALLOC_SIZE 0x20000000U
+// GP1
 #define GP1_DRAM_BASE_ADDR gp1_addr_base
 #define GP1_CSR_BASE_ADDR (gp1_addr_base + DRAM_MAX_ALLOC_SIZE)
+
+#define NUM_RESET 1
 
 // Helper functions
 void nbf_load(bp_zynq_pl *zpl, char *filename);
@@ -148,13 +153,24 @@ extern "C" void cosim_main(char *argstr) {
 
   long val;
   bsg_pr_info("ps.cpp: reading three base registers\n");
-  bsg_pr_info("ps.cpp: reset(lo)=%ld dram_init=%ld, dram_base=%lx\n",
-              zpl->axil_read(GP0_RD_CSR_RESET       + gp0_addr_base),
+  bsg_pr_info("ps.cpp: reset(lo)=%d dram_init=%d, dram_base=%x\n",
+              zpl->axil_read(GP0_RD_CSR_BITBANG + gp0_addr_base),
               zpl->axil_read(GP0_RD_CSR_DRAM_INITED + gp0_addr_base),
               val = zpl->axil_read(GP0_RD_CSR_DRAM_BASE + gp0_addr_base));
+#ifdef BITBANG_ENABLE
+  // Reset the bsg tag master
+  zpl->tag->bsg_tag_reset(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base);
+  // Reset bsg client0
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 0, 0, -1U);
+  // Set bsg client0 to 1 (assert BP reset)
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 0, 0x1);
+  // Set bsg client0 to 0 (deassert BP reset)
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 0, 0x0);
 
-  bsg_pr_info("ps.cpp: putting BP into reset\n");
-  zpl->axil_write(GP0_WR_CSR_RESET + gp0_addr_base, 0x0, mask1); // BP reset
+  // We need some additional toggles for data to propagate through
+  for(int i = 0;i < 4;i++)
+    zpl->tag->bsg_tag_bit_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, 0x0);
+#endif
 
   bsg_pr_info("ps.cpp: attempting to write and read register 0x8\n");
 
@@ -200,26 +216,6 @@ extern "C" void cosim_main(char *argstr) {
     delete zpl;
     exit(0);
   }
-
-  bsg_pr_info("ps.cpp: asserting reset to BP\n");
-
-  // Assert reset, we do it repeatedly just to make sure that enough cycles pass
-  zpl->axil_write(GP0_WR_CSR_RESET + gp0_addr_base, 0x0, mask1);
-  assert((zpl->axil_read(GP0_RD_CSR_RESET + gp0_addr_base) == (0)));
-  zpl->axil_write(GP0_WR_CSR_RESET + gp0_addr_base, 0x0, mask1);
-  assert((zpl->axil_read(GP0_RD_CSR_RESET + gp0_addr_base) == (0)));
-  zpl->axil_write(GP0_WR_CSR_RESET + gp0_addr_base, 0x0, mask1);
-  assert((zpl->axil_read(GP0_RD_CSR_RESET + gp0_addr_base) == (0)));
-  zpl->axil_write(GP0_WR_CSR_RESET + gp0_addr_base, 0x0, mask1);
-  assert((zpl->axil_read(GP0_RD_CSR_RESET + gp0_addr_base) == (0)));
-
-  // Deassert reset
-  bsg_pr_info("ps.cpp: deasserting reset to BP\n");
-  zpl->axil_write(GP0_WR_CSR_RESET + gp0_addr_base, 0x1, mask1);
-  zpl->axil_write(GP0_WR_CSR_RESET + gp0_addr_base, 0x1, mask1);
-  zpl->axil_write(GP0_WR_CSR_RESET + gp0_addr_base, 0x1, mask1);
-
-  bsg_pr_info("Reset asserted and deasserted\n");
 
   bsg_pr_info("ps.cpp: attempting to read mtime reg in BP CFG space, should "
               "increase monotonically  (testing ARM GP1 connections)\n");
