@@ -30,11 +30,12 @@ module top_zynq
    , parameter integer C_M01_AXI_DATA_WIDTH   = 32
    , parameter integer C_M01_AXI_ADDR_WIDTH   = 32
    )
-  (input wire                                    rt_clk
-   
+  (input wire                                    aclk
+   , input wire                                  aresetn
+   , input wire                                  rt_clk
    // Ports of Axi Slave Bus Interface S00_AXI
    , input wire                                  s00_axi_aclk
-   , input wire                                  s00_axi_aresetn
+   , output wire                                 s00_axi_aresetn
    , input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
    , input wire [2 : 0]                          s00_axi_awprot
    , input wire                                  s00_axi_awvalid
@@ -56,7 +57,7 @@ module top_zynq
    , input wire                                  s00_axi_rready
 
    , input wire                                  s01_axi_aclk
-   , input wire                                  s01_axi_aresetn
+   , output wire                                 s01_axi_aresetn
    , input wire [C_S01_AXI_ADDR_WIDTH-1 : 0]     s01_axi_awaddr
    , input wire [2 : 0]                          s01_axi_awprot
    , input wire                                  s01_axi_awvalid
@@ -78,7 +79,7 @@ module top_zynq
    , input wire                                  s01_axi_rready
 
    , input wire                                  m00_axi_aclk
-   , input wire                                  m00_axi_aresetn
+   , output wire                                 m00_axi_aresetn
    , output wire [C_M00_AXI_ADDR_WIDTH-1:0]      m00_axi_awaddr
    , output wire                                 m00_axi_awvalid
    , input wire                                  m00_axi_awready
@@ -123,7 +124,7 @@ module top_zynq
    , input wire [1:0]                            m00_axi_rresp
 
    , input wire                                  m01_axi_aclk
-   , input wire                                  m01_axi_aresetn
+   , output wire                                 m01_axi_aresetn
    , output wire [C_M01_AXI_ADDR_WIDTH-1 : 0]    m01_axi_awaddr
    , output wire [2 : 0]                         m01_axi_awprot
    , output wire                                 m01_axi_awvalid
@@ -188,6 +189,8 @@ module top_zynq
      assign minstret_lo = blackparrot.m.multicore.cc.y[0].x[0].tile_node.tile_node.tile.core.core_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
    else
      assign minstret_lo = blackparrot.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
+
+   assign m00_axi_aresetn = s00_axi_aresetn;
 
    // BlackParrot reset signal is connected to a CSR (along with
    // the AXI interface reset) so that a regression can be launched
