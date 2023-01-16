@@ -201,7 +201,7 @@ double-shell-example-vivado:
   artifacts:
     paths:
       - cosim/double-shell-example/vivado/vivado.log
-      - cosim/double-shell-example/double-shell_bd_1.pynqz2.tar.xz.b64
+      - cosim/double-shell-example/double_shell_bd_1.pynqz2.tar.xz.b64
 
 double-shell-example-fpga:
   <<: *job_definition
@@ -214,7 +214,7 @@ double-shell-example-fpga:
   script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/double-shell-example/double-shell_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/double-shell-example/double-shell_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/double-shell-example/double_shell_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/double-shell-example/double_shell_bd_1.pynqz2.tar.xz.b64
     - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/double-shell-example/fpga/run.log $CI_PROJECT_DIR/cosim/double-shell-example/fpga/run.log
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/double-shell-example/fpga/run.log

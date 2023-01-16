@@ -96,7 +96,7 @@ extern "C" void cosim_main(char *argstr) {
     TEST_LOOP
   }
   {
-    volatile int *p = zpl->axil_get_ptr(0x0+GP0_ADDR_BASE); 
+    volatile int *p = (volatile int *p)zpl->axil_get_ptr(0x0+GP0_ADDR_BASE); 
     uint32_t val = 23;
     uint32_t words_per_xfer = 1;
     const char *label="int32    :";
