@@ -126,8 +126,10 @@ module top
     ,output wire                                 m01_axi_rready
     );
 
+    logic s00_axi_aclk, s01_axi_aclk, m00_axi_aclk, m01_axi_aclk;
+    logic s00_axi_aresetn, s01_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn;
+
     assign {s00_axi_aclk, s01_axi_aclk, m00_axi_aclk, m01_axi_aclk} = {4{aclk}};
-    assign {s00_axi_aresetn, s01_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn} = {4{aresetn}};
 `else
     );
 
@@ -157,7 +159,7 @@ module top
      #(.addr_width_p(C_S00_AXI_ADDR_WIDTH), .data_width_p(C_S00_AXI_DATA_WIDTH))
      axil0
       (.aclk_o(s00_axi_aclk)
-       ,.aresetn_o(s00_axi_aresetn)
+       ,.aresetn_o() // UNUSED
 
        ,.awaddr_o(s00_axi_awaddr)
        ,.awprot_o(s00_axi_awprot)
@@ -200,7 +202,7 @@ module top
      #(.addr_width_p(C_S01_AXI_ADDR_WIDTH), .data_width_p(C_S01_AXI_DATA_WIDTH))
      axil1
       (.aclk_o(s01_axi_aclk)
-       ,.aresetn_o(s01_axi_aresetn)
+       ,.aresetn_o() // UNUSED
 
        ,.awaddr_o(s01_axi_awaddr)
        ,.awprot_o(s01_axi_awprot)
@@ -244,7 +246,7 @@ module top
      #(.addr_width_p(C_M01_AXI_ADDR_WIDTH), .data_width_p(C_M01_AXI_DATA_WIDTH))
      axil2
       (.aclk_o(m01_axi_aclk)
-       ,.aresetn_o(m01_axi_aresetn)
+       ,.aresetn_o() // UNUSED
 
        ,.awaddr_i(m01_axi_awaddr)
        ,.awprot_i(m01_axi_awprot)
@@ -275,7 +277,6 @@ module top
    localparam axi_burst_len_p = 8;
 
    wire                                 m00_axi_aclk = s00_axi_aclk;
-   wire                                 m00_axi_aresetn = s00_axi_aresetn;
    wire [C_M00_AXI_ADDR_WIDTH-1:0]      m00_axi_awaddr;
    wire                                 m00_axi_awvalid;
    wire                                 m00_axi_awready;
@@ -373,8 +374,9 @@ module top
       ,.C_M01_AXI_ADDR_WIDTH(C_M01_AXI_ADDR_WIDTH)
       )
      top_fpga_inst
-     (.rt_clk          (rt_clk)
-
+     (.aclk            (aclk)
+      ,.aresetn        (aresetn)
+      ,.rt_clk         (rt_clk)
       ,.s00_axi_aclk   (s00_axi_aclk)
       ,.s00_axi_aresetn(s00_axi_aresetn)
       ,.s00_axi_awaddr (s00_axi_awaddr)
