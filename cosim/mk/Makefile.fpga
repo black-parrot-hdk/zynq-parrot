@@ -24,6 +24,9 @@ run: $(EXE)
 $(EXE): $(HOST_PROGRAM)
 	$(GCC) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $(CSOURCES) $< $(CFLAGS) $(LDFLAGS) -o $@
 
+reset_pl:
+	echo 'from pynq import PL; PL.reset();' | sudo -E $(PYTHON3)
+
 unpack_bitstream:
 	base64 -d ../$(BASENAME)_bd_1.$(BOARDNAME).tar.xz.b64 | tar xvJ
 

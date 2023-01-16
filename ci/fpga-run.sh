@@ -16,7 +16,7 @@ source /etc/profile.d/pynq_venv.sh
 echo "Unpacking bitstream"
 make -C cosim/${BASENAME}-example/fpga clean unpack_bitstream
 echo "Loading bitstream"
-make -C cosim/${BASENAME}-example/fpga load_bitstream
+make -C cosim/${BASENAME}-example/fpga reset_pl load_bitstream
 echo "Running test"
 make -C cosim/${BASENAME}-example/fpga run
 
