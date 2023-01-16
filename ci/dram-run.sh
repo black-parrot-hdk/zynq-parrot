@@ -12,6 +12,9 @@ echo "This must be set up correctly by the prescript"
 cd /home/xilinx/mnt/zynq-parrot
 echo "Sourcing python environment"
 source /etc/profile.d/pynq_venv.sh
+echo "Dropping VM"
+sudo sh -c "echo 1 > /proc/sys/vm/overcommit_memory"
+sudo sh -c "echo 1 > /proc/sys/vm/drop_caches"
 echo "Running test"
 make -C cosim/${BASENAME}-example/fpga run
 

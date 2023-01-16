@@ -13,6 +13,9 @@ echo "This must be set up correctly by the prescript"
 cd /home/xilinx/mnt/zynq-parrot
 echo "Sourcing python environment"
 source /etc/profile.d/pynq_venv.sh
+echo "Dropping VM"
+sudo sh -c "echo 1 > /proc/sys/vm/overcommit_memory"
+sudo sh -c "echo 1 > /proc/sys/vm/drop_caches"
 echo "Unpacking bitstream"
 make -C cosim/${EXAMPLE_NAME}/fpga clean unpack_bitstream
 echo "Loading bitstream"
