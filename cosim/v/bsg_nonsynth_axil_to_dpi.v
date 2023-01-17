@@ -5,8 +5,8 @@ module bsg_nonsynth_axil_to_dpi
  #(parameter `BSG_INV_PARAM(addr_width_p)
    , parameter `BSG_INV_PARAM(data_width_p)
    )
-  (output logic                      aclk_o
-   , output logic                    aresetn_o
+  (input                             aclk_i
+   , input                           aresetn_i
 
    , input [addr_width_p-1:0]        awaddr_i
    , input [2:0]                     awprot_i
@@ -33,22 +33,12 @@ module bsg_nonsynth_axil_to_dpi
    , input                           rready_i
    );
 
-    bsg_nonsynth_clock_gen
-     #(.cycle_time_p(1000))
-     clock_gen
-      (.o(aclk_o));
-
-    logic areset;
-    bsg_nonsynth_reset_gen
-     #(.reset_cycles_lo_p(0), .reset_cycles_hi_p(10))
-     reset_gen
-      (.clk_i(aclk_o), .async_reset_o(areset));
-    assign aresetn_o = ~areset;
+    wire areset = ~aresetn_i;
 
     bsg_nonsynth_dpi_gpio
      #(.width_p(1), .use_input_p(1))
      aclk_gpio
-      (.gpio_i(aclk_o), .gpio_o());
+      (.gpio_i(aclk_i), .gpio_o());
 
     bsg_nonsynth_dpi_gpio
      #(.width_p(1), .use_input_p(1))
