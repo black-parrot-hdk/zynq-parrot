@@ -129,7 +129,6 @@ module top
     logic s00_axi_aclk, s01_axi_aclk, m00_axi_aclk, m01_axi_aclk;
     logic s00_axi_aresetn, s01_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn;
 
-    assign {s00_axi_aclk, s01_axi_aclk, m00_axi_aclk, m01_axi_aclk} = {4{aclk}};
 `else
     );
 
@@ -140,7 +139,26 @@ module top
      rt_clk_gen
       (.o(rt_clk));
 
+    localparam aclk_period_lp = 1000;
+    logic aclk;
+    bsg_nonsynth_clock_gen
+     #(.cycle_time_p(aclk_period_lp))
+     aclk_gen
+      (.o(aclk));
+
+    logic areset;
+    bsg_nonsynth_reset_gen
+     #(.reset_cycles_lo_p(0), .reset_cycles_hi_p(10))
+     reset_gen
+      (.clk_i(aclk), .async_reset_o(areset));
+    wire aresetn = ~areset;
+
     logic s00_axi_aclk, s00_axi_aresetn;
+    logic s01_axi_aclk, s01_axi_aresetn;
+    logic m00_axi_aclk, m00_axi_aresetn;
+    logic m01_axi_aclk, m01_axi_aresetn;
+    assign {s00_axi_aclk, s01_axi_aclk, m00_axi_aclk, m01_axi_aclk} = {4{aclk}};
+
     logic [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_awaddr;
     logic [2:0] s00_axi_awprot;
     logic s00_axi_awvalid, s00_axi_awready;
@@ -158,8 +176,8 @@ module top
     bsg_nonsynth_dpi_to_axil
      #(.addr_width_p(C_S00_AXI_ADDR_WIDTH), .data_width_p(C_S00_AXI_DATA_WIDTH))
      axil0
-      (.aclk_o(s00_axi_aclk)
-       ,.aresetn_o() // UNUSED
+      (.aclk_i(s00_axi_aclk)
+       ,.aresetn_i(s00_axi_aresetn)
 
        ,.awaddr_o(s00_axi_awaddr)
        ,.awprot_o(s00_axi_awprot)
@@ -183,7 +201,6 @@ module top
        ,.rready_o(s00_axi_rready)
        );
 
-    logic s01_axi_aclk, s01_axi_aresetn;
     logic [C_S01_AXI_ADDR_WIDTH-1:0] s01_axi_awaddr;
     logic [2:0] s01_axi_awprot;
     logic s01_axi_awvalid, s01_axi_awready;
@@ -201,8 +218,8 @@ module top
     bsg_nonsynth_dpi_to_axil
      #(.addr_width_p(C_S01_AXI_ADDR_WIDTH), .data_width_p(C_S01_AXI_DATA_WIDTH))
      axil1
-      (.aclk_o(s01_axi_aclk)
-       ,.aresetn_o() // UNUSED
+      (.aclk_i(s01_axi_aclk)
+       ,.aresetn_i(s01_axi_aresetn)
 
        ,.awaddr_o(s01_axi_awaddr)
        ,.awprot_o(s01_axi_awprot)
@@ -227,7 +244,6 @@ module top
        );
 
     // TODO: Fix widths
-    logic m01_axi_aclk, m01_axi_aresetn;
     logic [C_M01_AXI_ADDR_WIDTH-1:0] m01_axi_awaddr;
     logic [2:0] m01_axi_awprot;
     logic m01_axi_awvalid, m01_axi_awready;
@@ -245,8 +261,8 @@ module top
     bsg_nonsynth_axil_to_dpi
      #(.addr_width_p(C_M01_AXI_ADDR_WIDTH), .data_width_p(C_M01_AXI_DATA_WIDTH))
      axil2
-      (.aclk_o(m01_axi_aclk)
-       ,.aresetn_o() // UNUSED
+      (.aclk_i(m01_axi_aclk)
+       ,.aresetn_i(m01_axi_aresetn)
 
        ,.awaddr_i(m01_axi_awaddr)
        ,.awprot_i(m01_axi_awprot)
@@ -276,7 +292,6 @@ module top
    localparam axi_strb_width_p = axi_data_width_p >> 3;
    localparam axi_burst_len_p = 8;
 
-   wire                                 m00_axi_aclk = s00_axi_aclk;
    wire [C_M00_AXI_ADDR_WIDTH-1:0]      m00_axi_awaddr;
    wire                                 m00_axi_awvalid;
    wire                                 m00_axi_awready;
