@@ -154,11 +154,6 @@ module top
     wire aresetn = ~areset;
 
     logic s00_axi_aclk, s00_axi_aresetn;
-    logic s01_axi_aclk, s01_axi_aresetn;
-    logic m00_axi_aclk, m00_axi_aresetn;
-    logic m01_axi_aclk, m01_axi_aresetn;
-    assign {s00_axi_aclk, s01_axi_aclk, m00_axi_aclk, m01_axi_aclk} = {4{aclk}};
-
     logic [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_awaddr;
     logic [2:0] s00_axi_awprot;
     logic s00_axi_awvalid, s00_axi_awready;
@@ -201,6 +196,7 @@ module top
        ,.rready_o(s00_axi_rready)
        );
 
+    logic s01_axi_aclk, s01_axi_aresetn;
     logic [C_S01_AXI_ADDR_WIDTH-1:0] s01_axi_awaddr;
     logic [2:0] s01_axi_awprot;
     logic s01_axi_awvalid, s01_axi_awready;
@@ -244,6 +240,7 @@ module top
        );
 
     // TODO: Fix widths
+    logic m01_axi_aclk, m01_axi_aresetn;
     logic [C_M01_AXI_ADDR_WIDTH-1:0] m01_axi_awaddr;
     logic [2:0] m01_axi_awprot;
     logic m01_axi_awvalid, m01_axi_awready;
@@ -292,6 +289,8 @@ module top
    localparam axi_strb_width_p = axi_data_width_p >> 3;
    localparam axi_burst_len_p = 8;
 
+   logic                                m00_axi_aclk;
+   logic                                m00_axi_aresetn;
    wire [C_M00_AXI_ADDR_WIDTH-1:0]      m00_axi_awaddr;
    wire                                 m00_axi_awvalid;
    wire                                 m00_axi_awready;
@@ -377,6 +376,8 @@ module top
       ,.axi_rready_i  (m00_axi_rready)
       );
 `endif
+
+   assign {s00_axi_aclk, s01_axi_aclk, m00_axi_aclk, m01_axi_aclk} = {4{aclk}};
 
    top_zynq #
      (.C_S00_AXI_DATA_WIDTH (C_S00_AXI_DATA_WIDTH)

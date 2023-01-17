@@ -190,12 +190,29 @@ module top_zynq
    else
      assign minstret_lo = blackparrot.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
 
-   assign m00_axi_aresetn = s00_axi_aresetn;
+   // Reset Generation Logic
 
-   // BlackParrot reset signal is connected to a CSR (along with
-   // the AXI interface reset) so that a regression can be launched
-   // without having to reload the bitstream
-   wire bp_reset_li = (~csr_data_lo[0][0]) || (~s01_axi_aresetn);
+   localparam num_reset_lp = 1;
+   logic resets_lo;
+   wire tag_data_li = csr_data_lo[0][0];
+   wire tag_v_li = csr_data_v_lo[0];
+   bsg_tag_reset_gen #(
+      .els_p(num_reset_lp)
+   ) reset_gen (
+      .tag_clk_i(aclk)
+     ,.tag_reset_i(~aresetn)
+     ,.tag_data_i(tag_data_li)
+     ,.tag_v_i(tag_v_li)
+     ,.clks_i({aclk})
+     ,.resets_o({resets_lo}) // assuming the PS programmer uses high-true signals
+   );
+
+   // When aresetn is asserted, s00 will be the only axi bus that has been initialized
+   assign s00_axi_aresetn = aresetn;
+   // Other axi buses need to be initialized through bit banging from PS
+   assign {s01_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn} = {3{~resets_lo}};
+
+   wire bp_reset_li = ~s01_axi_aresetn;
 
    // Connect Shell to AXI Bus Interface S00_AXI
    bsg_zynq_pl_shell #
