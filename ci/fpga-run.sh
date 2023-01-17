@@ -23,7 +23,5 @@ make -C cosim/${EXAMPLE_NAME}/fpga reset_pl load_bitstream
 echo "Running test"
 make -C cosim/${EXAMPLE_NAME}/fpga run
 
-sudo shutdown --reboot +1 "System is going down for reboot in 1 minute"
-
 exit 0
 
