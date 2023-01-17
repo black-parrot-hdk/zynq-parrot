@@ -33,8 +33,6 @@ module bsg_nonsynth_dpi_to_axil
    , output logic                           rready_o
    );
 
-    wire areset = ~aresetn_i;
-
     bsg_nonsynth_dpi_gpio
      #(.width_p(1), .use_input_p(1))
      aclk_gpio
@@ -43,7 +41,7 @@ module bsg_nonsynth_dpi_to_axil
     bsg_nonsynth_dpi_gpio
      #(.width_p(1), .use_input_p(1))
      aresetn_gpio
-      (.gpio_i(areset), .gpio_o());
+      (.gpio_i(aresetn_i), .gpio_o());
 
     bsg_nonsynth_dpi_gpio
      #(.width_p(addr_width_p), .use_output_p(1))
