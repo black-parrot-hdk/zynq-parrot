@@ -371,9 +371,12 @@ extern "C" void cosim_main(char *argstr) {
 #endif
 
   zpl->done();
-
   delete zpl;
+#ifdef VCS
+  return;
+#else
   exit(EXIT_SUCCESS);
+#endif
 }
 
 std::uint32_t rotl(std::uint32_t v, std::int32_t shift) {
