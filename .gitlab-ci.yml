@@ -71,6 +71,7 @@ simple-example-fpga:
   stage: fpga
   tags:
     - fpga
+  resource_group: fpga
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="simple"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
@@ -145,6 +146,7 @@ shell-example-fpga:
   stage: fpga
   tags:
     - fpga
+  resource_group: fpga
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
@@ -162,8 +164,6 @@ shell-example-fpga:
       - cosim/shell-example/fpga/run.log
   dependencies:
     - shell-example-vivado
-    # We make this a dependency so we only run one at a time
-    - simple-example-fpga
 
 double-shell-example-verilator:
   <<: *job_definition
@@ -221,6 +221,7 @@ double-shell-example-fpga:
   stage: fpga
   tags:
     - fpga
+  resource_group: fpga
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="double_shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2020.1"
@@ -238,14 +239,13 @@ double-shell-example-fpga:
       - cosim/double-shell-example/fpga/run.log
   dependencies:
     - double-shell-example-vivado
-    # We make this a dependency so we only run one at a time
-    - shell-example-fpga
 
 dram-example-fpga:
   <<: *job_definition
   stage: fpga
   tags:
     - fpga
+  resource_group: fpga
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="dram"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
@@ -260,9 +260,7 @@ dram-example-fpga:
   artifacts:
     paths:
       - cosim/dram-example/fpga/run.log
-  dependencies:
-    # We make this a dependency so we only run one at a time
-    - double-shell-example-fpga
+  dependencies: []
 
 black-parrot-example-verilator:
   <<: *job_definition
@@ -320,6 +318,7 @@ black-parrot-example-fpga:
   stage: fpga
   tags:
     - fpga
+  resource_group: fpga
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
     - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
@@ -339,6 +338,4 @@ black-parrot-example-fpga:
       - cosim/black-parrot-example/fpga/run.log
   dependencies:
     - black-parrot-example-vivado
-    # We make this a dependency so we only run one at a time
-    - dram-example-fpga
 
