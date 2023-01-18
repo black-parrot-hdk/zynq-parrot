@@ -50,7 +50,7 @@ simple-example-vcs:
     paths:
       - cosim/simple-example/vcs/run.log
 
-simple-example-vivado:
+simple-example-vivado-pynqz2:
   <<: *job_definition
   stage: vivado
   tags:
@@ -66,7 +66,7 @@ simple-example-vivado:
     paths:
       - cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
 
-simple-example-fpga:
+simple-example-fpga-pynqz2:
   <<: *job_definition
   stage: fpga
   tags:
@@ -88,7 +88,7 @@ simple-example-fpga:
     paths:
       - cosim/simple-example/fpga/run.log
   dependencies:
-    - simple-example-vivado
+    - simple-example-vivado-pynqz2
 
 shell-example-verilator:
   <<: *job_definition
@@ -122,7 +122,7 @@ shell-example-vcs:
     paths:
       - cosim/shell-example/vcs/run.log
 
-shell-example-vivado:
+shell-example-vivado-pynqz2:
   <<: *job_definition
   stage: vivado
   tags:
@@ -141,7 +141,7 @@ shell-example-vivado:
       - cosim/shell-example/vivado/vivado.log
       - cosim/shell-example/shell_bd_1.pynqz2.tar.xz.b64
 
-shell-example-fpga:
+shell-example-fpga-pynqz2:
   <<: *job_definition
   stage: fpga
   tags:
@@ -163,7 +163,7 @@ shell-example-fpga:
     paths:
       - cosim/shell-example/fpga/run.log
   dependencies:
-    - shell-example-vivado
+    - shell-example-vivado-pynqz2
 
 double-shell-example-verilator:
   <<: *job_definition
@@ -197,7 +197,7 @@ double-shell-example-vcs:
     paths:
       - cosim/double-shell-example/vcs/run.log
 
-double-shell-example-vivado:
+double-shell-example-vivado-pynqz2:
   <<: *job_definition
   stage: vivado
   tags:
@@ -216,7 +216,7 @@ double-shell-example-vivado:
       - cosim/double-shell-example/vivado/vivado.log
       - cosim/double-shell-example/double_shell_bd_1.pynqz2.tar.xz.b64
 
-double-shell-example-fpga:
+double-shell-example-fpga-pynqz2:
   <<: *job_definition
   stage: fpga
   tags:
@@ -238,9 +238,9 @@ double-shell-example-fpga:
     paths:
       - cosim/double-shell-example/fpga/run.log
   dependencies:
-    - double-shell-example-vivado
+    - double-shell-example-vivado-pynqz2
 
-dram-example-fpga:
+dram-example-fpga-pynqz2:
   <<: *job_definition
   stage: fpga
   tags:
@@ -294,7 +294,7 @@ black-parrot-example-vcs:
     paths:
       - cosim/black-parrot-example/vcs/run.log
 
-black-parrot-example-vivado:
+black-parrot-example-vivado-pynqz2:
   <<: *job_definition
   stage: vivado
   tags:
@@ -313,7 +313,26 @@ black-parrot-example-vivado:
       - cosim/black-parrot-example/vivado/vivado.log
       - cosim/black-parrot-example/blackparrot_bd_1.pynqz2.tar.xz.b64
 
-black-parrot-example-fpga:
+black-parrot-example-vivado-ultra96v2:
+  <<: *job_definition
+  stage: vivado
+  tags:
+    - vivado
+  before_script:
+    - git submodule update --init --checkout --recursive cosim/import
+    - export BASENAME="blackparrot"; export BOARDNAME="ultra96v2"; export VIVADO_VERSION="2020.1"
+    - export EXAMPLE_NAME="black-parrot-example"
+  script:
+    - echo "Building black-parrot-example for Ultra96v2"
+    - make -C cosim/black-parrot-example/vivado clean fpga_build
+    - echo "Packing up bitstream"
+    - make -C cosim/black-parrot-example/vivado pack_bitstream
+  artifacts:
+    paths:
+      - cosim/black-parrot-example/vivado/vivado.log
+      - cosim/black-parrot-example/blackparrot_bd_1.ultra96v2.tar.xz.b64
+
+black-parrot-example-fpga-ultra96v2:
   <<: *job_definition
   stage: fpga
   tags:
@@ -321,21 +340,21 @@ black-parrot-example-fpga:
   resource_group: fpga
   before_script:
     - git submodule update --init --checkout --recursive cosim/import
-    - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
+    - export BASENAME="blackparrot"; export BOARDNAME="ultra96v2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="black-parrot-example"
     - export NBF_FILE=/home/xilinx/mnt/zynqparrot_nbf/bp-tests/hello_world.nbf
   script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/blackparrot-run.sh | envsubst > $CI_PROJECT_DIR/ci/blackparrot-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/black-parrot-example/blackparrot_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/blackparrot_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/black-parrot-example/blackparrot_bd_1.ultra96v2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/blackparrot_bd_1.ultra96v2.tar.xz.b64
     - cp -r $SOFTWARE_NBF_DIR $CI_MOUNT_DIR/zynqparrot_nbf
-    - ssh xilinx@$CI_PYNQZ2_IP "nohup sudo reboot &>/dev/null & exit"; sleep 60;
-    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/blackparrot-run-envsubst.sh
+    - ssh xilinx@$CI_ULTRA96V2_IP "nohup sudo reboot &>/dev/null & exit"; sleep 60;
+    - ssh xilinx@$CI_ULTRA96V2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/blackparrot-run-envsubst.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/fpga/run.log $CI_PROJECT_DIR/cosim/black-parrot-example/fpga/run.log
     - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/fpga/run.log
   artifacts:
     paths:
       - cosim/black-parrot-example/fpga/run.log
   dependencies:
-    - black-parrot-example-vivado
+    - black-parrot-example-vivado-ultra96v2
 
