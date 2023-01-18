@@ -1,20 +1,22 @@
 set project_name $::env(BASENAME)_bd_proj
 set project_part $::env(PART)
+set project_bd   $::env(BASENAME)_bd_1
 
 create_project -force ${project_name} [pwd] -part ${project_part}
-create_bd_design "blackparrot_bd_1"
+create_bd_design "${project_bd}"
 update_compile_order -fileset sources_1
-open_bd_design {${project_name}.srcs/sources_1/bd/blackparrot_bd_1/blackparrot_bd_1.bd}
+open_bd_design ${project_name}.srcs/sources_1/bd/${project_bd}/${project_bd}.bd
 set_property ip_repo_paths fpga_build [current_project]
 update_ip_catalog
 
 startgroup
 create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.4 zynq_ultra_ps_e_0
-set_property -dict [list CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {50}] [get_bd_cells zynq_ultra_ps_e_0]
+set_property -dict [list CONFIG.PSU__FPGA_PL0_ENABLE {1}  CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {50}] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP0 {1} CONFIG.PSU__MAXIGP0__DATA_WIDTH {32}] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP1 {1} CONFIG.PSU__MAXIGP1__DATA_WIDTH {32}] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__USE__S_AXI_GP2 {1} CONFIG.PSU__SAXIGP2__DATA_WIDTH {64}] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP2 {0}] [get_bd_cells zynq_ultra_ps_e_0]
+set_property -dict [list CONFIG.PSU__FPGA_PL1_ENABLE {1} CONFIG.PSU__CRL_APB__PL1_REF_CTRL__FREQMHZ {0.4}] [get_bd_cells zynq_ultra_ps_e_0]
 endgroup
 
 startgroup
@@ -29,6 +31,8 @@ apply_bd_automation -rule xilinx.com:bd_rule:bram_cntlr -config {BRAM "Auto"} [g
 endgroup
 
 create_bd_cell -type ip -vlnv user.org:user:top:1.0 top_0
+set_property -dict [list CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ [get_bd_pins /zynq_ultra_ps_e_0/pl_clk0]]] [get_bd_pins top_0/aclk]
+set_property -dict [list CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ [get_bd_pins /zynq_ultra_ps_e_0/pl_clk1]]] [get_bd_pins top_0/rt_clk]
 
 create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_0
 set_property -dict [list CONFIG.NUM_SI {1}] [get_bd_cells smartconnect_0]
@@ -36,7 +40,7 @@ set_property CONFIG.ADVANCED_PROPERTIES {__experimental_features__ {disable_low_
 
 create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_1
 set_property -dict [list CONFIG.NUM_SI {1}] [get_bd_cells smartconnect_1]
-set_property CONFIG.ADVANCED_PROPERTIES {__experimental_features__ {disable_low_area_mode 1}} [get_bd_cells smartconnect_1]
+#set_property CONFIG.ADVANCED_PROPERTIES {__experimental_features__ {disable_low_area_mode 1}} [get_bd_cells smartconnect_1]
 
 create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_2
 set_property -dict [list CONFIG.NUM_SI {1}] [get_bd_cells smartconnect_2]
@@ -51,6 +55,7 @@ connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins sm
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn]
 
 connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins top_0/aclk]
+connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk1] [get_bd_pins top_0/rt_clk]
 connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins smartconnect_0/aclk]
 connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins smartconnect_1/aclk]
 connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins smartconnect_2/aclk]
@@ -83,8 +88,8 @@ set_property range 1G [get_bd_addr_segs {zynq_ultra_ps_e_0/Data/SEG_top_0_reg0_1
 
 validate_bd_design
 
-make_wrapper -files [get_files ${project_name}.srcs/sources_1/bd/blackparrot_bd_1/blackparrot_bd_1.bd] -top
-add_files -norecurse ${project_name}.srcs/sources_1/bd/blackparrot_bd_1/hdl/blackparrot_bd_1_wrapper.v
+make_wrapper -files [get_files ${project_name}.srcs/sources_1/bd/${project_bd}/${project_bd}.bd] -top
+add_files -norecurse ${project_name}.srcs/sources_1/bd/${project_bd}/hdl/${project_bd}_wrapper.v
 #set_property verilog_define $::env(SV_DEFINES) [current_fileset]
 
 save_bd_design
