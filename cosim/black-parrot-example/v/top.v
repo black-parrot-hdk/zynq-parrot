@@ -487,17 +487,7 @@ module top
       ,.m01_axi_rready (m01_axi_rready)
       );
 
-`ifdef VERILATOR
-   initial
-     begin
-       if ($test$plusargs("bsg_trace") != 0)
-         begin
-           $display("[%0t] Tracing to trace.fst...\n", $time);
-           $dumpfile("trace.fst");
-           $dumpvars();
-         end
-     end
-`elsif VCS
+`ifdef VCS
    import "DPI-C" context task cosim_main(string c_args);
    string c_args;
    initial
@@ -514,6 +504,7 @@ module top
            $value$plusargs("c_args=%s", c_args);
          end
        cosim_main(c_args);
+       $finish;
      end
 
    // Evaluate the simulation, until the next clk_i positive edge.
