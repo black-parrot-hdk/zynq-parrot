@@ -197,9 +197,9 @@ extern "C" void cosim_main(char *argstr) {
     zpl->axil_write(GP0_WR_CSR_BITBANG + gp0_addr_base, 0x0, 0xf);
   // Reset bsg client0
   write_bsg_tag_packet(zpl, NUM_RESET, 1, 0, 0, -1U);
-  // Set bsg client0 to 1
+  // Set bsg client0 to 1 (assert reset for axi buses m00, m01, s01)
   write_bsg_tag_packet(zpl, NUM_RESET, 1, 1, 0, 0x1);
-  // Set bsg client0 to 0
+  // Set bsg client0 to 0 (deassert reset for axi buses m00, m01, s01)
   write_bsg_tag_packet(zpl, NUM_RESET, 1, 1, 0, 0x0);
 
   // We need at least 4 additional toggles for data to propagate through

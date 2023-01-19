@@ -2,6 +2,12 @@
 `include "bsg_defines.v"
 `include "bsg_tag.vh"
 
+/*
+ *   This is a simple wrapper that joins 1 bsg_tag_bitbang, 1 bsg_tag_master
+ * and els_p bsg_tag_clients. One bsg_tag_client for one reset generation.
+ *
+ */
+
 module bsg_tag_reset_gen
     import bsg_tag_pkg::bsg_tag_s;
 #(
