@@ -17,7 +17,7 @@ echo "Dropping VM"
 sudo sh -c "echo 1 > /proc/sys/vm/overcommit_memory"
 sudo sh -c "echo 1 > /proc/sys/vm/drop_caches"
 echo "Unpacking bitstream"
-make -C cosim/${EXAMPLE_NAME}/fpga clean unpack_bitstream
+make -C cosim/${EXAMPLE_NAME}/fpga clean unpack_bitstream BOARDNAME=$BOARDNAME
 echo "Loading bitstream"
 make -C cosim/${EXAMPLE_NAME}/fpga reset_pl load_bitstream
 echo "Running test"
