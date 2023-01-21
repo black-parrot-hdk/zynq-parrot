@@ -17,10 +17,6 @@ sudo sh -c "echo 1 > /proc/sys/vm/overcommit_memory"
 sudo sh -c "echo 1 > /proc/sys/vm/drop_caches"
 echo "Unpacking bitstream"
 make -C cosim/${EXAMPLE_NAME}/fpga clean unpack_bitstream BOARDNAME=$BOARDNAME
-echo "Loading bitstream"
-make -C cosim/${EXAMPLE_NAME}/fpga reset_pl load_bitstream BOARDNAME=$BOARDNAME
-echo "Running test"
-make -C cosim/${EXAMPLE_NAME}/fpga run BOARDNAME=$BOARDNAME NBF_FILE=$NBF_FILE
-
-exit 0
+echo "Loading bitstream and running test"
+make -C cosim/${EXAMPLE_NAME}/fpga reset_pl load_bitstream run BOARDNAME=$BOARDNAME NBF_FILE=$NBF_FILE
 
