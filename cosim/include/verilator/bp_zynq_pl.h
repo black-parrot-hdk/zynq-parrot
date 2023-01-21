@@ -57,7 +57,7 @@ public:
   std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > axi_gp1;
   std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> > axi_hp0;
 
-  static std::unique_ptr<zynq_scratchpad> scratchpad;
+  std::unique_ptr<zynq_scratchpad> scratchpad;
 
   // Each bsg_timekeeper::next() moves to the next clock edge
   //   so we need 2 to perform one full clock cycle.
@@ -197,7 +197,5 @@ public:
 
 Vtop *bp_zynq_pl::tb;
 VerilatedFstC *bp_zynq_pl::wf;
-
-std::unique_ptr<zynq_scratchpad> bp_zynq_pl::scratchpad;
 
 #endif
