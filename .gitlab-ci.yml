@@ -10,8 +10,6 @@ stages:
   - all
 
 .job_template: &job_definition
-  only:
-    - ci_test
   variables:
     VIVADO_MODE: "batch"
   artifacts:
