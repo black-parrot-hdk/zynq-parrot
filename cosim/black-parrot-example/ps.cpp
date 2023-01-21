@@ -148,7 +148,7 @@ extern "C" void cosim_main(char *argstr) {
 
   long val;
   bsg_pr_info("ps.cpp: reading three base registers\n");
-  bsg_pr_info("ps.cpp: reset(lo)=%d dram_init=%d, dram_base=%x\n",
+  bsg_pr_info("ps.cpp: reset(lo)=%ld dram_init=%ld, dram_base=%lx\n",
               zpl->axil_read(GP0_RD_CSR_RESET       + gp0_addr_base),
               zpl->axil_read(GP0_RD_CSR_DRAM_INITED + gp0_addr_base),
               val = zpl->axil_read(GP0_RD_CSR_DRAM_BASE + gp0_addr_base));
@@ -180,7 +180,7 @@ extern "C" void cosim_main(char *argstr) {
     zpl->axil_write(GP0_WR_CSR_DRAM_INITED + gp0_addr_base, 0x1, mask2);
     assert(zpl->axil_read(GP0_RD_CSR_DRAM_INITED + gp0_addr_base) == 1);
   } else
-    bsg_pr_info("ps.cpp: reusing dram base pointer %x\n",
+    bsg_pr_info("ps.cpp: reusing dram base pointer %lx\n",
                 zpl->axil_read(GP0_RD_CSR_DRAM_BASE + gp0_addr_base));
 
   int outer = 1024 / 4;
