@@ -52,14 +52,13 @@ public:
 };
 
 class bp_zynq_pl {
-
-  static std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > axi_gp0;
-  static std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > axi_gp1;
-  static std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> > axi_hp0;
-
-  static std::unique_ptr<zynq_scratchpad> scratchpad;
-
 public:
+  std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > axi_gp0;
+  std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > axi_gp1;
+  std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> > axi_hp0;
+
+  std::unique_ptr<zynq_scratchpad> scratchpad;
+
   // Move the simulation forward to the next DPI event
   static void tick(void) { bsg_dpi_next(); }
 
@@ -166,11 +165,5 @@ public:
     }
   }
 };
-
-std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > bp_zynq_pl::axi_gp0;
-std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > bp_zynq_pl::axi_gp1;
-std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> > bp_zynq_pl::axi_hp0;
-
-std::unique_ptr<zynq_scratchpad> bp_zynq_pl::scratchpad;
 
 #endif

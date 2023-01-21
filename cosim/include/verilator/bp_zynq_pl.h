@@ -15,6 +15,8 @@
 #include "bsg_nonsynth_dpi_clock_gen.hpp"
 #include "bsg_nonsynth_dpi_gpio.hpp"
 #include "zynq_headers.h"
+#include "verilated_fst_c.h"
+#include "verilated_cov.h"
 
 using namespace std;
 using namespace bsg_nonsynth_dpi;
@@ -48,14 +50,15 @@ public:
 
 class bp_zynq_pl {
   static Vtop *tb;
-
-  static std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > axi_gp0;
-  static std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > axi_gp1;
-  static std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> > axi_hp0;
-
-  static std::unique_ptr<zynq_scratchpad> scratchpad;
+  static VerilatedFstC *wf;
 
 public:
+  std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > axi_gp0;
+  std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > axi_gp1;
+  std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> > axi_hp0;
+
+  std::unique_ptr<zynq_scratchpad> scratchpad;
+
   // Each bsg_timekeeper::next() moves to the next clock edge
   //   so we need 2 to perform one full clock cycle.
   // If your design does not evaluate things on negedge, you could omit
@@ -63,12 +66,17 @@ public:
   //   at the least.
   static void tick(void) {
     tb->eval();
+    wf->dump(sc_time_stamp());
     bsg_timekeeper::next();
     tb->eval();
+    wf->dump(sc_time_stamp());
     bsg_timekeeper::next();
   }
 
-  static void done(void) { printf("bp_zynq_pl: done() called, exiting\n"); }
+  static void done(void) {
+    printf("bp_zynq_pl: done() called, exiting\n");
+    wf->close();
+  }
 
   bp_zynq_pl(int argc, char *argv[]) {
     // Initialize Verilators variables
@@ -78,6 +86,10 @@ public:
     Verilated::traceEverOn(true);
 
     tb = new Vtop();
+
+    wf = new VerilatedFstC;
+    tb->trace(wf, 10);
+    wf->open("trace.fst");
 
     // Tick once to register clock generators
     tb->eval();
@@ -184,10 +196,6 @@ public:
 };
 
 Vtop *bp_zynq_pl::tb;
-std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > bp_zynq_pl::axi_gp0;
-std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > bp_zynq_pl::axi_gp1;
-std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> > bp_zynq_pl::axi_hp0;
-
-std::unique_ptr<zynq_scratchpad> bp_zynq_pl::scratchpad;
+VerilatedFstC *bp_zynq_pl::wf;
 
 #endif
