@@ -19,13 +19,16 @@ all:
 
 EXE ?= control-program
 run: $(EXE)
-	sudo ./$< $(SIM_ARGS)
+	sudo ./$< $(SIM_ARGS) | tee run.log
 
 $(EXE): $(HOST_PROGRAM)
 	$(GCC) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $(CSOURCES) $< $(CFLAGS) $(LDFLAGS) -o $@
 
+reset_pl:
+	echo 'from pynq import PL; PL.reset();' | sudo -E $(PYTHON3)
+
 unpack_bitstream:
-	base64 -d ../$(BASENAME)_bd_1.tar.xz.b64 | tar xvJ
+	base64 -d ../$(BASENAME)_bd_1.$(BOARDNAME).tar.xz.b64 | tar xvJ
 
 # load the bitstream on the Zynq board (copy the .b64 file into this dir first)
 # make sure to unpack it first

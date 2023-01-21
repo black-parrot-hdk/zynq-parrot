@@ -87,7 +87,7 @@ ifeq ($(VIVADO_VERSION),2022.1)
 	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.tcl $(BASENAME)_bd_1_bd.tcl
 	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.bit $(BASENAME)_bd_1.bit
 endif
-	tar -Jc $(BASENAME)_bd_1* | base64 > ../$(BASENAME)_bd_1.tar.xz.b64
+	tar -Jc $(BASENAME)_bd_1* | base64 > ../$(BASENAME)_bd_1.$(BOARDNAME).tar.xz.b64
 
 clean:
 	rm -rf flist.vcs

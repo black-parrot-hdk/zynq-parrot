@@ -16,8 +16,7 @@
 #include <stdio.h>
 #include "bp_zynq_pl.h"
 
-//#define DRAM_ALLOC_SIZE_BYTES 16384
-#define DRAM_ALLOC_SIZE_BYTES 80*1024*1024
+#define DRAM_ALLOC_SIZE_BYTES 16384
 
 int main(int argc, char **argv) {
   bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
