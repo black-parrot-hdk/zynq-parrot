@@ -1,7 +1,7 @@
 +incdir+$BASEJUMP_STL_DIR/bsg_tag
 $BASEJUMP_STL_DIR/bsg_misc/bsg_mux2_gatestack.v
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_pkg.v
-$BASEJUMP_STL_DIR/bsg_tag/bsg_tag_master.v
+$BASEJUMP_STL_DIR/bsg_tag/bsg_tag_master_decentralized.v
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_client.v
 $BASEJUMP_STL_DIR/bsg_cache/bsg_cache_to_axi.v
 $BASEJUMP_STL_DIR/bsg_cache/bsg_cache_to_axi_rx.v
@@ -18,7 +18,6 @@ $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_demux.v
 $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_mux.v
 $COSIM_SRC_DIR/bsg_zynq_pl_shell.v
 $COSIM_SRC_DIR/bsg_tag_bitbang.v
-$CURR_SRC_DIR/bsg_tag_reset_gen.v
 $CURR_SRC_DIR/top_zynq.sv
 $CURR_SRC_DIR/top.v
 
