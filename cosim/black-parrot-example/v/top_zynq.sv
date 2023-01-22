@@ -9,6 +9,7 @@ module top_zynq
  import bp_common_pkg::*;
  import bp_be_pkg::*;
  import bp_me_pkg::*;
+ import bsg_tag_pkg::bsg_tag_s;
  #(parameter bp_params_e bp_params_p = e_bp_default_cfg
    `declare_bp_proc_params(bp_params_p)
    `declare_bp_bedrock_mem_if_widths(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p)
@@ -193,19 +194,45 @@ module top_zynq
    // Reset Generation Logic
 
    localparam num_reset_lp = 1;
-   logic resets_lo;
-   wire tag_data_li = csr_data_lo[0][0];
-   wire tag_v_li = csr_data_v_lo[0];
-   bsg_tag_reset_gen #(
-      .els_p(num_reset_lp)
-   ) reset_gen (
-      .tag_clk_i(aclk)
-     ,.tag_reset_i(~aresetn)
-     ,.tag_data_i(tag_data_li)
-     ,.tag_v_i(tag_v_li)
-     ,.clks_i({aclk})
-     ,.resets_o({resets_lo}) // assuming the PS programmer uses high-true signals
+   `declare_bsg_tag_header_s(num_reset_lp, 1)
+   logic tag_clk_r_lo;
+   logic tag_data_r_lo;
+   wire [num_reset_lp-1:0] clks_li = {aclk};
+   logic [num_reset_lp-1:0] resets_lo;
+   bsg_tag_s [num_reset_lp-1:0] tag;
+
+   bsg_tag_bitbang bitbang (
+     .clk_i(aclk)
+     ,.reset_i(~aresetn)
+     ,.data_i(csr_data_lo[0][0])
+     ,.v_i(csr_data_v_lo[0])
+     ,.ready_and_o() // UNUSED
+
+     ,.tag_clk_r_o(tag_clk_r_lo)
+     ,.tag_data_r_o(tag_data_r_lo)
    );
+
+   bsg_tag_master_decentralized #(
+     .els_p(num_reset_lp)
+     ,.local_els_p(num_reset_lp)
+     ,.lg_width_p(1)
+   ) master (
+     .clk_i(tag_clk_r_lo)
+     ,.data_i(tag_data_r_lo)
+     ,.node_id_offset_i('0)
+     ,.clients_o(tag)
+   );
+
+   for(genvar i = 0;i < num_reset_lp;i++) begin: tag_client
+     bsg_tag_client #(
+       .width_p(1)
+     ) client (
+       .bsg_tag_i(tag[i])
+       ,.recv_clk_i(clks_li[i])
+       ,.recv_new_r_o() // UNUSED
+       ,.recv_data_r_o(resets_lo[i])
+     );
+   end
 
    // When aresetn is asserted, s00 will be the only axi bus that has been initialized
    assign s00_axi_aresetn = aresetn;
