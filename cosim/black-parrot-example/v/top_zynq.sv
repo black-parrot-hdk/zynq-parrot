@@ -193,20 +193,27 @@ module top_zynq
 
    // Reset Generation Logic
 
-   localparam num_reset_lp = 1;
+   // Specify the number of generated resets here:
+   localparam num_reset_lp = 1; // for BP reset
+   // Specify the clocks the generated resets belong to here:
+   wire [num_reset_lp-1:0] clks_li = {aclk};
+   // Generated resets signals:
+   logic [num_reset_lp-1:0] synced_resets_lo;
+
    `declare_bsg_tag_header_s(num_reset_lp, 1)
    logic tag_clk_r_lo;
    logic tag_data_r_lo;
-   wire [num_reset_lp-1:0] clks_li = {aclk};
-   logic [num_reset_lp-1:0] resets_lo;
    bsg_tag_s [num_reset_lp-1:0] tag;
 
-   bsg_tag_bitbang bitbang (
+   wire bb_v_li = csr_data_v_lo[0];
+   wire bb_ready_and_lo;
+
+   bsg_tag_bitbang bb (
      .clk_i(aclk)
      ,.reset_i(~aresetn)
      ,.data_i(csr_data_lo[0][0])
-     ,.v_i(csr_data_v_lo[0])
-     ,.ready_and_o() // UNUSED
+     ,.v_i(bb_v_li)
+     ,.ready_and_o(bb_ready_and_lo) // UNUSED
 
      ,.tag_clk_r_o(tag_clk_r_lo)
      ,.tag_data_r_o(tag_data_r_lo)
@@ -230,16 +237,13 @@ module top_zynq
        .bsg_tag_i(tag[i])
        ,.recv_clk_i(clks_li[i])
        ,.recv_new_r_o() // UNUSED
-       ,.recv_data_r_o(resets_lo[i])
+       ,.recv_data_r_o(synced_resets_lo[i])
      );
    end
 
-   // When aresetn is asserted, s00 will be the only axi bus that has been initialized
-   assign s00_axi_aresetn = aresetn;
-   // Other axi buses need to be initialized through bit banging from PS
-   assign {s01_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn} = {3{~resets_lo}};
+   assign {s00_axi_aresetn, s01_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn} = {4{aresetn}};
 
-   wire bp_reset_li = ~s01_axi_aresetn;
+   wire bp_reset_li = ~s01_axi_aresetn | synced_resets_lo[0];
 
    // Connect Shell to AXI Bus Interface S00_AXI
    bsg_zynq_pl_shell #
@@ -662,6 +666,12 @@ module top_zynq
       );
 
    // synopsys translate_off
+   always @(negedge s00_axi_aclk) begin
+     if(s00_axi_aresetn == 1'b1)
+       if(bb_v_li & ~bb_ready_and_lo == 1'b1)
+         $display("top_zynq: bitbang bit drop occurred");
+   end
+
    always @(negedge s01_axi_aclk)
      if (s01_axi_awvalid & s01_axi_awready)
        if (debug_lp) $display("top_zynq: AXI Write Addr %x -> %x (BP)",s01_axi_awaddr,waddr_translated_lo);
