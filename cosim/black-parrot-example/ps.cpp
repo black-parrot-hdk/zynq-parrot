@@ -191,21 +191,14 @@ extern "C" void cosim_main(char *argstr) {
     zpl->axil_write(GP0_WR_CSR_BITBANG + gp0_addr_base, 0x0, 0xf);
   // Reset bsg client0
   write_bsg_tag_packet(zpl, NUM_RESET, 1, 0, 0, -1U);
-  // Set bsg client0 to 1 (assert reset for axi buses m00, m01, s01)
+  // Set bsg client0 to 1 (assert BP reset)
   write_bsg_tag_packet(zpl, NUM_RESET, 1, 1, 0, 0x1);
-  // Set bsg client0 to 0 (deassert reset for axi buses m00, m01, s01)
+  // Set bsg client0 to 0 (deassert BP reset)
   write_bsg_tag_packet(zpl, NUM_RESET, 1, 1, 0, 0x0);
 
   // We need at least 4 additional toggles for data to propagate through
   for(int i = 0;i < 4;i++)
     zpl->axil_write(GP0_WR_CSR_BITBANG + gp0_addr_base, 0x0, 0xf);
-
-#ifdef GP1_ENABLE
-  zpl->axi_gp1->reset(bp_zynq_pl::tick);
-#endif
-#ifdef HP0_ENABLE
-  zpl->axi_hp0->reset(bp_zynq_pl::tick);
-#endif
 
   bsg_pr_info("ps.cpp: attempting to write and read register 0x8\n");
 
