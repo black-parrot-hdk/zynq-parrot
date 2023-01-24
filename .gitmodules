@@ -13,3 +13,12 @@
 [submodule "cosim/import/basejump_stl"]
 	path = cosim/import/basejump_stl
 	url = https://github.com/bespoke-silicon-group/basejump_stl
+[submodule "cosim/import/bsg_manycore"]
+	path = cosim/import/bsg_manycore
+	url = https://github.com/bespoke-silicon-group/bsg_manycore
+[submodule "cosim/import/basejump_stl"]
+	path = cosim/import/basejump_stl
+	url = https://github.com/bespoke-silicon-group/basejump_stl
+[submodule "software/import/bsg_replicant"]
+	path = software/import/bsg_replicant
+	url = https://github.com/bespoke-silicon-group/bsg_replicant
