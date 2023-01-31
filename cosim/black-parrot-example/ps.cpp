@@ -60,7 +60,7 @@ const char* metrics[] = {
   "e_ic_miss_l2_ic", "e_ic_miss_l2_dc_fetch", "e_ic_miss_l2_dc_evict",
   "e_dc_miss_l2_ic", "e_dc_miss_l2_dc_fetch", "e_dc_miss_l2_dc_evict",
 
-  "e_dc_is_miss", "e_dc_is_late", "e_dc_is_busy_cnt", "e_dc_is_busy",
+  "e_dc_is_miss", "e_dc_is_late", "e_dc_is_resume", "e_dc_is_busy_cnt", "e_dc_is_busy",
 
   "e_l2_ic_cnt", "e_l2_dc_fetch_cnt", "e_l2_dc_evict_cnt",
   "e_l2_ic", "e_l2_dc_fetch", "e_l2_dc_evict",
@@ -303,6 +303,11 @@ extern "C" void cosim_main(char *argstr) {
   bsg_pr_info("ps.cpp: Starting scan thread\n");
   pthread_t thread_id;
   pthread_create(&thread_id, NULL, monitor, NULL);
+
+  bsg_pr_info("ps.cpp: clearing pl to ps fifo\n");
+  while(zpl->axil_read(0x14 + GP0_ADDR_BASE) != 0) {
+    zpl->axil_read(0x10 + GP0_ADDR_BASE);
+  }
 
   bsg_pr_info("ps.cpp: asserting counter enable\n");
   zpl->axil_write(0xC + GP0_ADDR_BASE, 0x1, mask1);

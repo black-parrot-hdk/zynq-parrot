@@ -68,7 +68,6 @@ module bp_nonsynth_core_profiler
 
     , input [lg_l2_banks_lp-1:0] l2_bank_i
     , input [l2_banks_p-1:0] l2_ready_i
-    , input l2_serving_dc_i
 
     , input m_arvalid_i
     , input m_arready_i
@@ -128,11 +127,23 @@ module bp_nonsynth_core_profiler
      ,.data_i(mispredict_i)
      ,.data_o(mispredict_r)
      );
-
+/*
   logic rdma_pending_r, wdma_pending_r;
+  logic dma_sel_li;
   wire rdma_pending_li = rdma_pending_r | m_rlast_i;
   wire wdma_pending_li = wdma_pending_r | m_bvalid_i;
   wire dma_pending_li = rdma_pending_li | wdma_pending_li;
+
+  bsg_dff_reset_en_bypass
+   #(.width_p(2))
+   rdma_pending_reg
+    (.clk_i(clk_i)
+     ,.reset_i(reset_i)
+     ,.en_i((m_arvalid_i & m_arready_i) | (m_awvalid_i & m_arready_i))
+     ,.data_i(m_arvalid_i)
+     ,.data_o(rdma_pending_r)
+     );
+
   bsg_dff_reset_en_bypass
    #(.width_p(1))
    rdma_pending_reg
@@ -152,7 +163,7 @@ module bp_nonsynth_core_profiler
      ,.data_i(m_awvalid_i)
      ,.data_o(wdma_pending_r)
      );
-
+*/
   wire sb_dc_miss_w_li = sb_int_v_i & (commit_pkt.dcache_miss & commit_pkt.instr.t.fmatype.opcode inside {`RV64_LOAD_OP, `RV64_AMO_OP});
   wire sb_dc_miss_clr_li = sb_int_clr_i & (iwb_pkt.rd_addr == sb_dc_miss_rd_lo);
   logic [reg_addr_width_gp-1:0] sb_dc_miss_rd_lo;
@@ -181,8 +192,6 @@ module bp_nonsynth_core_profiler
       stall_stage_n[0].fe_cmd            |= fe_cmd_nonattaboy_li & ~fe_cmd_br_mispredict_li;
       stall_stage_n[0].mispredict        |= fe_cmd_nonattaboy_li & fe_cmd_br_mispredict_li;
       stall_stage_n[0].ic_miss           |= (~icache_ready_i | (if2_v_i & ~icache_data_v_i));
-      //stall_stage_n[0].ic_l2_miss        |= ~icache_ready_i & ~l2_ready_li & ~l2_serving_dc_i;
-      //stall_stage_n[0].ic_dma            |= ~icache_ready_i & ~l2_ready_li & ~l2_serving_dc_i & dma_pending_li;
 
       // IF1
       stall_stage_n[1]                    = stall_stage_r[0];
@@ -228,8 +237,6 @@ module bp_nonsynth_core_profiler
       stall_stage_n[3].dtlb_miss         |= commit_pkt.dtlb_load_miss | commit_pkt.dtlb_store_miss | commit_pkt.dtlb_fill_v;
       stall_stage_n[3].dc_miss           |= commit_pkt.dcache_miss;
       stall_stage_n[3].dc_miss           |= (~dcache_ready_i | sb_dc_miss_li);
-      //stall_stage_n[3].dc_l2_miss        |= (~dcache_ready_i | sb_dc_miss_li) & ~l2_ready_li & l2_serving_dc_i;
-      //stall_stage_n[3].dc_dma            |= (~dcache_ready_i | sb_dc_miss_li) & ~l2_ready_li & l2_serving_dc_i & dma_pending_li;
       stall_stage_n[3].dc_fail           |= commit_pkt.dcache_fail;
 
       // EX1
