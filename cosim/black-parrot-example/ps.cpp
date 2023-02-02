@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <bitset>
 
+#include "bsg_tag_bitbang.h"
 #include "bp_zynq_pl.h"
 #include "bsg_printing.h"
 #include "bsg_argparse.h"
@@ -57,8 +58,10 @@
 #define GP0_WR_CSR_DRAM_BASE       GP0_RD_CSR_DRAM_BASE
 #define GP0_WR_PS2PL_FIFO_DATA 0xC
 
+// DRAM
 #define DRAM_BASE_ADDR  0x80000000U
 #define DRAM_MAX_ALLOC_SIZE 0x20000000U
+// GP1
 #define GP1_DRAM_BASE_ADDR gp1_addr_base
 #define GP1_CSR_BASE_ADDR (gp1_addr_base + DRAM_MAX_ALLOC_SIZE)
 
@@ -120,39 +123,6 @@ inline uint64_t get_counter_64(bp_zynq_pl *zpl, uint64_t addr) {
   } while (1);
 }
 
-unsigned clog2(unsigned val) {
-  unsigned i;
-  for(i = 0;i < 32;i++) {
-    if((1U << i) >= val)
-      break;
-  }
-  return i;
-}
-#define safe_clog2(x) (((x) == 1U) ? 1U : clog2(x))
-unsigned get_bsg_tag_reset_len(unsigned els, unsigned width) {
-  unsigned lg_width = clog2(width + 1);
-  unsigned header_len = safe_clog2(els) + 1 + lg_width;
-  unsigned max_packet_len = ((1 << lg_width) - 1 + header_len);
-  return (1 << (safe_clog2(max_packet_len + 1))) + 1;
-}
-
-void write_bsg_tag_packet(bp_zynq_pl *zpl, unsigned els, unsigned width,
-        bool data_not_reset, unsigned nodeID, unsigned payload) {
-  // start
-  zpl->axil_write(GP0_WR_CSR_BITBANG + gp0_addr_base, 1, 0xf);
-  // payload len
-  for(unsigned i = 0;i < clog2(width + 1);i++)
-    zpl->axil_write(GP0_WR_CSR_BITBANG + gp0_addr_base, (width >> i) & 1U, 0xf);
-  // data_not_reset
-  zpl->axil_write(GP0_WR_CSR_BITBANG + gp0_addr_base, data_not_reset, 0xf);
-  // nodeID
-  for(unsigned i = 0;i < safe_clog2(els);i++)
-    zpl->axil_write(GP0_WR_CSR_BITBANG + gp0_addr_base, (nodeID >> i) & 1U, 0xf);
-  // payload
-  for(unsigned i = 0;i < width;i++)
-    zpl->axil_write(GP0_WR_CSR_BITBANG + gp0_addr_base, (payload >> i) & 1U, 0xf);
-}
-
 #ifndef VCS
 int main(int argc, char **argv) {
 #else
@@ -184,27 +154,21 @@ extern "C" void cosim_main(char *argstr) {
   long val;
   bsg_pr_info("ps.cpp: reading three base registers\n");
   bsg_pr_info("ps.cpp: reset(lo)=%d dram_init=%d, dram_base=%x\n",
-              zpl->axil_read(GP0_RD_CSR_BITBANG       + gp0_addr_base),
+              zpl->axil_read(GP0_RD_CSR_BITBANG + gp0_addr_base),
               zpl->axil_read(GP0_RD_CSR_DRAM_INITED + gp0_addr_base),
               val = zpl->axil_read(GP0_RD_CSR_DRAM_BASE + gp0_addr_base));
-
-  // Reset bsg tag master
-  // This is needed because otherwise zeros_ctr_r in the tag master will never
-  //   be zero, though in hardware it should eventually be set to 0.
-
-  zpl->axil_write(GP0_WR_CSR_BITBANG + gp0_addr_base, 0x1, 0xf);
-  for(unsigned i = 0;i < get_bsg_tag_reset_len(NUM_RESET, 1);i++)
-    zpl->axil_write(GP0_WR_CSR_BITBANG + gp0_addr_base, 0x0, 0xf);
+  // Reset the bsg tag master
+  zpl->tag->bsg_tag_reset(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base);
   // Reset bsg client0
-  write_bsg_tag_packet(zpl, NUM_RESET, 1, 0, 0, -1U);
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 0, 0, -1U);
   // Set bsg client0 to 1 (assert BP reset)
-  write_bsg_tag_packet(zpl, NUM_RESET, 1, 1, 0, 0x1);
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 0, 0x1);
   // Set bsg client0 to 0 (deassert BP reset)
-  write_bsg_tag_packet(zpl, NUM_RESET, 1, 1, 0, 0x0);
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 0, 0x0);
 
   // We need at least 4 additional toggles for data to propagate through
   for(int i = 0;i < 4;i++)
-    zpl->axil_write(GP0_WR_CSR_BITBANG + gp0_addr_base, 0x0, 0xf);
+    zpl->tag->bsg_tag_bit_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, 0x0);
 
   bsg_pr_info("ps.cpp: attempting to write and read register 0x8\n");
 
