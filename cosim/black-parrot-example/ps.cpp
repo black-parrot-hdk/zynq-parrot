@@ -151,6 +151,7 @@ extern "C" void cosim_main(char *argstr) {
               zpl->axil_read(GP0_RD_CSR_BITBANG + gp0_addr_base),
               zpl->axil_read(GP0_RD_CSR_DRAM_INITED + gp0_addr_base),
               val = zpl->axil_read(GP0_RD_CSR_DRAM_BASE + gp0_addr_base));
+#ifdef BITBANG_ENABLE
   // Reset the bsg tag master
   zpl->tag->bsg_tag_reset(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base);
   // Reset bsg client0
@@ -163,6 +164,7 @@ extern "C" void cosim_main(char *argstr) {
   // We need at least 4 additional toggles for data to propagate through
   for(int i = 0;i < 4;i++)
     zpl->tag->bsg_tag_bit_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, 0x0);
+#endif
 
   bsg_pr_info("ps.cpp: attempting to write and read register 0x8\n");
 
