@@ -11,16 +11,18 @@ export COSIM_PY_DIR          ?= $(COSIM_DIR)/py
 export COSIM_TCL_DIR         ?= $(COSIM_DIR)/tcl
 export COSIM_IMPORT_DIR      ?= $(COSIM_DIR)/import
 
-export BLACKPARROT_DIR       ?= $(COSIM_DIR)/import/black-parrot
-export BLACKPARROT_TOOLS_DIR ?= $(COSIM_DIR)/import/black-parrot-tools
-export BLACKPARROT_SUB_DIR   ?= $(COSIM_DIR)/import/black-parrot-subsystems
+export BASEJUMP_STL_DIR      ?= $(COSIM_IMPORT_DIR)/basejump_stl
+
+export BLACKPARROT_DIR       ?= $(COSIM_IMPORT_DIR)/black-parrot
+export BLACKPARROT_TOOLS_DIR ?= $(COSIM_IMPORT_DIR)/black-parrot-tools
+export BLACKPARROT_SUB_DIR   ?= $(COSIM_IMPORT_DIR)/black-parrot-subsystems
 export BP_FE_DIR             ?= $(BLACKPARROT_DIR)/bp_fe
 export BP_COMMON_DIR         ?= $(BLACKPARROT_DIR)/bp_common
 export BP_BE_DIR             ?= $(BLACKPARROT_DIR)/bp_be
 export BP_ME_DIR             ?= $(BLACKPARROT_DIR)/bp_me
 export BP_TOP_DIR            ?= $(BLACKPARROT_DIR)/bp_top
 export BP_EXTERNAL_DIR       ?= $(BLACKPARROT_DIR)/external
-export BASEJUMP_STL_DIR      ?= $(BP_EXTERNAL_DIR)/basejump_stl
+export BP_BASEJUMP_STL_DIR   ?= $(BP_EXTERNAL_DIR)/basejump_stl
 export HARDFLOAT_DIR         ?= $(BP_EXTERNAL_DIR)/HardFloat
 # Override to zynq-parrot version
 export BP_TOOLS_DIR          ?= $(BLACKPARROT_TOOLS_DIR)
