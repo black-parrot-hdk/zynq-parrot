@@ -243,7 +243,7 @@ module top_zynq
 
    assign {s00_axi_aresetn, s01_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn} = {4{aresetn}};
 
-   wire bp_reset_li = ~s01_axi_aresetn | synced_resets_lo[0];
+   wire bp_reset_li = ~aresetn | synced_resets_lo[0];
 
    // Connect Shell to AXI Bus Interface S00_AXI
    bsg_zynq_pl_shell #
@@ -669,7 +669,7 @@ module top_zynq
    always @(negedge s00_axi_aclk) begin
      if(s00_axi_aresetn == 1'b1)
        if(bb_v_li & ~bb_ready_and_lo == 1'b1)
-         $display("top_zynq: bitbang bit drop occurred");
+         $error("top_zynq: bitbang bit drop occurred");
    end
 
    always @(negedge s01_axi_aclk)
