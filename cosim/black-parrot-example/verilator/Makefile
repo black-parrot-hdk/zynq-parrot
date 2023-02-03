@@ -23,8 +23,13 @@ CFLAGS += $(INCLUDES) $(SKIP_DRAM)
 # Modify base flist
 #############################
 BASE_FLIST ?= $(abspath ../flist.vcs)
+BP_FLIST   ?= $(abspath flist.blackparrot.vcs)
 FLIST      ?= $(abspath flist.vcs)
-$(FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs $(BASE_FLIST)
+$(BP_FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs
+	cp $^ $@
+	sed -i "s/BASEJUMP_STL_DIR/BP_BASEJUMP_STL_DIR/g" $@
+
+$(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	cat $^ | envsubst > $@
 	echo "+incdir+$(CURR_SRC_DIR)" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp" >> $@
