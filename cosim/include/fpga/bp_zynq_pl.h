@@ -43,15 +43,20 @@ void _xlnk_reset();
 #include "zynq_headers.h"
 using namespace std;
 
+class bsg_tag_bitbang;
+
 class bp_zynq_pl {
 public:
+  std::unique_ptr<bsg_tag_bitbang> tag;
   bool debug = ZYNQ_PL_DEBUG;
   uintptr_t gp0_base_offset = 0;
   uintptr_t gp1_base_offset = 0;
 
   bp_zynq_pl(int argc, char *argv[]) {
     printf("// bp_zynq_pl: be sure to run as root\n");
-
+#ifdef BITBANG_ENABLE
+    tag = std::make_unique<bsg_tag_bitbang>();
+#endif
     // open memory device
     int fd = open("/dev/mem", O_RDWR | O_SYNC);
     assert(fd != 0);

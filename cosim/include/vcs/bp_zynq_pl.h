@@ -69,7 +69,9 @@ public:
 
   bp_zynq_pl(int argc, char *argv[]) {
     tick();
+#ifdef BITBANG_ENABLE
     tag = std::make_unique<bsg_tag_bitbang>();
+#endif
 #ifdef GP0_ENABLE
     axi_gp0 = std::make_unique<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> >(
         STRINGIFY(GP0_HIER_BASE));
