@@ -1,5 +1,7 @@
 include ../Makefile.design
 
+export TCL_DIR ?= ./tcl
+
 #############################
 # Modify base flist
 #############################
