@@ -1,6 +1,7 @@
 
 `timescale 1 ps / 1 ps
 
+`include "bsg_tag.vh"
 `include "bp_common_defines.svh"
 `include "bp_be_defines.svh"
 `include "bp_me_defines.svh"
@@ -9,6 +10,7 @@ module top_zynq
  import bp_common_pkg::*;
  import bp_be_pkg::*;
  import bp_me_pkg::*;
+ import bsg_tag_pkg::bsg_tag_s;
  #(parameter bp_params_e bp_params_p = e_bp_default_cfg
    `declare_bp_proc_params(bp_params_p)
    `declare_bp_bedrock_mem_if_widths(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p)
@@ -30,11 +32,12 @@ module top_zynq
    , parameter integer C_M01_AXI_DATA_WIDTH   = 32
    , parameter integer C_M01_AXI_ADDR_WIDTH   = 32
    )
-  (input wire                                    rt_clk
-   
+  (input wire                                    aclk
+   , input wire                                  aresetn
+   , input wire                                  rt_clk
    // Ports of Axi Slave Bus Interface S00_AXI
    , input wire                                  s00_axi_aclk
-   , input wire                                  s00_axi_aresetn
+   , output wire                                 s00_axi_aresetn
    , input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
    , input wire [2 : 0]                          s00_axi_awprot
    , input wire                                  s00_axi_awvalid
@@ -56,7 +59,7 @@ module top_zynq
    , input wire                                  s00_axi_rready
 
    , input wire                                  s01_axi_aclk
-   , input wire                                  s01_axi_aresetn
+   , output wire                                 s01_axi_aresetn
    , input wire [C_S01_AXI_ADDR_WIDTH-1 : 0]     s01_axi_awaddr
    , input wire [2 : 0]                          s01_axi_awprot
    , input wire                                  s01_axi_awvalid
@@ -78,7 +81,7 @@ module top_zynq
    , input wire                                  s01_axi_rready
 
    , input wire                                  m00_axi_aclk
-   , input wire                                  m00_axi_aresetn
+   , output wire                                 m00_axi_aresetn
    , output wire [C_M00_AXI_ADDR_WIDTH-1:0]      m00_axi_awaddr
    , output wire                                 m00_axi_awvalid
    , input wire                                  m00_axi_awready
@@ -123,7 +126,7 @@ module top_zynq
    , input wire [1:0]                            m00_axi_rresp
 
    , input wire                                  m01_axi_aclk
-   , input wire                                  m01_axi_aresetn
+   , output wire                                 m01_axi_aresetn
    , output wire [C_M01_AXI_ADDR_WIDTH-1 : 0]    m01_axi_awaddr
    , output wire [2 : 0]                         m01_axi_awprot
    , output wire                                 m01_axi_awvalid
@@ -150,6 +153,8 @@ module top_zynq
    localparam bp_axi_addr_width_lp  = 32;
    localparam bp_axi_data_width_lp  = 64;
 
+   logic [2:0]                                  csr_data_v_lo;
+   logic [2:0]                                  csr_data_w_lo;
    logic [2:0][C_S00_AXI_DATA_WIDTH-1:0]        csr_data_lo;
    logic [C_S00_AXI_DATA_WIDTH-1:0]             pl_to_ps_fifo_data_li, ps_to_pl_fifo_data_lo;
    logic                                        pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
@@ -188,10 +193,59 @@ module top_zynq
    else
      assign minstret_lo = blackparrot.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
 
-   // BlackParrot reset signal is connected to a CSR (along with
-   // the AXI interface reset) so that a regression can be launched
-   // without having to reload the bitstream
-   wire bp_reset_li = (~csr_data_lo[0][0]) || (~s01_axi_aresetn);
+   // Reset Generation Logic
+
+   // Specify the number of generated resets here:
+   localparam num_reset_lp = 1; // for BP reset
+   // Specify the clocks the generated resets belong to here:
+   wire [num_reset_lp-1:0] clks_li = {aclk};
+   // Generated resets signals:
+   logic [num_reset_lp-1:0] synced_resets_lo;
+
+   `declare_bsg_tag_header_s(num_reset_lp, 1)
+   logic tag_clk_r_lo;
+   logic tag_data_r_lo;
+   bsg_tag_s [num_reset_lp-1:0] tag;
+
+   wire bb_v_li = csr_data_v_lo[0] & csr_data_w_lo[0];
+   wire bb_ready_and_lo;
+
+   bsg_tag_bitbang bb (
+     .clk_i(aclk)
+     ,.reset_i(~aresetn)
+     ,.data_i(csr_data_lo[0][0])
+     ,.v_i(bb_v_li)
+     ,.ready_and_o(bb_ready_and_lo) // UNUSED
+
+     ,.tag_clk_r_o(tag_clk_r_lo)
+     ,.tag_data_r_o(tag_data_r_lo)
+   );
+
+   bsg_tag_master_decentralized #(
+     .els_p(num_reset_lp)
+     ,.local_els_p(num_reset_lp)
+     ,.lg_width_p(1)
+   ) master (
+     .clk_i(tag_clk_r_lo)
+     ,.data_i(tag_data_r_lo)
+     ,.node_id_offset_i('0)
+     ,.clients_o(tag)
+   );
+
+   for(genvar i = 0;i < num_reset_lp;i++) begin: tag_client
+     bsg_tag_client #(
+       .width_p(1)
+     ) client (
+       .bsg_tag_i(tag[i])
+       ,.recv_clk_i(clks_li[i])
+       ,.recv_new_r_o() // UNUSED
+       ,.recv_data_r_o(synced_resets_lo[i])
+     );
+   end
+
+   assign {s00_axi_aresetn, s01_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn} = {4{aresetn}};
+
+   wire bp_reset_li = ~aresetn | synced_resets_lo[0];
 
    // Connect Shell to AXI Bus Interface S00_AXI
    bsg_zynq_pl_shell #
@@ -213,7 +267,9 @@ module top_zynq
       ,.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
       ) zps
        (
-        .csr_data_o(csr_data_lo)
+        .csr_data_v_o(csr_data_v_lo)
+        ,.csr_data_w_o(csr_data_w_lo)
+        ,.csr_data_o(csr_data_lo)
 
         // (MBT)
         // note: this ability to probe into the core is not supported in ASIC toolflows but
@@ -613,6 +669,12 @@ module top_zynq
       );
 
    // synopsys translate_off
+   always @(negedge s00_axi_aclk) begin
+     if(s00_axi_aresetn == 1'b1)
+       if(bb_v_li & ~bb_ready_and_lo == 1'b1)
+         $error("top_zynq: bitbang bit drop occurred");
+   end
+
    always @(negedge s01_axi_aclk)
      if (s01_axi_awvalid & s01_axi_awready)
        if (debug_lp) $display("top_zynq: AXI Write Addr %x -> %x (BP)",s01_axi_awaddr,waddr_translated_lo);

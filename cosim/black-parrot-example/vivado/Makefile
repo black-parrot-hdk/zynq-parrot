@@ -1,5 +1,7 @@
 include ../Makefile.design
 
+export TCL_DIR ?= ./tcl
+
 #############################
 # Modify base flist
 #############################
@@ -12,7 +14,12 @@ $(BP_FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs
 	sed -i "s/BASEJUMP_STL_DIR/BP_BASEJUMP_STL_DIR/g" $@
 
 $(FLIST): $(BP_FLIST) $(BASE_FLIST)
-	cat $^ | envsubst > $@
+	# Use vivado version instead
+	cat $^ > $@.merged
+	sed -i "s/.*bsg_launch_sync_sync.v/\$$BASEJUMP_STL_DIR\/hard\/xilinx\/common\/bsg_async\/bsg_launch_sync_sync.v/g" $@.merged
+	sed -i "s/.*bsg_mux.v/\$$BASEJUMP_STL_DIR\/hard\/xilinx\/7_series\/bsg_misc\/bsg_mux.v/g" $@.merged
+	cat $@.merged | envsubst > $@
+	rm -f $@.merged
 	echo "+incdir+$(CURR_SRC_DIR)" >> $@
 	echo "+incdir+$(COSIM_DIR)/include/vivado" >> $@
 	# Replace hardened memory which is incorrectly inferred on some Xilinx FPGAs

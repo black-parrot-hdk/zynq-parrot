@@ -2,6 +2,9 @@
 // that runs on the real Zynq chip.
 //
 
+#ifndef BP_ZYNQ_PL_H
+#define BP_ZYNQ_PL_H
+
 #if !defined(__arm__) && !defined(__aarch64__)
 #error this file intended only to be compiled on an ARM (Zynq) platform
 #endif
@@ -38,20 +41,26 @@ void _xlnk_reset();
 #include <iostream>
 #include <cstdint>
 #include <inttypes.h>
+#include <memory>
 #include "bsg_argparse.h"
 #include "bsg_printing.h"
 #include "zynq_headers.h"
 using namespace std;
 
+class bsg_tag_bitbang;
+
 class bp_zynq_pl {
 public:
+  std::unique_ptr<bsg_tag_bitbang> tag;
   bool debug = ZYNQ_PL_DEBUG;
   uintptr_t gp0_base_offset = 0;
   uintptr_t gp1_base_offset = 0;
 
   bp_zynq_pl(int argc, char *argv[]) {
     printf("// bp_zynq_pl: be sure to run as root\n");
-
+#ifdef BITBANG_ENABLE
+    tag = std::make_unique<bsg_tag_bitbang>();
+#endif
     // open memory device
     int fd = open("/dev/mem", O_RDWR | O_SYNC);
     assert(fd != 0);
@@ -173,4 +182,4 @@ public:
     return data;
   }
 };
-
+#endif

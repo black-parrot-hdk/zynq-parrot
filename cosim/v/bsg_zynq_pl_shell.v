@@ -54,6 +54,8 @@ module bsg_zynq_pl_shell #
     output wire [num_fifo_ps_to_pl_p-1:0]                         ps_to_pl_fifo_v_o,
     input wire [num_fifo_ps_to_pl_p-1:0]                          ps_to_pl_fifo_yumi_i,
 
+    output wire [num_regs_ps_to_pl_p-1:0]                         csr_data_v_o,
+    output wire [num_regs_ps_to_pl_p-1:0]                         csr_data_w_o,
     output wire [num_regs_ps_to_pl_p-1:0][C_S_AXI_DATA_WIDTH-1:0] csr_data_o,
 
     // note: this does not create registers, they are implemented in client PL
@@ -132,7 +134,8 @@ module bsg_zynq_pl_shell #
    reg [C_S_AXI_DATA_WIDTH-1 : 0]                                 axi_rdata;
    reg [1 : 0]                                                    axi_rresp;
    reg                  axi_rvalid;
-
+   reg [num_regs_ps_to_pl_p-1:0] csr_data_v_r;
+   reg [num_regs_ps_to_pl_p-1:0] csr_data_w_r;
 
    initial
      begin
@@ -350,9 +353,22 @@ module bsg_zynq_pl_shell #
         assign ps_to_pl_fifo_v_o[k]     = ps_to_pl_fifo_valid_lo[k];
      end
 
+   always @(posedge S_AXI_ACLK) begin
+     if (S_AXI_ARESETN == 1'b0) begin
+       csr_data_w_r <= '0;
+       csr_data_v_r <= '0;
+     end
+     else begin
+       csr_data_w_r <= slv_wr_sel_one_hot[num_regs_ps_to_pl_p-1:0];
+       csr_data_v_r <= slv_wr_sel_one_hot[num_regs_ps_to_pl_p-1:0] | slv_rd_sel_one_hot[num_regs_ps_to_pl_p-1:0];
+     end
+   end
+
    for (genvar k=0; k < num_regs_ps_to_pl_p; k++)
      begin: rof5
         assign csr_data_o[k] = slv_r[k];
+        assign csr_data_v_o[k] = csr_data_v_r[k];
+        assign csr_data_w_o[k] = csr_data_w_r[k];
      end
 
    // END
