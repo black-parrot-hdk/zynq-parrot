@@ -4,7 +4,7 @@
 # Project Settings
 #############################
 # TCL to pause between stages, batch to proceed straight through
-VIVADO_MODE ?= batch
+VIVADO_MODE ?= tcl
 
 # ultra96v2, pynqz2
 ifeq ($(BOARDNAME),ultra96v2)
