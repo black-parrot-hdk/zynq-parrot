@@ -87,12 +87,19 @@ add_files -norecurse ${project_name}.srcs/sources_1/bd/${project_bd}/hdl/${proje
 
 save_bd_design
 
-# change this to a 0 to have it stop before synthesis and implementation
+# Change to 0 to have it stop before synthesis / implementation
 # so you can inspect the design with the GUI
 
 if {1} {
-launch_runs impl_1 -to_step write_bitstream -jobs 4
-wait_on_run impl_1
+  launch_runs synth_1 -jobs 4
+  wait_on_run synth_1
+  open_run synth_1 -name synth_1
+  source ./tcl/constraints.tcl
+}
+
+if {1} {
+  launch_runs impl_1 -to_step write_bitstream -jobs 4
+  wait_on_run impl_1
 }
 
 puts "Completed. Type start_gui to enter vivado GUI; quit to exit"
