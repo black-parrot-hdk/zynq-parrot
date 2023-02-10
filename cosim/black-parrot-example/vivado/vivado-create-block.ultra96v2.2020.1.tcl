@@ -1,6 +1,7 @@
 set project_name $::env(BASENAME)_bd_proj
 set project_part $::env(PART)
 set project_bd   $::env(BASENAME)_bd_1
+set tcl_dir      $::env(TCL_DIR)
 
 create_project -force ${project_name} [pwd] -part ${project_part}
 create_bd_design "${project_bd}"
@@ -94,7 +95,7 @@ if {1} {
   launch_runs synth_1 -jobs 4
   wait_on_run synth_1
   open_run synth_1 -name synth_1
-  source ./tcl/constraints.tcl
+  source ${tcl_dir}/additional_constraints.tcl
 }
 
 if {1} {
