@@ -49,6 +49,8 @@ public:
     // payload
     for(unsigned i = 0;i < width;i++)
       bsg_tag_bit_write((payload >> i) & 1U);
+    // end
+    bsg_tag_bit_write(0);
   }
   // Reset the bsg tag master
   // In simulation we need this to initialize zeros_ctr_r in tag master.

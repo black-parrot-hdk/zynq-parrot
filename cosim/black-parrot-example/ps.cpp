@@ -168,11 +168,9 @@ extern "C" void cosim_main(char *argstr) {
   tag->bsg_tag_packet_write(NUM_RESET, 1, 1, 0, 0x1);
   // Set bsg client0 to 0 (deassert BP reset)
   tag->bsg_tag_packet_write(NUM_RESET, 1, 1, 0, 0x0);
-
-  // We need at least 4 additional toggles for data to propagate through
+  // We need some additional toggles for data to propagate through
   for(int i = 0;i < 4;i++)
     tag->bsg_tag_bit_write(0);
-
 #endif
 
   bsg_pr_info("ps.cpp: attempting to write and read register 0x8\n");
