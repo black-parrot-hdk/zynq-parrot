@@ -44,11 +44,14 @@ set_false_path -hold -from [get_pins $clint_inst/mtimesel_reg/data_r_reg*/C] -to
 set_false_path -hold -from [get_pins $clint_inst/mtimesel_reg/data_r_reg*/C] -to [get_pins $rtc_mux2/S*]
 set_false_path -hold -from [get_pins $clint_inst/mtimesel_reg/data_r_reg*/C] -to [get_pins $rtc_mux3/S*]
 
+# Create generated clock for the bit banging clock
+set bb_inst [join [get_cells -hier -filter {(ORIG_REF_NAME == bsg_tag_bitbang || REF_NAME == bsg_tag_bitbang)}]]
+create_generated_clock -name bb_clk -source [get_pins $bb_inst/aclk] -edges {3 5 7} [get_pins $bb_inst/tag_clk_reg/data_r_reg[0]/Q]
+
 ################# bsg_launch_sync_sync #################
 foreach blss_inst [get_cells -hier -filter {(ORIG_REF_NAME == bsg_launch_sync_sync || REF_NAME == bsg_launch_sync_sync)}] {
   puts "blss_inst: $blss_inst"
-  #foreach launch_reg [get_cells -regexp {$blss_inst/.*/bsg_SYNC_LNCH_r_reg\\[.*]}]
-  foreach launch_reg [get_cells -regexp [format {%s/.*/bsg_SYNC_LNCH_r_reg\\[.*]} $blss_inst]] {
+  foreach launch_reg [get_cells $blss_inst/*/bsg_SYNC_LNCH_r_reg[*]] {
     # ASYNC_REG should have been applied in RTL
     regexp {([\w/.\[\]]+)/[\w]+\[([0-9]+)\]} $launch_reg -> path index
 
@@ -62,4 +65,16 @@ foreach blss_inst [get_cells -hier -filter {(ORIG_REF_NAME == bsg_launch_sync_sy
     # max delay between launch flop and sync_1 flop
     set_max_delay -from $source_cell -to $dest_cell -datapath_only $min_clk_period
   }
+}
+
+################## bsg_tag_client #################
+foreach tag_inst [get_cells -hier -filter {(ORIG_REF_NAME == bsg_tag_client || REF_NAME == bsg_tag_client)}] {
+    set source_cell [get_cells $tag_inst/tag_data_reg/data_r_reg[0]]
+    set dest_cell [get_cells $tag_inst/recv/data_r_reg[0]]
+    set write_clk [get_clocks -of_objects [get_pins $source_cell/C]]
+    set read_clk [get_clocks -of_objects [get_pins $dest_cell/C]]
+    set read_clk_period  [get_property -min PERIOD $read_clk]
+    set write_clk_period [get_property -min PERIOD $write_clk]
+    set min_clk_period [expr $read_clk_period < $write_clk_period ? $read_clk_period : $write_clk_period]
+    set_max_delay -from $source_cell -to $dest_cell -datapath_only $min_clk_period
 }
