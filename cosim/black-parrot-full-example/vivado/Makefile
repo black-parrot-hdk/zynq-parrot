@@ -1,7 +1,9 @@
 include ../Makefile.design
 
-export TCL_DIR ?= ./tcl
-
+export TCL_DIR  ?= ./tcl
+export AXI_DIR  ?= $(BLACKPARROT_SUB_DIR)/axi
+export PLIC_DIR ?= $(BLACKPARROT_SUB_DIR)/rv_plic
+export ETH_DIR  ?= $(BLACKPARROT_SUB_DIR)/ethernet_controller
 #############################
 # Modify base flist
 #############################
