@@ -7,7 +7,7 @@ VCS_OPTS += -assert svaext
 VCS_OPTS += +noportcoerce
 VCS_OPTS += -timescale=1ps/1ps
 VCS_OPTS += -diag timescale
-VCS_OPTS += -f flist.vcs
+VCS_OPTS += -f $(FLIST)
 VCS_OPTS += -top $(TOP_MODULE)
 VCS_OPTS += -debug_pp
 VCS_OPTS += +vcs+lic+wait
