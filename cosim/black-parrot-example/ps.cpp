@@ -152,19 +152,18 @@ extern "C" void cosim_main(char *argstr) {
               zpl->axil_read(GP0_RD_CSR_DRAM_INITED + gp0_addr_base),
               val = zpl->axil_read(GP0_RD_CSR_DRAM_BASE + gp0_addr_base));
 #ifdef BITBANG_ENABLE
-  std::unique_ptr<bsg_tag_bitbang> tag;
-  tag = std::make_unique<bsg_tag_bitbang>((zpl->axi_gp0).get(), bp_zynq_pl::tick, GP0_WR_CSR_BITBANG);
   // Reset the bsg tag master
-  tag->bsg_tag_reset_master();
+  zpl->tag->bsg_tag_reset(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base);
   // Reset bsg client0
-  tag->bsg_tag_packet_write(NUM_RESET, 1, 0, 0, -1U);
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 0, 0, -1U);
   // Set bsg client0 to 1 (assert BP reset)
-  tag->bsg_tag_packet_write(NUM_RESET, 1, 1, 0, 0x1);
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 0, 0x1);
   // Set bsg client0 to 0 (deassert BP reset)
-  tag->bsg_tag_packet_write(NUM_RESET, 1, 1, 0, 0x0);
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 0, 0x0);
+
   // We need some additional toggles for data to propagate through
   for(int i = 0;i < 4;i++)
-    tag->bsg_tag_bit_write(0);
+    zpl->tag->bsg_tag_bit_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, 0x0);
 #endif
 
   bsg_pr_info("ps.cpp: attempting to write and read register 0x8\n");

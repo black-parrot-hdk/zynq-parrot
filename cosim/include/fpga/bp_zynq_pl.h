@@ -48,8 +48,11 @@ void _xlnk_reset();
 #include "zynq_headers.h"
 using namespace std;
 
+class bsg_tag_bitbang;
+
 class bp_zynq_pl {
 public:
+  std::unique_ptr<bsg_tag_bitbang> tag;
   bool debug = ZYNQ_PL_DEBUG;
   uintptr_t gp0_base_offset = 0;
   uintptr_t gp1_base_offset = 0;
