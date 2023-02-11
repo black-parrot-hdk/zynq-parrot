@@ -2,13 +2,13 @@
 #ifndef BP_ZYNQ_PL_H
 #define BP_ZYNQ_PL_H
 
-// This is an implementation of the standardized host bp_zynq_pl API
-// that runs on the real Zynq chip.
-//
-
 #if !defined(__arm__) && !defined(__aarch64__)
 #error this file intended only to be compiled on an ARM (Zynq) platform
 #endif
+
+// This is an implementation of the standardized host bp_zynq_pl API
+// that runs on the real Zynq chip.
+//
 
 // memory management hooks (corresponds to allocate function in python)
 //
