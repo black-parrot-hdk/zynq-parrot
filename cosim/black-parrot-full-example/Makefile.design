@@ -5,7 +5,7 @@ include $(TOP)/Makefile.common
 #############################
 # Design Settings
 #############################
-BOARDNAME  ?= pynqz2
+BOARDNAME  ?= zedboard
 TOP_MODULE ?= top
 BASENAME   ?= blackparrot
 

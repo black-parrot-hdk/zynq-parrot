@@ -11,6 +11,8 @@ ifeq ($(BOARDNAME),ultra96v2)
 PART ?= xczu3eg-sbva484-1-e
 else ifeq ($(BOARDNAME),pynqz2)
 PART ?= xc7z020clg400-1
+else ifeq ($(BOARDNAME),zedboard)
+PART ?= xc7z020clg484-1
 else
 $(error Invalid BOARDNAME)
 endif
