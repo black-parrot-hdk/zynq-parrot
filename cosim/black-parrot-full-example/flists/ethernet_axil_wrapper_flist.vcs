@@ -26,6 +26,7 @@ $ETH_DIR/ethernet_sender.sv
 $ETH_DIR/packet_buffer.sv
 $BP_COMMON_DIR/src/include/bp_common_pkg.sv
 $BP_ME_DIR/src/include/bp_me_pkg.sv
+$BASEJUMP_STL_DIR/bsg_axi/bsg_axi_pkg.v
 $AXI_DIR/bsg_axil_fifo_client.sv
 $CURR_SRC_DIR/ethernet_axil_wrapper.sv
 $BASEJUMP_STL_DIR/bsg_link/bsg_link_oddr_phy.v
@@ -43,6 +44,9 @@ $BASEJUMP_STL_DIR/bsg_mem/bsg_mem_1rw_sync_mask_write_bit_synth.v
 $BASEJUMP_STL_DIR/bsg_mem/bsg_mem_1rw_sync_mask_write_byte.v
 $BASEJUMP_STL_DIR/bsg_mem/bsg_mem_1rw_sync_mask_write_byte_synth.v
 $BASEJUMP_STL_DIR/bsg_mem/bsg_mem_1rw_sync_synth.v
+$BASEJUMP_STL_DIR/bsg_mem/bsg_mem_1r1w.v
+$BASEJUMP_STL_DIR/bsg_mem/bsg_mem_1r1w_synth.v
+$BASEJUMP_STL_DIR/bsg_mem/bsg_mem_1r1w_sync.v
 $BASEJUMP_STL_DIR/bsg_misc/bsg_counter_clock_downsample.v
 $BASEJUMP_STL_DIR/bsg_misc/bsg_edge_detect.v
 $BASEJUMP_STL_DIR/bsg_misc/bsg_buf.v
@@ -64,3 +68,5 @@ $BASEJUMP_STL_DIR/bsg_misc/bsg_nand.v
 $BASEJUMP_STL_DIR/bsg_misc/bsg_reduce.v
 $BASEJUMP_STL_DIR/bsg_misc/bsg_strobe.v
 $BASEJUMP_STL_DIR/bsg_misc/bsg_xnor.v
+$BASEJUMP_STL_DIR/bsg_async/bsg_async_fifo.v
+$BASEJUMP_STL_DIR/bsg_async/bsg_async_ptr_gray.v

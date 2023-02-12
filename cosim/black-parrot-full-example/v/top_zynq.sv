@@ -37,6 +37,16 @@ module top_zynq
   (input wire                                    aclk
    , input wire                                  aresetn
    , input wire                                  rt_clk
+   , input wire                                  clk250_i
+   // Ethernet clocks
+   , input wire                                  tx_clk_i
+   , input wire                                  rx_clk_i
+   // resets
+   , output wire                                 clk250_reset_o
+   , output wire                                 tx_clk_gen_reset_o
+   , output wire                                 tx_reset_o
+   , output wire                                 rx_reset_o
+
    // Ports of Axi Slave Bus Interface S00_AXI
    , input wire                                  s00_axi_aclk
    , output wire                                 s00_axi_aresetn
@@ -240,9 +250,9 @@ module top_zynq
    // Reset Generation Logic
 
    // Specify the number of generated resets here:
-   localparam num_reset_lp = 1; // for BP reset
+   localparam num_reset_lp = 5;
    // Specify the clocks the generated resets belong to here:
-   wire [num_reset_lp-1:0] clks_li = {aclk};
+   wire [num_reset_lp-1:0] clks_li = {rx_clk_i, tx_clk_i, clk250_i, clk250_i, aclk};
    // Generated resets signals:
    logic [num_reset_lp-1:0] synced_resets_lo;
 
@@ -289,7 +299,13 @@ module top_zynq
 
    assign {s00_axi_aresetn, s01_axi_aresetn, s02_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn} = {5{aresetn}};
 
-   wire bp_reset_li = ~aresetn | synced_resets_lo[0];
+   wire bp_reset_li          = synced_resets_lo[0] | ~aresetn;
+   assign clk250_reset_o     = synced_resets_lo[1];
+   assign tx_clk_gen_reset_o = synced_resets_lo[2];
+   assign tx_reset_o         = synced_resets_lo[3];
+   assign rx_reset_o         = synced_resets_lo[4];
+
+
 
    // Connect Shell to AXI Bus Interface S00_AXI
    bsg_zynq_pl_shell #
@@ -419,12 +435,12 @@ module top_zynq
 
    // Zynq PA 0x8000_0000 .. 0x8FFF_FFFF -> AXI 0x0000_0000 .. 0x0FFF_FFFF -> BP 0x8000_0000 - 0x8FFF_FFFF
    // Zynq PA 0xA000_0000 .. 0xAFFF_FFFF -> AXI 0x2000_0000 .. 0x2FFF_FFFF -> BP 0x0000_0000 - 0x0FFF_FFFF
-   
+
    wire [bp_axil_addr_width_lp-1:0] waddr_translated_lo = {~s01_axi_awaddr[29], 3'b0, s01_axi_awaddr[0+:28]};
-   
+
    // Zynq PA 0x8000_0000 .. 0x8FFF_FFFF -> AXI 0x0000_0000 .. 0x0FFF_FFFF -> BP 0x8000_0000 - 0x8FFF_FFFF
    // Zynq PA 0xA000_0000 .. 0xAFFF_FFFF -> AXI 0x2000_0000 .. 0x2FFF_FFFF -> BP 0x0000_0000 - 0x0FFF_FFFF
-   
+
    wire [bp_axil_addr_width_lp-1:0] raddr_translated_lo = {~s01_axi_araddr[29], 3'b0, s01_axi_araddr[0+:28]};
 
 

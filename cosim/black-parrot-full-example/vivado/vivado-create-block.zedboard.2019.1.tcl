@@ -145,11 +145,13 @@ if {1} {
   launch_runs synth_1 -jobs 4
   wait_on_run synth_1
   open_run synth_1 -name synth_1
-  source ${eth_dir}/../syn/zedboard/zedboard.tcl
+  # Order matters
   source ${tcl_dir}/additional_constraints.tcl
+  source ${eth_dir}/../syn/zedboard/zedboard.tcl
+  source ${tcl_dir}/post_additional_constraints.tcl
 }
 
-if {0} {
+if {1} {
   launch_runs impl_1 -to_step write_bitstream -jobs 4
   wait_on_run impl_1
 }

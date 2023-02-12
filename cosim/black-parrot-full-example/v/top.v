@@ -23,6 +23,15 @@ module top
     input wire                                   aclk
     ,input wire                                  aresetn
     ,input wire                                  rt_clk
+    ,input wire                                  clk250_i
+    // Ethernet clocks
+    ,input wire                                  tx_clk_i
+    ,input wire                                  rx_clk_i
+    // resets
+    ,output wire                                 clk250_reset_o
+    ,output wire                                 tx_clk_gen_reset_o
+    ,output wire                                 tx_reset_o
+    ,output wire                                 rx_reset_o
 
     ,input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
     ,input wire [2 : 0]                          s00_axi_awprot
@@ -415,6 +424,14 @@ module top
      (.aclk            (aclk)
       ,.aresetn        (aresetn)
       ,.rt_clk         (rt_clk)
+      ,.clk250_i       (clk250_i)
+      ,.tx_clk_i       (tx_clk_i)
+      ,.rx_clk_i       (rx_clk_i)
+
+      ,.clk250_reset_o (clk250_reset_o)
+      ,.tx_clk_gen_reset_o(tx_clk_gen_reset_o)
+      ,.tx_reset_o     (tx_reset_o)
+      ,.rx_reset_o     (rx_reset_o)
       ,.s00_axi_aclk   (s00_axi_aclk)
       ,.s00_axi_aresetn(s00_axi_aresetn)
       ,.s00_axi_awaddr (s00_axi_awaddr)
