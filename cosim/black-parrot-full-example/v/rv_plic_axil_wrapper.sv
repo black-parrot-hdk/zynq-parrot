@@ -1,5 +1,5 @@
 
-module rv_plic_wrapper
+module rv_plic_axil_wrapper
     import rv_plic_reg_pkg::*; #(
       parameter axil_data_width_p = 32
     , parameter axil_addr_width_p = 32

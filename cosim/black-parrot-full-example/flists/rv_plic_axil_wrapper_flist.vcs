@@ -35,7 +35,7 @@ $PLIC_DIR/rv_plic_reg_top.sv
 $PLIC_DIR/rv_plic_target.sv
 $AXI_DIR/bsg_axil_fifo_master.sv
 $AXI_DIR/bsg_axil_fifo_client.sv
-$CURR_SRC_DIR/rv_plic_wrapper.sv
+$CURR_SRC_DIR/rv_plic_axil_wrapper.sv
 $CURR_SRC_DIR/irq_to_axil_adaptor.sv
 $BASEJUMP_STL_DIR/bsg_dataflow/bsg_one_fifo.v
 $BASEJUMP_STL_DIR/bsg_dataflow/bsg_fifo_1r1w_small.v

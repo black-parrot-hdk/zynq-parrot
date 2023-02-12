@@ -3,12 +3,11 @@
 `include "bp_zynq_pl.vh"
 
 module ethernet_axil_wrapper
-  import bp_common_pkg::*;
 #(
      // AXI CHANNEL PARAMS
       parameter axil_data_width_p = 32
     , parameter axil_addr_width_p = 32
-    , localparam axil_mask_width_lp = axil_data_width_p>>3
+    , parameter axil_mask_width_lp = (axil_addr_width_p >> 3)
 `ifdef FPGA
     , localparam simulation_lp = 0
 `else
