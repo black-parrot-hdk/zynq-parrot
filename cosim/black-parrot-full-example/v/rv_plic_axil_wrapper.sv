@@ -1,81 +1,84 @@
 
 module rv_plic_axil_wrapper
-    import rv_plic_reg_pkg::*; #(
-      parameter axil_data_width_p = 32
-    , parameter axil_addr_width_p = 32
-    // {Ethernet INT, Reserved}
-    , localparam int SRCW    = $clog2(NumSrc)
-  )
-  (
-      input                                      clk_i
-    , input                                      reset_i
-    // Interrupt Sources
-    , input       [NumSrc-1:0]                   intr_src_i
-    //====================== AXI-4 LITE (Master) =========================
-    // WRITE ADDRESS CHANNEL SIGNALS
-    , output logic [axil_addr_width_p-1:0]       m_axil_awaddr_o
-    , output logic [2:0]                         m_axil_awprot_o
-    , output logic                               m_axil_awvalid_o
-    , input                                      m_axil_awready_i
+  import rv_plic_reg_pkg::*; #(
+    parameter axil_data_width_p = 32
+  , parameter axil_addr_width_p = 32
+  // {Ethernet INT, Reserved}
+  , localparam int SRCW    = $clog2(NumSrc)
+)
+(
+    input                                      aclk
+  , input                                      aresetn
+  // Interrupt Sources
+  , input                                      intr_src_i
+  //====================== AXI-4 LITE (Master) =========================
+  // WRITE ADDRESS CHANNEL SIGNALS
+  , output logic [axil_addr_width_p-1:0]       m00_axi_awaddr
+  , output logic [2:0]                         m00_axi_awprot
+  , output logic                               m00_axi_awvalid
+  , input                                      m00_axi_awready
 
-    // WRITE DATA CHANNEL SIGNALS
-    , output logic [axil_data_width_p-1:0]       m_axil_wdata_o
-    , output logic [(axil_data_width_p>>3)-1:0]  m_axil_wstrb_o
-    , output logic                               m_axil_wvalid_o
-    , input                                      m_axil_wready_i
+  // WRITE DATA CHANNEL SIGNALS
+  , output logic [axil_data_width_p-1:0]       m00_axi_wdata
+  , output logic [(axil_data_width_p>>3)-1:0]  m00_axi_wstrb
+  , output logic                               m00_axi_wvalid
+  , input                                      m00_axi_wready
 
-    // WRITE RESPONSE CHANNEL SIGNALS
-    , input [1:0]                                m_axil_bresp_i
-    , input                                      m_axil_bvalid_i
-    , output logic                               m_axil_bready_o
+  // WRITE RESPONSE CHANNEL SIGNALS
+  , input [1:0]                                m00_axi_bresp
+  , input                                      m00_axi_bvalid
+  , output logic                               m00_axi_bready
 
-    // READ ADDRESS CHANNEL SIGNALS
-    , output logic [axil_addr_width_p-1:0]       m_axil_araddr_o
-    , output logic [2:0]                         m_axil_arprot_o
-    , output logic                               m_axil_arvalid_o
-    , input                                      m_axil_arready_i
+  // READ ADDRESS CHANNEL SIGNALS
+  , output logic [axil_addr_width_p-1:0]       m00_axi_araddr
+  , output logic [2:0]                         m00_axi_arprot
+  , output logic                               m00_axi_arvalid
+  , input                                      m00_axi_arready
 
-    // READ DATA CHANNEL SIGNALS
-    , input [axil_data_width_p-1:0]              m_axil_rdata_i
-    , input [1:0]                                m_axil_rresp_i
-    , input                                      m_axil_rvalid_i
-    , output logic                               m_axil_rready_o
+  // READ DATA CHANNEL SIGNALS
+  , input [axil_data_width_p-1:0]              m00_axi_rdata
+  , input [1:0]                                m00_axi_rresp
+  , input                                      m00_axi_rvalid
+  , output logic                               m00_axi_rready
 
-    //====================== AXI-4 LITE (Slave) =========================
-    // WRITE ADDRESS CHANNEL SIGNALS
-    , input [axil_addr_width_p-1:0]              s_axil_awaddr_i
-    , input [2:0]                                s_axil_awprot_i
-    , input                                      s_axil_awvalid_i
-    , output logic                               s_axil_awready_o
+  //====================== AXI-4 LITE (Slave) =========================
+  // WRITE ADDRESS CHANNEL SIGNALS
+  , input [axil_addr_width_p-1:0]              s00_axi_awaddr
+  , input [2:0]                                s00_axi_awprot
+  , input                                      s00_axi_awvalid
+  , output logic                               s00_axi_awready
 
-    // WRITE DATA CHANNEL SIGNALS
-    , input [axil_data_width_p-1:0]              s_axil_wdata_i
-    , input [(axil_data_width_p>>3)-1:0]         s_axil_wstrb_i
-    , input                                      s_axil_wvalid_i
-    , output logic                               s_axil_wready_o
+  // WRITE DATA CHANNEL SIGNALS
+  , input [axil_data_width_p-1:0]              s00_axi_wdata
+  , input [(axil_data_width_p>>3)-1:0]         s00_axi_wstrb
+  , input                                      s00_axi_wvalid
+  , output logic                               s00_axi_wready
 
-    // WRITE RESPONSE CHANNEL SIGNALS
-    , output logic [1:0]                         s_axil_bresp_o
-    , output logic                               s_axil_bvalid_o
-    , input                                      s_axil_bready_i
+  // WRITE RESPONSE CHANNEL SIGNALS
+  , output logic [1:0]                         s00_axi_bresp
+  , output logic                               s00_axi_bvalid
+  , input                                      s00_axi_bready
 
-    // READ ADDRESS CHANNEL SIGNALS
-    , input [axil_addr_width_p-1:0]              s_axil_araddr_i
-    , input [2:0]                                s_axil_arprot_i
-    , input                                      s_axil_arvalid_i
-    , output logic                               s_axil_arready_o
+  // READ ADDRESS CHANNEL SIGNALS
+  , input [axil_addr_width_p-1:0]              s00_axi_araddr
+  , input [2:0]                                s00_axi_arprot
+  , input                                      s00_axi_arvalid
+  , output logic                               s00_axi_arready
 
-    // READ DATA CHANNEL SIGNALS
-    , output logic [axil_data_width_p-1:0]       s_axil_rdata_o
-    , output logic [1:0]                         s_axil_rresp_o
-    , output logic                               s_axil_rvalid_o
-    , input                                      s_axil_rready_i
+  // READ DATA CHANNEL SIGNALS
+  , output logic [axil_data_width_p-1:0]       s00_axi_rdata
+  , output logic [1:0]                         s00_axi_rresp
+  , output logic                               s00_axi_rvalid
+  , input                                      s00_axi_rready
   );
 
   parameter reg_width_p      = top_pkg::TL_DW;
   parameter reg_addr_width_p = top_pkg::TL_AW;
   localparam plic_addr_width_lp = 22;
   localparam s_mode_plic_addr_lp = 'h30_b004;
+
+  wire clk_i = aclk;
+  wire reset_i = ~aresetn;
 
   // Interrupt notification to targets
   logic [NumTarget-1:0]                   irq_lo; // eip
@@ -124,29 +127,29 @@ module rv_plic_axil_wrapper
    ,.v_i(output_fifo_v_lo)
    ,.ready_and_o(output_fifo_ready_and_li)
 
-   ,.s_axil_awaddr_i
-   ,.s_axil_awprot_i
-   ,.s_axil_awvalid_i
-   ,.s_axil_awready_o
+   ,.s_axil_awaddr_i (s00_axi_awaddr )
+   ,.s_axil_awprot_i (s00_axi_awprot )
+   ,.s_axil_awvalid_i(s00_axi_awvalid)
+   ,.s_axil_awready_o(s00_axi_awready)
 
-   ,.s_axil_wdata_i
-   ,.s_axil_wstrb_i
-   ,.s_axil_wvalid_i
-   ,.s_axil_wready_o
+   ,.s_axil_wdata_i  (s00_axi_wdata  )
+   ,.s_axil_wstrb_i  (s00_axi_wstrb  )
+   ,.s_axil_wvalid_i (s00_axi_wvalid )
+   ,.s_axil_wready_o (s00_axi_wready )
 
-   ,.s_axil_bresp_o
-   ,.s_axil_bvalid_o
-   ,.s_axil_bready_i
+   ,.s_axil_bresp_o  (s00_axi_bresp  )
+   ,.s_axil_bvalid_o (s00_axi_bvalid )
+   ,.s_axil_bready_i (s00_axi_bready )
 
-   ,.s_axil_araddr_i
-   ,.s_axil_arprot_i
-   ,.s_axil_arvalid_i
-   ,.s_axil_arready_o
+   ,.s_axil_araddr_i (s00_axi_araddr )
+   ,.s_axil_arprot_i (s00_axi_arprot )
+   ,.s_axil_arvalid_i(s00_axi_arvalid)
+   ,.s_axil_arready_o(s00_axi_arready)
 
-   ,.s_axil_rdata_o
-   ,.s_axil_rresp_o
-   ,.s_axil_rvalid_o
-   ,.s_axil_rready_i
+   ,.s_axil_rdata_o  (s00_axi_rdata  )
+   ,.s_axil_rresp_o  (s00_axi_rresp  )
+   ,.s_axil_rvalid_o (s00_axi_rvalid )
+   ,.s_axil_rready_i (s00_axi_rready )
   );
 
   wire output_fifo_yumi = output_fifo_v_lo & output_fifo_ready_and_li;
@@ -191,7 +194,7 @@ module rv_plic_axil_wrapper
    ,.tl_o(tl_lo)
 
     // Interrupt Sources
-   ,.intr_src_i(intr_src_i)
+   ,.intr_src_i({intr_src_i, 1'b0})
 
    ,.alert_rx_i(/* UNUSED */)
    ,.alert_tx_o(/* UNUSED */)
@@ -231,37 +234,37 @@ module rv_plic_axil_wrapper
 
   irq_to_axil_adaptor #(
     .axil_data_width_p(axil_data_width_p)
-    ,.axil_addr_width_p(axil_addr_width_p)
-    ,.s_mode_plic_addr_p(s_mode_plic_addr_lp)
+   ,.axil_addr_width_p(axil_addr_width_p)
+   ,.s_mode_plic_addr_p(s_mode_plic_addr_lp)
   ) irq_to_axil_adaptor (
-      .clk_i(clk_i)
-     ,.reset_i(reset_i)
-     ,.irq_r_i(irq_lo)
+    .clk_i(clk_i)
+   ,.reset_i(reset_i)
+   ,.irq_r_i(irq_lo)
 
-     ,.m_axil_awaddr_o(m_axil_awaddr_o)
-     ,.m_axil_awprot_o(m_axil_awprot_o)
-     ,.m_axil_awvalid_o(m_axil_awvalid_o)
-     ,.m_axil_awready_i(m_axil_awready_i)
+   ,.m_axil_awaddr_o (m00_axi_awaddr )
+   ,.m_axil_awprot_o (m00_axi_awprot )
+   ,.m_axil_awvalid_o(m00_axi_awvalid)
+   ,.m_axil_awready_i(m00_axi_awready)
 
-     ,.m_axil_wdata_o(m_axil_wdata_o)
-     ,.m_axil_wstrb_o(m_axil_wstrb_o)
-     ,.m_axil_wvalid_o(m_axil_wvalid_o)
-     ,.m_axil_wready_i(m_axil_wready_i)
+   ,.m_axil_wdata_o  (m00_axi_wdata  )
+   ,.m_axil_wstrb_o  (m00_axi_wstrb  )
+   ,.m_axil_wvalid_o (m00_axi_wvalid )
+   ,.m_axil_wready_i (m00_axi_wready )
 
-     ,.m_axil_bresp_i(m_axil_bresp_i)
-     ,.m_axil_bvalid_i(m_axil_bvalid_i)
-     ,.m_axil_bready_o(m_axil_bready_o)
+   ,.m_axil_bresp_i  (m00_axi_bresp  )
+   ,.m_axil_bvalid_i (m00_axi_bvalid )
+   ,.m_axil_bready_o (m00_axi_bready )
 
-     ,.m_axil_araddr_o(m_axil_araddr_o)
-     ,.m_axil_arprot_o(m_axil_arprot_o)
-     ,.m_axil_arvalid_o(m_axil_arvalid_o)
-     ,.m_axil_arready_i(m_axil_arready_i)
+   ,.m_axil_araddr_o (m00_axi_araddr )
+   ,.m_axil_arprot_o (m00_axi_arprot )
+   ,.m_axil_arvalid_o(m00_axi_arvalid)
+   ,.m_axil_arready_i(m00_axi_arready)
 
-     ,.m_axil_rdata_i(m_axil_rdata_i)
-     ,.m_axil_rresp_i(m_axil_rresp_i)
-     ,.m_axil_rvalid_i(m_axil_rvalid_i)
-     ,.m_axil_rready_o(m_axil_rready_o)
-    );
+   ,.m_axil_rdata_i  (m00_axi_rdata  )
+   ,.m_axil_rresp_i  (m00_axi_rresp  )
+   ,.m_axil_rvalid_i (m00_axi_rvalid )
+   ,.m_axil_rready_o (m00_axi_rready )
+  );
 
 
   // synopsys translate_off

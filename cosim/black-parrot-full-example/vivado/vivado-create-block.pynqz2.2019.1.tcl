@@ -89,14 +89,18 @@ connect_bd_net [get_bd_pins ethernet_axil_wrapper_0/aclk] [get_bd_pins processin
 connect_bd_net [get_bd_pins ethernet_axil_wrapper_0/aresetn] [get_bd_pins proc_sys_reset_0/peripheral_aresetn]
 
 # Instantiate the RISC-V PLIC module
-create_bd_cell -type ip -vlnv user.org:user:rv_plic_wrapper:1.0 rv_plic_wrapper_0
-connect_bd_intf_net [get_bd_intf_pins smartconnect_2/M01_AXI] [get_bd_intf_pins rv_plic_wrapper_0/s00_axi]
-connect_bd_net [get_bd_pins rv_plic_wrapper_0/aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
-connect_bd_net [get_bd_pins rv_plic_wrapper_0/aresetn] [get_bd_pins proc_sys_reset_0/peripheral_aresetn]
+create_bd_cell -type ip -vlnv user.org:user:rv_plic_axil_wrapper:1.0 rv_plic_axil_wrapper_0
+connect_bd_intf_net [get_bd_intf_pins smartconnect_2/M01_AXI] [get_bd_intf_pins rv_plic_axil_wrapper_0/s00_axi]
+connect_bd_net [get_bd_pins rv_plic_axil_wrapper_0/aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
+connect_bd_net [get_bd_pins rv_plic_axil_wrapper_0/aresetn] [get_bd_pins proc_sys_reset_0/peripheral_aresetn]
 
-connect_bd_intf_net [get_bd_intf_pins rv_plic_wrapper_0/m00_axi] [get_bd_intf_pins smartconnect_3/S00_AXI]
+connect_bd_intf_net [get_bd_intf_pins rv_plic_axil_wrapper_0/m00_axi] [get_bd_intf_pins smartconnect_3/S00_AXI]
 connect_bd_intf_net [get_bd_intf_pins top_0/s02_axi] [get_bd_intf_pins smartconnect_3/M00_AXI]
-connect_bd_net [get_bd_pins rv_plic_wrapper_0/intr_src_i] [get_bd_pins ethernet_axil_wrapper_0/irq_o]
+connect_bd_net [get_bd_pins rv_plic_axil_wrapper_0/intr_src_i] [get_bd_pins ethernet_axil_wrapper_0/irq_o]
+
+# Connect 250MHZ and 200MHZ clocks
+connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK2] [get_bd_pins ethernet_axil_wrapper_0/clk250_i]
+connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK3] [get_bd_pins ethernet_axil_wrapper_0/iodelay_ref_clk_i]
 
 # Create external pins for RGMII
 make_bd_pins_external -name rgmii_rx_clk_i [get_bd_pins ethernet_axil_wrapper_0/rgmii_rx_clk_i]
@@ -110,9 +114,9 @@ connect_bd_net [get_bd_ports eth_phy_resetn_o] [get_bd_pins proc_sys_reset_0/per
 
 create_bd_addr_seg -range 0x00001000 -offset 0x40000000 [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs top_0/s00_axi/reg0] SEG_top_0_reg0
 create_bd_addr_seg -range 0x40000000 -offset 0x80000000 [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs top_0/s01_axi/reg0] SEG_top_0_reg1
-create_bd_addr_seg -range 0x100000000 -offset 0x0 [get_bd_addr_spaces rv_plic_wrapper_0/m00_axi] [get_bd_addr_segs top_0/s02_axi/reg0] SEG_top_0_reg2
+create_bd_addr_seg -range 0x100000000 -offset 0x0 [get_bd_addr_spaces rv_plic_axil_wrapper_0/m00_axi] [get_bd_addr_segs top_0/s02_axi/reg0] SEG_top_0_reg2
 create_bd_addr_seg -range 0x2000 -offset 0x20000000 [get_bd_addr_spaces top_0/m01_axi] [get_bd_addr_segs ethernet_axil_wrapper_0/s00_axi/reg0] SEG_top_0_reg3
-create_bd_addr_seg -range 0x4000000 -offset 0x10000000 [get_bd_addr_spaces top_0/m01_axi] [get_bd_addr_segs rv_plic_wrapper_0/s00_axi/reg0] SEG_top_0_reg4
+create_bd_addr_seg -range 0x4000000 -offset 0x10000000 [get_bd_addr_spaces top_0/m01_axi] [get_bd_addr_segs rv_plic_axil_wrapper_0/s00_axi/reg0] SEG_top_0_reg4
 assign_bd_address
 
 validate_bd_design
@@ -125,14 +129,14 @@ save_bd_design
 # Change to 0 to have it stop before synthesis / implementation
 # so you can inspect the design with the GUI
 
-if {1} {
+if {0} {
   launch_runs synth_1 -jobs 4
   wait_on_run synth_1
   open_run synth_1 -name synth_1
   source ${tcl_dir}/additional_constraints.tcl
 }
 
-if {1} {
+if {0} {
   launch_runs impl_1 -to_step write_bitstream -jobs 4
   wait_on_run impl_1
 }

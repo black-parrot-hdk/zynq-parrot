@@ -42,6 +42,7 @@ $(ETH_FLIST): $(CURR_FLIST_DIR)/ethernet_axil_wrapper_flist.vcs
 	cat $^ | envsubst > $@
 	echo "+incdir+$(CURR_SRC_DIR)" >> $@
 	echo "+incdir+$(BASEJUMP_STL_DIR)/bsg_noc" >> $@
+	echo "+incdir+$(BASEJUMP_STL_DIR)/bsg_misc" >> $@
 	echo "+incdir+$(COSIM_DIR)/include/vivado" >> $@
 	# Replace hardened memory which is incorrectly inferred on some Xilinx FPGAs
 	sed -i "/bsg_mem_1rw_sync_mask_write_bit.v/d" $@
@@ -51,6 +52,7 @@ $(ETH_FLIST): $(CURR_FLIST_DIR)/ethernet_axil_wrapper_flist.vcs
 $(PLIC_FLIST): $(CURR_FLIST_DIR)/rv_plic_axil_wrapper_flist.vcs
 	cat $^ | envsubst > $@
 	echo "+incdir+$(CURR_SRC_DIR)" >> $@
+	echo "+incdir+$(BASEJUMP_STL_DIR)/bsg_misc" >> $@
 	echo "+incdir+$(COSIM_DIR)/include/vivado" >> $@
 	# Replace hardened memory which is incorrectly inferred on some Xilinx FPGAs
 	sed -i "/bsg_mem_1rw_sync_mask_write_bit.v/d" $@
