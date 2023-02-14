@@ -5,7 +5,7 @@ $ETH_DIR/zedboard/bsg_mem_1r1w_sync_synth.v
 $ETH_DIR/zedboard/bsg_launch_sync_sync.v
 $ETH_DIR/zedboard/axis_async_fifo.v
 $ETH_DIR/zedboard/axis_fifo_mem.sv
-$ETH_DIR/ssio_ddr_in.v
+$ETH_DIR/zedboard/ssio_ddr_in.v
 $ETH_DIR/ethernet_controller.sv
 $ETH_DIR/axis_adapter.v
 $ETH_DIR/axis_async_fifo_adapter.v

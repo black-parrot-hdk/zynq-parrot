@@ -28,6 +28,7 @@ module top
     ,input wire                                  tx_clk_i
     ,input wire                                  rx_clk_i
     // resets
+    ,output wire                                 reset_o
     ,output wire                                 clk250_reset_o
     ,output wire                                 tx_clk_gen_reset_o
     ,output wire                                 tx_reset_o
@@ -428,10 +429,12 @@ module top
       ,.tx_clk_i       (tx_clk_i)
       ,.rx_clk_i       (rx_clk_i)
 
+      ,.reset_o(reset_o)
       ,.clk250_reset_o (clk250_reset_o)
       ,.tx_clk_gen_reset_o(tx_clk_gen_reset_o)
       ,.tx_reset_o     (tx_reset_o)
       ,.rx_reset_o     (rx_reset_o)
+
       ,.s00_axi_aclk   (s00_axi_aclk)
       ,.s00_axi_aresetn(s00_axi_aresetn)
       ,.s00_axi_awaddr (s00_axi_awaddr)

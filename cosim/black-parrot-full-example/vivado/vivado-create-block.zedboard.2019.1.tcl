@@ -87,13 +87,11 @@ connect_bd_net [get_bd_pins top_0/rt_clk] [get_bd_pins processing_system7_0/FCLK
 create_bd_cell -type ip -vlnv user.org:user:ethernet_axil_wrapper:1.0 ethernet_axil_wrapper_0
 connect_bd_intf_net [get_bd_intf_pins smartconnect_2/M00_AXI] [get_bd_intf_pins ethernet_axil_wrapper_0/s00_axi]
 connect_bd_net [get_bd_pins ethernet_axil_wrapper_0/aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
-connect_bd_net [get_bd_pins ethernet_axil_wrapper_0/aresetn] [get_bd_pins proc_sys_reset_0/peripheral_aresetn]
 
 # Instantiate the RISC-V PLIC module
 create_bd_cell -type ip -vlnv user.org:user:rv_plic_axil_wrapper:1.0 rv_plic_axil_wrapper_0
 connect_bd_intf_net [get_bd_intf_pins smartconnect_2/M01_AXI] [get_bd_intf_pins rv_plic_axil_wrapper_0/s00_axi]
 connect_bd_net [get_bd_pins rv_plic_axil_wrapper_0/aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
-connect_bd_net [get_bd_pins rv_plic_axil_wrapper_0/aresetn] [get_bd_pins proc_sys_reset_0/peripheral_aresetn]
 
 connect_bd_intf_net [get_bd_intf_pins rv_plic_axil_wrapper_0/m00_axi] [get_bd_intf_pins smartconnect_3/S00_AXI]
 connect_bd_intf_net [get_bd_intf_pins top_0/s02_axi] [get_bd_intf_pins smartconnect_3/M00_AXI]
@@ -105,10 +103,15 @@ connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK2] [get_bd_pins top_0/c
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK3] [get_bd_pins ethernet_axil_wrapper_0/iodelay_ref_clk_i]
 
 # Connect reset signals
-connect_bd_net [get_bd_pins top_0/clk250_reset_o] [get_bd_pins ethernet_axil_wrapper_0/clk250_reset_i]
+connect_bd_net [get_bd_pins top_0/reset_o]            [get_bd_pins ethernet_axil_wrapper_0/reset_i]
+connect_bd_net [get_bd_pins top_0/reset_o]            [get_bd_pins rv_plic_axil_wrapper_0/reset_i]
+connect_bd_net [get_bd_pins top_0/clk250_reset_o]     [get_bd_pins ethernet_axil_wrapper_0/clk250_reset_i]
 connect_bd_net [get_bd_pins top_0/tx_clk_gen_reset_o] [get_bd_pins ethernet_axil_wrapper_0/tx_clk_gen_reset_i]
-connect_bd_net [get_bd_pins top_0/tx_reset_o] [get_bd_pins ethernet_axil_wrapper_0/tx_reset_i]
-connect_bd_net [get_bd_pins top_0/rx_reset_o] [get_bd_pins ethernet_axil_wrapper_0/rx_reset_i]
+connect_bd_net [get_bd_pins top_0/tx_reset_o]         [get_bd_pins ethernet_axil_wrapper_0/tx_reset_i]
+connect_bd_net [get_bd_pins top_0/rx_reset_o]         [get_bd_pins ethernet_axil_wrapper_0/rx_reset_i]
+set_property CONFIG.POLARITY ACTIVE_HIGH [get_bd_pins ethernet_axil_wrapper_0/reset_i]
+set_property CONFIG.POLARITY ACTIVE_HIGH [get_bd_pins rv_plic_axil_wrapper_0/reset_i]
+set_property CONFIG.POLARITY ACTIVE_HIGH [get_bd_pins top_0/reset_o]
 
 # Connect tx_clk and rx_clk (for Ethernet)
 connect_bd_net [get_bd_pins ethernet_axil_wrapper_0/tx_clk_o] [get_bd_pins top_0/tx_clk_i]

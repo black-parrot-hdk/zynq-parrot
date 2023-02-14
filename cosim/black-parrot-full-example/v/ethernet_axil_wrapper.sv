@@ -16,7 +16,7 @@ module ethernet_axil_wrapper
 )
 (
     input  logic                         aclk
-  , input  logic                         aresetn
+  , input  logic                         reset_i
   , input  logic                         clk250_i
   , input  logic                         clk250_reset_i
   , input  logic                         tx_clk_gen_reset_i
@@ -74,7 +74,6 @@ module ethernet_axil_wrapper
   localparam size_width_lp = `BSG_WIDTH(`BSG_SAFE_CLOG2(axil_mask_width_lp));
 
   wire clk_i = aclk;
-  wire reset_i = ~aresetn;
 
   logic [axil_data_width_p-1:0]       axil_data_lo;
   logic [axil_addr_width_p-1:0]       axil_addr_lo;

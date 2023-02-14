@@ -8,7 +8,7 @@ module rv_plic_axil_wrapper
 )
 (
     input                                      aclk
-  , input                                      aresetn
+  , input                                      reset_i
   // Interrupt Sources
   , input                                      intr_src_i
   //====================== AXI-4 LITE (Master) =========================
@@ -78,7 +78,6 @@ module rv_plic_axil_wrapper
   localparam s_mode_plic_addr_lp = 'h30_b004;
 
   wire clk_i = aclk;
-  wire reset_i = ~aresetn;
 
   // Interrupt notification to targets
   logic [NumTarget-1:0]                   irq_lo; // eip
