@@ -65,7 +65,7 @@
 #define GP1_DRAM_BASE_ADDR gp1_addr_base
 #define GP1_CSR_BASE_ADDR (gp1_addr_base + DRAM_MAX_ALLOC_SIZE)
 
-#define NUM_RESET 1
+#define NUM_RESET 5
 
 // Helper functions
 void nbf_load(bp_zynq_pl *zpl, char *filename);
@@ -160,12 +160,32 @@ extern "C" void cosim_main(char *argstr) {
 #ifdef BITBANG_ENABLE
   // Reset the bsg tag master
   zpl->tag->bsg_tag_reset(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base);
-  // Reset bsg client0
+  // Reset bsg client0-4
   zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 0, 0, -1U);
-  // Set bsg client0 to 1 (assert BP reset)
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 0, 1, -1U);
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 0, 2, -1U);
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 0, 3, -1U);
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 0, 4, -1U);
+
+  // Set bsg client0-4 to 1 (assert resets)
   zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 0, 0x1);
-  // Set bsg client0 to 0 (deassert BP reset)
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 1, 0x1);
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 2, 0x1);
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 3, 0x1);
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 4, 0x1);
+
+  // Set bsg client2 to 0 (deassert reset)
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 2, 0x0);
+
+  // wait until the system is reset
+  for(int i = 0;i < 200;i++)
+    zpl->axil_read(GP0_RD_CSR_DRAM_BASE + gp0_addr_base);
+
+  // Set all other bsg client to 0 (deassert)
   zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 0, 0x0);
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 1, 0x0);
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 3, 0x0);
+  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 4, 0x0);
 
   // We need some additional toggles for data to propagate through
   for(int i = 0;i < 4;i++)

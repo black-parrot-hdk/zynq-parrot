@@ -11,6 +11,8 @@ ifeq ($(BOARDNAME),ultra96v2)
 PART ?= xczu3eg-sbva484-1-e
 else ifeq ($(BOARDNAME),pynqz2)
 PART ?= xc7z020clg400-1
+else ifeq ($(BOARDNAME),zedboard)
+PART ?= xc7z020clg484-1
 else
 $(error Invalid BOARDNAME)
 endif
@@ -58,7 +60,9 @@ fpga_report_build_block:
 # on the x86 server
 fpga_build_ip: $(FLIST)
 	mkdir fpga_build
-	source $(XILINX_SETTINGS) && $(VIVADO) -source $(COSIM_TCL_DIR)/vivado-build-ip.tcl -mode $(VIVADO_MODE)
+	for f in $(FLIST); do \
+		source $(XILINX_SETTINGS) && $(VIVADO) -source $(COSIM_TCL_DIR)/vivado-build-ip.tcl -mode $(VIVADO_MODE) -tclargs $$f ;\
+	done
 	-@grep --color "CRITICAL WARNING" vivado.log
 	-@grep --color "ERROR" vivado.log
 	-@tail -n5 vivado.log
@@ -75,7 +79,7 @@ pack_bitstream:
 ifeq ($(VIVADO_VERSION),2019.1)
 	cp $(BASENAME)_bd_proj.srcs/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1*.hwh .
 	cp $(BASENAME)_bd_proj.srcs/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1*.tcl .
-	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.bit ../$(BASENAME)_bd_1.bit
+	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.bit $(BASENAME)_bd_1.bit
 endif
 ifeq ($(VIVADO_VERSION),2020.1)
 	cp $(BASENAME)_bd_proj.srcs/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1*.hwh .
@@ -90,12 +94,12 @@ endif
 	tar -Jc $(BASENAME)_bd_1* | base64 > ../$(BASENAME)_bd_1.$(BOARDNAME).tar.xz.b64
 
 clean:
-	rm -rf flist.vcs
+	rm -rf *.vcs
 	rm -rf *.fpga
 	rm -rf *.log
 	rm -rf *.jou
 	rm -rf *.b64
-	rm -rf $(BASENAME)_ip_proj*
+	rm -rf *_ip_proj*
 	rm -rf fpga_build
 	rm -rf $(BASENAME)_bd_proj*
 	rm -rf $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.hwh $(BASENAME)_bd_1_bd.tcl
