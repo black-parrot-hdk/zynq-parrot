@@ -355,6 +355,28 @@ module top
    wire                                 m00_axi_rlast;
    wire [1:0]                           m00_axi_rresp;
 
+   wire                                 s02_axi_aclk;
+   wire                                 s02_axi_aresetn;
+   wire [C_S02_AXI_ADDR_WIDTH-1 : 0]    s02_axi_awaddr;
+   wire [2 : 0]                         s02_axi_awprot;
+   wire                                 s02_axi_awvalid;
+   wire                                 s02_axi_awready;
+   wire [C_S02_AXI_DATA_WIDTH-1 : 0]    s02_axi_wdata;
+   wire [(C_S02_AXI_DATA_WIDTH/8)-1 : 0]s02_axi_wstrb;
+   wire                                 s02_axi_wvalid;
+   wire                                 s02_axi_wready;
+   wire [1 : 0]                         s02_axi_bresp;
+   wire                                 s02_axi_bvalid;
+   wire                                 s02_axi_bready;
+   wire [C_S02_AXI_ADDR_WIDTH-1 : 0]    s02_axi_araddr;
+   wire [2 : 0]                         s02_axi_arprot;
+   wire                                 s02_axi_arvalid;
+   wire                                 s02_axi_arready;
+   wire [C_S02_AXI_DATA_WIDTH-1 : 0]    s02_axi_rdata;
+   wire [1 : 0]                         s02_axi_rresp;
+   wire                                 s02_axi_rvalid;
+   wire                                 s02_axi_rready;
+
 
    bsg_nonsynth_axi_mem
      #(.axi_id_width_p(axi_id_width_p)
@@ -445,7 +467,7 @@ module top
    ,.tx_clk_o(tx_clk_i)
    ,.tx_reset_i(tx_reset_o)
    ,.rx_clk_o(rx_clk_i)
-   ,.rx_reset_i(rx_clk_o)
+   ,.rx_reset_i(rx_reset_o)
    ,.iodelay_ref_clk_i(iodelay_ref_clk_i)
 
    ,.s01_axi_awaddr (m01_axi_awaddr )

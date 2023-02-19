@@ -57,7 +57,9 @@ class bp_zynq_pl {
 
   std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > axi_gp0;
   std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > axi_gp1;
+#ifdef HP0_ENABLE
   std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> > axi_hp0;
+#endif
 public:
   std::unique_ptr<bsg_tag_bitbang> tag;
   std::unique_ptr<zynq_scratchpad> scratchpad;
@@ -169,8 +171,8 @@ public:
       int araddr = axi_hp0->p_awaddr;
       bsg_pr_err("  bp_zynq_pl: Unsupported AXI device read at [%x]\n", araddr);
     }
-  }
 #endif
+  }
 };
 
 #endif

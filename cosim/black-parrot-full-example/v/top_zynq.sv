@@ -94,7 +94,7 @@ module top_zynq
    , input wire                                  s01_axi_rready
 
    , input wire                                  s02_axi_aclk
-   , input wire                                  s02_axi_aresetn
+   , output wire                                 s02_axi_aresetn
    , input wire [C_S02_AXI_ADDR_WIDTH-1 : 0]     s02_axi_awaddr
    , input wire [2 : 0]                          s02_axi_awprot
    , input wire                                  s02_axi_awvalid

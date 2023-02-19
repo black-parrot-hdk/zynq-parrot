@@ -15,10 +15,10 @@ module peripheral_nonsynth #(
   , input wire                                  clk250_reset_i
   , input wire                                  tx_clk_gen_reset_i
 
-  , input wire                                  tx_clk_o
+  , output wire                                 tx_clk_o
   , input wire                                  tx_reset_i
 
-  , input wire                                  rx_clk_o
+  , output wire                                 rx_clk_o
   , input wire                                  rx_reset_i
 
   , input wire                                  iodelay_ref_clk_i
