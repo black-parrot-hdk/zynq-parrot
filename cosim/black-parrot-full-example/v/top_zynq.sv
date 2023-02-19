@@ -301,7 +301,7 @@ module top_zynq
    assign {s00_axi_aresetn, s01_axi_aresetn, s02_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn} = {5{aresetn}};
 
    wire bp_reset_li          = synced_resets_lo[0] | ~aresetn;
-   assign reset_o            = synced_resets_lo[0];
+   assign reset_o            = bp_reset_li;
    assign clk250_reset_o     = synced_resets_lo[1];
    assign tx_clk_gen_reset_o = synced_resets_lo[2];
    assign tx_reset_o         = synced_resets_lo[3];

@@ -39,6 +39,9 @@ public:
       bsg_tag_bit_write(zpl, csr_addr, (payload >> i) & 1U);
     // end
     bsg_tag_bit_write(zpl, csr_addr, 0U);
+    // Need some additional toggles for data to propagate through
+    for(int i = 0;i < 3;i++)
+      bsg_tag_bit_write(zpl, csr_addr, 0U);
   }
   // Reset the bsg tag master
   // In simulation we need this to initialize zeros_ctr_r in tag master.
