@@ -301,7 +301,7 @@ module top_zynq
    assign {s00_axi_aresetn, s01_axi_aresetn, s02_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn} = {5{aresetn}};
 
    wire bp_reset_li          = synced_resets_lo[0] | ~aresetn;
-   assign reset_o            = bp_reset_li;
+   assign reset_o            = synced_resets_lo[0];
    assign clk250_reset_o     = synced_resets_lo[1];
    assign tx_clk_gen_reset_o = synced_resets_lo[2];
    assign tx_reset_o         = synced_resets_lo[3];
@@ -474,7 +474,7 @@ module top_zynq
       )
     store_packer
      (.clk_i   (s01_axi_aclk)
-      ,.reset_i(~s01_axi_aresetn)
+      ,.reset_i(reset_o)
 
       ,.s_axil_awaddr_i (spack_axi_awaddr)
       ,.s_axil_awprot_i (spack_axi_awprot)
@@ -514,7 +514,7 @@ module top_zynq
      ,.data_width_p(C_S01_AXI_DATA_WIDTH))
    axil_mux
     (.clk_i(s01_axi_aclk)
-     ,.reset_i(~s01_axi_aresetn)
+     ,.reset_i(reset_o)
      ,.s00_axil_awaddr (waddr_translated_lo)
      ,.s00_axil_awprot (s01_axi_awprot)
      ,.s00_axil_awvalid(s01_axi_awvalid)
@@ -584,7 +584,7 @@ module top_zynq
      )
    axil_demux
     (.clk_i(s01_axi_aclk)
-     ,.reset_i(~s01_axi_aresetn)
+     ,.reset_i(reset_o)
 
      ,.s00_axil_awaddr(bp_m_axil_awaddr)
      ,.s00_axil_awprot(bp_m_axil_awprot)
