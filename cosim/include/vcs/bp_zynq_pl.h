@@ -157,6 +157,7 @@ public:
   }
 
   void axil_poll() {
+#ifdef HP0_ENABLE
     if (axi_hp0->p_awvalid && (axi_hp0->p_awaddr >= SCRATCHPAD_BASE) && (axi_hp0->p_awaddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {
       axi_hp0->axil_write_helper((axil_device *)scratchpad.get(), tick);
     } else if (axi_hp0->p_arvalid && (axi_hp0->p_araddr >= SCRATCHPAD_BASE) && (axi_hp0->p_araddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {
@@ -169,6 +170,7 @@ public:
       bsg_pr_err("  bp_zynq_pl: Unsupported AXI device read at [%x]\n", araddr);
     }
   }
+#endif
 };
 
 #endif
