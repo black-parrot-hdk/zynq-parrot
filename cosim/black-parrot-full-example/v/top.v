@@ -164,6 +164,26 @@ module top
 `else
     );
 
+    logic tx_clk_i;
+    logic rx_clk_i;
+    logic reset_o;
+    logic clk250_reset_o;
+    logic tx_clk_gen_reset_o;
+    logic tx_reset_o;
+    logic rx_reset_o;
+
+    logic clk250_i;
+    bsg_nonsynth_clock_gen
+     #(.cycle_time_p(4000)) // 250 MHZ
+     clk250_gen
+      (.o(clk250_i));
+
+    logic iodelay_ref_clk_i;
+    bsg_nonsynth_clock_gen
+     #(.cycle_time_p(5000)) // 200 MHZ
+     iodelay_ref_clk_gen
+      (.o(iodelay_ref_clk_i));
+
     localparam rt_clk_period_lp = 2500000;
     logic rt_clk;
     bsg_nonsynth_clock_gen
@@ -171,7 +191,7 @@ module top
      rt_clk_gen
       (.o(rt_clk));
 
-    localparam aclk_period_lp = 1000;
+    localparam aclk_period_lp = 50000;
     logic aclk;
     bsg_nonsynth_clock_gen
      #(.cycle_time_p(aclk_period_lp))
@@ -287,33 +307,6 @@ module top
     logic [C_M01_AXI_DATA_WIDTH-1:0] m01_axi_rdata;
     logic [1:0] m01_axi_rresp;
     logic m01_axi_rvalid, m01_axi_rready;
-    bsg_nonsynth_axil_to_dpi
-     #(.addr_width_p(C_M01_AXI_ADDR_WIDTH), .data_width_p(C_M01_AXI_DATA_WIDTH))
-     axil2
-      (.aclk_i(m01_axi_aclk)
-       ,.aresetn_i(m01_axi_aresetn)
-
-       ,.awaddr_i(m01_axi_awaddr)
-       ,.awprot_i(m01_axi_awprot)
-       ,.awvalid_i(m01_axi_awvalid)
-       ,.awready_o(m01_axi_awready)
-       ,.wdata_i(m01_axi_wdata)
-       ,.wstrb_i(m01_axi_wstrb)
-       ,.wvalid_i(m01_axi_wvalid)
-       ,.wready_o(m01_axi_wready)
-       ,.bresp_o(m01_axi_bresp)
-       ,.bvalid_o(m01_axi_bvalid)
-       ,.bready_i(m01_axi_bready)
-
-       ,.araddr_i(m01_axi_araddr)
-       ,.arprot_i(m01_axi_arprot)
-       ,.arvalid_i(m01_axi_arvalid)
-       ,.arready_o(m01_axi_arready)
-       ,.rdata_o(m01_axi_rdata)
-       ,.rresp_o(m01_axi_rresp)
-       ,.rvalid_o(m01_axi_rvalid)
-       ,.rready_i(m01_axi_rready)
-       );
 
    localparam axi_id_width_p = 6;
    localparam axi_addr_width_p = 32;
@@ -407,6 +400,109 @@ module top
       ,.axi_rvalid_o  (m00_axi_rvalid)
       ,.axi_rready_i  (m00_axi_rready)
       );
+
+  logic       rgmii_rx_clk_i;
+  logic [3:0] rgmii_rxd_i;
+  logic       rgmii_rx_ctl_i;
+  logic       rgmii_tx_clk_o;
+  logic [3:0] rgmii_txd_o;
+  logic       rgmii_tx_ctl_o;
+
+  // Ethernet speed: cycle time
+  // 10M: 400000;
+  // 100M: 40000;
+  // 1000M: 8000;
+  localparam rgmii_rx_cycle_time_lp = 40000; // 100M
+
+  bsg_nonsynth_clock_gen #(.cycle_time_p(rgmii_rx_cycle_time_lp)
+  ) rgmii_rx_clk_gen (
+    .o(rgmii_rx_clk_i)
+  );
+  rgmii_loopback_nonsynth rgmii_loopback_nonsynth (
+    .rx_rst_i(tx_reset_o)
+   ,.rgmii_rx_clk_i(rgmii_tx_clk_o)
+   ,.rgmii_rxd_i(rgmii_txd_o)
+   ,.rgmii_rx_ctl_i(rgmii_tx_ctl_o)
+
+   ,.tx_rst_i(rx_reset_o)
+   ,.rgmii_tx_clk_i(rgmii_rx_clk_i)
+   ,.rgmii_txd_o(rgmii_rxd_i)
+   ,.rgmii_tx_ctl_o(rgmii_rx_ctl_i)
+  );
+
+
+  peripheral_nonsynth #(
+    .C_M01_AXI_DATA_WIDTH(C_M01_AXI_DATA_WIDTH)
+   ,.C_M01_AXI_ADDR_WIDTH(C_M01_AXI_ADDR_WIDTH)
+   ,.C_S02_AXI_DATA_WIDTH(C_S02_AXI_DATA_WIDTH)
+   ,.C_S02_AXI_ADDR_WIDTH(C_S02_AXI_ADDR_WIDTH)
+  ) peripheral_nonsynth_inst (
+    .aclk(aclk)
+   ,.reset_i(~aresetn)
+   ,.clk250_i(clk250_i)
+   ,.clk250_reset_i(clk250_reset_o)
+   ,.tx_clk_gen_reset_i(tx_clk_gen_reset_o)
+   ,.tx_clk_o(tx_clk_i)
+   ,.tx_reset_i(tx_reset_o)
+   ,.rx_clk_o(rx_clk_i)
+   ,.rx_reset_i(rx_clk_o)
+   ,.iodelay_ref_clk_i(iodelay_ref_clk_i)
+
+   ,.s01_axi_awaddr (m01_axi_awaddr )
+   ,.s01_axi_awprot (m01_axi_awprot )
+   ,.s01_axi_awvalid(m01_axi_awvalid)
+   ,.s01_axi_awready(m01_axi_awready)
+
+   ,.s01_axi_wdata  (m01_axi_wdata  )
+   ,.s01_axi_wstrb  (m01_axi_wstrb  )
+   ,.s01_axi_wvalid (m01_axi_wvalid )
+   ,.s01_axi_wready (m01_axi_wready )
+
+   ,.s01_axi_bresp  (m01_axi_bresp  )
+   ,.s01_axi_bvalid (m01_axi_bvalid )
+   ,.s01_axi_bready (m01_axi_bready )
+
+   ,.s01_axi_araddr (m01_axi_araddr )
+   ,.s01_axi_arprot (m01_axi_arprot )
+   ,.s01_axi_arvalid(m01_axi_arvalid)
+   ,.s01_axi_arready(m01_axi_arready)
+
+   ,.s01_axi_rdata  (m01_axi_rdata  )
+   ,.s01_axi_rresp  (m01_axi_rresp  )
+   ,.s01_axi_rvalid (m01_axi_rvalid )
+   ,.s01_axi_rready (m01_axi_rready )
+
+   ,.m02_axi_awaddr (s02_axi_awaddr )
+   ,.m02_axi_awprot (s02_axi_awprot )
+   ,.m02_axi_awvalid(s02_axi_awvalid)
+   ,.m02_axi_awready(s02_axi_awready)
+
+   ,.m02_axi_wdata  (s02_axi_wdata  )
+   ,.m02_axi_wstrb  (s02_axi_wstrb  )
+   ,.m02_axi_wvalid (s02_axi_wvalid )
+   ,.m02_axi_wready (s02_axi_wready )
+
+   ,.m02_axi_bresp  (s02_axi_bresp  )
+   ,.m02_axi_bvalid (s02_axi_bvalid )
+   ,.m02_axi_bready (s02_axi_bready )
+
+   ,.m02_axi_araddr (s02_axi_araddr )
+   ,.m02_axi_arprot (s02_axi_arprot )
+   ,.m02_axi_arvalid(s02_axi_arvalid)
+   ,.m02_axi_arready(s02_axi_arready)
+
+   ,.m02_axi_rdata  (s02_axi_rdata  )
+   ,.m02_axi_rresp  (s02_axi_rresp  )
+   ,.m02_axi_rvalid (s02_axi_rvalid )
+   ,.m02_axi_rready (s02_axi_rready )
+
+   ,.rgmii_rx_clk_i(rgmii_rx_clk_i)
+   ,.rgmii_rxd_i(rgmii_rxd_i)
+   ,.rgmii_rx_ctl_i(rgmii_rx_ctl_i)
+   ,.rgmii_tx_clk_o(rgmii_tx_clk_o)
+   ,.rgmii_txd_o(rgmii_txd_o)
+   ,.rgmii_tx_ctl_o(rgmii_tx_ctl_o)
+  );
 `endif
 
    assign {s00_axi_aclk, s01_axi_aclk, s02_axi_aclk, m00_axi_aclk, m01_axi_aclk} = {5{aclk}};
