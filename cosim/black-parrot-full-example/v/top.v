@@ -28,7 +28,7 @@ module top
     ,input wire                                  tx_clk_i
     ,input wire                                  rx_clk_i
     // resets
-    ,output wire                                 reset_o
+    ,output wire                                 sys_reset_o
     ,output wire                                 clk250_reset_o
     ,output wire                                 tx_clk_gen_reset_o
     ,output wire                                 tx_reset_o
@@ -159,14 +159,14 @@ module top
     );
 
     logic s00_axi_aclk, s01_axi_aclk, s02_axi_aclk, m00_axi_aclk, m01_axi_aclk;
-    logic s00_axi_aresetn, s01_axi_aresetn, s02_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn;
+    logic s00_axi_aresetn, s01_axi_aresetn, m00_axi_aresetn;
 
 `else
     );
 
     logic tx_clk_i;
     logic rx_clk_i;
-    logic reset_o;
+    logic sys_reset_o;
     logic clk250_reset_o;
     logic tx_clk_gen_reset_o;
     logic tx_reset_o;
@@ -292,7 +292,7 @@ module top
        );
 
     // TODO: Fix widths
-    logic m01_axi_aclk, m01_axi_aresetn;
+    logic m01_axi_aclk;
     logic [C_M01_AXI_ADDR_WIDTH-1:0] m01_axi_awaddr;
     logic [2:0] m01_axi_awprot;
     logic m01_axi_awvalid, m01_axi_awready;
@@ -356,7 +356,6 @@ module top
    wire [1:0]                           m00_axi_rresp;
 
    wire                                 s02_axi_aclk;
-   wire                                 s02_axi_aresetn;
    wire [C_S02_AXI_ADDR_WIDTH-1 : 0]    s02_axi_awaddr;
    wire [2 : 0]                         s02_axi_awprot;
    wire                                 s02_axi_awvalid;
@@ -460,7 +459,7 @@ module top
    ,.C_S02_AXI_ADDR_WIDTH(C_S02_AXI_ADDR_WIDTH)
   ) peripheral_nonsynth_inst (
     .aclk(aclk)
-   ,.reset_i(reset_o)
+   ,.sys_reset_i(sys_reset_o)
    ,.clk250_i(clk250_i)
    ,.clk250_reset_i(clk250_reset_o)
    ,.tx_clk_gen_reset_i(tx_clk_gen_reset_o)
@@ -547,7 +546,7 @@ module top
       ,.tx_clk_i       (tx_clk_i)
       ,.rx_clk_i       (rx_clk_i)
 
-      ,.reset_o(reset_o)
+      ,.sys_reset_o(sys_reset_o)
       ,.clk250_reset_o (clk250_reset_o)
       ,.tx_clk_gen_reset_o(tx_clk_gen_reset_o)
       ,.tx_reset_o     (tx_reset_o)
@@ -598,7 +597,6 @@ module top
       ,.s01_axi_rready (s01_axi_rready)
 
       ,.s02_axi_aclk   (s02_axi_aclk)
-      ,.s02_axi_aresetn(s02_axi_aresetn)
       ,.s02_axi_awaddr (s02_axi_awaddr)
       ,.s02_axi_awprot (s02_axi_awprot)
       ,.s02_axi_awvalid(s02_axi_awvalid)
@@ -665,7 +663,6 @@ module top
       ,.m00_axi_rresp  (m00_axi_rresp)
 
       ,.m01_axi_aclk   (m01_axi_aclk)
-      ,.m01_axi_aresetn(m01_axi_aresetn)
       ,.m01_axi_awaddr (m01_axi_awaddr)
       ,.m01_axi_awprot (m01_axi_awprot)
       ,.m01_axi_awvalid(m01_axi_awvalid)

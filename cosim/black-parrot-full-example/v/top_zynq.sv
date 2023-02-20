@@ -42,7 +42,7 @@ module top_zynq
    , input wire                                  tx_clk_i
    , input wire                                  rx_clk_i
    // resets
-   , output wire                                 reset_o
+   , output wire                                 sys_reset_o
    , output wire                                 clk250_reset_o
    , output wire                                 tx_clk_gen_reset_o
    , output wire                                 tx_reset_o
@@ -94,7 +94,6 @@ module top_zynq
    , input wire                                  s01_axi_rready
 
    , input wire                                  s02_axi_aclk
-   , output wire                                 s02_axi_aresetn
    , input wire [C_S02_AXI_ADDR_WIDTH-1 : 0]     s02_axi_awaddr
    , input wire [2 : 0]                          s02_axi_awprot
    , input wire                                  s02_axi_awvalid
@@ -161,7 +160,6 @@ module top_zynq
    , input wire [1:0]                            m00_axi_rresp
 
    , input wire                                  m01_axi_aclk
-   , output wire                                 m01_axi_aresetn
    , output wire [C_M01_AXI_ADDR_WIDTH-1 : 0]    m01_axi_awaddr
    , output wire [2 : 0]                         m01_axi_awprot
    , output wire                                 m01_axi_awvalid
@@ -249,6 +247,8 @@ module top_zynq
      assign minstret_lo = blackparrot.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
 
    // Reset Generation Logic
+   //
+   assign s00_axi_aresetn    = aresetn;
 
    // Specify the number of generated resets here:
    localparam num_reset_lp = 5;
@@ -256,6 +256,7 @@ module top_zynq
    wire [num_reset_lp-1:0] clks_li = {rx_clk_i, tx_clk_i, clk250_i, clk250_i, aclk};
    // Generated resets signals:
    logic [num_reset_lp-1:0] synced_resets_lo;
+
 
    `declare_bsg_tag_header_s(num_reset_lp, 1)
    logic tag_clk_r_lo;
@@ -267,7 +268,7 @@ module top_zynq
 
    bsg_tag_bitbang bb (
      .clk_i(aclk)
-     ,.reset_i(~aresetn)
+     ,.reset_i(~s00_axi_aresetn)
      ,.data_i(csr_data_lo[0][0])
      ,.v_i(bb_v_li)
      ,.ready_and_o(bb_ready_and_lo) // UNUSED
@@ -294,19 +295,18 @@ module top_zynq
        .bsg_tag_i(tag[i])
        ,.recv_clk_i(clks_li[i])
        ,.recv_new_r_o() // UNUSED
-       ,.recv_data_r_o(synced_resets_lo[i])
+       ,.recv_data_r_o(synced_resets_lo[i]) // high-true
      );
    end
 
-   assign {s00_axi_aresetn, s01_axi_aresetn, s02_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn} = {5{aresetn}};
-
-   wire bp_reset_li          = synced_resets_lo[0] | ~aresetn;
-   assign reset_o            = synced_resets_lo[0];
+   assign sys_reset_o        = synced_resets_lo[0];
    assign clk250_reset_o     = synced_resets_lo[1];
    assign tx_clk_gen_reset_o = synced_resets_lo[2];
    assign tx_reset_o         = synced_resets_lo[3];
    assign rx_reset_o         = synced_resets_lo[4];
-
+   wire   bp_reset_li        = sys_reset_o;
+   assign s01_axi_aresetn    = ~sys_reset_o;
+   assign m00_axi_aresetn    = ~sys_reset_o;
 
 
    // Connect Shell to AXI Bus Interface S00_AXI
@@ -474,7 +474,7 @@ module top_zynq
       )
     store_packer
      (.clk_i   (s01_axi_aclk)
-      ,.reset_i(reset_o)
+      ,.reset_i(sys_reset_o)
 
       ,.s_axil_awaddr_i (spack_axi_awaddr)
       ,.s_axil_awprot_i (spack_axi_awprot)
@@ -514,7 +514,7 @@ module top_zynq
      ,.data_width_p(C_S01_AXI_DATA_WIDTH))
    axil_mux
     (.clk_i(s01_axi_aclk)
-     ,.reset_i(reset_o)
+     ,.reset_i(sys_reset_o)
      ,.s00_axil_awaddr (waddr_translated_lo)
      ,.s00_axil_awprot (s01_axi_awprot)
      ,.s00_axil_awvalid(s01_axi_awvalid)
@@ -584,7 +584,7 @@ module top_zynq
      )
    axil_demux
     (.clk_i(s01_axi_aclk)
-     ,.reset_i(reset_o)
+     ,.reset_i(sys_reset_o)
 
      ,.s00_axil_awaddr(bp_m_axil_awaddr)
      ,.s00_axil_awprot(bp_m_axil_awprot)
