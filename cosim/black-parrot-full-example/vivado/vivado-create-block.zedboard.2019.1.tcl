@@ -48,11 +48,13 @@ connect_bd_intf_net [get_bd_intf_pins smartconnect_0/M00_AXI] [get_bd_intf_pins 
 connect_bd_intf_net [get_bd_intf_pins processing_system7_0/M_AXI_GP1] [get_bd_intf_pins smartconnect_1/S00_AXI]
 connect_bd_intf_net [get_bd_intf_pins smartconnect_1/M00_AXI] [get_bd_intf_pins top_0/s01_axi]
 connect_bd_intf_net [get_bd_intf_pins top_0/m00_axi] [get_bd_intf_pins processing_system7_0/S_AXI_HP0]
+
+
 startgroup
 create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_0
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins top_0/aresetn]
-connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins smartconnect_0/aresetn]
-connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins smartconnect_1/aresetn]
+connect_bd_net [get_bd_pins top_0/sys_resetn_o] [get_bd_pins smartconnect_0/aresetn]
+connect_bd_net [get_bd_pins top_0/sys_resetn_o] [get_bd_pins smartconnect_1/aresetn]
 endgroup
 apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/processing_system7_0/FCLK_CLK0 (20 MHz)" }  [get_bd_pins processing_system7_0/S_AXI_HP0_ACLK]
 apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/processing_system7_0/FCLK_CLK0 (20 MHz)" }  [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK]
@@ -67,13 +69,13 @@ endgroup
 create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_2
 set_property -dict [list CONFIG.NUM_MI {2} CONFIG.NUM_SI {1}] [get_bd_cells smartconnect_2]
 connect_bd_net [get_bd_pins smartconnect_2/aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
-connect_bd_net [get_bd_pins smartconnect_2/aresetn] [get_bd_pins proc_sys_reset_0/peripheral_aresetn]
+connect_bd_net [get_bd_pins smartconnect_2/aresetn] [get_bd_pins top_0/sys_resetn_o]
 
 # Instantiate smartconnect_3
-create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_3
-set_property -dict [list CONFIG.NUM_SI {1}] [get_bd_cells smartconnect_3]
-connect_bd_net [get_bd_pins smartconnect_3/aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
-connect_bd_net [get_bd_pins smartconnect_3/aresetn] [get_bd_pins proc_sys_reset_0/peripheral_aresetn]
+#create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_3
+#set_property -dict [list CONFIG.NUM_SI {1}] [get_bd_cells smartconnect_3]
+#connect_bd_net [get_bd_pins smartconnect_3/aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
+#connect_bd_net [get_bd_pins smartconnect_3/aresetn] [get_bd_pins proc_sys_reset_0/peripheral_aresetn]
 
 connect_bd_intf_net [get_bd_intf_pins top_0/m01_axi] [get_bd_intf_pins smartconnect_2/S00_AXI]
 
@@ -93,8 +95,11 @@ create_bd_cell -type ip -vlnv user.org:user:rv_plic_axil_wrapper:1.0 rv_plic_axi
 connect_bd_intf_net [get_bd_intf_pins smartconnect_2/M01_AXI] [get_bd_intf_pins rv_plic_axil_wrapper_0/s00_axi]
 connect_bd_net [get_bd_pins rv_plic_axil_wrapper_0/aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
 
-connect_bd_intf_net [get_bd_intf_pins rv_plic_axil_wrapper_0/m00_axi] [get_bd_intf_pins smartconnect_3/S00_AXI]
-connect_bd_intf_net [get_bd_intf_pins top_0/s02_axi] [get_bd_intf_pins smartconnect_3/M00_AXI]
+#connect_bd_intf_net [get_bd_intf_pins rv_plic_axil_wrapper_0/m00_axi] [get_bd_intf_pins smartconnect_3/S00_AXI]
+#connect_bd_intf_net [get_bd_intf_pins top_0/s02_axi] [get_bd_intf_pins smartconnect_3/M00_AXI]
+connect_bd_intf_net [get_bd_intf_pins rv_plic_axil_wrapper_0/m00_axi] [get_bd_intf_pins top_0/s02_axi]
+
+
 connect_bd_net [get_bd_pins rv_plic_axil_wrapper_0/intr_src_i] [get_bd_pins ethernet_axil_wrapper_0/irq_o]
 
 # Connect 250MHZ and 200MHZ clocks
@@ -103,15 +108,12 @@ connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK2] [get_bd_pins top_0/c
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK3] [get_bd_pins ethernet_axil_wrapper_0/iodelay_ref_clk_i]
 
 # Connect reset signals
-connect_bd_net [get_bd_pins top_0/reset_o]            [get_bd_pins ethernet_axil_wrapper_0/reset_i]
-connect_bd_net [get_bd_pins top_0/reset_o]            [get_bd_pins rv_plic_axil_wrapper_0/reset_i]
+connect_bd_net [get_bd_pins top_0/sys_resetn_o]            [get_bd_pins ethernet_axil_wrapper_0/aresetn]
+connect_bd_net [get_bd_pins top_0/sys_resetn_o]            [get_bd_pins rv_plic_axil_wrapper_0/aresetn]
 connect_bd_net [get_bd_pins top_0/clk250_reset_o]     [get_bd_pins ethernet_axil_wrapper_0/clk250_reset_i]
 connect_bd_net [get_bd_pins top_0/tx_clk_gen_reset_o] [get_bd_pins ethernet_axil_wrapper_0/tx_clk_gen_reset_i]
 connect_bd_net [get_bd_pins top_0/tx_reset_o]         [get_bd_pins ethernet_axil_wrapper_0/tx_reset_i]
 connect_bd_net [get_bd_pins top_0/rx_reset_o]         [get_bd_pins ethernet_axil_wrapper_0/rx_reset_i]
-set_property CONFIG.POLARITY ACTIVE_HIGH [get_bd_pins ethernet_axil_wrapper_0/reset_i]
-set_property CONFIG.POLARITY ACTIVE_HIGH [get_bd_pins rv_plic_axil_wrapper_0/reset_i]
-set_property CONFIG.POLARITY ACTIVE_HIGH [get_bd_pins top_0/reset_o]
 
 # Connect tx_clk and rx_clk (for Ethernet)
 connect_bd_net [get_bd_pins ethernet_axil_wrapper_0/tx_clk_o] [get_bd_pins top_0/tx_clk_i]
