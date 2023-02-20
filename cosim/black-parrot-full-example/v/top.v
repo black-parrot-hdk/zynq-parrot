@@ -28,7 +28,7 @@ module top
     ,input wire                                  tx_clk_i
     ,input wire                                  rx_clk_i
     // resets
-    ,output wire                                 sys_reset_o
+    ,output wire                                 sys_resetn_o
     ,output wire                                 clk250_reset_o
     ,output wire                                 tx_clk_gen_reset_o
     ,output wire                                 tx_reset_o
@@ -166,7 +166,7 @@ module top
 
     logic tx_clk_i;
     logic rx_clk_i;
-    logic sys_reset_o;
+    logic sys_resetn_o;
     logic clk250_reset_o;
     logic tx_clk_gen_reset_o;
     logic tx_reset_o;
@@ -459,7 +459,7 @@ module top
    ,.C_S02_AXI_ADDR_WIDTH(C_S02_AXI_ADDR_WIDTH)
   ) peripheral_nonsynth_inst (
     .aclk(aclk)
-   ,.sys_reset_i(sys_reset_o)
+   ,.sys_reset_i(~sys_resetn_o)
    ,.clk250_i(clk250_i)
    ,.clk250_reset_i(clk250_reset_o)
    ,.tx_clk_gen_reset_i(tx_clk_gen_reset_o)
@@ -546,7 +546,7 @@ module top
       ,.tx_clk_i       (tx_clk_i)
       ,.rx_clk_i       (rx_clk_i)
 
-      ,.sys_reset_o(sys_reset_o)
+      ,.sys_resetn_o(sys_resetn_o)
       ,.clk250_reset_o (clk250_reset_o)
       ,.tx_clk_gen_reset_o(tx_clk_gen_reset_o)
       ,.tx_reset_o     (tx_reset_o)

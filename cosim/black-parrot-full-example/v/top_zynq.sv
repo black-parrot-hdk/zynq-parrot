@@ -42,7 +42,7 @@ module top_zynq
    , input wire                                  tx_clk_i
    , input wire                                  rx_clk_i
    // resets
-   , output wire                                 sys_reset_o
+   , output wire                                 sys_resetn_o
    , output wire                                 clk250_reset_o
    , output wire                                 tx_clk_gen_reset_o
    , output wire                                 tx_reset_o
@@ -299,14 +299,15 @@ module top_zynq
      );
    end
 
-   assign sys_reset_o        = synced_resets_lo[0];
+   wire   sys_reset_lo       = synced_resets_lo[0];
    assign clk250_reset_o     = synced_resets_lo[1];
    assign tx_clk_gen_reset_o = synced_resets_lo[2];
    assign tx_reset_o         = synced_resets_lo[3];
    assign rx_reset_o         = synced_resets_lo[4];
-   wire   bp_reset_li        = sys_reset_o;
-   assign s01_axi_aresetn    = ~sys_reset_o;
-   assign m00_axi_aresetn    = ~sys_reset_o;
+   wire   bp_reset_li        = sys_reset_lo;
+   assign sys_resetn_o       = ~sys_reset_lo;
+   assign s01_axi_aresetn    = sys_resetn_o;
+   assign m00_axi_aresetn    = sys_resetn_o;
 
 
    // Connect Shell to AXI Bus Interface S00_AXI
@@ -474,7 +475,7 @@ module top_zynq
       )
     store_packer
      (.clk_i   (s01_axi_aclk)
-      ,.reset_i(sys_reset_o)
+      ,.reset_i(sys_reset_lo)
 
       ,.s_axil_awaddr_i (spack_axi_awaddr)
       ,.s_axil_awprot_i (spack_axi_awprot)
@@ -514,7 +515,7 @@ module top_zynq
      ,.data_width_p(C_S01_AXI_DATA_WIDTH))
    axil_mux
     (.clk_i(s01_axi_aclk)
-     ,.reset_i(sys_reset_o)
+     ,.reset_i(sys_reset_lo)
      ,.s00_axil_awaddr (waddr_translated_lo)
      ,.s00_axil_awprot (s01_axi_awprot)
      ,.s00_axil_awvalid(s01_axi_awvalid)
@@ -584,7 +585,7 @@ module top_zynq
      )
    axil_demux
     (.clk_i(s01_axi_aclk)
-     ,.reset_i(sys_reset_o)
+     ,.reset_i(sys_reset_lo)
 
      ,.s00_axil_awaddr(bp_m_axil_awaddr)
      ,.s00_axil_awprot(bp_m_axil_awprot)
