@@ -248,8 +248,6 @@ module top_zynq
 
    // Reset Generation Logic
    //
-   assign s00_axi_aresetn    = aresetn;
-
    // Specify the number of generated resets here:
    localparam num_reset_lp = 5;
    // Specify the clocks the generated resets belong to here:
@@ -268,7 +266,7 @@ module top_zynq
 
    bsg_tag_bitbang bb (
      .clk_i(aclk)
-     ,.reset_i(~s00_axi_aresetn)
+     ,.reset_i(~aresetn)
      ,.data_i(csr_data_lo[0][0])
      ,.v_i(bb_v_li)
      ,.ready_and_o(bb_ready_and_lo) // UNUSED
@@ -304,11 +302,11 @@ module top_zynq
    assign tx_clk_gen_reset_o = synced_resets_lo[2];
    assign tx_reset_o         = synced_resets_lo[3];
    assign rx_reset_o         = synced_resets_lo[4];
-   wire   bp_reset_li        = sys_reset_lo;
+   wire   bp_reset_li        = sys_reset_lo | ~aresetn;
    assign sys_resetn_o       = ~sys_reset_lo;
-   assign s01_axi_aresetn    = sys_resetn_o;
-   assign m00_axi_aresetn    = sys_resetn_o;
-
+   assign s00_axi_aresetn    = aresetn;
+   assign s01_axi_aresetn    = aresetn;
+   assign m00_axi_aresetn    = aresetn;
 
    // Connect Shell to AXI Bus Interface S00_AXI
    bsg_zynq_pl_shell #
