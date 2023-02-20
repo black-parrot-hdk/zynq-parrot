@@ -459,7 +459,7 @@ module top
    ,.C_S02_AXI_ADDR_WIDTH(C_S02_AXI_ADDR_WIDTH)
   ) peripheral_nonsynth_inst (
     .aclk(aclk)
-   ,.sys_reset_i(~sys_resetn_o)
+   ,.aresetn(sys_resetn_o)
    ,.clk250_i(clk250_i)
    ,.clk250_reset_i(clk250_reset_o)
    ,.tx_clk_gen_reset_i(tx_clk_gen_reset_o)

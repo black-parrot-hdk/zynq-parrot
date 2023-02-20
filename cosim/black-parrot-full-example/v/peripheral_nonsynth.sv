@@ -9,7 +9,7 @@ module peripheral_nonsynth #(
 )
 (
     input wire                                  aclk
-  , input wire                                  sys_reset_i
+  , input wire                                  aresetn
 
   , input wire                                  clk250_i
   , input wire                                  clk250_reset_i
@@ -136,7 +136,7 @@ module peripheral_nonsynth #(
    ,.split_addr_p(32'h20000000) // 0x10000000: Ethernet, 0x20000000: PLIC
   ) demux (
     .clk_i(aclk)
-   ,.reset_i(sys_reset_i)
+   ,.reset_i(~aresetn)
 
    ,.s00_axil_awaddr (s01_axi_awaddr )
    ,.s00_axil_awprot (s01_axi_awprot )
@@ -216,7 +216,7 @@ module peripheral_nonsynth #(
    ,.axil_addr_width_p(32)
   ) ethernet_wrapper (
     .aclk
-   ,.reset_i(sys_reset_i)
+   ,.aresetn
    ,.clk250_i
    ,.clk250_reset_i
    ,.tx_clk_gen_reset_i
@@ -269,7 +269,7 @@ module peripheral_nonsynth #(
    ,.axil_addr_width_p(32)
   ) plic_wrapper (
     .aclk
-   ,.reset_i(sys_reset_i)
+   ,.aresetn
    ,.intr_src_i(irq_lo)
 
    ,.m00_axi_awaddr (m02_axi_awaddr)
