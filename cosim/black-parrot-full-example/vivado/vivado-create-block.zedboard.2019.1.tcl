@@ -132,8 +132,8 @@ connect_bd_net [get_bd_ports eth_phy_resetn_o] [get_bd_pins proc_sys_reset_0/per
 create_bd_addr_seg -range 0x00001000 -offset 0x40000000 [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs top_0/s00_axi/reg0] SEG_top_0_reg0
 create_bd_addr_seg -range 0x40000000 -offset 0x80000000 [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs top_0/s01_axi/reg0] SEG_top_0_reg1
 create_bd_addr_seg -range 0x100000000 -offset 0x0 [get_bd_addr_spaces rv_plic_axil_wrapper_0/m00_axi] [get_bd_addr_segs top_0/s02_axi/reg0] SEG_top_0_reg2
-create_bd_addr_seg -range 0x2000 -offset 0x20000000 [get_bd_addr_spaces top_0/m01_axi] [get_bd_addr_segs ethernet_axil_wrapper_0/s00_axi/reg0] SEG_top_0_reg3
-create_bd_addr_seg -range 0x4000000 -offset 0x10000000 [get_bd_addr_spaces top_0/m01_axi] [get_bd_addr_segs rv_plic_axil_wrapper_0/s00_axi/reg0] SEG_top_0_reg4
+create_bd_addr_seg -range 0x2000 -offset 0x10000000 [get_bd_addr_spaces top_0/m01_axi] [get_bd_addr_segs ethernet_axil_wrapper_0/s00_axi/reg0] SEG_top_0_reg3
+create_bd_addr_seg -range 0x4000000 -offset 0x20000000 [get_bd_addr_spaces top_0/m01_axi] [get_bd_addr_segs rv_plic_axil_wrapper_0/s00_axi/reg0] SEG_top_0_reg4
 assign_bd_address
 
 validate_bd_design
