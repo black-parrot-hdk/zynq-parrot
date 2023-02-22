@@ -37,6 +37,8 @@ clean:
 	-rm -rf obj_dir/ *~ trace.fst
 	-rm -rf build.log
 	-rm -rf run.log
+	-rm -rf prog.elf
+	-rm -rf *.trace
 
 view:
 	gtkwave -f trace.fst
