@@ -91,6 +91,11 @@ public:
     tb->trace(wf, 10);
     wf->open("trace.fst");
 
+    // Initialize backpressure (if any)
+#ifdef SIM_BACKPRESSURE_ENABLE
+    srand(SIM_BACKPRESSURE_SEED);
+#endif
+
     // Tick once to register clock generators
     tb->eval();
     tick();

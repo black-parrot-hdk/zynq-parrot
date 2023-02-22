@@ -65,6 +65,11 @@ public:
   static void done(void) { bsg_pr_info("  bp_zynq_pl: done() called, exiting\n"); }
 
   bp_zynq_pl(int argc, char *argv[]) {
+    // Initialize backpressure (if any)
+#ifdef SIM_BACKPRESSURE_ENABLE
+    srand(SIM_BACKPRESSURE_SEED);
+#endif
+
     tick();
 
 #ifdef GP0_ENABLE
@@ -155,7 +160,6 @@ public:
 #ifdef SIM_BACKPRESSURE_ENABLE
     if ((rand() % 100) < SIM_BACKPRESSURE_CHANCE) {
       for (int i = 0; i < SIM_BACKPRESSURE_LENGTH; i++) {
-        printf("Backpressure happening\n");
         tick();
       }
     }
