@@ -19,6 +19,11 @@ CFLAGS += -DSCRATCHPAD_ENABLE
 CFLAGS += -DBP_NCPUS=$(BP_NCPUS)
 CFLAGS += $(INCLUDES) $(SKIP_DRAM)
 
+# Enable backpressure, emulating context switches
+#CFLAGS += -DSIM_BACKPRESSURE_ENABLE
+#CFLAGS += -DSIM_BACKPRESSURE_CHANCE=20
+#CFLAGS += -DSIM_BACKPRESSURE_LENGTH=1000
+
 #############################
 # Modify base flist
 #############################
