@@ -487,6 +487,71 @@ module top
       ,.m01_axi_rready (m01_axi_rready)
       );
 
+`ifdef DROMAJO_COSIM
+  logic cosim_clk;
+  bsg_nonsynth_clock_gen
+   #(.cycle_time_p(1000))
+   cosim_clk_gen
+    (.o(cosim_clk));
+
+  logic cosim_reset;
+  bsg_nonsynth_reset_gen
+   #(.num_clocks_p(1)
+     ,.reset_cycles_lo_p(0)
+     ,.reset_cycles_hi_p(10)
+     )
+   cosim_reset_gen
+    (.clk_i(cosim_clk)
+     ,.async_reset_o(cosim_reset)
+     );
+
+   bind bp_be_top
+     bp_nonsynth_cosim
+      #(.bp_params_p(bp_params_p))
+      cosim
+       (.clk_i(clk_i)
+        ,.reset_i(reset_i)
+        ,.freeze_i(calculator.pipe_sys.csr.cfg_bus_cast_i.freeze)
+
+        // We hardcode these for now, integrate more cosim features later
+        ,.num_core_i(1'b1)
+        ,.cosim_en_i(1'b1)
+        ,.amo_en_i(1'b1)
+        ,.trace_en_i('0)
+        ,.checkpoint_i('0)
+        ,.mhartid_i('0)
+        ,.config_file_i('0)
+        ,.instr_cap_i(0)
+        ,.memsize_i(256)
+
+        ,.decode_i(calculator.reservation_n.decode)
+
+        ,.is_debug_mode_i(calculator.pipe_sys.csr.is_debug_mode)
+        ,.commit_pkt_i(calculator.commit_pkt_cast_o)
+
+        ,.priv_mode_i(calculator.pipe_sys.csr.priv_mode_r)
+        ,.mstatus_i(calculator.pipe_sys.csr.mstatus_lo)
+        ,.mcause_i(calculator.pipe_sys.csr.mcause_lo)
+        ,.scause_i(calculator.pipe_sys.csr.scause_lo)
+
+        ,.ird_w_v_i(scheduler.iwb_pkt_cast_i.ird_w_v)
+        ,.ird_addr_i(scheduler.iwb_pkt_cast_i.rd_addr)
+        ,.ird_data_i(scheduler.iwb_pkt_cast_i.rd_data)
+
+        ,.frd_w_v_i(scheduler.fwb_pkt_cast_i.frd_w_v)
+        ,.frd_addr_i(scheduler.fwb_pkt_cast_i.rd_addr)
+        ,.frd_data_i(scheduler.fwb_pkt_cast_i.rd_data)
+
+        ,.cache_req_ready_and_i(calculator.pipe_mem.dcache.cache_req_ready_and_i)
+        ,.cache_req_v_i(calculator.pipe_mem.dcache.cache_req_v_o)
+        ,.cache_req_complete_i(calculator.pipe_mem.dcache.cache_req_complete_i)
+        ,.cache_req_nonblocking_i(calculator.pipe_mem.dcache.nonblocking_req)
+
+        ,.cosim_clk_i(top.cosim_clk)
+        ,.cosim_reset_i(top.cosim_reset)
+        );
+`endif
+
 `ifdef VCS
    import "DPI-C" context task cosim_main(string c_args);
    string c_args;
