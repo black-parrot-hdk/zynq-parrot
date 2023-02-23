@@ -65,6 +65,11 @@ public:
   static void done(void) { bsg_pr_info("  bp_zynq_pl: done() called, exiting\n"); }
 
   bp_zynq_pl(int argc, char *argv[]) {
+    // Initialize backpressure (if any)
+#ifdef SIM_BACKPRESSURE_ENABLE
+    srand(SIM_BACKPRESSURE_SEED);
+#endif
+
     tick();
 
 #ifdef GP0_ENABLE
@@ -152,6 +157,14 @@ public:
   }
 
   void axil_poll() {
+#ifdef SIM_BACKPRESSURE_ENABLE
+    if ((rand() % 100) < SIM_BACKPRESSURE_CHANCE) {
+      for (int i = 0; i < SIM_BACKPRESSURE_LENGTH; i++) {
+        tick();
+      }
+    }
+#endif
+
     if (axi_hp0->p_awvalid && (axi_hp0->p_awaddr >= SCRATCHPAD_BASE) && (axi_hp0->p_awaddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {
       axi_hp0->axil_write_helper((axil_device *)scratchpad.get(), tick);
     } else if (axi_hp0->p_arvalid && (axi_hp0->p_araddr >= SCRATCHPAD_BASE) && (axi_hp0->p_araddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {

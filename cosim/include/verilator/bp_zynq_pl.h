@@ -91,6 +91,11 @@ public:
     tb->trace(wf, 10);
     wf->open("trace.fst");
 
+    // Initialize backpressure (if any)
+#ifdef SIM_BACKPRESSURE_ENABLE
+    srand(SIM_BACKPRESSURE_SEED);
+#endif
+
     // Tick once to register clock generators
     tb->eval();
     tick();
@@ -181,6 +186,14 @@ public:
   }
 
   void axil_poll() {
+#ifdef SIM_BACKPRESSURE_ENABLE
+    if ((rand() % 100) < SIM_BACKPRESSURE_CHANCE) {
+      for (int i = 0; i < SIM_BACKPRESSURE_LENGTH; i++) {
+        tick();
+      }
+    }
+#endif
+
     if (axi_hp0->p_awvalid && (axi_hp0->p_awaddr >= SCRATCHPAD_BASE) && (axi_hp0->p_awaddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {
       axi_hp0->axil_write_helper((axil_device *)scratchpad.get(), tick);
     } else if (axi_hp0->p_arvalid && (axi_hp0->p_araddr >= SCRATCHPAD_BASE) && (axi_hp0->p_araddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {

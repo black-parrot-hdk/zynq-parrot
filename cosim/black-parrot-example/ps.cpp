@@ -85,9 +85,7 @@ void *monitor(void *vargp) {
 void *device_poll(void *vargp) {
   bp_zynq_pl *zpl = (bp_zynq_pl *)vargp;
   while (1) {
-#ifndef FPGA
     zpl->axil_poll();
-#endif
 
     // keep reading as long as there is data
     if (zpl->axil_read(GP0_RD_PL2PS_FIFO_CTRS + gp0_addr_base) != 0) {
@@ -141,10 +139,6 @@ extern "C" void cosim_main(char *argstr) {
 
   pthread_t thread_id;
   long allocated_dram = DRAM_ALLOCATE_SIZE;
-#ifdef FPGA
-  unsigned long phys_ptr;
-  volatile int32_t *buf;
-#endif
 
   long val;
   bsg_pr_info("ps.cpp: reading three base registers\n");
@@ -166,6 +160,8 @@ extern "C" void cosim_main(char *argstr) {
   bsg_pr_info("ps.cpp: successfully wrote and read registers in bsg_zynq_shell "
               "(verified ARM GP0 connection)\n");
 #ifdef FPGA
+  unsigned long phys_ptr;
+  volatile int32_t *buf;
   data = zpl->axil_read(GP0_RD_CSR_DRAM_INITED + gp0_addr_base);
   if (data == 0) {
     bsg_pr_info(

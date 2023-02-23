@@ -51,6 +51,9 @@ public:
 
   bp_zynq_pl(int argc, char *argv[]) {
     printf("// bp_zynq_pl: be sure to run as root\n");
+#ifdef SIM_BACKPRESSURE_ENABLE
+    printf("// bp_zynq_pl: warning does not support SIM_BACKPRESSURE_ENABLE\n");
+#endif
 
     // open memory device
     int fd = open("/dev/mem", O_RDWR | O_SYNC);
@@ -109,7 +112,9 @@ public:
     cma_free(virtual_ptr);
   }
 
-  bool done(void) { printf("bp_zynq_pl: done() called, exiting\n"); return true; }
+  static void tick(void) { /* Does nothing on PS */ }
+
+  static bool done(void) { printf("bp_zynq_pl: done() called, exiting\n"); return true; }
 
   inline volatile void *axil_get_ptr(uintptr_t address) {
     if (address >= gp1_addr_base)
@@ -117,6 +122,8 @@ public:
     else
       return (void *)(address + gp0_base_offset);
   }
+
+  static void axil_poll() { /* Does nothing on PS */ }
   
   inline volatile uint64_t *axil_get_ptr64(uintptr_t address) {
     return (uint64_t *)axil_get_ptr(address);
