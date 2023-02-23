@@ -48,11 +48,8 @@ void _xlnk_reset();
 #include "zynq_headers.h"
 using namespace std;
 
-class bsg_tag_bitbang;
-
 class bp_zynq_pl {
 public:
-  std::unique_ptr<bsg_tag_bitbang> tag;
   bool debug = ZYNQ_PL_DEBUG;
   uintptr_t gp0_base_offset = 0;
   uintptr_t gp1_base_offset = 0;
@@ -63,9 +60,6 @@ public:
     printf("// bp_zynq_pl: warning does not support SIM_BACKPRESSURE_ENABLE\n");
 #endif
 
-#ifdef BITBANG_ENABLE
-    tag = std::make_unique<bsg_tag_bitbang>();
-#endif
     // open memory device
     int fd = open("/dev/mem", O_RDWR | O_SYNC);
     assert(fd != 0);
