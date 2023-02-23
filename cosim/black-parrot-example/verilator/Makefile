@@ -30,12 +30,6 @@ endif
 #CFLAGS += -DSIM_BACKPRESSURE_CHANCE=5
 #CFLAGS += -DSIM_BACKPRESSURE_LENGTH=100
 
-# Enable backpressure, emulating context switches
-CFLAGS += -DSIM_BACKPRESSURE_ENABLE
-CFLAGS += -DSIM_BACKPRESSURE_SEED=1234
-CFLAGS += -DSIM_BACKPRESSURE_CHANCE=5
-CFLAGS += -DSIM_BACKPRESSURE_LENGTH=100
-
 #############################
 # Modify base flist
 #############################
