@@ -65,7 +65,8 @@
 #define GP1_DRAM_BASE_ADDR gp1_addr_base
 #define GP1_CSR_BASE_ADDR (gp1_addr_base + DRAM_MAX_ALLOC_SIZE)
 
-#define NUM_RESET 1
+#define TAG_CLIENT_RESET_ID 0
+#define TAG_CLIENT_RESET_WIDTH 1
 
 // Helper functions
 void nbf_load(bp_zynq_pl *zpl, char *filename);
@@ -152,18 +153,20 @@ extern "C" void cosim_main(char *argstr) {
               zpl->axil_read(GP0_RD_CSR_DRAM_INITED + gp0_addr_base),
               val = zpl->axil_read(GP0_RD_CSR_DRAM_BASE + gp0_addr_base));
 #ifdef BITBANG_ENABLE
+  bsg_tag_bitbang *btb = new bsg_tag_bitbang(zpl, GP0_WR_CSR_BITBANG+gp0_addr_base, 1, 1);
+  bsg_tag_client *reset_client = new bsg_tag_client(TAG_CLIENT_RESET_ID, TAG_CLIENT_RESET_WIDTH);
+
   // Reset the bsg tag master
-  zpl->tag->bsg_tag_reset(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base);
+  btb->reset_master();
   // Reset bsg client0
-  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 0, 0, -1U);
+  btb->reset_client(reset_client);
   // Set bsg client0 to 1 (assert BP reset)
-  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 0, 0x1);
+  btb->set_client(reset_client, 0x1);
   // Set bsg client0 to 0 (deassert BP reset)
-  zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 0, 0x0);
+  btb->set_client(reset_client, 0x0);
 
   // We need some additional toggles for data to propagate through
-  for(int i = 0;i < 4;i++)
-    zpl->tag->bsg_tag_bit_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, 0x0);
+  btb->idle(50);
 #endif
 
   bsg_pr_info("ps.cpp: attempting to write and read register 0x8\n");
