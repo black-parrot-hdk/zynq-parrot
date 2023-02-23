@@ -3,6 +3,7 @@
 export SHELL := /bin/bash
 
 export CURR_SRC_DIR          ?= $(CURR)/../v
+export CURR_TCL_DIR          ?= $(CURR)/../tcl
 
 export COSIM_DIR             ?= $(TOP)/cosim
 export COSIM_INCLUDE_DIR     ?= $(COSIM_DIR)/include
