@@ -387,6 +387,7 @@ public:
     this->p_wready = 0;
     // raise bvalid for response
     this->p_bvalid = 1;
+    this->p_bresp  = 0;
 
     // wait for response ready
     while (this->p_bready == 0) {
