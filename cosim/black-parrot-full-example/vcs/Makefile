@@ -40,7 +40,6 @@ $(BP_FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs
 	cp $^ $@
 	sed -i "s/BASEJUMP_STL_DIR/BP_BASEJUMP_STL_DIR/g" $@
 
-# TODO: Need to swap ssio_ddr
 $(ZYNQ_CORE_FLIST): $(BP_FLIST) $(BASE_FLIST) $(SIM_FLIST)
 	cat $^ | envsubst > $@
 	echo "+incdir+$(CURR_SRC_DIR)" >> $@
