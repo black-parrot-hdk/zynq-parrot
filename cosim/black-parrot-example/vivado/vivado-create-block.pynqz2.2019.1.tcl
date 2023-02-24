@@ -1,7 +1,7 @@
 set project_name $::env(BASENAME)_bd_proj
 set project_part $::env(PART)
 set project_bd   $::env(BASENAME)_bd_1
-set tcl_dir      $::env(TCL_DIR)
+set tcl_dir      $::env(CURR_TCL_DIR)
 
 create_project -force ${project_name} [pwd] -part ${project_part}
 create_bd_design "${project_bd}"

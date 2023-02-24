@@ -1,3 +1,7 @@
+
+#ifndef BP_ZYNQ_PL_H
+#define BP_ZYNQ_PL_H
+
 // This is an implementation of the standardized host bp_zynq_pl API
 // that runs on the real Zynq chip.
 //
@@ -47,20 +51,18 @@ void _xlnk_reset();
 #include "zynq_headers.h"
 using namespace std;
 
-class bsg_tag_bitbang;
-
 class bp_zynq_pl {
 public:
-  std::unique_ptr<bsg_tag_bitbang> tag;
   bool debug = ZYNQ_PL_DEBUG;
   uintptr_t gp0_base_offset = 0;
   uintptr_t gp1_base_offset = 0;
 
   bp_zynq_pl(int argc, char *argv[]) {
     printf("// bp_zynq_pl: be sure to run as root\n");
-#ifdef BITBANG_ENABLE
-    tag = std::make_unique<bsg_tag_bitbang>();
+#ifdef SIM_BACKPRESSURE_ENABLE
+    printf("// bp_zynq_pl: warning does not support SIM_BACKPRESSURE_ENABLE\n");
 #endif
+
     // open memory device
     int fd = open("/dev/mem", O_RDWR | O_SYNC);
     assert(fd != 0);
@@ -118,7 +120,9 @@ public:
     cma_free(virtual_ptr);
   }
 
-  bool done(void) { printf("bp_zynq_pl: done() called, exiting\n"); return true; }
+  static void tick(void) { /* Does nothing on PS */ }
+
+  static bool done(void) { printf("bp_zynq_pl: done() called, exiting\n"); return true; }
 
   inline volatile void *axil_get_ptr(uintptr_t address) {
     if (address >= gp1_addr_base)
@@ -126,6 +130,8 @@ public:
     else
       return (void *)(address + gp0_base_offset);
   }
+
+  static void axil_poll() { /* Does nothing on PS */ }
   
   inline volatile uint64_t *axil_get_ptr64(uintptr_t address) {
     return (uint64_t *)axil_get_ptr(address);

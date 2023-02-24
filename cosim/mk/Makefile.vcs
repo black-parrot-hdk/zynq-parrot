@@ -46,6 +46,8 @@ clean:
 	-rm -rf simv* vcdplus.vpd
 	-rm -rf build.log
 	-rm -rf run.log
+	-rm -rf prog.elf
+	-rm -rf *.trace
 
 view:
 	$(_DVE) -full64 -vpd vcdplus.vpd

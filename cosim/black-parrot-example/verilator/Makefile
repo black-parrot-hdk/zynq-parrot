@@ -4,9 +4,11 @@ include ../Makefile.design
 # Accelerator Software Settings
 #############################
 NBF_FILE     ?= $(abspath ../prog.nbf)
+ELF_FILE     ?= $(abspath ../prog.elf)
 HOST_PROGRAM ?= $(abspath ../ps.cpp)
 SIM_ARGS     += $(NBF_FILE)
 
+DROMAJO_COSIM ?= 0
 SKIP_DRAM ?= -DSKIP_DRAM_TESTING
 BP_NCPUS ?= 1
 
@@ -19,6 +21,15 @@ CFLAGS += -DSCRATCHPAD_ENABLE
 CFLAGS += -DBITBANG_ENABLE
 CFLAGS += -DBP_NCPUS=$(BP_NCPUS)
 CFLAGS += $(INCLUDES) $(SKIP_DRAM)
+ifeq ($(DROMAJO_COSIM),1)
+CFLAGS += -I$(BP_TOOLS_DIR)/dromajo/include
+endif
+
+# Enable backpressure, emulating context switches
+#CFLAGS += -DSIM_BACKPRESSURE_ENABLE
+#CFLAGS += -DSIM_BACKPRESSURE_SEED=1234
+#CFLAGS += -DSIM_BACKPRESSURE_CHANCE=5
+#CFLAGS += -DSIM_BACKPRESSURE_LENGTH=100
 
 #############################
 # Modify base flist
@@ -38,6 +49,13 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.v " >> $@
 	echo "$(COSIM_SRC_DIR)/bsg_nonsynth_dpi_to_axil.v" >> $@
 	echo "$(COSIM_SRC_DIR)/bsg_nonsynth_axil_to_dpi.v" >> $@
+	if [ "$(DROMAJO_COSIM)" = "1" ]; then \
+		echo "$(BLACKPARROT_DIR)/bp_top/test/common/bp_nonsynth_cosim.sv" >> $@; \
+		echo "$(BLACKPARROT_DIR)/bp_top/test/common/dromajo_cosim.cpp" >> $@; \
+		echo "$(BLACKPARROT_TOOLS_DIR)/install/lib/libdromajo_cosim.a" >> $@; \
+		echo "+define+DROMAJO_COSIM" >> $@; \
+		cp $(ELF_FILE) prog.elf; \
+	fi
 
 include $(TOP)/cosim/mk/Makefile.verilator
 

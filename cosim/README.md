@@ -24,3 +24,5 @@ See [The ZynqParrot Co-simulation Development Flow](https://docs.google.com/docu
 To install Verilator, see [Installation -- Verilator](https://verilator.org/guide/latest/install.html).
 
 To use the Black Parrot example, you will most likely want to build the software toolchain for RISC-V. The makefile for doing this is in the zynq-parrot/software directory.
+
+To have accurate VCS waveform dump, change the VCS option '-debug_pp' to '-debug_all' in mk/Makefile.vcs. Otherwise use '-debug_pp' to have faster simulation.

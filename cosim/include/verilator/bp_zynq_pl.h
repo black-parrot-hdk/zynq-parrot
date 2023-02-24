@@ -48,8 +48,6 @@ public:
   }
 };
 
-class bsg_tag_bitbang;
-
 class bp_zynq_pl {
   static Vtop *tb;
   static VerilatedFstC *wf;
@@ -59,7 +57,6 @@ public:
   std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > axi_gp1;
   std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> > axi_hp0;
 
-  std::unique_ptr<bsg_tag_bitbang> tag;
   std::unique_ptr<zynq_scratchpad> scratchpad;
 
   // Each bsg_timekeeper::next() moves to the next clock edge
@@ -94,12 +91,14 @@ public:
     tb->trace(wf, 10);
     wf->open("trace.fst");
 
+    // Initialize backpressure (if any)
+#ifdef SIM_BACKPRESSURE_ENABLE
+    srand(SIM_BACKPRESSURE_SEED);
+#endif
+
     // Tick once to register clock generators
     tb->eval();
     tick();
-#ifdef BITBANG_ENABLE
-    tag = std::make_unique<bsg_tag_bitbang>();
-#endif
 #ifdef GP0_ENABLE
     axi_gp0 = std::make_unique<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> >(
         STRINGIFY(GP0_HIER_BASE));
@@ -186,6 +185,15 @@ public:
   }
 
   void axil_poll() {
+#ifdef SIM_BACKPRESSURE_ENABLE
+    if ((rand() % 100) < SIM_BACKPRESSURE_CHANCE) {
+      for (int i = 0; i < SIM_BACKPRESSURE_LENGTH; i++) {
+        tick();
+      }
+    }
+#endif
+
+#ifdef HP0_ENABLE
     if (axi_hp0->p_awvalid && (axi_hp0->p_awaddr >= SCRATCHPAD_BASE) && (axi_hp0->p_awaddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {
       axi_hp0->axil_write_helper((axil_device *)scratchpad.get(), tick);
     } else if (axi_hp0->p_arvalid && (axi_hp0->p_araddr >= SCRATCHPAD_BASE) && (axi_hp0->p_araddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {
@@ -198,6 +206,7 @@ public:
       bsg_pr_err("  bp_zynq_pl: Unsupported AXI device read at [%x]\n", araddr);
     }
   }
+#endif
 };
 
 Vtop *bp_zynq_pl::tb;
