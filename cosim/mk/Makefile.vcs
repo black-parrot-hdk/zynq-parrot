@@ -42,7 +42,7 @@ clean:
 	-rm -rf csrc/
 	-rm -rf ucli.key
 	-rm -rf vc_hdrs.h
-	-rm -rf flist*.vcs
+	-rm -rf *.vcs
 	-rm -rf simv* vcdplus.vpd
 	-rm -rf build.log
 	-rm -rf run.log

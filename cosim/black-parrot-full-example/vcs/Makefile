@@ -20,7 +20,7 @@ CFLAGS += -DBITBANG_ENABLE
 CFLAGS += -DBP_NCPUS=$(BP_NCPUS)
 CFLAGS += $(INCLUDES) $(SKIP_DRAM)
 
-export CURR_DIR ?= $(shell pwd)
+export SIM_DIR ?= $(shell pwd)/sim
 export AXI_DIR  ?= $(BLACKPARROT_SUB_DIR)/axi/v
 export PLIC_DIR ?= $(BLACKPARROT_SUB_DIR)/rv_plic
 export ETH_DIR  ?= $(BLACKPARROT_SUB_DIR)/ethernet_controller/rtl
@@ -29,7 +29,7 @@ export ETH_DIR  ?= $(BLACKPARROT_SUB_DIR)/ethernet_controller/rtl
 #############################
 BASE_FLIST      ?= $(abspath $(CURR_FLIST_DIR)/base_flist.vcs)
 BP_FLIST        ?= $(abspath flist.blackparrot.vcs)
-SIM_FLIST       ?= $(abspath $(CURR_DIR)/sim.vcs)
+SIM_FLIST       ?= $(abspath $(SIM_DIR)/sim.vcs)
 
 # Flist for Zynq-Parrot core (In simulation, only ZYNQ_CORE_FLIST is considered)
 ZYNQ_CORE_FLIST  ?= $(abspath top_flist.vcs)
