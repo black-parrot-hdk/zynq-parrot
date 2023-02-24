@@ -11,7 +11,7 @@ $BLACKPARROT_SUB_DIR/axi/v/bp_me_axil_master.sv
 $BLACKPARROT_SUB_DIR/axi/v/bp_me_axil_client.sv
 $BLACKPARROT_SUB_DIR/axi/v/bp_me_axil_to_burst.sv
 $BLACKPARROT_SUB_DIR/axi/v/bp_me_burst_to_axil.sv
-$BLACKPARROT_SUB_DIR/axi/v/bp_axi_top.sv
+$CURR_SRC_DIR/bp_axi_top.sv
 $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_fifo_client.sv
 $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_fifo_master.sv
 $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_store_packer.sv
