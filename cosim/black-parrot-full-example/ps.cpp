@@ -171,9 +171,9 @@ extern "C" void cosim_main(char *argstr) {
   zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 0, 3, -1U);
   zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 0, 4, -1U);
 
-  // Set bsg client2 to 1 (assert reset)
+  // Set bsg client2 to 1 (assert reset for the tx_clk downsampling logic)
   zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 2, 0x1);
-  // Set bsg client2 to 0 (deassert reset)
+  // Set bsg client2 to 0 (deassert reset for the tx_clk downsampling logic)
   zpl->tag->bsg_tag_packet_write(zpl, GP0_RD_CSR_BITBANG + gp0_addr_base, NUM_RESET, 1, 1, 2, 0x0);
 
   // Set all bsg clients except client2 to 1 (assert resets)
