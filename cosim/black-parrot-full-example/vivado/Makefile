@@ -27,7 +27,7 @@ $(BP_FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs
 $(ZYNQ_CORE_FLIST): $(BP_FLIST) $(BASE_FLIST)
 	# Use vivado version instead
 	cat $^ > $@.merged
-	sed -i "s/.*bsg_launch_sync_sync.v/\$$BASEJUMP_STL_DIR\/hard\/xilinx\/common\/bsg_async\/bsg_launch_sync_sync.v/g" $@.merged
+	sed -i "s/.*bsg_launch_sync_sync.v/\$$BASEJUMP_STL_DIR\/hard\/ultrascale_plus\/bsg_async\/bsg_launch_sync_sync.v/g" $@.merged
 	sed -i "s/.*bsg_mux.v/\$$CURR_SRC_DIR\/bsg_mux.v/g" $@.merged
 	cat $@.merged | envsubst > $@
 	rm -f $@.merged
