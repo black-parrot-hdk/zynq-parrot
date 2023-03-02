@@ -56,14 +56,15 @@ fpga_report_build_block:
 
 # this packages the IP, but does not continue to synthesis, pnr and bitfile generation
 # on the x86 server
-fpga_build_ip: $(FLIST)
-	mkdir fpga_build
-	source $(XILINX_SETTINGS) && $(VIVADO) -source $(COSIM_TCL_DIR)/vivado-build-ip.tcl -mode $(VIVADO_MODE)
+fpga_build_ip: ip_repo
+ip_repo: $(FLIST)
+	mkdir $@
+	source $(XILINX_SETTINGS) && $(VIVADO) -source $(CURR)/vivado-build-ip.tcl -mode $(VIVADO_MODE)
 	-@grep --color "CRITICAL WARNING" vivado.log
 	-@grep --color "ERROR" vivado.log
 	-@tail -n5 vivado.log
 
-fpga_build: fpga_build_ip
+fpga_build: ip_repo
 	source $(XILINX_SETTINGS) && $(VIVADO) -source $(CURR)/vivado-create-block.$(BOARDNAME).$(VIVADO_VERSION).tcl -mode $(VIVADO_MODE)
 	$(MAKE) fpga_report_build_block
 
@@ -96,7 +97,7 @@ clean:
 	rm -rf *.jou
 	rm -rf *.b64
 	rm -rf $(BASENAME)_ip_proj*
-	rm -rf fpga_build
+	rm -rf ip_repo
 	rm -rf $(BASENAME)_bd_proj*
 	rm -rf $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.hwh $(BASENAME)_bd_1_bd.tcl
 

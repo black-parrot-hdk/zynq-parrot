@@ -7,7 +7,7 @@ create_project -force ${project_name} [pwd] -part ${project_part}
 create_bd_design "${project_bd}"
 update_compile_order -fileset sources_1
 open_bd_design ${project_name}.srcs/sources_1/bd/${project_bd}/${project_bd}.bd
-set_property ip_repo_paths fpga_build [current_project]
+set_property ip_repo_paths ip_repo [current_project]
 update_ip_catalog
 
 startgroup
