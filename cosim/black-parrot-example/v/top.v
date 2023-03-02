@@ -20,6 +20,7 @@ module top
 `ifdef FPGA
     input wire                                   aclk
     ,input wire                                  aresetn
+    ,output wire                                 sys_resetn
     ,input wire                                  rt_clk
 
     ,input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
@@ -392,6 +393,7 @@ module top
      top_fpga_inst
      (.aclk            (aclk)
       ,.aresetn        (aresetn)
+      ,.sys_resetn     (sys_resetn)
       ,.rt_clk         (rt_clk)
       ,.s00_axi_aclk   (s00_axi_aclk)
       ,.s00_axi_aresetn(s00_axi_aresetn)

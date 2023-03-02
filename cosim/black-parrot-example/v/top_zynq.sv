@@ -34,6 +34,7 @@ module top_zynq
    )
   (input wire                                    aclk
    , input wire                                  aresetn
+   , output wire                                 sys_resetn
    , input wire                                  rt_clk
    // Ports of Axi Slave Bus Interface S00_AXI
    , input wire                                  s00_axi_aclk
@@ -152,33 +153,44 @@ module top_zynq
    localparam bp_axil_data_width_lp = 32;
    localparam bp_axi_addr_width_lp  = 32;
    localparam bp_axi_data_width_lp  = 64;
+   localparam num_regs_ps_to_pl_lp  = 4;
 
-   logic [2:0]                                  csr_data_v_lo;
-   logic [2:0]                                  csr_data_w_lo;
-   logic [2:0][C_S00_AXI_DATA_WIDTH-1:0]        csr_data_lo;
-   logic [C_S00_AXI_DATA_WIDTH-1:0]             pl_to_ps_fifo_data_li, ps_to_pl_fifo_data_lo;
-   logic                                        pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
-   logic                                        ps_to_pl_fifo_v_lo, ps_to_pl_fifo_ready_li;
+   ///////////////////////////////////////////////////////////////////////////////////////
+   // csr_data_lo:
+   //
+   // 0: System-wide reset (low true); note: it is only legal to assert reset if you are
+   //    finished with all AXI transactions (fixme: potential improvement to detect this)
+   // 4: Bit banging interface
+   // 8: = 1 if the DRAM has been allocated for the device in the ARM PS Linux subsystem
+   // C: The base register for the allocated dram
+   //
+   logic [num_regs_ps_to_pl_lp-1:0]                           csr_data_v_lo;
+   logic [num_regs_ps_to_pl_lp-1:0]                           csr_data_w_lo;
+   logic [num_regs_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_lo;
 
-   logic [bp_axil_addr_width_lp-1:0]            bp_axi_awaddr;
-   logic [2:0]                                  bp_axi_awprot;
-   logic                                        bp_axi_awvalid;
-   logic                                        bp_axi_awready;
-   logic [bp_axil_data_width_lp-1:0]            bp_axi_wdata;
-   logic [(bp_axil_data_width_lp/8)-1:0]        bp_axi_wstrb;
-   logic                                        bp_axi_wvalid;
-   logic                                        bp_axi_wready;
-   logic [1:0]                                  bp_axi_bresp;
-   logic                                        bp_axi_bvalid;
-   logic                                        bp_axi_bready;
-   logic [bp_axil_addr_width_lp-1:0]            bp_axi_araddr;
-   logic [2:0]                                  bp_axi_arprot;
-   logic                                        bp_axi_arvalid;
-   logic                                        bp_axi_arready;
-   logic [bp_axil_data_width_lp-1:0]            bp_axi_rdata;
-   logic [1:0]                                  bp_axi_rresp;
-   logic                                        bp_axi_rvalid;
-   logic                                        bp_axi_rready;
+   logic [C_S00_AXI_DATA_WIDTH-1:0]      pl_to_ps_fifo_data_li, ps_to_pl_fifo_data_lo;
+   logic                                 pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
+   logic                                 ps_to_pl_fifo_v_lo, ps_to_pl_fifo_ready_li;
+
+   logic [bp_axil_addr_width_lp-1:0]     bp_axi_awaddr;
+   logic [2:0]                           bp_axi_awprot;
+   logic                                 bp_axi_awvalid;
+   logic                                 bp_axi_awready;
+   logic [bp_axil_data_width_lp-1:0]     bp_axi_wdata;
+   logic [(bp_axil_data_width_lp/8)-1:0] bp_axi_wstrb;
+   logic                                 bp_axi_wvalid;
+   logic                                 bp_axi_wready;
+   logic [1:0]                           bp_axi_bresp;
+   logic                                 bp_axi_bvalid;
+   logic                                 bp_axi_bready;
+   logic [bp_axil_addr_width_lp-1:0]     bp_axi_araddr;
+   logic [2:0]                           bp_axi_arprot;
+   logic                                 bp_axi_arvalid;
+   logic                                 bp_axi_arready;
+   logic [bp_axil_data_width_lp-1:0]     bp_axi_rdata;
+   logic [1:0]                           bp_axi_rresp;
+   logic                                 bp_axi_rvalid;
+   logic                                 bp_axi_rready;
 
    localparam debug_lp = 0;
    localparam memory_upper_limit_lp = 256*1024*1024;
@@ -188,6 +200,18 @@ module top_zynq
    logic [127:0] mem_profiler_r;
 
    logic [63:0] minstret_lo;
+   // (MBT)
+   // note: this ability to probe into the core is not supported in ASIC toolflows but
+   // is supported in Verilator, VCS, and Vivado Synthesis.
+
+   // it is very helpful for adding instrumentation to a pre-existing design that you are
+   // prototyping in FPGA, where you don't necessarily want to put the support into the ASIC version
+   // or don't know yet if you want to.
+
+   // in additional to this approach of poking down into pre-existing registers, you can also
+   // instantiate counters, and then pull control signals out of the DUT in order to figure out when
+   // to increment the counters.
+   //
    if (cce_type_p != e_cce_uce)
      assign minstret_lo = blackparrot.m.multicore.cc.y[0].x[0].tile_node.tile_node.tile.core.core_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
    else
@@ -197,6 +221,7 @@ module top_zynq
 
    // Specify the number of generated resets here:
    localparam num_reset_lp = 1; // for BP reset
+   logic bp_reset_li;
    // Specify the clocks the generated resets belong to here:
    wire [num_reset_lp-1:0] clks_li = {aclk};
    // Generated resets signals:
@@ -207,13 +232,13 @@ module top_zynq
    logic tag_data_r_lo;
    bsg_tag_s [num_reset_lp-1:0] tag;
 
-   wire bb_v_li = csr_data_v_lo[0] & csr_data_w_lo[0];
+   wire bb_v_li = csr_data_v_lo[1] & csr_data_w_lo[1];
    wire bb_ready_and_lo;
 
    bsg_tag_bitbang bb (
      .clk_i(aclk)
      ,.reset_i(~aresetn)
-     ,.data_i(csr_data_lo[0][0])
+     ,.data_i(csr_data_lo[1][0])
      ,.v_i(bb_v_li)
      ,.ready_and_o(bb_ready_and_lo) // UNUSED
 
@@ -243,21 +268,16 @@ module top_zynq
      );
    end
 
-   assign {s00_axi_aresetn, s01_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn} = {4{aresetn}};
+   assign sys_resetn = csr_data_lo[0][0]; // active-low
+   assign {s00_axi_aresetn, s01_axi_aresetn} = {2{aresetn}};
+   assign {m00_axi_aresetn, m01_axi_aresetn} = {2{sys_resetn}};
 
-   wire bp_reset_li = ~aresetn | synced_resets_lo[0];
+   assign bp_reset_li = ~sys_resetn | synced_resets_lo[0];
 
    // Connect Shell to AXI Bus Interface S00_AXI
    bsg_zynq_pl_shell #
      (
-      .num_regs_ps_to_pl_p (3)
-      // standard memory map for all blackparrot instances should be
-      //
-      // 0: reset for bp (low true); note: it is only legal to assert reset if you are
-      //    finished with all AXI transactions (fixme: potential improvement to detect this)
-      // 4: = 1 if the DRAM has been allocated for the device in the ARM PS Linux subsystem
-      // 8: the base register for the allocated dram
-      //
+      .num_regs_ps_to_pl_p (num_regs_ps_to_pl_lp)
 
       // need to update C_S00_AXI_ADDR_WIDTH accordingly
       ,.num_fifo_ps_to_pl_p(1)
@@ -270,20 +290,6 @@ module top_zynq
         .csr_data_v_o(csr_data_v_lo)
         ,.csr_data_w_o(csr_data_w_lo)
         ,.csr_data_o(csr_data_lo)
-
-        // (MBT)
-        // note: this ability to probe into the core is not supported in ASIC toolflows but
-        // is supported in Verilator, VCS, and Vivado Synthesis.
-
-        // it is very helpful for adding instrumentation to a pre-existing design that you are
-        // prototyping in FPGA, where you don't necessarily want to put the support into the ASIC version
-        // or don't know yet if you want to.
-
-        // in additional to this approach of poking down into pre-existing registers, you can also
-        // instantiate counters, and then pull control signals out of the DUT in order to figure out when
-        // to increment the counters.
-        //
-
         ,.csr_data_i({ mem_profiler_r[127:96]
                        , mem_profiler_r[95:64]
                        , mem_profiler_r[63:32]
@@ -291,7 +297,6 @@ module top_zynq
                        , minstret_lo[63:32]
                        , minstret_lo[31:0]}
                      )
-
         ,.pl_to_ps_fifo_data_i (pl_to_ps_fifo_data_li)
         ,.pl_to_ps_fifo_v_i    (pl_to_ps_fifo_v_li)
         ,.pl_to_ps_fifo_ready_o(pl_to_ps_fifo_ready_lo)
@@ -412,7 +417,7 @@ module top_zynq
       )
     store_packer
      (.clk_i   (s01_axi_aclk)
-      ,.reset_i(~s01_axi_aresetn)
+      ,.reset_i(~sys_resetn)
 
       ,.s_axil_awaddr_i (spack_axi_awaddr)
       ,.s_axil_awprot_i (spack_axi_awprot)
@@ -455,7 +460,7 @@ module top_zynq
      )
    axil_demux
     (.clk_i(s01_axi_aclk)
-     ,.reset_i(~s01_axi_aresetn)
+     ,.reset_i(~sys_resetn)
 
      ,.s00_axil_awaddr(bp_axi_awaddr)
      ,.s00_axil_awprot(bp_axi_awprot)
@@ -535,8 +540,8 @@ module top_zynq
    //       $display("top_zynq: unexpectedly high DRAM read: %x",axi_araddr);
    //  end
 
-   assign m00_axi_awaddr = (axi_awaddr ^ 32'h8000_0000) + csr_data_lo[2];
-   assign m00_axi_araddr = (axi_araddr ^ 32'h8000_0000) + csr_data_lo[2];
+   assign m00_axi_awaddr = (axi_awaddr ^ 32'h8000_0000) + csr_data_lo[3];
+   assign m00_axi_araddr = (axi_araddr ^ 32'h8000_0000) + csr_data_lo[3];
 
    // synopsys translate_off
 

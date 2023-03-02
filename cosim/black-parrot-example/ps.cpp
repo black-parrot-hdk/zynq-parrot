@@ -40,23 +40,24 @@
 #endif
 
 // GP0 Read Memory Map
-#define GP0_RD_CSR_BITBANG     0x0
-#define GP0_RD_CSR_DRAM_INITED 0x4
-#define GP0_RD_CSR_DRAM_BASE   0x8
-#define GP0_RD_PL2PS_FIFO_DATA 0xC
-#define GP0_RD_PL2PS_FIFO_CTRS 0x10
-#define GP0_RD_PS2PL_FIFO_CTRS 0x14
-#define GP0_RD_MINSTRET        0x18 // 64-bit
-#define GP0_RD_MEM_PROF_0      0x20
-#define GP0_RD_MEM_PROF_1      0x24
-#define GP0_RD_MEM_PROF_2      0x28
-#define GP0_RD_MEM_PROF_3      0x2C
+#define GP0_RD_CSR_SYS_RESET   0x0
+#define GP0_RD_CSR_BITBANG     (GP0_RD_CSR_SYS_RESET + 0x4)
+#define GP0_RD_CSR_DRAM_INITED (GP0_RD_CSR_BITBANG + 0x4)
+#define GP0_RD_CSR_DRAM_BASE   (GP0_RD_CSR_DRAM_INITED + 0x4)
+#define GP0_RD_PL2PS_FIFO_DATA (GP0_RD_CSR_DRAM_BASE   + 0x4)
+#define GP0_RD_PL2PS_FIFO_CTRS (GP0_RD_PL2PS_FIFO_DATA + 0x4)
+#define GP0_RD_PS2PL_FIFO_CTRS (GP0_RD_PL2PS_FIFO_CTRS + 0x4)
+#define GP0_RD_MINSTRET        (GP0_RD_PS2PL_FIFO_CTRS + 0x4) // 64-bit
+#define GP0_RD_MEM_PROF_0      (GP0_RD_MINSTRET        + 0x8)
+#define GP0_RD_MEM_PROF_1      (GP0_RD_MEM_PROF_0      + 0x4)
+#define GP0_RD_MEM_PROF_2      (GP0_RD_MEM_PROF_1      + 0x4)
+#define GP0_RD_MEM_PROF_3      (GP0_RD_MEM_PROF_2      + 0x4)
 
 // GP0 Write Memory Map
-#define GP0_WR_CSR_BITBANG         GP0_RD_CSR_BITBANG
-#define GP0_WR_CSR_DRAM_INITED     GP0_RD_CSR_DRAM_INITED
-#define GP0_WR_CSR_DRAM_BASE       GP0_RD_CSR_DRAM_BASE
-#define GP0_WR_PS2PL_FIFO_DATA 0xC
+#define GP0_WR_CSR_BITBANG     GP0_RD_CSR_BITBANG
+#define GP0_WR_CSR_DRAM_INITED GP0_RD_CSR_DRAM_INITED
+#define GP0_WR_CSR_DRAM_BASE   GP0_RD_CSR_DRAM_BASE
+#define GP0_WR_PS2PL_FIFO_DATA (GP0_WR_CSR_DRAM_BASE + 0x4)
 
 // DRAM
 #define DRAM_BASE_ADDR  0x80000000U
@@ -147,11 +148,23 @@ extern "C" void cosim_main(char *argstr) {
   long allocated_dram = DRAM_ALLOCATE_SIZE;
 
   long val;
-  bsg_pr_info("ps.cpp: reading three base registers\n");
-  bsg_pr_info("ps.cpp: reset(lo)=%d dram_init=%d, dram_base=%x\n",
+  bsg_pr_info("ps.cpp: reading four base registers\n");
+  bsg_pr_info("ps.cpp: reset(lo)=%d, bitbang=%d, dram_init=%d, dram_base=%x\n",
+              zpl->axil_read(GP0_RD_CSR_SYS_RESET + gp0_addr_base),
               zpl->axil_read(GP0_RD_CSR_BITBANG + gp0_addr_base),
               zpl->axil_read(GP0_RD_CSR_DRAM_INITED + gp0_addr_base),
               val = zpl->axil_read(GP0_RD_CSR_DRAM_BASE + gp0_addr_base));
+
+  bsg_pr_info("ps.cpp: attempting to write and read register 0x8\n");
+
+  zpl->axil_write(GP0_WR_CSR_DRAM_BASE + gp0_addr_base, 0xDEADBEEF, mask1);
+  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE + gp0_addr_base) == (0xDEADBEEF)));
+  zpl->axil_write(GP0_WR_CSR_DRAM_BASE + gp0_addr_base, val, mask1);
+  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE + gp0_addr_base) == (val)));
+
+  bsg_pr_info("ps.cpp: successfully wrote and read registers in bsg_zynq_shell "
+              "(verified ARM GP0 connection)\n");
+
   bsg_tag_bitbang *btb = new bsg_tag_bitbang(zpl, GP0_WR_CSR_BITBANG+gp0_addr_base, 1, 1);
   bsg_tag_client *reset_client = new bsg_tag_client(TAG_CLIENT_RESET_ID, TAG_CLIENT_RESET_WIDTH);
 
@@ -166,16 +179,9 @@ extern "C" void cosim_main(char *argstr) {
 
   // We need some additional toggles for data to propagate through
   btb->idle(50);
+  // Deassert the active-low system reset as we finish initializing the whole system
+  zpl->axil_write(GP0_RD_CSR_SYS_RESET + gp0_addr_base, 0x1, 0xF);
 
-  bsg_pr_info("ps.cpp: attempting to write and read register 0x8\n");
-
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE + gp0_addr_base, 0xDEADBEEF, mask1);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE + gp0_addr_base) == (0xDEADBEEF)));
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE + gp0_addr_base, val, mask1);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE + gp0_addr_base) == (val)));
-
-  bsg_pr_info("ps.cpp: successfully wrote and read registers in bsg_zynq_shell "
-              "(verified ARM GP0 connection)\n");
 #ifdef FPGA
   unsigned long phys_ptr;
   volatile int32_t *buf;

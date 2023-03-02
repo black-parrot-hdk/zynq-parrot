@@ -84,7 +84,6 @@ public:
 #ifdef HP0_ENABLE
     axi_hp0 = std::make_unique<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> >(
         STRINGIFY(HP0_HIER_BASE));
-    axi_hp0->reset(tick);
 #endif
 #ifdef SCRATCHPAD_ENABLE
     scratchpad = std::make_unique<zynq_scratchpad>();
