@@ -20,6 +20,9 @@ module top
 `ifdef FPGA
     input wire                                   aclk
     ,input wire                                  aresetn
+    // In order to prevent X from propagating to any of the initialized AXI buses,
+    //   we use sys_resetn to put modules that have resets generated from bsg tags
+    //   into reset while the tags are still reseting. Unused in this example.
     ,output wire                                 sys_resetn
     ,input wire                                  rt_clk
 

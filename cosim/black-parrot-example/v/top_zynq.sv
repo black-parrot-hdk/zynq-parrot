@@ -269,10 +269,9 @@ module top_zynq
    end
 
    assign sys_resetn = csr_data_lo[0][0]; // active-low
-   assign {s00_axi_aresetn, s01_axi_aresetn} = {2{aresetn}};
-   assign {m00_axi_aresetn, m01_axi_aresetn} = {2{sys_resetn}};
+   assign {s00_axi_aresetn, s01_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn} = {4{aresetn}};
 
-   assign bp_reset_li = ~sys_resetn | synced_resets_lo[0];
+   assign bp_reset_li = ~aresetn | synced_resets_lo[0];
 
    // Connect Shell to AXI Bus Interface S00_AXI
    bsg_zynq_pl_shell #
@@ -417,7 +416,7 @@ module top_zynq
       )
     store_packer
      (.clk_i   (s01_axi_aclk)
-      ,.reset_i(~sys_resetn)
+      ,.reset_i(~s01_axi_aresetn)
 
       ,.s_axil_awaddr_i (spack_axi_awaddr)
       ,.s_axil_awprot_i (spack_axi_awprot)
@@ -460,7 +459,7 @@ module top_zynq
      )
    axil_demux
     (.clk_i(s01_axi_aclk)
-     ,.reset_i(~sys_resetn)
+     ,.reset_i(~s01_axi_aresetn)
 
      ,.s00_axil_awaddr(bp_axi_awaddr)
      ,.s00_axil_awprot(bp_axi_awprot)
