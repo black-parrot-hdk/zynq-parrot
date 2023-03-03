@@ -677,11 +677,9 @@ module top_zynq
       );
 
    // synopsys translate_off
-   always @(negedge aclk) begin
-     if(aresetn == 1'b1)
-       if(bb_v_li & ~bb_ready_and_lo == 1'b1)
-         $error("top_zynq: bitbang bit drop occurred");
-   end
+   always @(negedge aclk)
+     if (aresetn !== '0 & bb_v_li & ~bb_ready_and_lo == 1'b1)
+       $error("top_zynq: bitbang bit drop occurred");
 
    always @(negedge aclk)
      if (s01_axi_awvalid & s01_axi_awready)
