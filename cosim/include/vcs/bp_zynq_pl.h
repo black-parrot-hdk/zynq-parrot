@@ -178,8 +178,8 @@ public:
       int araddr = axi_hp0->p_awaddr;
       bsg_pr_err("  bp_zynq_pl: Unsupported AXI device read at [%x]\n", araddr);
     }
-  }
 #endif
+  }
 };
 
 #endif

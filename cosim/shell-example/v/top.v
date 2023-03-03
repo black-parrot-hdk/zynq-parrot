@@ -45,11 +45,23 @@ module top #
     output wire                                 s00_axi_rvalid,
     input wire                                  s00_axi_rready
     );
-    assign {s00_axi_aclk} = {1{aclk}};
-    assign {s00_axi_aresetn} = {1{aresetn}};
 `else
     );
-    logic s00_axi_aclk, s00_axi_aresetn;
+
+    localparam aclk_period_lp = 50000;
+    logic aclk;
+    bsg_nonsynth_clock_gen
+     #(.cycle_time_p(aclk_period_lp))
+     aclk_gen
+      (.o(aclk));
+
+    logic areset;
+    bsg_nonsynth_reset_gen
+     #(.reset_cycles_lo_p(0), .reset_cycles_hi_p(10))
+     reset_gen
+      (.clk_i(aclk), .async_reset_o(areset));
+    wire aresetn = ~areset;
+
     logic [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_awaddr;
     logic [2:0] s00_axi_awprot;
     logic s00_axi_awvalid, s00_axi_awready;
@@ -67,8 +79,8 @@ module top #
     bsg_nonsynth_dpi_to_axil
      #(.addr_width_p(C_S00_AXI_ADDR_WIDTH), .data_width_p(C_S00_AXI_DATA_WIDTH))
      axil0
-      (.aclk_o(s00_axi_aclk)
-       ,.aresetn_o(s00_axi_aresetn)
+      (.aclk_i(aclk)
+       ,.aresetn_i(aresetn)
 
        ,.awaddr_o(s00_axi_awaddr)
        ,.awprot_o(s00_axi_awprot)
@@ -128,9 +140,10 @@ module top #
         ,.ps_to_pl_fifo_yumi_i (ps_to_pl_fifo_yumi_li)
 
         ,.csr_data_o(csr_data_lo)
+        ,.csr_data_new_o()
         ,.csr_data_i(csr_data_li)
-        ,.S_AXI_ACLK   (s00_axi_aclk   )
-        ,.S_AXI_ARESETN(s00_axi_aresetn)
+        ,.S_AXI_ACLK   (aclk           )
+        ,.S_AXI_ARESETN(aresetn        )
         ,.S_AXI_AWADDR (s00_axi_awaddr )
         ,.S_AXI_AWPROT (s00_axi_awprot )
         ,.S_AXI_AWVALID(s00_axi_awvalid)
@@ -175,8 +188,8 @@ module top #
         //
         logic [C_S00_AXI_ADDR_WIDTH-1:0] last_write_addr_r;
 
-        always @(posedge s00_axi_aclk)
-          if (~s00_axi_aresetn)
+        always @(posedge aclk)
+          if (~aresetn)
             last_write_addr_r <= '0;
           else
             if (s00_axi_awvalid & s00_axi_awready)
@@ -224,7 +237,7 @@ module top #
    // functions.
    export "DPI-C" task bsg_dpi_next;
    task bsg_dpi_next();
-     @(posedge s00_axi_aclk);
+     @(posedge aclk);
      #1;
    endtask
 `endif
