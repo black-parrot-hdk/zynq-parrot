@@ -129,10 +129,6 @@ module top
     ,input wire                                  m01_axi_rvalid
     ,output wire                                 m01_axi_rready
     );
-
-    logic s00_axi_aclk, s01_axi_aclk, m00_axi_aclk, m01_axi_aclk;
-    logic s00_axi_aresetn, s01_axi_aresetn, m00_axi_aresetn, m01_axi_aresetn;
-
 `else
     );
 
@@ -157,7 +153,6 @@ module top
       (.clk_i(aclk), .async_reset_o(areset));
     wire aresetn = ~areset;
 
-    logic s00_axi_aclk, s00_axi_aresetn;
     logic [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_awaddr;
     logic [2:0] s00_axi_awprot;
     logic s00_axi_awvalid, s00_axi_awready;
@@ -175,8 +170,8 @@ module top
     bsg_nonsynth_dpi_to_axil
      #(.addr_width_p(C_S00_AXI_ADDR_WIDTH), .data_width_p(C_S00_AXI_DATA_WIDTH))
      axil0
-      (.aclk_i(s00_axi_aclk)
-       ,.aresetn_i(s00_axi_aresetn)
+      (.aclk_i(aclk)
+       ,.aresetn_i(aresetn)
 
        ,.awaddr_o(s00_axi_awaddr)
        ,.awprot_o(s00_axi_awprot)
@@ -200,7 +195,6 @@ module top
        ,.rready_o(s00_axi_rready)
        );
 
-    logic s01_axi_aclk, s01_axi_aresetn;
     logic [C_S01_AXI_ADDR_WIDTH-1:0] s01_axi_awaddr;
     logic [2:0] s01_axi_awprot;
     logic s01_axi_awvalid, s01_axi_awready;
@@ -218,8 +212,8 @@ module top
     bsg_nonsynth_dpi_to_axil
      #(.addr_width_p(C_S01_AXI_ADDR_WIDTH), .data_width_p(C_S01_AXI_DATA_WIDTH))
      axil1
-      (.aclk_i(s01_axi_aclk)
-       ,.aresetn_i(s01_axi_aresetn)
+      (.aclk_i(aclk)
+       ,.aresetn_i(aresetn)
 
        ,.awaddr_o(s01_axi_awaddr)
        ,.awprot_o(s01_axi_awprot)
@@ -243,8 +237,6 @@ module top
        ,.rready_o(s01_axi_rready)
        );
 
-    // TODO: Fix widths
-    logic m01_axi_aclk, m01_axi_aresetn;
     logic [C_M01_AXI_ADDR_WIDTH-1:0] m01_axi_awaddr;
     logic [2:0] m01_axi_awprot;
     logic m01_axi_awvalid, m01_axi_awready;
@@ -262,8 +254,8 @@ module top
     bsg_nonsynth_axil_to_dpi
      #(.addr_width_p(C_M01_AXI_ADDR_WIDTH), .data_width_p(C_M01_AXI_DATA_WIDTH))
      axil2
-      (.aclk_i(m01_axi_aclk)
-       ,.aresetn_i(m01_axi_aresetn)
+      (.aclk_i(aclk)
+       ,.aresetn_i(aresetn)
 
        ,.awaddr_i(m01_axi_awaddr)
        ,.awprot_i(m01_axi_awprot)
@@ -287,14 +279,6 @@ module top
        ,.rready_i(m01_axi_rready)
        );
 
-   localparam axi_id_width_p = 6;
-   localparam axi_addr_width_p = 32;
-   localparam axi_data_width_p = 64;
-   localparam axi_strb_width_p = axi_data_width_p >> 3;
-   localparam axi_burst_len_p = 8;
-
-   logic                                m00_axi_aclk;
-   logic                                m00_axi_aresetn;
    wire [C_M00_AXI_ADDR_WIDTH-1:0]      m00_axi_awaddr;
    wire                                 m00_axi_awvalid;
    wire                                 m00_axi_awready;
@@ -336,16 +320,16 @@ module top
 
 
    bsg_nonsynth_axi_mem
-     #(.axi_id_width_p(axi_id_width_p)
-       ,.axi_addr_width_p(axi_addr_width_p)
-       ,.axi_data_width_p(axi_data_width_p)
+     #(.axi_id_width_p(6)
+       ,.axi_addr_width_p(C_M00_AXI_ADDR_WIDTH)
+       ,.axi_data_width_p(C_M00_AXI_DATA_WIDTH)
        ,.axi_len_width_p(4)
        ,.mem_els_p(2**28) // 256 MB
        ,.init_data_p('0)
      )
    axi_mem
-     (.clk_i          (m00_axi_aclk)
-      ,.reset_i       (~m00_axi_aresetn)
+     (.clk_i          (aclk)
+      ,.reset_i       (~aresetn)
 
       ,.axi_awid_i    (m00_axi_awid)
       ,.axi_awaddr_i  (m00_axi_awaddr)
@@ -381,8 +365,6 @@ module top
       );
 `endif
 
-   assign {s00_axi_aclk, s01_axi_aclk, m00_axi_aclk, m01_axi_aclk} = {4{aclk}};
-
    top_zynq #
      (.C_S00_AXI_DATA_WIDTH (C_S00_AXI_DATA_WIDTH)
       ,.C_S00_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
@@ -398,8 +380,7 @@ module top
       ,.aresetn        (aresetn)
       ,.sys_resetn     (sys_resetn)
       ,.rt_clk         (rt_clk)
-      ,.s00_axi_aclk   (s00_axi_aclk)
-      ,.s00_axi_aresetn(s00_axi_aresetn)
+
       ,.s00_axi_awaddr (s00_axi_awaddr)
       ,.s00_axi_awprot (s00_axi_awprot)
       ,.s00_axi_awvalid(s00_axi_awvalid)
@@ -420,8 +401,6 @@ module top
       ,.s00_axi_rvalid (s00_axi_rvalid)
       ,.s00_axi_rready (s00_axi_rready)
 
-      ,.s01_axi_aclk   (s01_axi_aclk)
-      ,.s01_axi_aresetn(s01_axi_aresetn)
       ,.s01_axi_awaddr (s01_axi_awaddr)
       ,.s01_axi_awprot (s01_axi_awprot)
       ,.s01_axi_awvalid(s01_axi_awvalid)
@@ -442,8 +421,6 @@ module top
       ,.s01_axi_rvalid (s01_axi_rvalid)
       ,.s01_axi_rready (s01_axi_rready)
 
-      ,.m00_axi_aclk   (m00_axi_aclk)
-      ,.m00_axi_aresetn(m00_axi_aresetn)
       ,.m00_axi_awaddr (m00_axi_awaddr)
       ,.m00_axi_awvalid(m00_axi_awvalid)
       ,.m00_axi_awready(m00_axi_awready)
@@ -487,8 +464,6 @@ module top
       ,.m00_axi_rlast  (m00_axi_rlast)
       ,.m00_axi_rresp  (m00_axi_rresp)
 
-      ,.m01_axi_aclk   (m01_axi_aclk)
-      ,.m01_axi_aresetn(m01_axi_aresetn)
       ,.m01_axi_awaddr (m01_axi_awaddr)
       ,.m01_axi_awprot (m01_axi_awprot)
       ,.m01_axi_awvalid(m01_axi_awvalid)
@@ -605,15 +580,15 @@ module top
    // functions.
    export "DPI-C" task bsg_dpi_next;
    task bsg_dpi_next();
-     @(posedge s00_axi_aclk);
+     @(posedge aclk);
      #1;
    endtask
 
   initial
     begin
       $assertoff();
-      @(posedge s00_axi_aclk);
-      @(negedge s00_axi_aresetn);
+      @(posedge aclk);
+      @(negedge aresetn);
       $asserton();
     end
 `endif

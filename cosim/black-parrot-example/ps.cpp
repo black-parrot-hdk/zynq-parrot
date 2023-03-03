@@ -41,14 +41,16 @@
 
 // GP0 Read Memory Map
 #define GP0_RD_CSR_SYS_RESET   0x0
-#define GP0_RD_CSR_BITBANG     (GP0_RD_CSR_SYS_RESET + 0x4)
-#define GP0_RD_CSR_DRAM_INITED (GP0_RD_CSR_BITBANG + 0x4)
+#define GP0_RD_CSR_BITBANG     (GP0_RD_CSR_SYS_RESET   + 0x4)
+#define GP0_RD_CSR_DRAM_INITED (GP0_RD_CSR_BITBANG     + 0x4)
 #define GP0_RD_CSR_DRAM_BASE   (GP0_RD_CSR_DRAM_INITED + 0x4)
 #define GP0_RD_PL2PS_FIFO_DATA (GP0_RD_CSR_DRAM_BASE   + 0x4)
 #define GP0_RD_PL2PS_FIFO_CTRS (GP0_RD_PL2PS_FIFO_DATA + 0x4)
 #define GP0_RD_PS2PL_FIFO_CTRS (GP0_RD_PL2PS_FIFO_CTRS + 0x4)
-#define GP0_RD_MINSTRET        (GP0_RD_PS2PL_FIFO_CTRS + 0x4) // 64-bit
-#define GP0_RD_MEM_PROF_0      (GP0_RD_MINSTRET        + 0x8)
+#define GP0_RD_MINSTRET        (GP0_RD_PS2PL_FIFO_CTRS + 0x4)
+#define GP0_RD_MINSTRET_0      (GP0_RD_MINSTRET             )
+#define GP0_RD_MINSTRET_1      (GP0_RD_MINSTRET_0      + 0x4)
+#define GP0_RD_MEM_PROF_0      (GP0_RD_MINSTRET_1      + 0x4)
 #define GP0_RD_MEM_PROF_1      (GP0_RD_MEM_PROF_0      + 0x4)
 #define GP0_RD_MEM_PROF_2      (GP0_RD_MEM_PROF_1      + 0x4)
 #define GP0_RD_MEM_PROF_3      (GP0_RD_MEM_PROF_2      + 0x4)
@@ -311,7 +313,7 @@ extern "C" void cosim_main(char *argstr) {
   nbf_load(zpl, argv[1]);
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
-  unsigned long long minstret_start = get_counter_64(zpl, GP0_RD_MINSTRET + gp0_addr_base);
+  unsigned long long minstret_start = get_counter_64(zpl, GP0_RD_MINSTRET_0 + gp0_addr_base);
   unsigned long long mtime_start = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
   bsg_pr_dbg_ps("ps.cpp: finished nbf load\n");
 
@@ -326,9 +328,9 @@ extern "C" void cosim_main(char *argstr) {
 
   unsigned long long mtime_stop = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
 
-  unsigned long long minstret_stop = get_counter_64(zpl, GP0_RD_MINSTRET + gp0_addr_base);
+  unsigned long long minstret_stop = get_counter_64(zpl, GP0_RD_MINSTRET_0 + gp0_addr_base);
   // test delay for reading counter
-  unsigned long long counter_data = get_counter_64(zpl, GP0_RD_MINSTRET + gp0_addr_base);
+  unsigned long long counter_data = get_counter_64(zpl, GP0_RD_MINSTRET_0 + gp0_addr_base);
   clock_gettime(CLOCK_MONOTONIC, &end);
   setlocale(LC_NUMERIC, "");
   bsg_pr_info("ps.cpp: end polling i/o\n");
