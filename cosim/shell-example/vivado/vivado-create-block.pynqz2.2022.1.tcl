@@ -13,7 +13,7 @@ set_property -dict [list CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {178}] [get_bd_cell
 endgroup
 apply_bd_automation -rule xilinx.com:bd_rule:processing_system7 -config {make_external "FIXED_IO, DDR" Master "Disable" Slave "Disable" }  [get_bd_cells processing_system7_0]
 open_bd_design ${project_name}.srcs/sources_1/bd/${project_bd}/${project_bd}.bd}
-set_property  ip_repo_paths  fpga_build [current_project]
+set_property  ip_repo_paths  ip_repo [current_project]
 update_ip_catalog
 startgroup
 create_bd_cell -type ip -vlnv user.org:user:top:1.0 top_0

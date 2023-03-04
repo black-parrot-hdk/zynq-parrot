@@ -4,7 +4,7 @@ obj_dir/
 *.log
 *.str
 *.pyc
-fpga_build/
+ip_repo/
 vcdplus.vpd
 vc_hdrs.h
 ucli.key
