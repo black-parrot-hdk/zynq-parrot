@@ -69,6 +69,32 @@ static uintptr_t gp1_addr_base = (uintptr_t) GP1_ADDR_BASE;
 #endif
 #endif
 
+#ifndef GP2_ENABLE
+#define GP2_ADDR_WIDTH 0
+#define GP2_DATA_WIDTH 0
+#define GP2_ADDR_BASE 0
+#define GP2_HIER_BASE ""
+#endif
+
+#ifndef GP2_ADDR_WIDTH
+#error GP2_ADDR_WIDTH must be defined
+#endif
+#ifndef GP2_ADDR_SIZE_BYTES
+#define GP2_ADDR_SIZE_BYTES (1 << GP2_ADDR_WIDTH)
+#endif
+
+#ifndef GP2_ADDR_BASE
+#error GP2_ADDR_BASE must be defined
+#endif
+
+#ifndef GP2_DATA_WIDTH
+#error GP2_DATA_WIDTH must be defined
+#endif
+
+#ifndef GP2_HIER_BASE
+#error GP2_HIER_BASE must be defined
+#endif
+
 #ifndef HP0_ENABLE
 #define HP0_ADDR_WIDTH 0 
 #define HP0_DATA_WIDTH 0

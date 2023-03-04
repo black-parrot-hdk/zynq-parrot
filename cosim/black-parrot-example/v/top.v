@@ -10,6 +10,8 @@ module top
     , parameter integer C_S00_AXI_ADDR_WIDTH = 10
     , parameter integer C_S01_AXI_DATA_WIDTH = 32
     , parameter integer C_S01_AXI_ADDR_WIDTH = 30
+    , parameter integer C_S02_AXI_DATA_WIDTH = 32
+    , parameter integer C_S02_AXI_ADDR_WIDTH = 28
     , parameter integer C_M00_AXI_DATA_WIDTH = 64
     , parameter integer C_M00_AXI_ADDR_WIDTH = 32
     , parameter integer C_M01_AXI_DATA_WIDTH = 32
@@ -65,6 +67,26 @@ module top
     ,output wire [1 : 0]                         s01_axi_rresp
     ,output wire                                 s01_axi_rvalid
     ,input wire                                  s01_axi_rready
+
+    ,input wire [C_S02_AXI_ADDR_WIDTH-1 : 0]     s02_axi_awaddr
+    ,input wire [2 : 0]                          s02_axi_awprot
+    ,input wire                                  s02_axi_awvalid
+    ,output wire                                 s02_axi_awready
+    ,input wire [C_S02_AXI_DATA_WIDTH-1 : 0]     s02_axi_wdata
+    ,input wire [(C_S02_AXI_DATA_WIDTH/8)-1 : 0] s02_axi_wstrb
+    ,input wire                                  s02_axi_wvalid
+    ,output wire                                 s02_axi_wready
+    ,output wire [1 : 0]                         s02_axi_bresp
+    ,output wire                                 s02_axi_bvalid
+    ,input wire                                  s02_axi_bready
+    ,input wire [C_S02_AXI_ADDR_WIDTH-1 : 0]     s02_axi_araddr
+    ,input wire [2 : 0]                          s02_axi_arprot
+    ,input wire                                  s02_axi_arvalid
+    ,output wire                                 s02_axi_arready
+    ,output wire [C_S02_AXI_DATA_WIDTH-1 : 0]    s02_axi_rdata
+    ,output wire [1 : 0]                         s02_axi_rresp
+    ,output wire                                 s02_axi_rvalid
+    ,input wire                                  s02_axi_rready
 
     ,output wire [C_M00_AXI_ADDR_WIDTH-1:0]      m00_axi_awaddr
     ,output wire                                 m00_axi_awvalid
@@ -131,6 +153,7 @@ module top
     );
 `else
     );
+    wire sys_resetn;
 
     localparam rt_clk_period_lp = 2500000;
     logic rt_clk;
@@ -279,6 +302,54 @@ module top
        ,.rready_i(m01_axi_rready)
        );
 
+    logic [C_S02_AXI_ADDR_WIDTH-1:0] s02_axi_awaddr;
+    logic [2:0] s02_axi_awprot;
+    logic s02_axi_awvalid, s02_axi_awready;
+    logic [C_S02_AXI_DATA_WIDTH-1:0] s02_axi_wdata;
+    logic [(C_S02_AXI_DATA_WIDTH/8)-1:0] s02_axi_wstrb;
+    logic s02_axi_wvalid, s02_axi_wready;
+    logic [1:0] s02_axi_bresp;
+    logic s02_axi_bvalid, s02_axi_bready;
+    logic [C_S02_AXI_ADDR_WIDTH-1:0] s02_axi_araddr;
+    logic [2:0] s02_axi_arprot;
+    logic s02_axi_arvalid, s02_axi_arready;
+    logic [C_S02_AXI_DATA_WIDTH-1:0] s02_axi_rdata;
+    logic [1:0] s02_axi_rresp;
+    logic s02_axi_rvalid, s02_axi_rready;
+    bsg_nonsynth_dpi_to_axil
+     #(.addr_width_p(C_S02_AXI_ADDR_WIDTH), .data_width_p(C_S02_AXI_DATA_WIDTH))
+     axil3
+      (.aclk_i(aclk)
+       ,.aresetn_i(aresetn)
+
+       ,.awaddr_o(s02_axi_awaddr)
+       ,.awprot_o(s02_axi_awprot)
+       ,.awvalid_o(s02_axi_awvalid)
+       ,.awready_i(s02_axi_awready)
+       ,.wdata_o(s02_axi_wdata)
+       ,.wstrb_o(s02_axi_wstrb)
+       ,.wvalid_o(s02_axi_wvalid)
+       ,.wready_i(s02_axi_wready)
+       ,.bresp_i(s02_axi_bresp)
+       ,.bvalid_i(s02_axi_bvalid)
+       ,.bready_o(s02_axi_bready)
+
+       ,.araddr_o(s02_axi_araddr)
+       ,.arprot_o(s02_axi_arprot)
+       ,.arvalid_o(s02_axi_arvalid)
+       ,.arready_i(s02_axi_arready)
+       ,.rdata_i(s02_axi_rdata)
+       ,.rresp_i(s02_axi_rresp)
+       ,.rvalid_i(s02_axi_rvalid)
+       ,.rready_o(s02_axi_rready)
+       );
+
+   localparam axi_id_width_p = 6;
+   localparam axi_addr_width_p = 32;
+   localparam axi_data_width_p = 64;
+   localparam axi_strb_width_p = axi_data_width_p >> 3;
+   localparam axi_burst_len_p = 8;
+
    wire [C_M00_AXI_ADDR_WIDTH-1:0]      m00_axi_awaddr;
    wire                                 m00_axi_awvalid;
    wire                                 m00_axi_awready;
@@ -370,6 +441,8 @@ module top
       ,.C_S00_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
       ,.C_S01_AXI_DATA_WIDTH(C_S01_AXI_DATA_WIDTH)
       ,.C_S01_AXI_ADDR_WIDTH(C_S01_AXI_ADDR_WIDTH)
+      ,.C_S02_AXI_DATA_WIDTH(C_S02_AXI_DATA_WIDTH)
+      ,.C_S02_AXI_ADDR_WIDTH(C_S02_AXI_ADDR_WIDTH)
       ,.C_M00_AXI_DATA_WIDTH(C_M00_AXI_DATA_WIDTH)
       ,.C_M00_AXI_ADDR_WIDTH(C_M00_AXI_ADDR_WIDTH)
       ,.C_M01_AXI_DATA_WIDTH(C_M01_AXI_DATA_WIDTH)
@@ -420,6 +493,26 @@ module top
       ,.s01_axi_rresp  (s01_axi_rresp)
       ,.s01_axi_rvalid (s01_axi_rvalid)
       ,.s01_axi_rready (s01_axi_rready)
+
+      ,.s02_axi_awaddr (s02_axi_awaddr)
+      ,.s02_axi_awprot (s02_axi_awprot)
+      ,.s02_axi_awvalid(s02_axi_awvalid)
+      ,.s02_axi_awready(s02_axi_awready)
+      ,.s02_axi_wdata  (s02_axi_wdata)
+      ,.s02_axi_wstrb  (s02_axi_wstrb)
+      ,.s02_axi_wvalid (s02_axi_wvalid)
+      ,.s02_axi_wready (s02_axi_wready)
+      ,.s02_axi_bresp  (s02_axi_bresp)
+      ,.s02_axi_bvalid (s02_axi_bvalid)
+      ,.s02_axi_bready (s02_axi_bready)
+      ,.s02_axi_araddr (s02_axi_araddr)
+      ,.s02_axi_arprot (s02_axi_arprot)
+      ,.s02_axi_arvalid(s02_axi_arvalid)
+      ,.s02_axi_arready(s02_axi_arready)
+      ,.s02_axi_rdata  (s02_axi_rdata)
+      ,.s02_axi_rresp  (s02_axi_rresp)
+      ,.s02_axi_rvalid (s02_axi_rvalid)
+      ,.s02_axi_rready (s02_axi_rready)
 
       ,.m00_axi_awaddr (m00_axi_awaddr)
       ,.m00_axi_awvalid(m00_axi_awvalid)

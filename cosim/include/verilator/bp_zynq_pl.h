@@ -126,7 +126,7 @@ public:
 
   void axil_write(unsigned int address, int data, int wstrb) {
     int address_orig = address;
-    int index;
+    int index = -1;
 
     // we subtract the bases to make it consistent with the Zynq AXI IPI
     // implementation
@@ -139,8 +139,9 @@ public:
                address <= GP1_ADDR_BASE + GP1_ADDR_SIZE_BYTES) {
       index = 1;
       address = address - GP1_ADDR_BASE;
-    } else
+    } else {
       bsg_pr_err("Invalid axi port: %d\n", index);
+    }
 
     bsg_pr_dbg_pl("  bp_zynq_pl: AXI writing [%x] -> port %d, [%x]<-%8.8x\n",
                   address_orig, index, address, data);
@@ -154,7 +155,7 @@ public:
 
   int axil_read(unsigned int address) {
     int address_orig = address;
-    int index = 0;
+    int index = -1;
     int data;
 
     // we subtract the bases to make it consistent with the Zynq AXI IPI
@@ -168,8 +169,9 @@ public:
                address <= GP1_ADDR_BASE + GP1_ADDR_SIZE_BYTES) {
       index = 1;
       address = address - GP1_ADDR_BASE;
-    } else
+    } else {
       bsg_pr_err("Invalid axi port: %d\n", index);
+    }
 
     if (index == 0) {
       data = axi_gp0->axil_read_helper(address, tick);

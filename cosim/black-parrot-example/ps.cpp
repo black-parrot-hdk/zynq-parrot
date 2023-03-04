@@ -94,7 +94,7 @@ void *monitor(void *vargp) {
 void *device_poll(void *vargp) {
   bp_zynq_pl *zpl = (bp_zynq_pl *)vargp;
   while (1) {
-    zpl->axil_poll();
+    zpl->peripheral_sim_poll();
 
     // keep reading as long as there is data
     if (zpl->axil_read(GP0_RD_PL2PS_FIFO_CTRS) != 0) {
