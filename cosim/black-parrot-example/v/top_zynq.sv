@@ -570,8 +570,10 @@ module top_zynq
 
    bp_axi_top #
      (.bp_params_p(bp_params_p)
-      ,.axil_addr_width_p(bp_axil_addr_width_lp)
-      ,.axil_data_width_p(bp_axil_data_width_lp)
+      ,.m_axil_addr_width_p(bp_axil_addr_width_lp)
+      ,.m_axil_data_width_p(bp_axil_data_width_lp)
+      ,.s_axil_addr_width_p(bp_axil_addr_width_lp)
+      ,.s_axil_data_width_p(bp_axil_data_width_lp)
       ,.axi_addr_width_p(bp_axi_addr_width_lp)
       ,.axi_data_width_p(bp_axi_data_width_lp)
       )
