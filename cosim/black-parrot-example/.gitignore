@@ -1,3 +1,6 @@
 blackparrot_ip_proj*
 blackparrot_bd_*
 flist.vcs
+flist.blackparrot.vcs
+prog.elf
+commit_*.trace

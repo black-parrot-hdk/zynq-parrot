@@ -1,6 +1,4 @@
 
-include $(TOP)/cosim/mk/Makefile.common
-
 VV_OPTS += --cc --sv
 VV_OPTS += --build --exe
 VV_OPTS += --trace-fst --trace-structs
@@ -35,10 +33,12 @@ obj_dir/V$(TOP_MODULE): $(HOST_PROGRAM) $(FLIST)
 		2>&1 | tee -i $(BUILD_LOG)
 
 clean:
-	-rm -rf flist.vcs
+	-rm -rf flist*.vcs
 	-rm -rf obj_dir/ *~ trace.fst
 	-rm -rf build.log
 	-rm -rf run.log
+	-rm -rf prog.elf
+	-rm -rf *.trace
 
 view:
 	gtkwave -f trace.fst

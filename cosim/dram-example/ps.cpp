@@ -16,6 +16,8 @@
 #include <stdio.h>
 #include "bp_zynq_pl.h"
 
+#define DRAM_ALLOC_SIZE_BYTES 16384
+
 int main(int argc, char **argv) {
   bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
 
@@ -25,14 +27,14 @@ int main(int argc, char **argv) {
   volatile int *buf;
 
   if (argc == 1)
-    buf = (volatile int *)zpl->allocate_dram(16384, &phys_ptr);
+    buf = (volatile int *)zpl->allocate_dram(DRAM_ALLOC_SIZE_BYTES, &phys_ptr);
 
   // write all of the dram
-  for (int i = 0; i < 16384 / 4; i++)
+  for (int i = 0; i < DRAM_ALLOC_SIZE_BYTES / 4; i++)
     buf[i] = i;
 
   // read all of the dram
-  for (int i = 0; i < 16384 / 4; i++)
+  for (int i = 0; i < DRAM_ALLOC_SIZE_BYTES / 4; i++)
     assert(buf[i] == i);
 
   zpl->axil_write(0x0 + GP0_ADDR_BASE, phys_ptr, mask1);

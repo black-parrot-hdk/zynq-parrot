@@ -1,6 +1,4 @@
 
-include $(TOP)/cosim/mk/Makefile.common
-
 VCS_OPTS += -full64
 VCS_OPTS += -notice
 VCS_OPTS += -V
@@ -44,10 +42,12 @@ clean:
 	-rm -rf csrc/
 	-rm -rf ucli.key
 	-rm -rf vc_hdrs.h
-	-rm -rf flist.vcs
+	-rm -rf flist*.vcs
 	-rm -rf simv* vcdplus.vpd
 	-rm -rf build.log
 	-rm -rf run.log
+	-rm -rf prog.elf
+	-rm -rf *.trace
 
 view:
 	$(_DVE) -full64 -vpd vcdplus.vpd

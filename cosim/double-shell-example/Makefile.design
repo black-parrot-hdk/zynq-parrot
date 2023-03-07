@@ -1,0 +1,11 @@
+TOP  := $(shell git rev-parse --show-toplevel)
+CURR := $(shell pwd)
+include $(TOP)/Makefile.common
+
+#############################
+# Design Settings
+#############################
+BOARDNAME  ?= pynqz2
+TOP_MODULE ?= top
+BASENAME   ?= double_shell
+

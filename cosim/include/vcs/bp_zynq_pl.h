@@ -53,21 +53,24 @@ public:
 
 class bp_zynq_pl {
 
-  static std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > axi_gp0;
-  static std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > axi_gp1;
-  static std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> > axi_hp0;
-
-  static std::unique_ptr<zynq_scratchpad> scratchpad;
-
+  std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > axi_gp0;
+  std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > axi_gp1;
+  std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> > axi_hp0;
 public:
+  std::unique_ptr<zynq_scratchpad> scratchpad;
+
   // Move the simulation forward to the next DPI event
   static void tick(void) { bsg_dpi_next(); }
 
   static void done(void) { bsg_pr_info("  bp_zynq_pl: done() called, exiting\n"); }
 
   bp_zynq_pl(int argc, char *argv[]) {
-    tick();
+    // Initialize backpressure (if any)
+#ifdef SIM_BACKPRESSURE_ENABLE
+    srand(SIM_BACKPRESSURE_SEED);
+#endif
 
+    tick();
 #ifdef GP0_ENABLE
     axi_gp0 = std::make_unique<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> >(
         STRINGIFY(GP0_HIER_BASE));
@@ -82,10 +85,9 @@ public:
     axi_hp0 = std::make_unique<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> >(
         STRINGIFY(HP0_HIER_BASE));
     axi_hp0->reset(tick);
-#endif
 #ifdef SCRATCHPAD_ENABLE
     scratchpad = std::make_unique<zynq_scratchpad>();
-#else
+#endif
 #endif
   }
 
@@ -153,10 +155,22 @@ public:
   }
 
   void axil_poll() {
-    if (axi_hp0->p_awvalid && (axi_hp0->p_awaddr >= SCRATCHPAD_BASE) && (axi_hp0->p_awaddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {
+#ifdef SIM_BACKPRESSURE_ENABLE
+    if ((rand() % 100) < SIM_BACKPRESSURE_CHANCE) {
+      for (int i = 0; i < SIM_BACKPRESSURE_LENGTH; i++) {
+        tick();
+      }
+    }
+#endif
+
+#ifdef HP0_ENABLE
+    if (0) {
+#ifdef SCRATCHPAD_ENABLE
+    } else if (axi_hp0->p_awvalid && (axi_hp0->p_awaddr >= SCRATCHPAD_BASE) && (axi_hp0->p_awaddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {
       axi_hp0->axil_write_helper((axil_device *)scratchpad.get(), tick);
     } else if (axi_hp0->p_arvalid && (axi_hp0->p_araddr >= SCRATCHPAD_BASE) && (axi_hp0->p_araddr < SCRATCHPAD_BASE+SCRATCHPAD_SIZE)) {
       axi_hp0->axil_read_helper((axil_device *)scratchpad.get(), tick);
+#endif
     } else if (axi_hp0->p_awvalid) {
       int awaddr = axi_hp0->p_awaddr;
       bsg_pr_err("  bp_zynq_pl: Unsupported AXI device write at [%x]\n", awaddr);
@@ -164,13 +178,8 @@ public:
       int araddr = axi_hp0->p_awaddr;
       bsg_pr_err("  bp_zynq_pl: Unsupported AXI device read at [%x]\n", araddr);
     }
+#endif
   }
 };
-
-std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > bp_zynq_pl::axi_gp0;
-std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > bp_zynq_pl::axi_gp1;
-std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> > bp_zynq_pl::axi_hp0;
-
-std::unique_ptr<zynq_scratchpad> bp_zynq_pl::scratchpad;
 
 #endif

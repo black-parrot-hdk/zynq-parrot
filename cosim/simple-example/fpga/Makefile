@@ -1,12 +1,16 @@
-TOP  := $(shell git rev-parse --show-toplevel)
-CURR := $(shell pwd)
-VPATH := $(CURR)/.. $(CURR)
+include ../Makefile.design
 
-# you must set these for the accelerator to work
-HOST_PROGRAM ?= ps.cpp
-
+#############################
+# Accelerator Software Settings
+#############################
+HOST_PROGRAM ?= $(abspath ../ps.cpp)
 CFLAGS += -DZYNQ_PS_DEBUG
-CFLAGS=-DADDR_BASE=0x43C00000 -DADDR_SIZE_BYTES=4096
+CFLAGS += -DGP0_ENABLE -DGP0_DATA_WIDTH=32
+ifeq ($(BOARDNAME),pynqz2)
+CFLAGS += -DGP0_ADDR_BASE=0x40000000 -DGP0_ADDR_WIDTH=6
+else ifeq ($(BOARDNAME),ultra96v2)
+CFLAGS += -DGP0_ADDR_BASE=0xA0000000 -DGP0_ADDR_WIDTH=6
+endif
 
 include $(TOP)/cosim/mk/Makefile.fpga
 

@@ -119,7 +119,7 @@ public:
   // Wait for (low true) reset to be asserted by the testbench
   void reset(void (*tick)()) {
     printf("bp_zynq_pl: Entering reset\n");
-    while (this->p_aresetn == 1) {
+    while (this->p_aresetn == 0) {
       tick();
     }
     printf("bp_zynq_pl: Exiting reset\n");
@@ -291,7 +291,7 @@ public:
   // Wait for (low true) reset to be asserted by the testbench
   void reset(void (*tick)()) {
     printf("bp_zynq_pl: Entering reset\n");
-    while (this->p_aresetn == 1) {
+    while (this->p_aresetn == 0) {
       tick();
     }
     printf("bp_zynq_pl: Exiting reset\n");
@@ -387,6 +387,7 @@ public:
     this->p_wready = 0;
     // raise bvalid for response
     this->p_bvalid = 1;
+    this->p_bresp  = 0;
 
     // wait for response ready
     while (this->p_bready == 0) {

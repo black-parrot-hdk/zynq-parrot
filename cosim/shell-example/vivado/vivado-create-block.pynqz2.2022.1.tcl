@@ -1,7 +1,9 @@
-set project_name shell_bd_proj
+set project_name $::env(BASENAME)_bd_proj
+set project_part $::env(PART)
+set project_bd   $::env(BASENAME)_bd_1
 
-create_project -force ${project_name} [pwd] -part xc7z020clg400-1
-create_bd_design "shell_bd_1"
+create_project -force ${project_name} [pwd] -part ${project_part}
+create_bd_design "${project_bd}"
 update_compile_order -fileset sources_1
 startgroup
 create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0
@@ -10,8 +12,8 @@ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_sy
 set_property -dict [list CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {178}] [get_bd_cells processing_system7_0]
 endgroup
 apply_bd_automation -rule xilinx.com:bd_rule:processing_system7 -config {make_external "FIXED_IO, DDR" Master "Disable" Slave "Disable" }  [get_bd_cells processing_system7_0]
-open_bd_design ${project_name}.srcs/sources_1/bd/shell_bd_1/shell_bd_1.bd}
-set_property  ip_repo_paths  fpga_build [current_project]
+open_bd_design ${project_name}.srcs/sources_1/bd/${project_bd}/${project_bd}.bd}
+set_property  ip_repo_paths  ip_repo [current_project]
 update_ip_catalog
 startgroup
 create_bd_cell -type ip -vlnv user.org:user:top:1.0 top_0
@@ -36,10 +38,8 @@ connect_bd_net [get_bd_pins top_0/aclk] [get_bd_pins processing_system7_0/FCLK_C
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins smartconnect_0/aresetn]
 assign_bd_address
 validate_bd_design
-make_wrapper -files [get_files ${project_name}.srcs/sources_1/bd/shell_bd_1/shell_bd_1.bd] -top
-add_files -norecurse ${project_name}.srcs/sources_1/bd/shell_bd_1/hdl/shell_bd_1_wrapper.v
-#delete_bd_objs [get_bd_nets reset_rtl_0_1] [get_bd_ports reset_rtl_0]
-#connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins proc_sys_reset_0/ext_reset_in]
+make_wrapper -files [get_files ${project_name}.srcs/sources_1/bd/${project_bd}/${project_bd}.bd] -top
+add_files -norecurse ${project_name}.srcs/sources_1/bd/${project_bd}/hdl/${project_bd}_wrapper.v
 save_bd_design
 launch_runs impl_1 -to_step write_bitstream -jobs 4
 wait_on_run impl_1
