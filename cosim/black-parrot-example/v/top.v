@@ -28,6 +28,9 @@ module top
     ,output wire                                 sys_resetn
     ,input wire                                  rt_clk
 
+    ,output wire                                 tag_clk
+    ,output wire                                 tag_data
+
     ,input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
     ,input wire [2 : 0]                          s00_axi_awprot
     ,input wire                                  s00_axi_awvalid
@@ -153,7 +156,6 @@ module top
     );
 `else
     );
-    wire sys_resetn;
 
     localparam rt_clk_period_lp = 2500000;
     logic rt_clk;
@@ -344,12 +346,6 @@ module top
        ,.rready_o(s02_axi_rready)
        );
 
-   localparam axi_id_width_p = 6;
-   localparam axi_addr_width_p = 32;
-   localparam axi_data_width_p = 64;
-   localparam axi_strb_width_p = axi_data_width_p >> 3;
-   localparam axi_burst_len_p = 8;
-
    wire [C_M00_AXI_ADDR_WIDTH-1:0]      m00_axi_awaddr;
    wire                                 m00_axi_awvalid;
    wire                                 m00_axi_awready;
@@ -451,8 +447,11 @@ module top
      top_fpga_inst
      (.aclk            (aclk)
       ,.aresetn        (aresetn)
-      ,.sys_resetn     (sys_resetn)
       ,.rt_clk         (rt_clk)
+      ,.sys_resetn     (sys_resetn)
+
+      ,.tag_clk        (tag_clk)
+      ,.tag_data       (tag_data)
 
       ,.s00_axi_awaddr (s00_axi_awaddr)
       ,.s00_axi_awprot (s00_axi_awprot)

@@ -22,8 +22,6 @@
 using namespace std;
 using namespace bsg_nonsynth_dpi;
 
-typedef void (*tick_fn_t)(void);
-
 // W = width of pin
 template <unsigned int W> class pin {
   std::unique_ptr<dpi_gpio<W> > gpio;
@@ -59,12 +57,23 @@ public:
   }
 };
 
-class axil_device {
+class s_axil_device {
 public:
-  virtual int read(int address, tick_fn_t tick) = 0;
-  virtual void write(int address, int data, tick_fn_t tick, int wstrb=0xf) = 0;
+  virtual bool is_read(uintptr_t address) = 0;
+  virtual int32_t read(uintptr_t address) = 0;
+
+  virtual bool is_write(uintptr_t address) = 0;
+  virtual void write(uintptr_t address, int32_t data) = 0;
 };
 
+class m_axil_device {
+public:
+  virtual bool pending_read(uintptr_t *address) = 0;
+  virtual void return_read(int32_t data) = 0;
+
+  virtual bool pending_write(uintptr_t *address, int32_t *data, uint8_t *wmask) = 0;
+  virtual void return_write() = 0;
+};
 
 // A = axil address width
 // D = axil data width
@@ -120,7 +129,7 @@ public:
   }
 
   // Wait for (low true) reset to be asserted by the testbench
-  void reset(tick_fn_t tick) {
+  void reset(void (*tick)()) {
     printf("bp_zynq_pl: Entering reset\n");
     while (this->p_aresetn == 0) {
       tick();
@@ -128,7 +137,7 @@ public:
     printf("bp_zynq_pl: Exiting reset\n");
   }
 
-  int axil_read_helper(unsigned int address, tick_fn_t tick) {
+  int axil_read_helper(uintptr_t address, void (*tick)()) {
     int data;
     int timeout_counter = 0;
 
@@ -140,9 +149,6 @@ public:
     while (this->p_arready == 0) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         bsg_pr_err("bp_zynq_pl: AXI M read arready timeout\n");
-        for(;;) {
-          tick();
-        }
       }
 
       tick();
@@ -161,10 +167,8 @@ public:
     while (this->p_rvalid == 0) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         bsg_pr_err("bp_zynq_pl: AXI M read rvalid timeout\n");
-        for(;;) {
-          tick();
-        }
       }
+
       tick();
     }
 
@@ -178,8 +182,8 @@ public:
     return data;
   }
 
-  void axil_write_helper(unsigned int address, int data, int wstrb,
-                         tick_fn_t tick) {
+  void axil_write_helper(uintptr_t address, int32_t data, uint8_t wstrb,
+                         void (*tick)()) {
     int timeout_counter = 0;
 
     assert(wstrb == 0xf); // we only support full int writes right now
@@ -201,9 +205,6 @@ public:
       // check timeout
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         bsg_pr_err("bp_zynq_pl: AXI M write timeout\n");
-        for(;;) {
-          tick();
-        }
       }
 
       // check for handshake, lower valid signals independently
@@ -234,10 +235,8 @@ public:
     while (this->p_bvalid == 0) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         bsg_pr_err("bp_zynq_pl: AXI M bvalid timeout\n");
-        for(;;) {
-          tick();
-        }
       }
+
       tick();
     }
 
@@ -302,7 +301,7 @@ public:
   }
 
   // Wait for (low true) reset to be asserted by the testbench
-  void reset(tick_fn_t tick) {
+  void reset(void (*tick)()) {
     printf("bp_zynq_pl: Entering reset\n");
     while (this->p_aresetn == 0) {
       tick();
@@ -310,7 +309,7 @@ public:
     printf("bp_zynq_pl: Exiting reset\n");
   }
 
-  void axil_read_helper(axil_device *p, tick_fn_t tick) {
+  void axil_read_helper(s_axil_device *p, void (*tick)()) {
     int timeout_counter = 0;
     int data;
 
@@ -318,10 +317,8 @@ public:
     while (this->p_arvalid == 0) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         bsg_pr_err("bp_zynq_pl: AXI S read request timeout\n");
-        for(;;) {
-          tick();
-        }
       }
+
       tick();
     }
 
@@ -330,7 +327,7 @@ public:
 
     this->p_arready = 0;
 
-    int rdata = p->read(raddr, tick);
+    int rdata = p->read(raddr);
 
     this->p_rdata = rdata;
     this->p_rvalid = 1;
@@ -338,10 +335,8 @@ public:
     while (this->p_rready == 0) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         bsg_pr_err("bp_zynq_pl: AXI S read data timeout\n");
-        for(;;) {
-          tick();
-        }
       }
+
       tick();
     }
 
@@ -351,7 +346,7 @@ public:
     return;
   }
 
-  int axil_write_helper(axil_device *p, tick_fn_t tick) {
+  int axil_write_helper(s_axil_device *p, void (*tick)()) {
     int timeout_counter = 0;
 
     assert(this->p_wstrb == 0xf); // we only support full int writes right now
@@ -372,9 +367,6 @@ public:
       // check timeout
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         bsg_pr_err("bp_zynq_pl: AXI S write timeout\n");
-        for(;;) {
-          tick();
-        }
       }
 
       // check for handshake, lower ready signals independently
@@ -395,7 +387,7 @@ public:
 
       // do the write
       if (aw_done && w_done) {
-        p->write(awaddr, wdata, tick);
+        p->write(awaddr, wdata);
       }
 
       // tick the clock one cycle
@@ -413,9 +405,6 @@ public:
     while (this->p_bready == 0) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         bsg_pr_err("bp_zynq_pl: AXI S bvalid timeout\n");
-        for(;;) {
-          tick();
-        }
       }
 
       tick();

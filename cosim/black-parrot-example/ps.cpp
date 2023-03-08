@@ -40,26 +40,27 @@
 #endif
 
 // GP0 Read Memory Map
-#define GP0_RD_CSR_SYS_RESET   GP0_ADDR_BASE
-#define GP0_RD_CSR_BITBANG     (GP0_RD_CSR_SYS_RESET   + 0x4)
-#define GP0_RD_CSR_DRAM_INITED (GP0_RD_CSR_BITBANG     + 0x4)
-#define GP0_RD_CSR_DRAM_BASE   (GP0_RD_CSR_DRAM_INITED + 0x4)
-#define GP0_RD_PL2PS_FIFO_DATA (GP0_RD_CSR_DRAM_BASE   + 0x4)
-#define GP0_RD_PL2PS_FIFO_CTRS (GP0_RD_PL2PS_FIFO_DATA + 0x4)
-#define GP0_RD_PS2PL_FIFO_CTRS (GP0_RD_PL2PS_FIFO_CTRS + 0x4)
-#define GP0_RD_MINSTRET        (GP0_RD_PS2PL_FIFO_CTRS + 0x4)
-#define GP0_RD_MINSTRET_0      (GP0_RD_MINSTRET             )
-#define GP0_RD_MINSTRET_1      (GP0_RD_MINSTRET_0      + 0x4)
-#define GP0_RD_MEM_PROF_0      (GP0_RD_MINSTRET_1      + 0x4)
-#define GP0_RD_MEM_PROF_1      (GP0_RD_MEM_PROF_0      + 0x4)
-#define GP0_RD_MEM_PROF_2      (GP0_RD_MEM_PROF_1      + 0x4)
-#define GP0_RD_MEM_PROF_3      (GP0_RD_MEM_PROF_2      + 0x4)
+#define GP0_RD_CSR_SYS_RESETN    (GP0_ADDR_BASE                 )
+#define GP0_RD_CSR_TAG_BITBANG   (GP0_RD_CSR_SYS_RESETN    + 0x4)
+#define GP0_RD_CSR_DRAM_INITED   (GP0_RD_CSR_TAG_BITBANG   + 0x4)
+#define GP0_RD_CSR_DRAM_BASE     (GP0_RD_CSR_DRAM_INITED   + 0x4)
+#define GP0_RD_PL2PS_FIFO_DATA   (GP0_RD_CSR_DRAM_BASE     + 0x4)
+#define GP0_RD_PL2PS_FIFO_CTRS   (GP0_RD_PL2PS_FIFO_DATA   + 0x4)
+#define GP0_RD_PS2PL_FIFO_CTRS   (GP0_RD_PL2PS_FIFO_CTRS   + 0x4)
+#define GP0_RD_MINSTRET          (GP0_RD_PS2PL_FIFO_CTRS   + 0x4)
+#define GP0_RD_MINSTRET_0        (GP0_RD_MINSTRET               )
+#define GP0_RD_MINSTRET_1        (GP0_RD_MINSTRET_0        + 0x4)
+#define GP0_RD_MEM_PROF_0        (GP0_RD_MINSTRET_1        + 0x4)
+#define GP0_RD_MEM_PROF_1        (GP0_RD_MEM_PROF_0        + 0x4)
+#define GP0_RD_MEM_PROF_2        (GP0_RD_MEM_PROF_1        + 0x4)
+#define GP0_RD_MEM_PROF_3        (GP0_RD_MEM_PROF_2        + 0x4)
 
 // GP0 Write Memory Map
-#define GP0_WR_CSR_BITBANG     GP0_RD_CSR_BITBANG
-#define GP0_WR_CSR_DRAM_INITED GP0_RD_CSR_DRAM_INITED
-#define GP0_WR_CSR_DRAM_BASE   GP0_RD_CSR_DRAM_BASE
-#define GP0_WR_PS2PL_FIFO_DATA (GP0_WR_CSR_DRAM_BASE + 0x4)
+#define GP0_WR_CSR_SYS_RESETN    GP0_RD_CSR_SYS_RESETN
+#define GP0_WR_CSR_TAG_BITBANG   GP0_RD_CSR_TAG_BITBANG
+#define GP0_WR_CSR_DRAM_INITED   GP0_RD_CSR_DRAM_INITED
+#define GP0_WR_CSR_DRAM_BASE     GP0_RD_CSR_DRAM_BASE
+#define GP0_WR_PS2PL_FIFO_DATA   (GP0_WR_CSR_DRAM_BASE + 0x4)
 
 // DRAM
 #define DRAM_BASE_ADDR  0x80000000U
@@ -68,8 +69,12 @@
 #define GP1_DRAM_BASE_ADDR GP1_ADDR_BASE
 #define GP1_CSR_BASE_ADDR (GP1_DRAM_BASE_ADDR + DRAM_MAX_ALLOC_SIZE)
 
-#define TAG_CLIENT_RESET_ID 0
-#define TAG_CLIENT_RESET_WIDTH 1
+#define TAG_NUM_CLIENTS 16
+#define TAG_MAX_LEN 1
+#define TAG_CLIENT_PL_RESET_ID 0
+#define TAG_CLIENT_PL_RESET_WIDTH 1
+#define TAG_CLIENT_WD_RESET_ID 1
+#define TAG_CLIENT_WD_RESET_WIDTH 1
 
 // Helper functions
 void nbf_load(bp_zynq_pl *zpl, char *filename);
@@ -94,7 +99,7 @@ void *monitor(void *vargp) {
 void *device_poll(void *vargp) {
   bp_zynq_pl *zpl = (bp_zynq_pl *)vargp;
   while (1) {
-    zpl->peripheral_sim_poll();
+    zpl->axil_poll();
 
     // keep reading as long as there is data
     if (zpl->axil_read(GP0_RD_PL2PS_FIFO_CTRS) != 0) {
@@ -149,11 +154,11 @@ extern "C" void cosim_main(char *argstr) {
   pthread_t thread_id;
   long allocated_dram = DRAM_ALLOCATE_SIZE;
 
-  long val;
+  int32_t val;
   bsg_pr_info("ps.cpp: reading four base registers\n");
-  bsg_pr_info("ps.cpp: reset(lo)=%d, bitbang=%d, dram_init=%d, dram_base=%x\n",
-              zpl->axil_read(GP0_RD_CSR_SYS_RESET),
-              zpl->axil_read(GP0_RD_CSR_BITBANG),
+  bsg_pr_info("ps.cpp: reset(lo)=%d, bitbang=%d, dram_init=%d, dram_base=%d\n",
+              zpl->axil_read(GP0_RD_CSR_SYS_RESETN),
+              zpl->axil_read(GP0_RD_CSR_TAG_BITBANG),
               zpl->axil_read(GP0_RD_CSR_DRAM_INITED),
               val = zpl->axil_read(GP0_RD_CSR_DRAM_BASE));
 
@@ -167,22 +172,27 @@ extern "C" void cosim_main(char *argstr) {
   bsg_pr_info("ps.cpp: successfully wrote and read registers in bsg_zynq_shell "
               "(verified ARM GP0 connection)\n");
 
-  bsg_tag_bitbang *btb = new bsg_tag_bitbang(zpl, GP0_WR_CSR_BITBANG, 1, 1);
-  bsg_tag_client *reset_client = new bsg_tag_client(TAG_CLIENT_RESET_ID, TAG_CLIENT_RESET_WIDTH);
+  bsg_tag_bitbang *btb = new bsg_tag_bitbang(zpl, GP0_WR_CSR_TAG_BITBANG, TAG_NUM_CLIENTS, TAG_MAX_LEN);
+  bsg_tag_client *pl_reset_client = new bsg_tag_client(TAG_CLIENT_PL_RESET_ID, TAG_CLIENT_PL_RESET_WIDTH);
+  bsg_tag_client *wd_reset_client = new bsg_tag_client(TAG_CLIENT_WD_RESET_ID, TAG_CLIENT_WD_RESET_WIDTH);
 
   // Reset the bsg tag master
   btb->reset_master();
   // Reset bsg client0
-  btb->reset_client(reset_client);
+  btb->reset_client(pl_reset_client);
+  // Reset bsg client1
+  btb->reset_client(wd_reset_client);
   // Set bsg client0 to 1 (assert BP reset)
-  btb->set_client(reset_client, 0x1);
+  btb->set_client(pl_reset_client, 0x1);
+  // Set bsg client1 to 1 (assert WD reset)
+  btb->set_client(wd_reset_client, 0x1);
   // Set bsg client0 to 0 (deassert BP reset)
-  btb->set_client(reset_client, 0x0);
+  btb->set_client(pl_reset_client, 0x0);
 
   // We need some additional toggles for data to propagate through
   btb->idle(50);
   // Deassert the active-low system reset as we finish initializing the whole system
-  zpl->axil_write(GP0_RD_CSR_SYS_RESET, 0x1, 0xF);
+  zpl->axil_write(GP0_RD_CSR_SYS_RESETN, 0x1, 0xF);
 
 #ifdef FPGA
   unsigned long phys_ptr;
@@ -201,7 +211,7 @@ extern "C" void cosim_main(char *argstr) {
     zpl->axil_write(GP0_WR_CSR_DRAM_INITED, 0x1, mask2);
     assert(zpl->axil_read(GP0_RD_CSR_DRAM_INITED) == 1);
   } else
-    bsg_pr_info("ps.cpp: reusing dram base pointer %lx\n",
+    bsg_pr_info("ps.cpp: reusing dram base pointer %x\n",
                 zpl->axil_read(GP0_RD_CSR_DRAM_BASE));
 
   int outer = 1024 / 4;
@@ -317,6 +327,12 @@ extern "C" void cosim_main(char *argstr) {
   unsigned long long mtime_start = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
   bsg_pr_dbg_ps("ps.cpp: finished nbf load\n");
 
+  // Set bsg client1 to 0 (deassert WD reset)
+  btb->set_client(wd_reset_client, 0x0);
+  bsg_pr_info("ps.cpp: starting watchdog\n");
+  // We need some additional toggles for data to propagate through
+  btb->idle(50);
+
   bsg_pr_info("ps.cpp: Starting scan thread\n");
   pthread_create(&thread_id, NULL, monitor, NULL);
 
@@ -325,6 +341,12 @@ extern "C" void cosim_main(char *argstr) {
 
   bsg_pr_info("ps.cpp: waiting for i/o packet\n");
   pthread_join(thread_id, NULL);
+
+  // Set bsg client1 to 1 (assert WD reset)
+  btb->set_client(wd_reset_client, 0x1);
+  bsg_pr_info("ps.cpp: stopping watchdog\n");
+  // We need some additional toggles for data to propagate through
+  btb->idle(50);
 
   unsigned long long mtime_stop = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
 
@@ -364,7 +386,7 @@ extern "C" void cosim_main(char *argstr) {
           ((double)(diff_ns) / (60.0 * 1000.0 * 1000.0 * 1000.0)));
 
   bsg_pr_info("ps.cpp: BP DRAM USAGE MASK (each bit is 8 MB): "
-              "%-8.8ld%-8.8ld%-8.8ld%-8.8ld\n",
+              "%-8.8d%-8.8d%-8.8d%-8.8d\n",
               zpl->axil_read(GP0_RD_MEM_PROF_3),
               zpl->axil_read(GP0_RD_MEM_PROF_2),
               zpl->axil_read(GP0_RD_MEM_PROF_1),
@@ -493,6 +515,8 @@ bool decode_bp_output(bp_zynq_pl *zpl, long data) {
       } else {
         bsg_pr_info("CORE[%d] FAIL\n", core);
       }
+    } else if (address == 0x103000) {
+      bsg_pr_dbg_ps("ps.cpp: Watchdog tick\n");
     } else {
       bsg_pr_err("ps.cpp: Errant write to %lx\n", address);
       return false;

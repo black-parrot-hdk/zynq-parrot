@@ -82,17 +82,21 @@ static uintptr_t gp1_addr_base = (uintptr_t) GP1_ADDR_BASE;
 #ifndef GP2_ADDR_SIZE_BYTES
 #define GP2_ADDR_SIZE_BYTES (1 << GP2_ADDR_WIDTH)
 #endif
+static uintptr_t gp2_addr_size_bytes = (uintptr_t) GP2_ADDR_SIZE_BYTES;
 
 #ifndef GP2_ADDR_BASE
 #error GP2_ADDR_BASE must be defined
 #endif
+static uintptr_t gp2_addr_base = (uintptr_t) GP2_ADDR_BASE;
 
 #ifndef GP2_DATA_WIDTH
 #error GP2_DATA_WIDTH must be defined
 #endif
 
 #ifndef GP2_HIER_BASE
+#ifndef FPGA
 #error GP2_HIER_BASE must be defined
+#endif
 #endif
 
 #ifndef HP0_ENABLE
