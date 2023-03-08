@@ -32,6 +32,10 @@ apply_bd_automation -rule xilinx.com:bd_rule:bram_cntlr -config {BRAM "Auto"} [g
 endgroup
 
 startgroup
+create_bd_cell -type ip -vlnv user.org:user:watchdog:1.0 watchdog_0
+endgroup
+
+startgroup
 create_bd_cell -type ip -vlnv user.org:user:top:1.0 top_0
 set_property -dict [list CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ [get_bd_pins /processing_system7_0/FCLK_CLK0]]] [get_bd_pins top_0/aclk]
 set_property -dict [list CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ [get_bd_pins /processing_system7_0/FCLK_CLK1]]] [get_bd_pins top_0/rt_clk]
@@ -44,30 +48,43 @@ startgroup
 create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_1
 endgroup
 set_property -dict [list CONFIG.NUM_SI {1}] [get_bd_cells smartconnect_1]
+startgroup
+create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_2
+endgroup
+set_property -dict [list CONFIG.NUM_SI {1}] [get_bd_cells smartconnect_2]
 connect_bd_intf_net [get_bd_intf_pins processing_system7_0/M_AXI_GP0] [get_bd_intf_pins smartconnect_0/S00_AXI]
 connect_bd_intf_net [get_bd_intf_pins smartconnect_0/M00_AXI] [get_bd_intf_pins top_0/s00_axi]
 connect_bd_intf_net [get_bd_intf_pins processing_system7_0/M_AXI_GP1] [get_bd_intf_pins smartconnect_1/S00_AXI]
 connect_bd_intf_net [get_bd_intf_pins smartconnect_1/M00_AXI] [get_bd_intf_pins top_0/s01_axi]
 connect_bd_intf_net [get_bd_intf_pins top_0/m00_axi] [get_bd_intf_pins processing_system7_0/S_AXI_HP0]
 connect_bd_intf_net [get_bd_intf_pins top_0/m01_axi] [get_bd_intf_pins axi_bram_ctrl_0/S_AXI]
+connect_bd_intf_net [get_bd_intf_pins smartconnect_2/M00_AXI] [get_bd_intf_pins top_0/s02_axi]
+connect_bd_intf_net [get_bd_intf_pins watchdog_0/m_axil] [get_bd_intf_pins smartconnect_2/S00_AXI]
 startgroup
 create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_0
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins top_0/aresetn]
+connect_bd_net [get_bd_pins top_0/sys_resetn] [get_bd_pins watchdog_0/aresetn]
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins smartconnect_0/aresetn]
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins smartconnect_1/aresetn]
+connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins smartconnect_2/aresetn]
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn]
 endgroup
 apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/processing_system7_0/FCLK_CLK0 (20 MHz)" }  [get_bd_pins processing_system7_0/S_AXI_HP0_ACLK]
 apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/processing_system7_0/FCLK_CLK0 (20 MHz)" }  [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK]
 apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/processing_system7_0/FCLK_CLK0 (20 MHz)" }  [get_bd_pins processing_system7_0/M_AXI_GP1_ACLK]
+connect_bd_net [get_bd_pins smartconnect_2/aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
 
 startgroup
 apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/processing_system7_0/FCLK_CLK0 (20 MHz)" }  [get_bd_pins proc_sys_reset_0/slowest_sync_clk]
 apply_bd_automation -rule xilinx.com:bd_rule:board -config { Manual_Source {Auto}}  [get_bd_pins proc_sys_reset_0/ext_reset_in]
 endgroup
 
+connect_bd_net [get_bd_pins watchdog_0/aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
 connect_bd_net [get_bd_pins /axi_bram_ctrl_0/s_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
 connect_bd_net [get_bd_pins top_0/rt_clk] [get_bd_pins processing_system7_0/FCLK_CLK1]
+
+connect_bd_net [get_bd_pins top_0/tag_clk] [get_bd_pins watchdog_0/tag_clk]
+connect_bd_net [get_bd_pins top_0/tag_data] [get_bd_pins watchdog_0/tag_data]
 
 create_bd_addr_seg -range 0x00002000 -offset 0x10000000 [get_bd_addr_spaces top_0/m01_axi] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] SEG_axi_bram_ctrl_0_Mem0
 assign_bd_address

@@ -57,10 +57,22 @@ public:
   }
 };
 
-class axil_device {
+class s_axil_device {
 public:
-  virtual int read(int address, void (*tick)()) = 0;
-  virtual void write(int address, int data, void (*tick)()) = 0;
+  virtual bool is_read(uintptr_t address) = 0;
+  virtual int32_t read(uintptr_t address) = 0;
+
+  virtual bool is_write(uintptr_t address) = 0;
+  virtual void write(uintptr_t address, int32_t data) = 0;
+};
+
+class m_axil_device {
+public:
+  virtual bool pending_read(uintptr_t *address) = 0;
+  virtual void return_read(int32_t data) = 0;
+
+  virtual bool pending_write(uintptr_t *address, int32_t *data, uint8_t *wmask) = 0;
+  virtual void return_write() = 0;
 };
 
 // A = axil address width
@@ -125,7 +137,7 @@ public:
     printf("bp_zynq_pl: Exiting reset\n");
   }
 
-  int axil_read_helper(unsigned int address, void (*tick)()) {
+  int axil_read_helper(uintptr_t address, void (*tick)()) {
     int data;
     int timeout_counter = 0;
 
@@ -170,7 +182,7 @@ public:
     return data;
   }
 
-  void axil_write_helper(unsigned int address, int data, int wstrb,
+  void axil_write_helper(uintptr_t address, int32_t data, uint8_t wstrb,
                          void (*tick)()) {
     int timeout_counter = 0;
 
@@ -297,7 +309,7 @@ public:
     printf("bp_zynq_pl: Exiting reset\n");
   }
 
-  void axil_read_helper(axil_device *p, void (*tick)()) {
+  void axil_read_helper(s_axil_device *p, void (*tick)()) {
     int timeout_counter = 0;
     int data;
 
@@ -315,7 +327,7 @@ public:
 
     this->p_arready = 0;
 
-    int rdata = p->read(raddr, tick);
+    int rdata = p->read(raddr);
 
     this->p_rdata = rdata;
     this->p_rvalid = 1;
@@ -334,7 +346,7 @@ public:
     return;
   }
 
-  int axil_write_helper(axil_device *p, void (*tick)()) {
+  int axil_write_helper(s_axil_device *p, void (*tick)()) {
     int timeout_counter = 0;
 
     assert(this->p_wstrb == 0xf); // we only support full int writes right now
@@ -375,7 +387,7 @@ public:
 
       // do the write
       if (aw_done && w_done) {
-        p->write(awaddr, wdata, tick);
+        p->write(awaddr, wdata);
       }
 
       // tick the clock one cycle

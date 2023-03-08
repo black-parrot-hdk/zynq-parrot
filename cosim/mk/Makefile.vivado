@@ -96,8 +96,7 @@ clean:
 	rm -rf *.log
 	rm -rf *.jou
 	rm -rf *.b64
-	rm -rf $(BASENAME)_ip_proj*
+	rm -rf *_ip_proj*
 	rm -rf ip_repo
-	rm -rf $(BASENAME)_bd_proj*
-	rm -rf $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.hwh $(BASENAME)_bd_1_bd.tcl
-
+	rm -rf *_bd_proj*
+	rm -rf *_bd_1.bit *_bd_1.hwh *_bd_1_bd.tcl

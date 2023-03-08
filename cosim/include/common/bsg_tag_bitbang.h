@@ -22,7 +22,7 @@ class bsg_tag_bitbang {
   bp_zynq_pl *zpl;
   int id_len;
   int max_len;
-  int shell_addr;
+  uintptr_t shell_addr;
 
   // low-level bit manipulation function
   void write_bit(int bit) {
@@ -53,9 +53,9 @@ class bsg_tag_bitbang {
 
 public:
   // Construct a bitbang tag client
-  bsg_tag_bitbang(bp_zynq_pl *zpl, int shell_addr, int num_clients, int max_len)
+  bsg_tag_bitbang(bp_zynq_pl *zpl, uintptr_t shell_addr, int num_clients, int max_len)
       : zpl(zpl), shell_addr(shell_addr), id_len(safe_clog2(num_clients)), max_len(max_len) {
-    bsg_pr_info("Creating Bitbang Driver: %p %d %d %d\n", zpl, shell_addr, num_clients, max_len);    
+    bsg_pr_info("Creating Bitbang Driver: %p %" PRIxPTR " %d %d\n", zpl, shell_addr, num_clients, max_len);
   }
 
   // Set a specific bsg tag client

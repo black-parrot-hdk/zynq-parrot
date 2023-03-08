@@ -31,6 +31,10 @@ set_property -dict [ list \
 apply_bd_automation -rule xilinx.com:bd_rule:bram_cntlr -config {BRAM "Auto"} [get_bd_intf_pins axi_bram_ctrl_0/BRAM_PORTA]
 endgroup
 
+startgroup
+create_bd_cell -type ip -vlnv user.org:user:watchdog:1.0 watchdog_0
+endgroup
+
 create_bd_cell -type ip -vlnv user.org:user:top:1.0 top_0
 set_property -dict [list CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ [get_bd_pins /zynq_ultra_ps_e_0/pl_clk0]]] [get_bd_pins top_0/aclk]
 set_property -dict [list CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ [get_bd_pins /zynq_ultra_ps_e_0/pl_clk1]]] [get_bd_pins top_0/rt_clk]
@@ -45,20 +49,27 @@ set_property -dict [list CONFIG.NUM_SI {1}] [get_bd_cells smartconnect_1]
 create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_2
 set_property -dict [list CONFIG.NUM_SI {1}] [get_bd_cells smartconnect_2]
 
+create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_3
+set_property -dict [list CONFIG.NUM_SI {1}] [get_bd_cells smartconnect_3]
+
 create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_0
 
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins top_0/aresetn]
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins smartconnect_0/aresetn]
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins smartconnect_1/aresetn]
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins smartconnect_2/aresetn]
+connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins smartconnect_3/aresetn]
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn]
+connect_bd_net [get_bd_pins top_0/sys_resetn] [get_bd_pins watchdog_0/aresetn]
 
 connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins top_0/aclk]
 connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk1] [get_bd_pins top_0/rt_clk]
 connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins smartconnect_0/aclk]
 connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins smartconnect_1/aclk]
 connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins smartconnect_2/aclk]
+connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins smartconnect_3/aclk]
 connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins axi_bram_ctrl_0/s_axi_aclk]
+connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins watchdog_0/aclk]
 
 connect_bd_intf_net [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD] [get_bd_intf_pins smartconnect_0/S00_AXI]
 connect_bd_intf_net [get_bd_intf_pins smartconnect_0/M00_AXI] [get_bd_intf_pins top_0/s00_axi]
@@ -67,6 +78,11 @@ connect_bd_intf_net [get_bd_intf_pins smartconnect_1/M00_AXI] [get_bd_intf_pins 
 connect_bd_intf_net [get_bd_intf_pins top_0/m00_axi] [get_bd_intf_pins smartconnect_2/S00_AXI]
 connect_bd_intf_net [get_bd_intf_pins smartconnect_2/M00_AXI] [get_bd_intf_pins zynq_ultra_ps_e_0/S_AXI_HP1_FPD]
 connect_bd_intf_net [get_bd_intf_pins top_0/m01_axi] [get_bd_intf_pins axi_bram_ctrl_0/S_AXI]
+connect_bd_intf_net [get_bd_intf_pins smartconnect_3/M00_AXI] [get_bd_intf_pins top_0/s02_axi]
+connect_bd_intf_net [get_bd_intf_pins watchdog_0/m_axil] [get_bd_intf_pins smartconnect_3/S00_AXI]
+
+connect_bd_net [get_bd_pins top_0/tag_clk] [get_bd_pins watchdog_0/tag_clk]
+connect_bd_net [get_bd_pins top_0/tag_data] [get_bd_pins watchdog_0/tag_data]
 
 apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps_e_0/pl_clk0 (50 MHz)" }  [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk]
 apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps_e_0/pl_clk0 (50 MHz)" }  [get_bd_pins zynq_ultra_ps_e_0/maxihpm1_fpd_aclk]

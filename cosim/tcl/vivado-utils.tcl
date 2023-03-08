@@ -55,9 +55,10 @@ proc vivado_create_and_package_ip { ip_name top_name part flist } {
 
   update_compile_order -fileset sources_1
 
-  ipx::package_project -root_dir ip_repo -vendor user.org -library user -taxonomy /UserIP -import_files -set_current false
-  ipx::unload_core ip_repo/component.xml
-  ipx::edit_ip_in_project -upgrade true -name tmp_edit_project -directory ip_repo ip_repo/component.xml
+  ipx::package_project -root_dir ip_repo/${ip_name} -vendor user.org -library user -taxonomy /UserIP -import_files -set_current false
+  ipx::unload_core ip_repo/${ip_name}/component.xml
+  ipx::edit_ip_in_project -upgrade true -name tmp_edit_project -directory ip_repo ip_repo/${ip_name}/component.xml
+
   update_compile_order -fileset sources_1
   set_property previous_version_for_upgrade user.org:user:${ip_name}:1.0 [ipx::current_core]
   set_property core_revision 1 [ipx::current_core]
@@ -66,7 +67,7 @@ proc vivado_create_and_package_ip { ip_name top_name part flist } {
   ipx::save_core [ipx::current_core]
   ipx::move_temp_component_back -component [ipx::current_core]
   close_project -delete
-  set_property  ip_repo_paths ip_repo [current_project]
+  set_property ip_repo_paths ip_repo [current_project]
   update_ip_catalog
 
   puts "Type start_gui to enter Vivado GUI; quit to exit"

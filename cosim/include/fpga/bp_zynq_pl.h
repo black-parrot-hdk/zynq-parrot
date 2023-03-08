@@ -130,54 +130,51 @@ public:
 
   static void axil_poll() { /* Does nothing on PS */ }
   
-  inline volatile uint64_t *axil_get_ptr64(uintptr_t address) {
-    return (uint64_t *)axil_get_ptr(address);
+  inline volatile int64_t *axil_get_ptr64(uintptr_t address) {
+    return (int64_t *)axil_get_ptr(address);
   }
 
-  inline volatile uint32_t *axil_get_ptr32(uintptr_t address) {
-    return (uint32_t *)axil_get_ptr(address);
+  inline volatile int32_t *axil_get_ptr32(uintptr_t address) {
+    return (int32_t *)axil_get_ptr(address);
   }
 
-  inline volatile uint16_t *axil_get_ptr16(uintptr_t address) {
-    return (uint16_t *)axil_get_ptr(address);
+  inline volatile int16_t *axil_get_ptr16(uintptr_t address) {
+    return (int16_t *)axil_get_ptr(address);
   }
 
-  inline volatile uint8_t *axil_get_ptr8(uintptr_t address) {
-    return (uint8_t *)axil_get_ptr(address);
+  inline volatile int8_t *axil_get_ptr8(uintptr_t address) {
+    return (int8_t *)axil_get_ptr(address);
   }
 
-  inline void axil_write(uintptr_t address, long data, uint8_t wstrb=0xF) {
+  inline void axil_write(uintptr_t address, int32_t data, uint8_t wstrb) {
     if (debug)
-      printf("  bp_zynq_pl: AXI writing [%" PRIxPTR "]=%8.8ld mask %u\n", address, data,
+      printf("  bp_zynq_pl: AXI writing [%" PRIxPTR "]=%8.8d mask %" PRIu8 "\n", address, data,
              wstrb);
 
     // for now we don't support alternate write strobes
     assert(wstrb == 0XF || wstrb == 0x3 || wstrb == 0x1);
 
-    if (wstrb == 0xFF) {
-      volatile uint64_t *ptr64 = axil_get_ptr64(address);
-      *ptr64 = data;
-    } else if (wstrb == 0xF) {
-      volatile uint32_t *ptr32 = axil_get_ptr32(address);
+    if (wstrb == 0xF) {
+      volatile int32_t *ptr32 = axil_get_ptr32(address);
       *ptr32 = data;
     } else if (wstrb == 0x3) {
-      volatile uint16_t *ptr16 = axil_get_ptr16(address);
+      volatile int16_t *ptr16 = axil_get_ptr16(address);
       *ptr16 = data;
     } else if (wstrb == 0x1) {
-      volatile uint8_t *ptr8 = axil_get_ptr8(address);
+      volatile int8_t *ptr8 = axil_get_ptr8(address);
       *ptr8 = data;
     } else {
       assert(false); // Illegal write strobe
     }
   }
 
-  inline long axil_read(uintptr_t address) {
+  inline int32_t axil_read(uintptr_t address) {
     // Only aligned 32B reads are currently supported
     assert (alignof(address) >= 4);
 
     // We use unsigned here because the data is sign extended from the AXI bus
-    volatile uint32_t *ptr32 = axil_get_ptr32(address);
-    uint32_t data = *ptr32;
+    volatile int32_t *ptr32 = axil_get_ptr32(address);
+    int32_t data = *ptr32;
 
     if (debug)
       printf("  bp_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n", address, data);
