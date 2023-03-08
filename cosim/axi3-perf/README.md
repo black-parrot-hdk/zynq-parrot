@@ -20,4 +20,5 @@ So the general equation is 64 ns (ARM overhead) + 8 cycles per double word trans
 Future optimizations:
    -- This code could respond with AWREADY, WREADY, and BVALID more quickly.
    -- Support to Linux could be added for true device-ordered memory
-   
+
+Uncomment the ILA in the FPGA build script to view the transactions on the AXI bus.
