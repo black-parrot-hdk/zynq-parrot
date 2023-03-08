@@ -1,3 +1,4 @@
+```
 Xilinx PYNQ Z2:
 
 This directory demonstrates use of AXI3 (instead of AXI4), which eliminates the smart interconnect which adds latency.
@@ -22,3 +23,4 @@ Future optimizations:
    -- Support to Linux could be added for true device-ordered memory
 
 Uncomment the ILA in the FPGA build script to view the transactions on the AXI bus.
+```
