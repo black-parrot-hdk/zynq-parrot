@@ -1,0 +1,9 @@
+blackparrot_ip_proj*
+blackparrot_bd_*
+watchdog_ip_proj*
+watchdog_bd_*
+flist.vcs
+flist.watchdog.vcs
+flist.blackparrot.vcs
+prog.elf
+commit_*.trace
