@@ -5,7 +5,7 @@ include ../Makefile.design
 #############################
 BASE_FLIST ?= $(abspath ../flist.vcs)
 TOP_FLIST  ?= $(abspath flist.blackparrot.vcs)
-FLIST      ?= $(WD_FLIST) $(TOP_FLIST)
+FLIST      ?= $(TOP_FLIST)
 
 $(TOP_FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs $(BASE_FLIST)
 	cat $^ | envsubst > $@

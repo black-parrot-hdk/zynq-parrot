@@ -60,14 +60,14 @@ save_bd_design
 # Change to 0 to have it stop before synthesis / implementation
 # so you can inspect the design with the GUI
 
-if {0} {
+if {1} {
   launch_runs synth_1 -jobs 4
   wait_on_run synth_1
   open_run synth_1 -name synth_1
   source ${tcl_dir}/additional_constraints.tcl
 }
 
-if {0} {
+if {1} {
   launch_runs impl_1 -to_step write_bitstream -jobs 4
   wait_on_run impl_1
 }
