@@ -100,6 +100,7 @@ module top_zynq
    localparam bp_axil_data_width_lp = 32;
    localparam bp_axi_addr_width_lp  = 32;
    localparam bp_axi_data_width_lp  = 64;
+   localparam bp_credits_lp         = 32;
    localparam num_regs_ps_to_pl_lp  = 3;
    localparam num_regs_pl_to_ps_lp  = 6;
    localparam num_fifos_ps_to_pl_lp = 2;
@@ -119,8 +120,9 @@ module top_zynq
    ///////////////////////////////////////////////////////////////////////////////////////
    // csr_data_li:
    //
-   // 0: minstret (64b)
-   // 8: mem_profiler (128b)
+   // 0: bp i/o credits
+   // 4: minstret (64b)
+   // c: mem_profiler (128b)
    //
    logic [num_regs_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_li;
 
@@ -180,6 +182,7 @@ module top_zynq
    logic [1:0]                           bp_s_axil_rresp;
    logic                                 bp_s_axil_rvalid;
    logic                                 bp_s_axil_rready;
+   logic [`BSG_WIDTH(bp_credits_lp)-1:0] bp_s_credits_used;
 
    localparam debug_lp = 0;
    localparam memory_upper_limit_lp = 256*1024*1024;
@@ -245,12 +248,13 @@ module top_zynq
    assign dram_init_li = csr_data_lo[1];
    assign dram_base_li = csr_data_lo[2];
 
-   assign csr_data_li[0] = minstret_lo[31:0];
-   assign csr_data_li[1] = minstret_lo[63:32];
-   assign csr_data_li[2] = mem_profiler_r[31:0];
-   assign csr_data_li[3] = mem_profiler_r[63:32];
-   assign csr_data_li[4] = mem_profiler_r[95:64];
-   assign csr_data_li[5] = mem_profiler_r[127:96];
+   assign csr_data_li[0] = bp_s_credits_used;
+   assign csr_data_li[1] = minstret_lo[31:0];
+   assign csr_data_li[2] = minstret_lo[63:32];
+   assign csr_data_li[3] = mem_profiler_r[31:0];
+   assign csr_data_li[4] = mem_profiler_r[63:32];
+   assign csr_data_li[5] = mem_profiler_r[95:64];
+   assign csr_data_li[6] = mem_profiler_r[127:96];
 
    // (MBT)
    // note: this ability to probe into the core is not supported in ASIC toolflows but
@@ -281,6 +285,7 @@ module top_zynq
      ,.fifo_width_p(C_S00_AXI_DATA_WIDTH)
      ,.axil_data_width_p(bp_axil_data_width_lp)
      ,.axil_addr_width_p(bp_axil_addr_width_lp)
+     ,.num_credits_p(bp_credits_lp)
      )
    f2b
     (.clk_i(aclk)
@@ -317,6 +322,8 @@ module top_zynq
      ,.m_axil_rresp_i(bp_s_axil_rresp)
      ,.m_axil_rvalid_i(bp_s_axil_rvalid)
      ,.m_axil_rready_o(bp_s_axil_rready)
+
+     ,.credits_used_o(bp_s_credits_used)
      );
 
    bsg_axil_store_packer

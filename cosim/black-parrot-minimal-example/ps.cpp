@@ -46,7 +46,8 @@
 #define GP0_RD_PL2PS_FIFO_DATA   (GP0_RD_CSR_DRAM_BASE   + 0x4  )
 #define GP0_RD_PL2PS_FIFO_CTRS   (GP0_RD_PL2PS_FIFO_DATA + 0x4*2)
 #define GP0_RD_PS2PL_FIFO_CTRS   (GP0_RD_PL2PS_FIFO_CTRS + 0x4*2)
-#define GP0_RD_MINSTRET          (GP0_RD_PS2PL_FIFO_CTRS + 0x4*2)
+#define GP0_RD_CREDITS           (GP0_RD_PS2PL_FIFO_CTRS + 0x4*2)
+#define GP0_RD_MINSTRET          (GP0_RD_CREDITS         + 0x4  )
 #define GP0_RD_MINSTRET_0        (GP0_RD_MINSTRET               )
 #define GP0_RD_MINSTRET_1        (GP0_RD_MINSTRET_0      + 0x4  )
 #define GP0_RD_MEM_PROF_0        (GP0_RD_MINSTRET_1      + 0x4  )
@@ -448,6 +449,7 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
   }
 
   int line_count = 0;
+  int credit_count = 0;
   while (getline(nbf_file, nbf_command)) {
     line_count++;
     int i = 0;
@@ -478,6 +480,8 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
       return;
     }
   }
+  bsg_pr_dbg_ps("ps.cpp: waiting for credit returns.\n", credit_count);
+  while (zpl->axil_read(GP0_RD_CREDITS));
 
   bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
 }
