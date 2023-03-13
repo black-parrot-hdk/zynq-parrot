@@ -29,6 +29,7 @@ module top_zynq
    )
   (input wire                                    aclk
    , input wire                                  aresetn
+   , input wire                                  rt_clk
 
    // Ports of Axi Slave Bus Interface S00_AXI
    , input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
@@ -412,7 +413,7 @@ module top_zynq
    blackparrot
      (.clk_i(aclk)
       ,.reset_i(~sys_resetn)
-      ,.rt_clk_i(aclk)
+      ,.rt_clk_i(rt_clk)
 
       // these are reads/write from BlackParrot
       ,.m_axil_awaddr_o (bp_m_axil_awaddr)

@@ -10,6 +10,8 @@ startgroup
 create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0
 set_property -dict [list CONFIG.PCW_EN_CLK0_PORT {1}] [get_bd_cells processing_system7_0]
 set_property -dict [list CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {20}] [get_bd_cells processing_system7_0]
+set_property -dict [list CONFIG.PCW_EN_CLK1_PORT {1}] [get_bd_cells processing_system7_0]
+set_property -dict [list CONFIG.PCW_FPGA1_PERIPHERAL_FREQMHZ {0.4}] [get_bd_cells processing_system7_0]
 set_property -dict [list CONFIG.PCW_USE_S_AXI_HP0 {1}] [get_bd_cells processing_system7_0]
 endgroup
 apply_bd_automation -rule xilinx.com:bd_rule:processing_system7 -config {make_external "FIXED_IO, DDR" Master "Disable" Slave "Disable" }  [get_bd_cells processing_system7_0]
@@ -20,6 +22,7 @@ update_ip_catalog
 startgroup
 create_bd_cell -type ip -vlnv user.org:user:top:1.0 top_0
 set_property -dict [list CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ [get_bd_pins /processing_system7_0/FCLK_CLK0]]] [get_bd_pins top_0/aclk]
+set_property -dict [list CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ [get_bd_pins /processing_system7_0/FCLK_CLK1]]] [get_bd_pins top_0/rt_clk]
 endgroup
 startgroup
 create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_0
@@ -31,6 +34,8 @@ connect_bd_intf_net [get_bd_intf_pins top_0/m00_axi] [get_bd_intf_pins processin
 startgroup
 create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_0
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins top_0/aresetn]
+connect_bd_net [get_bd_pins /processing_system7_0/FCLK_CLK0] [get_bd_pins top_0/aclk]
+connect_bd_net [get_bd_pins /processing_system7_0/FCLK_CLK1] [get_bd_pins top_0/rt_clk]
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins smartconnect_0/aresetn]
 endgroup
 apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/processing_system7_0/FCLK_CLK0 (20 MHz)" }  [get_bd_pins processing_system7_0/S_AXI_HP0_ACLK]

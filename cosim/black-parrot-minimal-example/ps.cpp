@@ -156,12 +156,10 @@ inline uint64_t get_counter_64(bp_zynq_pl *zpl, uint64_t addr, bool bp_not_shell
   uint64_t val, val_hi, val_lo, val_hi2;
   do {
     if (bp_not_shell) {
-      bsg_pr_info("READING %x from BP\n", addr);
       val_hi = send_bp_read(zpl, addr + 4);
       val_lo = send_bp_read(zpl, addr + 0);
       val_hi2 = send_bp_read(zpl, addr + 4);
     } else {
-      bsg_pr_info("READING %x from SHELL\n", addr);
       val_hi = zpl->axil_read(addr + 4);
       val_lo = zpl->axil_read(addr + 0);
       val_hi2 = zpl->axil_read(addr + 4);
@@ -233,6 +231,7 @@ extern "C" void cosim_main(char *argstr) {
     zpl->axil_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, mask1);
     assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == (phys_ptr)));
     bsg_pr_info("ps.cpp: wrote and verified base register\n");
+    zpl->axil_write(GP0_RD_CSR_DRAM_INITED, 1, mask1);
     assert(zpl->axil_read(GP0_RD_CSR_DRAM_INITED) == 1);
   } else
     bsg_pr_info("ps.cpp: reusing dram base pointer %x\n",
