@@ -126,7 +126,7 @@ public:
       index = 1;
       address = address - GP1_ADDR_BASE;
     } else {
-      bsg_pr_err("  bp_zynq_pl: unsupported AXIL port %d %x %x\n", index, GP0_ADDR_BASE, address);
+      bsg_pr_err("  bp_zynq_pl: unsupported AXIL port %d\n", index);
     }
 
     bsg_pr_dbg_pl("  bp_zynq_pl: AXI writing [%x] -> port %d, [%x]<-%8.8x\n",
