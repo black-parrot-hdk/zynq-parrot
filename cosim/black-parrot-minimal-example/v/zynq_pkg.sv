@@ -36,8 +36,8 @@ package zynq_pkg;
   //   zynq_pl_tag_lines_s pl;
   // } bsg_chip
 
-  localparam [tag_lg_width_gp-1:0] tag_pl_offset_gp = 0;
-  localparam [tag_lg_width_gp-1:0] tag_wd_offset_gp = tag_pl_offset_gp + tag_pl_local_els_gp;
+  localparam [tag_lg_els_gp-1:0] tag_pl_offset_gp = 0;
+  localparam [tag_lg_els_gp-1:0] tag_wd_offset_gp = tag_pl_offset_gp + tag_pl_local_els_gp;
 
 endpackage
 
