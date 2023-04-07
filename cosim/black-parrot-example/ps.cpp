@@ -197,8 +197,8 @@ extern "C" void cosim_main(char *argstr) {
 
   int outer = 1024 / 4;
 #else
-  zpl->axil_write(0x8 + GP0_ADDR_BASE, val1, mask1);
-  assert((zpl->axil_read(0x8 + GP0_ADDR_BASE) == (val1)));
+  zpl->axil_write(0x8 + GP0_ADDR_BASE, 0x0, mask1);
+  assert((zpl->axil_read(0x8 + GP0_ADDR_BASE) == (0x0)));
   bsg_pr_info("ps.cpp: wrote and verified base register\n");
 
   int outer = 8 / 4;
@@ -483,16 +483,16 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
       }
       else if (nbf[0] == 0x1) {
         int offset = nbf[1] % 4;
-        int shift = 2 * offset;
+        int shift = 8 * offset;
         data = zpl->axil_read(base_addr + nbf[1] - offset);
-        data = data & rotl((uint32_t)0xffff0000,shift) + nbf[2] & ((uint32_t)0x0000ffff << shift);
+        data = data & rotl((uint32_t)0xffff0000,shift) + ((nbf[2] & ((uint32_t)0x0000ffff)) << shift);
         zpl->axil_write(base_addr + nbf[1] - offset, data, 0xf);
       }
       else {
         int offset = nbf[1] % 4;
-        int shift = 2 * offset;
+        int shift = 8 * offset;
         data = zpl->axil_read(base_addr + nbf[1] - offset);
-        data = data & rotl((uint32_t)0xffffff00,shift) + nbf[2] & ((uint32_t)0x000000ff << shift);
+        data = data & rotl((uint32_t)0xffffff00,shift) + ((nbf[2] & ((uint32_t)0x000000ff)) << shift);
         zpl->axil_write(base_addr + nbf[1] - offset, data, 0xf);
       }
     }
