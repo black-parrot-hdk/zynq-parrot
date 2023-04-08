@@ -102,7 +102,7 @@ module top_zynq
    localparam bp_axi_data_width_lp  = 64;
    localparam bp_credits_lp         = 32;
    localparam num_regs_ps_to_pl_lp  = 3;
-   localparam num_regs_pl_to_ps_lp  = 6;
+   localparam num_regs_pl_to_ps_lp  = 7;
    localparam num_fifos_ps_to_pl_lp = 2;
    localparam num_fifos_pl_to_ps_lp = 2;
 
