@@ -84,6 +84,13 @@ module top
 `else
     );
 
+    localparam rt_clk_period_lp = 2500000;
+    logic rt_clk;
+    bsg_nonsynth_clock_gen
+     #(.cycle_time_p(rt_clk_period_lp))
+     rt_clk_gen
+      (.o(rt_clk));
+
     localparam aclk_period_lp = 50000;
     logic aclk;
     bsg_nonsynth_clock_gen
@@ -235,7 +242,7 @@ module top
      top_fpga_inst
      (.aclk            (aclk)
       ,.aresetn        (aresetn)
-      ,.rt_clk         (rt_clk)
+      ,.rt_clk         (aclk)
 
       ,.s00_axi_awaddr (s00_axi_awaddr)
       ,.s00_axi_awprot (s00_axi_awprot)
