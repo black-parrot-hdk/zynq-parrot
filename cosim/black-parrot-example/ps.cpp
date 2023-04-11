@@ -255,18 +255,6 @@ extern "C" void cosim_main(char *argstr) {
   bsg_pr_info("ps.cpp: reading mtimecmp\n");
   assert(zpl->axil_read(GP1_CSR_BASE_ADDR + 0x304000) == y + 1);
 
-#ifdef FPGA
-  // Must zero DRAM for FPGA Linux boot, because opensbi payload mode
-  //   obliterates the section names of the payload (Linux)
-  if (ZERO_DRAM) {
-    bsg_pr_info("ps.cpp: Zero-ing DRAM (%d bytes)\n", DRAM_ALLOCATE_SIZE);
-    for (int i = 0; i < DRAM_ALLOCATE_SIZE; i+=4) {
-      if (i % (1024*1024) == 0) bsg_pr_info("ps.cpp: zero-d %d MB\n", i/(1024*1024));
-      zpl->axil_write(gp1_addr_base + i, 0x0, mask1);
-    }
-  }
-#endif
-
 #ifdef DRAM_TEST
 
   long num_times = allocated_dram / 32768;
@@ -318,6 +306,19 @@ extern "C" void cosim_main(char *argstr) {
               ((float)matches) / (float)(mismatches + matches));
 
 #endif // DRAM_TEST
+
+#ifdef FPGA
+  // Must zero DRAM for FPGA Linux boot, because opensbi payload mode
+  //   obliterates the section names of the payload (Linux)
+  if (ZERO_DRAM) {
+    bsg_pr_info("ps.cpp: Zero-ing DRAM (%d bytes)\n", DRAM_ALLOCATE_SIZE);
+    for (int i = 0; i < DRAM_ALLOCATE_SIZE; i+=4) {
+      if (i % (1024*1024) == 0) bsg_pr_info("ps.cpp: zero-d %d MB\n", i/(1024*1024));
+      zpl->axil_write(gp1_addr_base + i, 0x0, mask1);
+    }
+  }
+#endif
+
 
   bsg_pr_info("ps.cpp: beginning nbf load\n");
   nbf_load(zpl, argv[1]);
