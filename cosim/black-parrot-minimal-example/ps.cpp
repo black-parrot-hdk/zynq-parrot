@@ -71,7 +71,7 @@
 
 // Helper functions
 void nbf_load(bp_zynq_pl *zpl, char *filename);
-bool decode_bp_output(bp_zynq_pl *zpl, long data);
+bool decode_bp_output(bp_zynq_pl *zpl, uint32_t addr, int32_t data);
 
 // Globals
 std::queue<int> getchar_queue;
@@ -136,13 +136,18 @@ void *monitor(void *vargp) {
 
 void *device_poll(void *vargp) {
   bp_zynq_pl *zpl = (bp_zynq_pl *)vargp;
+  int axil_len = sizeof(bp_bedrock_packet) / 4;
   while (1) {
-    zpl->axil_poll();
-
+    uint32_t pkt_data[axil_len];
     // keep reading as long as there is data
-    if (zpl->axil_read(GP0_RD_PL2PS_FIFO_CTRS+4) != 0) {
-      decode_bp_output(zpl, zpl->axil_read(GP0_RD_PL2PS_FIFO_DATA+4));
+    for (int i = 0; i < axil_len; i++) {
+      while (!zpl->axil_read(GP0_RD_PL2PS_FIFO_CTRS+4));
+      pkt_data[i] = zpl->axil_read(GP0_RD_PL2PS_FIFO_DATA+4);
     }
+
+    // Assume writes only
+    bp_bedrock_packet *packet = reinterpret_cast<bp_bedrock_packet *>(pkt_data);
+    decode_bp_output(zpl, packet->addr0, packet->data);
     // break loop when all cores done
     if (done_vec.all()) {
       break;
@@ -486,59 +491,25 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
   bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
 }
 
-bool decode_bp_output(bp_zynq_pl *zpl, long data) {
-  long rd_wr = data >> 31;
-  long address = (data >> 8) & 0x7FFFFF;
+bool decode_bp_output(bp_zynq_pl *zpl, uint32_t address, int32_t data) {
   char print_data = data & 0xFF;
   char core = (address-0x102000) >> 3;
   // write from BP
-  if (rd_wr) {
-    if (address == 0x101000) {
-      printf("%c", print_data);
-      fflush(stdout);
-    } else if (address >= 0x102000 && address < 0x103000) {
-      done_vec[core] = true;
-      if (print_data == 0) {
-        bsg_pr_info("CORE[%d] PASS\n", core);
-      } else {
-        bsg_pr_info("CORE[%d] FAIL\n", core);
-      }
-    } else if (address == 0x103000) {
-      bsg_pr_dbg_ps("ps.cpp: Watchdog tick\n");
+  if (address == 0x101000) {
+    printf("%c", print_data);
+    fflush(stdout);
+  } else if (address >= 0x102000 && address < 0x103000) {
+    done_vec[core] = true;
+    if (print_data == 0) {
+      bsg_pr_info("CORE[%d] PASS\n", core);
     } else {
-      bsg_pr_err("ps.cpp: Errant write to %lx\n", address);
-      return false;
+      bsg_pr_info("CORE[%d] FAIL\n", core);
     }
-  }
-  // read from BP
-  else {
-    // getchar
-    if (address == 0x100000) {
-      if (getchar_queue.empty()) {
-        zpl->axil_write(GP0_WR_PS2PL_FIFO_DATA, -1, 0xf);
-      } else {
-        zpl->axil_write(GP0_WR_PS2PL_FIFO_DATA, getchar_queue.front(), 0xf);
-        getchar_queue.pop();
-      }
-    }
-    // parameter ROM, only partially implemented
-    else if (address >= 0x120000 && address <= 0x120128) {
-      bsg_pr_dbg_ps("ps.cpp: PARAM ROM read from (%lx)\n", address);
-      int offset = address - 0x120000;
-      // CC_X_DIM, return number of cores
-      if (offset == 0x0) {
-        zpl->axil_write(GP0_WR_PS2PL_FIFO_DATA, BP_NCPUS, 0xf);
-      }
-      // CC_Y_DIM, just return 1 so X*Y == number of cores
-      else if (offset == 0x4) {
-        zpl->axil_write(GP0_WR_PS2PL_FIFO_DATA, 1, 0xf);
-      }
-    }
-    // if not implemented, print error
-    else {
-      bsg_pr_err("ps.cpp: Errant read from (%lx)\n", address);
-      return false;
-    }
+  } else if (address == 0x103000) {
+    bsg_pr_dbg_ps("ps.cpp: Watchdog tick\n");
+  } else {
+    bsg_pr_err("ps.cpp: Errant write to %lx\n", address);
+    return false;
   }
 
   return true;
