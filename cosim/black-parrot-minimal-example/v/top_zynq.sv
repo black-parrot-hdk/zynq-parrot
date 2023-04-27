@@ -96,10 +96,6 @@ module top_zynq
    , input wire [1:0]                            m00_axi_rresp
    );
 
-   localparam bp_axil_addr_width_lp = 32;
-   localparam bp_axil_data_width_lp = 32;
-   localparam bp_axi_addr_width_lp  = 32;
-   localparam bp_axi_data_width_lp  = 64;
    localparam bp_credits_lp         = 32;
    localparam num_regs_ps_to_pl_lp  = 3;
    localparam num_regs_pl_to_ps_lp  = 7;
@@ -143,47 +139,6 @@ module top_zynq
    logic [num_fifos_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] ps_to_pl_fifo_data_lo;
    logic [num_fifos_ps_to_pl_lp-1:0]                           ps_to_pl_fifo_v_lo, ps_to_pl_fifo_ready_li;
 
-   logic [bp_axil_addr_width_lp-1:0]     bp_m_axil_awaddr;
-   logic [2:0]                           bp_m_axil_awprot;
-   logic                                 bp_m_axil_awvalid;
-   logic                                 bp_m_axil_awready;
-   logic [bp_axil_data_width_lp-1:0]     bp_m_axil_wdata;
-   logic [(bp_axil_data_width_lp/8)-1:0] bp_m_axil_wstrb;
-   logic                                 bp_m_axil_wvalid;
-   logic                                 bp_m_axil_wready;
-   logic [1:0]                           bp_m_axil_bresp;
-   logic                                 bp_m_axil_bvalid;
-   logic                                 bp_m_axil_bready;
-   logic [bp_axil_addr_width_lp-1:0]     bp_m_axil_araddr;
-   logic [2:0]                           bp_m_axil_arprot;
-   logic                                 bp_m_axil_arvalid;
-   logic                                 bp_m_axil_arready;
-   logic [bp_axil_data_width_lp-1:0]     bp_m_axil_rdata;
-   logic [1:0]                           bp_m_axil_rresp;
-   logic                                 bp_m_axil_rvalid;
-   logic                                 bp_m_axil_rready;
-
-   logic [bp_axil_addr_width_lp-1:0]     bp_s_axil_awaddr;
-   logic [2:0]                           bp_s_axil_awprot;
-   logic                                 bp_s_axil_awvalid;
-   logic                                 bp_s_axil_awready;
-   logic [bp_axil_data_width_lp-1:0]     bp_s_axil_wdata;
-   logic [(bp_axil_data_width_lp/8)-1:0] bp_s_axil_wstrb;
-   logic                                 bp_s_axil_wvalid;
-   logic                                 bp_s_axil_wready;
-   logic [1:0]                           bp_s_axil_bresp;
-   logic                                 bp_s_axil_bvalid;
-   logic                                 bp_s_axil_bready;
-   logic [bp_axil_addr_width_lp-1:0]     bp_s_axil_araddr;
-   logic [2:0]                           bp_s_axil_arprot;
-   logic                                 bp_s_axil_arvalid;
-   logic                                 bp_s_axil_arready;
-   logic [bp_axil_data_width_lp-1:0]     bp_s_axil_rdata;
-   logic [1:0]                           bp_s_axil_rresp;
-   logic                                 bp_s_axil_rvalid;
-   logic                                 bp_s_axil_rready;
-   logic [`BSG_WIDTH(bp_credits_lp)-1:0] bp_s_credits_used;
-
    localparam debug_lp = 0;
    localparam memory_upper_limit_lp = 256*1024*1024;
 
@@ -193,7 +148,7 @@ module top_zynq
       // need to update C_S00_AXI_ADDR_WIDTH accordingly
       .num_fifo_ps_to_pl_p(num_fifos_ps_to_pl_lp)
       ,.num_fifo_pl_to_ps_p(num_fifos_pl_to_ps_lp)
-      ,.num_regs_ps_to_pl_p (num_regs_ps_to_pl_lp)
+      ,.num_regs_ps_to_pl_p(num_regs_ps_to_pl_lp)
       ,.num_regs_pl_to_ps_p(num_regs_pl_to_ps_lp)
       ,.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH)
       ,.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
@@ -239,6 +194,7 @@ module top_zynq
    ///////////////////////////////////////////////////////////////////////////////////////
    logic dram_init_li;
    logic [C_M00_AXI_ADDR_WIDTH-1:0] dram_base_li;
+   logic [`BSG_WIDTH(bp_credits_lp)-1:0] bp_credits_used;
    logic [63:0] minstret_lo;
    // use this as a way of figuring out how much memory a RISC-V program is using
    // each bit corresponds to a region of memory
@@ -248,7 +204,7 @@ module top_zynq
    assign dram_init_li = csr_data_lo[1];
    assign dram_base_li = csr_data_lo[2];
 
-   assign csr_data_li[0] = bp_s_credits_used;
+   assign csr_data_li[0] = |bp_credits_used;
    assign csr_data_li[1] = minstret_lo[31:0];
    assign csr_data_li[2] = minstret_lo[63:32];
    assign csr_data_li[3] = mem_profiler_r[31:0];
@@ -268,108 +224,76 @@ module top_zynq
    // instantiate counters, and then pull control signals out of the DUT in order to figure out when
    // to increment the counters.
    //
-   if (cce_type_p != e_cce_uce)
-     assign minstret_lo = blackparrot.m.multicore.cc.y[0].x[0].tile_node.tile_node.tile.core.core_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
-   else
-     assign minstret_lo = blackparrot.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
+   assign minstret_lo = blackparrot.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
 
-  `declare_bp_bedrock_mem_if(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p);
-  bp_bedrock_mem_fwd_header_s mem_fwd_header_lo;
-  logic [dword_width_gp-1:0] mem_fwd_data_lo;
-  logic mem_fwd_v_lo, mem_fwd_ready_and_li;
-  bp_bedrock_mem_rev_header_s mem_rev_header_li;
-  logic [dword_width_gp-1:0] mem_rev_data_li;
-  logic mem_rev_v_li, mem_rev_ready_and_lo;
-  bp_me_fifos_to_axil
-   #(.bp_params_p(bp_params_p)
-     ,.fifo_width_p(C_S00_AXI_DATA_WIDTH)
-     ,.axil_data_width_p(bp_axil_data_width_lp)
-     ,.axil_addr_width_p(bp_axil_addr_width_lp)
-     ,.num_credits_p(bp_credits_lp)
-     )
-   f2b
-    (.clk_i(aclk)
-     ,.reset_i(~sys_resetn)
-
-     ,.fifo_i(ps_to_pl_fifo_data_lo[0])
-     ,.fifo_v_i(ps_to_pl_fifo_v_lo[0])
-     ,.fifo_ready_and_o(ps_to_pl_fifo_ready_li[0])
-
-     ,.fifo_o(pl_to_ps_fifo_data_li[0])
-     ,.fifo_v_o(pl_to_ps_fifo_v_li[0])
-     ,.fifo_ready_and_i(pl_to_ps_fifo_ready_lo[0])
-
-     ,.m_axil_awaddr_o(bp_s_axil_awaddr)
-     ,.m_axil_awprot_o(bp_s_axil_awprot)
-     ,.m_axil_awvalid_o(bp_s_axil_awvalid)
-     ,.m_axil_awready_i(bp_s_axil_awready)
-
-     ,.m_axil_wdata_o(bp_s_axil_wdata)
-     ,.m_axil_wstrb_o(bp_s_axil_wstrb)
-     ,.m_axil_wvalid_o(bp_s_axil_wvalid)
-     ,.m_axil_wready_i(bp_s_axil_wready)
-
-     ,.m_axil_bresp_i(bp_s_axil_bresp)
-     ,.m_axil_bvalid_i(bp_s_axil_bvalid)
-     ,.m_axil_bready_o(bp_s_axil_bready)
-
-     ,.m_axil_araddr_o(bp_s_axil_araddr)
-     ,.m_axil_arprot_o(bp_s_axil_arprot)
-     ,.m_axil_arvalid_o(bp_s_axil_arvalid)
-     ,.m_axil_arready_i(bp_s_axil_arready)
-
-     ,.m_axil_rdata_i(bp_s_axil_rdata)
-     ,.m_axil_rresp_i(bp_s_axil_rresp)
-     ,.m_axil_rvalid_i(bp_s_axil_rvalid)
-     ,.m_axil_rready_o(bp_s_axil_rready)
-
-     ,.credits_used_o(bp_s_credits_used)
-     );
-
-   bsg_axil_store_packer
-    #(.axil_addr_width_p(bp_axil_addr_width_lp)
-      ,.axil_data_width_p(bp_axil_data_width_lp)
-      ,.payload_data_width_p(8)
+   `declare_bp_bedrock_mem_if(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p);
+   localparam io_data_width_p = (cce_type_p == e_cce_uce) ? uce_fill_width_p : bedrock_data_width_p;
+   bp_bedrock_mem_fwd_header_s mem_fwd_header_li;
+   logic [io_data_width_p-1:0] mem_fwd_data_li;
+   logic mem_fwd_v_li, mem_fwd_ready_and_lo;
+   bp_bedrock_mem_rev_header_s mem_rev_header_lo;
+   logic [io_data_width_p-1:0] mem_rev_data_lo;
+   logic mem_rev_v_lo, mem_rev_ready_and_li;
+   bp_bedrock_mem_fwd_header_s mem_fwd_header_lo;
+   logic [io_data_width_p-1:0] mem_fwd_data_lo;
+   logic mem_fwd_v_lo, mem_fwd_ready_and_li;
+   bp_bedrock_mem_rev_header_s mem_rev_header_li;
+   logic [io_data_width_p-1:0] mem_rev_data_li;
+   logic mem_rev_v_li, mem_rev_ready_and_lo;
+   bp_me_endpoint_to_fifos
+    #(.bp_params_p(bp_params_p)
+      ,.fifo_width_p(C_S00_AXI_DATA_WIDTH)
+      ,.num_credits_p(bp_credits_lp)
       )
-    store_packer
-     (.clk_i   (aclk)
-      ,.reset_i(~aresetn)
+    f2b
+     (.clk_i(aclk)
+      ,.reset_i(~sys_resetn)
 
-      ,.s_axil_awaddr_i (bp_m_axil_awaddr)
-      ,.s_axil_awprot_i (bp_m_axil_awprot)
-      ,.s_axil_awvalid_i(bp_m_axil_awvalid)
-      ,.s_axil_awready_o(bp_m_axil_awready)
+      ,.fwd_fifo_i(ps_to_pl_fifo_data_lo[0])
+      ,.fwd_fifo_v_i(ps_to_pl_fifo_v_lo[0])
+      ,.fwd_fifo_ready_and_o(ps_to_pl_fifo_ready_li[0])
 
-      ,.s_axil_wdata_i  (bp_m_axil_wdata)
-      ,.s_axil_wstrb_i  (bp_m_axil_wstrb)
-      ,.s_axil_wvalid_i (bp_m_axil_wvalid)
-      ,.s_axil_wready_o (bp_m_axil_wready)
+      ,.rev_fifo_o(pl_to_ps_fifo_data_li[0])
+      ,.rev_fifo_v_o(pl_to_ps_fifo_v_li[0])
+      ,.rev_fifo_ready_and_i(pl_to_ps_fifo_ready_lo[0])
 
-      ,.s_axil_bresp_o  (bp_m_axil_bresp)
-      ,.s_axil_bvalid_o (bp_m_axil_bvalid)
-      ,.s_axil_bready_i (bp_m_axil_bready)
+      ,.fwd_fifo_o(pl_to_ps_fifo_data_li[1])
+      ,.fwd_fifo_v_o(pl_to_ps_fifo_v_li[1])
+      ,.fwd_fifo_ready_and_i(pl_to_ps_fifo_ready_lo[1])
 
-      ,.s_axil_araddr_i (bp_m_axil_araddr)
-      ,.s_axil_arprot_i (bp_m_axil_arprot)
-      ,.s_axil_arvalid_i(bp_m_axil_arvalid)
-      ,.s_axil_arready_o(bp_m_axil_arready)
+      ,.rev_fifo_i(ps_to_pl_fifo_data_lo[1])
+      ,.rev_fifo_v_i(ps_to_pl_fifo_v_lo[1])
+      ,.rev_fifo_ready_and_o(ps_to_pl_fifo_ready_li[1])
 
-      ,.s_axil_rdata_o  (bp_m_axil_rdata)
-      ,.s_axil_rresp_o  (bp_m_axil_rresp)
-      ,.s_axil_rvalid_o (bp_m_axil_rvalid)
-      ,.s_axil_rready_i (bp_m_axil_rready)
+      ,.mem_fwd_header_o(mem_fwd_header_li)
+      ,.mem_fwd_data_o(mem_fwd_data_li)
+      ,.mem_fwd_v_o(mem_fwd_v_li)
+      ,.mem_fwd_ready_and_i(mem_fwd_ready_and_lo)
+      ,.mem_fwd_last_o()
 
-      ,.data_o (pl_to_ps_fifo_data_li[1])
-      ,.v_o    (pl_to_ps_fifo_v_li[1])
-      ,.ready_i(pl_to_ps_fifo_ready_lo[1])
+      ,.mem_rev_header_i(mem_rev_header_lo)
+      ,.mem_rev_data_i(mem_rev_data_lo)
+      ,.mem_rev_v_i(mem_rev_v_lo)
+      ,.mem_rev_ready_and_o(mem_rev_ready_and_li)
+      ,.mem_rev_last_i(1'b1)
 
-      ,.data_i(ps_to_pl_fifo_data_lo[1])
-      ,.v_i(ps_to_pl_fifo_v_lo[1])
-      ,.ready_o(ps_to_pl_fifo_ready_li[1])
+      ,.mem_fwd_header_i(mem_fwd_header_lo)
+      ,.mem_fwd_data_i(mem_fwd_data_lo)
+      ,.mem_fwd_v_i(mem_fwd_v_lo)
+      ,.mem_fwd_ready_and_o(mem_fwd_ready_and_li)
+      ,.mem_fwd_last_i(1'b1)
+
+      ,.mem_rev_header_o(mem_rev_header_li)
+      ,.mem_rev_data_o(mem_rev_data_li)
+      ,.mem_rev_v_o(mem_rev_v_li)
+      ,.mem_rev_ready_and_i(mem_rev_ready_and_lo)
+      ,.mem_rev_last_o()
+
+      ,.credits_used_o(bp_credits_used)
       );
 
-   logic [bp_axi_addr_width_lp-1:0] axi_awaddr;
-   logic [bp_axi_addr_width_lp-1:0] axi_araddr;
+   logic [C_M00_AXI_ADDR_WIDTH-1:0] axi_awaddr;
+   logic [C_M00_AXI_ADDR_WIDTH-1:0] axi_araddr;
 
    // to translate from BP DRAM space to ARM PS DRAM space
    // we xor-subtract the BP DRAM base address (32'h8000_0000) and add the
@@ -408,114 +332,150 @@ module top_zynq
       ,.data_o(mem_profiler_r)
       );
 
-   bp_axi_top #
-     (.bp_params_p(bp_params_p)
-      ,.m_axil_addr_width_p(bp_axil_addr_width_lp)
-      ,.m_axil_data_width_p(bp_axil_data_width_lp)
-      ,.s_axil_addr_width_p(bp_axil_addr_width_lp)
-      ,.s_axil_data_width_p(bp_axil_data_width_lp)
-      ,.axi_addr_width_p(bp_axi_addr_width_lp)
-      ,.axi_data_width_p(bp_axi_data_width_lp)
-      )
-   blackparrot
+   `declare_bsg_cache_dma_pkt_s(daddr_width_p, l2_block_size_in_words_p);
+   bsg_cache_dma_pkt_s [num_cce_p-1:0][l2_banks_p-1:0] dma_pkt_lo;
+   logic [num_cce_p-1:0][l2_banks_p-1:0] dma_pkt_v_lo, dma_pkt_ready_and_li;
+   logic [num_cce_p-1:0][l2_banks_p-1:0][l2_fill_width_p-1:0] dma_data_lo;
+   logic [num_cce_p-1:0][l2_banks_p-1:0] dma_data_v_lo, dma_data_ready_and_li;
+   logic [num_cce_p-1:0][l2_banks_p-1:0][l2_fill_width_p-1:0] dma_data_li;
+   logic [num_cce_p-1:0][l2_banks_p-1:0] dma_data_v_li, dma_data_ready_and_lo;
+   bp_unicore
+    #(.bp_params_p(bp_params_p))
+    blackparrot
      (.clk_i(aclk)
-      ,.reset_i(~sys_resetn)
       ,.rt_clk_i(rt_clk)
+      ,.reset_i(~aresetn)
+  
+      ,.my_did_i('0)
+      ,.host_did_i('0)
+      ,.my_cord_i('0)
+  
+      ,.mem_fwd_header_o(mem_fwd_header_lo)
+      ,.mem_fwd_data_o(mem_fwd_data_lo)
+      ,.mem_fwd_v_o(mem_fwd_v_lo)
+      ,.mem_fwd_ready_and_i(mem_fwd_ready_and_li)
+      ,.mem_fwd_last_o()
+  
+      ,.mem_rev_header_i(mem_rev_header_li)
+      ,.mem_rev_data_i(mem_rev_data_li)
+      ,.mem_rev_v_i(mem_rev_v_li)
+      ,.mem_rev_ready_and_o(mem_rev_ready_and_lo)
+      ,.mem_rev_last_i(1'b1)
+  
+      ,.mem_fwd_header_i(mem_fwd_header_li)
+      ,.mem_fwd_data_i(mem_fwd_data_li)
+      ,.mem_fwd_v_i(mem_fwd_v_li)
+      ,.mem_fwd_ready_and_o(mem_fwd_ready_and_lo)
+      ,.mem_fwd_last_i(1'b1)
+  
+      ,.mem_rev_header_o(mem_rev_header_lo)
+      ,.mem_rev_data_o(mem_rev_data_lo)
+      ,.mem_rev_v_o(mem_rev_v_lo)
+      ,.mem_rev_ready_and_i(mem_rev_ready_and_li)
+      ,.mem_rev_last_o()
+  
+      ,.dma_pkt_o(dma_pkt_lo)
+      ,.dma_pkt_v_o(dma_pkt_v_lo)
+      ,.dma_pkt_ready_and_i(dma_pkt_ready_and_li)
+  
+      ,.dma_data_i(dma_data_li)
+      ,.dma_data_v_i(dma_data_v_li)
+      ,.dma_data_ready_and_o(dma_data_ready_and_lo)
+  
+      ,.dma_data_o(dma_data_lo)
+      ,.dma_data_v_o(dma_data_v_lo)
+      ,.dma_data_ready_and_i(dma_data_ready_and_li)
+      );
 
-      // these are reads/write from BlackParrot
-      ,.m_axil_awaddr_o (bp_m_axil_awaddr)
-      ,.m_axil_awprot_o (bp_m_axil_awprot)
-      ,.m_axil_awvalid_o(bp_m_axil_awvalid)
-      ,.m_axil_awready_i(bp_m_axil_awready)
+  // Unswizzle the dram
+  bsg_cache_dma_pkt_s [num_cce_p-1:0][l2_banks_p-1:0] dma_pkt;
+  for (genvar i = 0; i < num_cce_p; i++)
+    begin : rof3
+      for (genvar j = 0; j < l2_banks_p; j++)
+        begin : address_hash
+          logic [daddr_width_p-1:0] daddr_lo;
+          bp_me_dram_hash_decode
+           #(.bp_params_p(bp_params_p))
+            dma_addr_hash
+            (.daddr_i(dma_pkt_lo[i][j].addr)
+             ,.daddr_o(dma_pkt[i][j].addr)
+             );
+          assign dma_pkt[i][j].write_not_read = dma_pkt_lo[i][j].write_not_read;
+          assign dma_pkt[i][j].mask = dma_pkt_lo[i][j].mask;
+        end
+    end
 
-      ,.m_axil_wdata_o  (bp_m_axil_wdata)
-      ,.m_axil_wstrb_o  (bp_m_axil_wstrb)
-      ,.m_axil_wvalid_o (bp_m_axil_wvalid)
-      ,.m_axil_wready_i (bp_m_axil_wready)
+   import bsg_axi_pkg::*;
+   bsg_cache_to_axi
+    #(.addr_width_p(daddr_width_p)
+      ,.data_width_p(l2_fill_width_p)
+      ,.mask_width_p(l2_block_size_in_words_p)
+      ,.block_size_in_words_p(l2_block_size_in_fill_p)
+      ,.num_cache_p(num_cce_p*l2_banks_p)
+      ,.axi_data_width_p(C_M00_AXI_DATA_WIDTH)
+      ,.axi_id_width_p(6)
+      ,.axi_burst_len_p(l2_block_width_p/C_M00_AXI_DATA_WIDTH)
+      ,.axi_burst_type_p(e_axi_burst_incr)
+      )
+    cache2axi
+     (.clk_i(aclk)
+      ,.reset_i(~aresetn)
 
-      ,.m_axil_bresp_i  (bp_m_axil_bresp)
-      ,.m_axil_bvalid_i (bp_m_axil_bvalid)
-      ,.m_axil_bready_o (bp_m_axil_bready)
+      ,.dma_pkt_i(dma_pkt)
+      ,.dma_pkt_v_i(dma_pkt_v_lo)
+      ,.dma_pkt_yumi_o(dma_pkt_ready_and_li)
 
-      ,.m_axil_araddr_o (bp_m_axil_araddr)
-      ,.m_axil_arprot_o (bp_m_axil_arprot)
-      ,.m_axil_arvalid_o(bp_m_axil_arvalid)
-      ,.m_axil_arready_i(bp_m_axil_arready)
+      ,.dma_data_o(dma_data_li)
+      ,.dma_data_v_o(dma_data_v_li)
+      ,.dma_data_ready_i(dma_data_ready_and_lo)
 
-      ,.m_axil_rdata_i  (bp_m_axil_rdata)
-      ,.m_axil_rresp_i  (bp_m_axil_rresp)
-      ,.m_axil_rvalid_i (bp_m_axil_rvalid)
-      ,.m_axil_rready_o (bp_m_axil_rready)
+      ,.dma_data_i(dma_data_lo)
+      ,.dma_data_v_i(dma_data_v_lo)
+      ,.dma_data_yumi_o(dma_data_ready_and_li)
 
-      // these are reads/writes into BlackParrot
-      // from the Zynq PS ARM core
-      ,.s_axil_awaddr_i (bp_s_axil_awaddr)
-      ,.s_axil_awprot_i (bp_s_axil_awprot)
-      ,.s_axil_awvalid_i(bp_s_axil_awvalid)
-      ,.s_axil_awready_o(bp_s_axil_awready)
+      ,.axi_awid_o(m00_axi_awid)
+      ,.axi_awaddr_addr_o(axi_awaddr)
+      ,.axi_awlen_o(m00_axi_awlen)
+      ,.axi_awsize_o(m00_axi_awsize)
+      ,.axi_awburst_o(m00_axi_awburst)
+      ,.axi_awcache_o(m00_axi_awcache)
+      ,.axi_awprot_o(m00_axi_awprot)
+      ,.axi_awlock_o(m00_axi_awlock)
+      ,.axi_awvalid_o(m00_axi_awvalid)
+      ,.axi_awready_i(m00_axi_awready)
 
-      ,.s_axil_wdata_i  (bp_s_axil_wdata)
-      ,.s_axil_wstrb_i  (bp_s_axil_wstrb)
-      ,.s_axil_wvalid_i (bp_s_axil_wvalid)
-      ,.s_axil_wready_o (bp_s_axil_wready)
+      ,.axi_wdata_o(m00_axi_wdata)
+      ,.axi_wstrb_o(m00_axi_wstrb)
+      ,.axi_wlast_o(m00_axi_wlast)
+      ,.axi_wvalid_o(m00_axi_wvalid)
+      ,.axi_wready_i(m00_axi_wready)
 
-      ,.s_axil_bresp_o  (bp_s_axil_bresp)
-      ,.s_axil_bvalid_o (bp_s_axil_bvalid)
-      ,.s_axil_bready_i (bp_s_axil_bready)
+      ,.axi_bid_i(m00_axi_bid)
+      ,.axi_bresp_i(m00_axi_bresp)
+      ,.axi_bvalid_i(m00_axi_bvalid)
+      ,.axi_bready_o(m00_axi_bready)
 
-      ,.s_axil_araddr_i (bp_s_axil_araddr)
-      ,.s_axil_arprot_i (bp_s_axil_arprot)
-      ,.s_axil_arvalid_i(bp_s_axil_arvalid)
-      ,.s_axil_arready_o(bp_s_axil_arready)
+      ,.axi_arid_o(m00_axi_arid)
+      ,.axi_araddr_addr_o(axi_araddr)
+      ,.axi_arlen_o(m00_axi_arlen)
+      ,.axi_arsize_o(m00_axi_arsize)
+      ,.axi_arburst_o(m00_axi_arburst)
+      ,.axi_arcache_o(m00_axi_arcache)
+      ,.axi_arprot_o(m00_axi_arprot)
+      ,.axi_arlock_o(m00_axi_arlock)
+      ,.axi_arvalid_o(m00_axi_arvalid)
+      ,.axi_arready_i(m00_axi_arready)
 
-      ,.s_axil_rdata_o  (bp_s_axil_rdata)
-      ,.s_axil_rresp_o  (bp_s_axil_rresp)
-      ,.s_axil_rvalid_o (bp_s_axil_rvalid)
-      ,.s_axil_rready_i (bp_s_axil_rready)
+      ,.axi_rid_i(m00_axi_rid)
+      ,.axi_rdata_i(m00_axi_rdata)
+      ,.axi_rresp_i(m00_axi_rresp)
+      ,.axi_rlast_i(m00_axi_rlast)
+      ,.axi_rvalid_i(m00_axi_rvalid)
+      ,.axi_rready_o(m00_axi_rready)
 
-      // BlackParrot DRAM memory system (output of bsg_cache_to_axi)
-      ,.m_axi_awaddr_o   (axi_awaddr)
-      ,.m_axi_awvalid_o  (m00_axi_awvalid)
-      ,.m_axi_awready_i  (m00_axi_awready)
-      ,.m_axi_awid_o     (m00_axi_awid)
-      ,.m_axi_awlock_o   (m00_axi_awlock)
-      ,.m_axi_awcache_o  (m00_axi_awcache)
-      ,.m_axi_awprot_o   (m00_axi_awprot)
-      ,.m_axi_awlen_o    (m00_axi_awlen)
-      ,.m_axi_awsize_o   (m00_axi_awsize)
-      ,.m_axi_awburst_o  (m00_axi_awburst)
-      ,.m_axi_awqos_o    (m00_axi_awqos)
-
-      ,.m_axi_wdata_o    (m00_axi_wdata)
-      ,.m_axi_wvalid_o   (m00_axi_wvalid)
-      ,.m_axi_wready_i   (m00_axi_wready)
-      ,.m_axi_wid_o      (m00_axi_wid)
-      ,.m_axi_wlast_o    (m00_axi_wlast)
-      ,.m_axi_wstrb_o    (m00_axi_wstrb)
-
-      ,.m_axi_bvalid_i   (m00_axi_bvalid)
-      ,.m_axi_bready_o   (m00_axi_bready)
-      ,.m_axi_bid_i      (m00_axi_bid)
-      ,.m_axi_bresp_i    (m00_axi_bresp)
-
-      ,.m_axi_araddr_o   (axi_araddr)
-      ,.m_axi_arvalid_o  (m00_axi_arvalid)
-      ,.m_axi_arready_i  (m00_axi_arready)
-      ,.m_axi_arid_o     (m00_axi_arid)
-      ,.m_axi_arlock_o   (m00_axi_arlock)
-      ,.m_axi_arcache_o  (m00_axi_arcache)
-      ,.m_axi_arprot_o   (m00_axi_arprot)
-      ,.m_axi_arlen_o    (m00_axi_arlen)
-      ,.m_axi_arsize_o   (m00_axi_arsize)
-      ,.m_axi_arburst_o  (m00_axi_arburst)
-      ,.m_axi_arqos_o    (m00_axi_arqos)
-
-      ,.m_axi_rdata_i    (m00_axi_rdata)
-      ,.m_axi_rvalid_i   (m00_axi_rvalid)
-      ,.m_axi_rready_o   (m00_axi_rready)
-      ,.m_axi_rid_i      (m00_axi_rid)
-      ,.m_axi_rlast_i    (m00_axi_rlast)
-      ,.m_axi_rresp_i    (m00_axi_rresp)
+      // Unused
+      ,.axi_awaddr_cache_id_o()
+      ,.axi_araddr_cache_id_o()
       );
 
 endmodule
