@@ -35,29 +35,25 @@ module bp_me_endpoint_to_fifos
 
    // Outgoing I/O
    , output logic [mem_fwd_header_width_lp-1:0] mem_fwd_header_o
-   , output logic [dword_width_gp-1:0]          mem_fwd_data_o
+   , output logic [bedrock_fill_width_p-1:0]    mem_fwd_data_o
    , output logic                               mem_fwd_v_o
    , input                                      mem_fwd_ready_and_i
-   , output logic                               mem_fwd_last_o
    
    , input [mem_rev_header_width_lp-1:0]        mem_rev_header_i
-   , input [dword_width_gp-1:0]                 mem_rev_data_i
+   , input [bedrock_fill_width_p-1:0]           mem_rev_data_i
    , input                                      mem_rev_v_i
    , output logic                               mem_rev_ready_and_o
-   , input                                      mem_rev_last_i
    
    // Incoming I/O
    , input [mem_fwd_header_width_lp-1:0]        mem_fwd_header_i
-   , input [dword_width_gp-1:0]                 mem_fwd_data_i
+   , input [bedrock_fill_width_p-1:0]           mem_fwd_data_i
    , input                                      mem_fwd_v_i
    , output logic                               mem_fwd_ready_and_o
-   , input                                      mem_fwd_last_i
    
    , output logic [mem_rev_header_width_lp-1:0] mem_rev_header_o
-   , output logic [dword_width_gp-1:0]          mem_rev_data_o
+   , output logic [bedrock_fill_width_p-1:0]    mem_rev_data_o
    , output logic                               mem_rev_v_o
    , input                                      mem_rev_ready_and_i
-   , output logic                               mem_rev_last_o
 
    , output logic [credit_counter_width_lp-1:0] credits_used_o
    );
@@ -142,9 +138,8 @@ module bp_me_endpoint_to_fifos
                                             ,uncached    : aligned_fwd_payload_lo.uncached
                                             ,speculative : aligned_fwd_payload_lo.speculative
                                             };
-  assign mem_fwd_data_o           = {2{aligned_fwd_lo.data}};
+  assign mem_fwd_data_o           = {bedrock_fill_width_p/32{aligned_fwd_lo.data}};
   assign mem_fwd_v_o              = aligned_fwd_v_lo;
-  assign mem_fwd_last_o           = 1'b1; // Theroetically we can support burst transactions
   assign aligned_fwd_ready_and_li = mem_fwd_ready_and_i;
 
   assign aligned_rev_li.msg_type = mem_rev_header_cast_i.msg_type;
@@ -165,7 +160,6 @@ module bp_me_endpoint_to_fifos
   // Suppress reverse acks, instead just maintain with credits
   // This prevents the AXIL from dequeueing packets just for credit returns
   assign aligned_rev_v_li        = mem_rev_v_i & mem_rev_header_cast_i.msg_type inside {e_bedrock_mem_uc_rd, e_bedrock_mem_rd, e_bedrock_mem_amo};
-  wire   unused                  = mem_rev_last_i;
   assign mem_rev_ready_and_o     = aligned_rev_ready_and_lo;
 
   bp_bedrock_msg_aligned_s aligned_fwd_li;

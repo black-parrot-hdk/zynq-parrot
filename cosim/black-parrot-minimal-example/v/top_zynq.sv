@@ -224,21 +224,20 @@ module top_zynq
    // instantiate counters, and then pull control signals out of the DUT in order to figure out when
    // to increment the counters.
    //
-   assign minstret_lo = blackparrot.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
+   assign minstret_lo = blackparrot.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
 
    `declare_bp_bedrock_mem_if(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p);
-   localparam io_data_width_p = (cce_type_p == e_cce_uce) ? uce_fill_width_p : bedrock_data_width_p;
    bp_bedrock_mem_fwd_header_s mem_fwd_header_li;
-   logic [io_data_width_p-1:0] mem_fwd_data_li;
+   logic [bedrock_fill_width_p-1:0] mem_fwd_data_li;
    logic mem_fwd_v_li, mem_fwd_ready_and_lo;
    bp_bedrock_mem_rev_header_s mem_rev_header_lo;
-   logic [io_data_width_p-1:0] mem_rev_data_lo;
+   logic [bedrock_fill_width_p-1:0] mem_rev_data_lo;
    logic mem_rev_v_lo, mem_rev_ready_and_li;
    bp_bedrock_mem_fwd_header_s mem_fwd_header_lo;
-   logic [io_data_width_p-1:0] mem_fwd_data_lo;
+   logic [bedrock_fill_width_p-1:0] mem_fwd_data_lo;
    logic mem_fwd_v_lo, mem_fwd_ready_and_li;
    bp_bedrock_mem_rev_header_s mem_rev_header_li;
-   logic [io_data_width_p-1:0] mem_rev_data_li;
+   logic [bedrock_fill_width_p-1:0] mem_rev_data_li;
    logic mem_rev_v_li, mem_rev_ready_and_lo;
    bp_me_endpoint_to_fifos
     #(.bp_params_p(bp_params_p)
@@ -269,25 +268,21 @@ module top_zynq
       ,.mem_fwd_data_o(mem_fwd_data_li)
       ,.mem_fwd_v_o(mem_fwd_v_li)
       ,.mem_fwd_ready_and_i(mem_fwd_ready_and_lo)
-      ,.mem_fwd_last_o()
 
       ,.mem_rev_header_i(mem_rev_header_lo)
       ,.mem_rev_data_i(mem_rev_data_lo)
       ,.mem_rev_v_i(mem_rev_v_lo)
       ,.mem_rev_ready_and_o(mem_rev_ready_and_li)
-      ,.mem_rev_last_i(1'b1)
 
       ,.mem_fwd_header_i(mem_fwd_header_lo)
       ,.mem_fwd_data_i(mem_fwd_data_lo)
       ,.mem_fwd_v_i(mem_fwd_v_lo)
       ,.mem_fwd_ready_and_o(mem_fwd_ready_and_li)
-      ,.mem_fwd_last_i(1'b1)
 
       ,.mem_rev_header_o(mem_rev_header_li)
       ,.mem_rev_data_o(mem_rev_data_li)
       ,.mem_rev_v_o(mem_rev_v_li)
       ,.mem_rev_ready_and_i(mem_rev_ready_and_lo)
-      ,.mem_rev_last_o()
 
       ,.credits_used_o(bp_credits_used)
       );
@@ -333,13 +328,13 @@ module top_zynq
       );
 
    `declare_bsg_cache_dma_pkt_s(daddr_width_p, l2_block_size_in_words_p);
-   bsg_cache_dma_pkt_s [num_cce_p-1:0][l2_banks_p-1:0] dma_pkt_lo;
-   logic [num_cce_p-1:0][l2_banks_p-1:0] dma_pkt_v_lo, dma_pkt_ready_and_li;
-   logic [num_cce_p-1:0][l2_banks_p-1:0][l2_fill_width_p-1:0] dma_data_lo;
-   logic [num_cce_p-1:0][l2_banks_p-1:0] dma_data_v_lo, dma_data_ready_and_li;
-   logic [num_cce_p-1:0][l2_banks_p-1:0][l2_fill_width_p-1:0] dma_data_li;
-   logic [num_cce_p-1:0][l2_banks_p-1:0] dma_data_v_li, dma_data_ready_and_lo;
-   bp_unicore
+   bsg_cache_dma_pkt_s [num_cce_p*l2_banks_p-1:0] dma_pkt_lo;
+   logic [num_cce_p*l2_banks_p-1:0] dma_pkt_v_lo, dma_pkt_ready_and_li;
+   logic [num_cce_p*l2_banks_p-1:0][l2_fill_width_p-1:0] dma_data_lo;
+   logic [num_cce_p*l2_banks_p-1:0] dma_data_v_lo, dma_data_ready_and_li;
+   logic [num_cce_p*l2_banks_p-1:0][l2_fill_width_p-1:0] dma_data_li;
+   logic [num_cce_p*l2_banks_p-1:0] dma_data_v_li, dma_data_ready_and_lo;
+   bp_processor
     #(.bp_params_p(bp_params_p))
     blackparrot
      (.clk_i(aclk)
@@ -348,31 +343,26 @@ module top_zynq
   
       ,.my_did_i('0)
       ,.host_did_i('0)
-      ,.my_cord_i('0)
   
       ,.mem_fwd_header_o(mem_fwd_header_lo)
       ,.mem_fwd_data_o(mem_fwd_data_lo)
       ,.mem_fwd_v_o(mem_fwd_v_lo)
       ,.mem_fwd_ready_and_i(mem_fwd_ready_and_li)
-      ,.mem_fwd_last_o()
   
       ,.mem_rev_header_i(mem_rev_header_li)
       ,.mem_rev_data_i(mem_rev_data_li)
       ,.mem_rev_v_i(mem_rev_v_li)
       ,.mem_rev_ready_and_o(mem_rev_ready_and_lo)
-      ,.mem_rev_last_i(1'b1)
   
       ,.mem_fwd_header_i(mem_fwd_header_li)
       ,.mem_fwd_data_i(mem_fwd_data_li)
       ,.mem_fwd_v_i(mem_fwd_v_li)
       ,.mem_fwd_ready_and_o(mem_fwd_ready_and_lo)
-      ,.mem_fwd_last_i(1'b1)
   
       ,.mem_rev_header_o(mem_rev_header_lo)
       ,.mem_rev_data_o(mem_rev_data_lo)
       ,.mem_rev_v_o(mem_rev_v_lo)
       ,.mem_rev_ready_and_i(mem_rev_ready_and_li)
-      ,.mem_rev_last_o()
   
       ,.dma_pkt_o(dma_pkt_lo)
       ,.dma_pkt_v_o(dma_pkt_v_lo)
@@ -387,30 +377,51 @@ module top_zynq
       ,.dma_data_ready_and_i(dma_data_ready_and_li)
       );
 
-  // Unswizzle the dram
-  bsg_cache_dma_pkt_s [num_cce_p-1:0][l2_banks_p-1:0] dma_pkt;
-  for (genvar i = 0; i < num_cce_p; i++)
-    begin : rof3
-      for (genvar j = 0; j < l2_banks_p; j++)
-        begin : address_hash
-          logic [daddr_width_p-1:0] daddr_lo;
-          bp_me_dram_hash_decode
-           #(.bp_params_p(bp_params_p))
-            dma_addr_hash
-            (.daddr_i(dma_pkt_lo[i][j].addr)
-             ,.daddr_o(dma_pkt[i][j].addr)
-             );
-          assign dma_pkt[i][j].write_not_read = dma_pkt_lo[i][j].write_not_read;
-          assign dma_pkt[i][j].mask = dma_pkt_lo[i][j].mask;
-        end
+  // If necessary, downsize to axi data width. This could be done in bsg_cache_to_axi,
+  //   but punt for now
+  logic [num_cce_p*l2_banks_p-1:0][C_M00_AXI_DATA_WIDTH-1:0] axi_dma_data_lo;
+  logic [num_cce_p*l2_banks_p-1:0] axi_dma_data_v_lo, axi_dma_data_ready_and_li;
+  logic [num_cce_p*l2_banks_p-1:0][C_M00_AXI_DATA_WIDTH-1:0] axi_dma_data_li;
+  logic [num_cce_p*l2_banks_p-1:0] axi_dma_data_v_li, axi_dma_data_yumi_lo;
+  for (genvar i = 0; i < num_cce_p*l2_banks_p; i++)
+    begin : narrow
+      bsg_serial_in_parallel_out_full
+       #(.width_p(C_M00_AXI_DATA_WIDTH), .els_p(l2_fill_width_p/C_M00_AXI_DATA_WIDTH))
+       dma_piso
+        (.clk_i(aclk)
+         ,.reset_i(~aresetn)
+
+         ,.data_i(axi_dma_data_lo[i])
+         ,.v_i(axi_dma_data_v_lo[i])
+         ,.ready_o(axi_dma_data_ready_and_li[i])
+
+         ,.data_o(dma_data_li[i])
+         ,.v_o(dma_data_v_li[i])
+         ,.yumi_i(dma_data_ready_and_lo[i] & dma_data_v_li[i])
+         );
+
+      bsg_parallel_in_serial_out
+       #(.width_p(C_M00_AXI_DATA_WIDTH), .els_p(l2_fill_width_p/C_M00_AXI_DATA_WIDTH))
+       dma_sipo
+        (.clk_i(aclk)
+         ,.reset_i(~aresetn)
+
+         ,.data_i(dma_data_lo[i])
+         ,.valid_i(dma_data_v_lo[i])
+         ,.ready_and_o(dma_data_ready_and_li[i])
+
+         ,.data_o(axi_dma_data_li[i])
+         ,.valid_o(axi_dma_data_v_li[i])
+         ,.yumi_i(axi_dma_data_yumi_lo[i])
+         );
     end
 
    import bsg_axi_pkg::*;
    bsg_cache_to_axi
     #(.addr_width_p(daddr_width_p)
-      ,.data_width_p(l2_fill_width_p)
+      ,.data_width_p(C_M00_AXI_DATA_WIDTH)
       ,.mask_width_p(l2_block_size_in_words_p)
-      ,.block_size_in_words_p(l2_block_size_in_fill_p)
+      ,.block_size_in_words_p(l2_block_width_p/C_M00_AXI_DATA_WIDTH)
       ,.num_cache_p(num_cce_p*l2_banks_p)
       ,.axi_data_width_p(C_M00_AXI_DATA_WIDTH)
       ,.axi_id_width_p(6)
@@ -421,17 +432,17 @@ module top_zynq
      (.clk_i(aclk)
       ,.reset_i(~aresetn)
 
-      ,.dma_pkt_i(dma_pkt)
+      ,.dma_pkt_i(dma_pkt_lo)
       ,.dma_pkt_v_i(dma_pkt_v_lo)
       ,.dma_pkt_yumi_o(dma_pkt_ready_and_li)
 
-      ,.dma_data_o(dma_data_li)
-      ,.dma_data_v_o(dma_data_v_li)
-      ,.dma_data_ready_i(dma_data_ready_and_lo)
+      ,.dma_data_o(axi_dma_data_lo)
+      ,.dma_data_v_o(axi_dma_data_v_lo)
+      ,.dma_data_ready_i(axi_dma_data_ready_and_li)
 
-      ,.dma_data_i(dma_data_lo)
-      ,.dma_data_v_i(dma_data_v_lo)
-      ,.dma_data_yumi_o(dma_data_ready_and_li)
+      ,.dma_data_i(axi_dma_data_li)
+      ,.dma_data_v_i(axi_dma_data_v_li)
+      ,.dma_data_yumi_o(axi_dma_data_yumi_lo)
 
       ,.axi_awid_o(m00_axi_awid)
       ,.axi_awaddr_addr_o(axi_awaddr)

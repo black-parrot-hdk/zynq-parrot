@@ -369,9 +369,9 @@ module top_zynq
    // to increment the counters.
    //
    if (cce_type_p != e_cce_uce)
-     assign minstret_lo = blackparrot.m.multicore.cc.y[0].x[0].tile_node.tile_node.tile.core.core_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
+     assign minstret_lo = blackparrot.processor.m.multicore.cc.y[0].x[0].tile_node.tile_node.tile.core.core_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
    else
-     assign minstret_lo = blackparrot.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
+     assign minstret_lo = blackparrot.processor.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
 
    // Address Translation (MBT):
    //
