@@ -35,7 +35,7 @@ simv: $(HOST_PROGRAM) $(FLIST)
 		2>&1 | tee -i $(BUILD_LOG)
 
 RUN_LOG ?= run.log
-run: simv
+run: simv $(RUN_COLLATERAL)
 	./$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
 
 clean:
@@ -48,6 +48,7 @@ clean:
 	-rm -rf run.log
 	-rm -rf prog.elf
 	-rm -rf *.trace
+	-rm -rf *.nbf
 
 view:
 	$(_DVE) -full64 -vpd vcdplus.vpd
