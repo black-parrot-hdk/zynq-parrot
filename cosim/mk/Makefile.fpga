@@ -18,7 +18,7 @@ all:
 	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.fpga
 
 EXE ?= control-program
-run: $(EXE)
+run: $(EXE) $(RUN_COLLATERAL)
 	sudo ./$< $(SIM_ARGS) | tee run.log
 
 $(EXE): $(HOST_PROGRAM)
@@ -58,4 +58,5 @@ clean:
 	rm -rf $(EXE)
 	rm -rf sds_trace_data.dat
 	rm -rf $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.hwh $(BASENAME)_bd_1_bd.tcl
+	-rm -rf *.nbf
 

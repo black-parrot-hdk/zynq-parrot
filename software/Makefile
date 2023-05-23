@@ -12,7 +12,7 @@ SED ?= sed
 suite-binaries:=$(shell test -d $(BLACKPARROT_SDK_DIR)/prog/$(SUITE) && find $(BLACKPARROT_SDK_DIR)/prog/$(SUITE) -iname "*.riscv")
 
 checkout_tools:
-	cd ../software/import; git submodule update --init black-parrot-sdk
+	cd ../software/import; git submodule update --init $(BLACKPARROT_SDK_DIR)
 
 #build once (x86 server); takes about 15 minutes
 build_tools: checkout_tools
@@ -97,7 +97,7 @@ clean_logs:
 	rm -rf $(SOFTWARE_NBF_DIR)/*.log
 
 # run on x86
-VPATH := $(wildcard ../cosim/import/black-parrot-sdk/prog/*)
+VPATH := $(wildcard $(BLACKPARROT_SDK_DIR)/prog/*)
 %.nbf: %.riscv
 	$(RISCV_OBJCOPY) -O verilog $< $*.mem
 	$(SED) -i "s/@8/@0/g" $*.mem
