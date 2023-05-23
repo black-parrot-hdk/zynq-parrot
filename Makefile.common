@@ -62,5 +62,8 @@ export PYTHON2         ?= PYTHONPATH=$(COSIM_PY_DIR) python2
 export PYTHON3         ?= PYTHONPATH=$(COSIM_PY_DIR) python3
 export PYTHON          ?= $(PYTHON3)
 
+export SED      ?= sed
+export GREP     ?= grep
+
 export PATH := $(BP_TOOLS_DIR)/install/bin:$(BP_SDK_DIR)/install/bin:$(COSIM_PY_DIR):$(PATH)
 
