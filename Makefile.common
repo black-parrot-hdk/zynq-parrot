@@ -2,6 +2,10 @@
 # need to set the shell so that source works
 export SHELL := /bin/bash
 
+# Set up cad tools if using a non-bsg_cadenv environment
+export BSG_CADENV_DIR ?= $(BP_TOOLS_DIR)/bsg_cadenv
+-include $(BSG_CADENV_DIR)/cadenv.mk
+
 export CURR_SRC_DIR          ?= $(CURR)/../v
 export CURR_TCL_DIR          ?= $(CURR)/../tcl
 
@@ -48,10 +52,6 @@ export BSG_REPLICANT_DIR     ?= $(SOFTWARE_IMPORT_DIR)/bsg_replicant
 # Override to zynq-parrot version
 export BP_SDK_DIR            ?= $(BLACKPARROT_SDK_DIR)
 export PLATFORM              ?= zynqparrot
-
-# Set up cad tools if using a non-bsg_cadenv environment
-export BSG_CADENV_DIR ?= $(BP_TOOLS_DIR)/bsg_cadenv
--include $(BSG_CADENV_DIR)/cadenv.mk
 
 # TODO: Check verilator version
 ifeq ($(shell /usr/bin/arch),armv7l)
