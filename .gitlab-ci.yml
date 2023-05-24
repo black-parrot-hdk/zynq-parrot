@@ -10,6 +10,7 @@ stages:
   - all
 
 .job_template: &job_definition
+  when: manual
   variables:
     VIVADO_MODE: "batch"
   artifacts:

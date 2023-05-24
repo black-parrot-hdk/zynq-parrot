@@ -28,10 +28,23 @@ export HARDFLOAT_DIR         ?= $(BP_EXTERNAL_DIR)/HardFloat
 # Override to zynq-parrot version
 export BP_TOOLS_DIR          ?= $(BLACKPARROT_TOOLS_DIR)
 
+export BSG_MANYCORE_DIR          ?= $(COSIM_DIR)/import/bsg_manycore
+export BSG_MANYCORE_SOFTWARE_DIR ?= $(BSG_MANYCORE_DIR)/software
+export BSG_MANYCORE_RTL_DIR      ?= $(BSG_MANYCORE_DIR)/v
+# Override to zynq-parrot machine path
+# Only 2x2 is supported at the moment
+export BSG_MACHINE_PATH          ?= $(BSG_MANYCORE_DIR)/machines/pod_1x1_2X2Y
+ifeq (,$(wildcard $(BSG_CADENV_DIR)/cadenv.mk))
+export IGNORE_CADENV 			 ?= 1
+else
+export CAD_DIR                   ?= $(BSG_CADENV_DIR)
+endif
+
 export SOFTWARE_DIR          ?= $(TOP)/software
 export SOFTWARE_IMPORT_DIR   ?= $(SOFTWARE_DIR)/import
 export SOFTWARE_NBF_DIR      ?= $(SOFTWARE_DIR)/nbf
 export BLACKPARROT_SDK_DIR   ?= $(SOFTWARE_IMPORT_DIR)/black-parrot-sdk
+export BSG_REPLICANT_DIR     ?= $(SOFTWARE_IMPORT_DIR)/bsg_replicant
 # Override to zynq-parrot version
 export BP_SDK_DIR            ?= $(BLACKPARROT_SDK_DIR)
 export PLATFORM              ?= zynqparrot

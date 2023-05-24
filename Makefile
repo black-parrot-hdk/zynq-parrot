@@ -13,8 +13,11 @@ prep: checkout
 	$(MAKE) -C $(BLACKPARROT_SDK_DIR) prog
 
 prep_bsg: prep
+	# BlackParrot
 	$(MAKE) -C $(BLACKPARROT_TOOLS_DIR) tools_bsg
 	$(MAKE) -j1 -C $(BLACKPARROT_SDK_DIR) spec2000 spec2006 spec2017
+	# Manycore
+	$(MAKE) -C $(BSG_MANYCORE_DIR) tools
 
 bleach_all:
 	cd $(TOP); git clean -fdx; git submodule deinit -f .

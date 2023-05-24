@@ -39,16 +39,16 @@ run: simv $(RUN_COLLATERAL)
 	./$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
 
 clean:
-	-rm -rf csrc/
-	-rm -rf ucli.key
-	-rm -rf vc_hdrs.h
-	-rm -rf flist*.vcs
-	-rm -rf simv* vcdplus.vpd
-	-rm -rf build.log
-	-rm -rf run.log
-	-rm -rf prog.elf
-	-rm -rf *.trace
-	-rm -rf *.nbf
+	rm -rf csrc/
+	rm -rf ucli.key
+	rm -rf vc_hdrs.h
+	rm -rf flist*.vcs
+	rm -rf simv* vcdplus.vpd
+	rm -rf build.log
+	rm -rf run.log
+	rm -rf *.nbf
+	rm -rf *.elf
+	rm -rf *.trace
 
 view:
 	$(_DVE) -full64 -vpd vcdplus.vpd
