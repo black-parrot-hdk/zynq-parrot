@@ -60,14 +60,75 @@
 #define DRAM_BASE_ADDR  0x80000000U
 #define DRAM_MAX_ALLOC_SIZE 0x20000000U
 
-// BP
-#define BP_MTIME    0x30bff8
-#define BP_MTIMECMP 0x304000
-
 #include "bsg_manycore_request_packet.h"
 #include "bsg_manycore_response_packet.h"
 
 void nbf_load(bp_zynq_pl *zpl, char *filename);
+
+inline void send_mc_request_packet(bp_zynq_pl *zpl, hb_mc_request_packet_t *packet) {
+  int axil_len = sizeof(hb_mc_request_packet_t) / 4;
+
+  uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
+  for (int i = 0; i < axil_len; i++) {
+    while (!zpl->axil_read(GP0_RD_EP_REQ_FIFO_CTR));
+    zpl->axil_write(GP0_WR_EP_REQ_FIFO_DATA, pkt_data[i], 0xf);
+  }
+}
+
+inline void recv_mc_response_packet(bp_zynq_pl *zpl, hb_mc_response_packet_t *packet) {
+  int axil_len = sizeof(hb_mc_response_packet_t) / 4;
+
+  uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
+  for (int i = 0; i < axil_len; i++) {
+    while (!zpl->axil_read(GP0_RD_MC_RSP_FIFO_CTR));
+    pkt_data[i] = zpl->axil_read(GP0_RD_MC_RSP_FIFO_DATA);
+  }
+}
+
+inline void recv_mc_request_packet(bp_zynq_pl *zpl, hb_mc_request_packet_t *packet) {
+  int axil_len = sizeof(hb_mc_request_packet_t) / 4;
+
+  uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
+  for (int i = 0; i < axil_len; i++) {
+    while (!zpl->axil_read(GP0_RD_MC_REQ_FIFO_CTR));
+    pkt_data[i] = zpl->axil_read(GP0_RD_MC_REQ_FIFO_DATA);
+  }
+}
+
+inline void send_mc_write(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa, int32_t data) {
+  hb_mc_request_packet_t req_pkt;
+
+  req_pkt.op_v2   = 2; // SW
+  req_pkt.reg_id  = 0xff; // unused
+  req_pkt.payload = data;
+  req_pkt.x_src   = 2; // Hardcoded host coord
+  req_pkt.y_src   = 0; //
+  req_pkt.x_dst   = x;
+  req_pkt.y_dst   = y;
+  req_pkt.addr    = epa;
+
+  send_mc_request_packet(zpl, &req_pkt);
+}
+
+inline int32_t send_mc_read(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa) {
+  hb_mc_request_packet_t req_pkt;
+
+  req_pkt.op_v2   = 0; // LD
+  req_pkt.reg_id  = 0xff; // unused
+  req_pkt.payload = 0; // Ignore payload
+  req_pkt.x_src   = 2; // Hardcoded host coord
+  req_pkt.y_src   = 0; //
+  req_pkt.x_dst   = x;
+  req_pkt.y_dst   = y;
+  req_pkt.addr    = epa;
+
+  send_mc_request_packet(zpl, &req_pkt);
+
+  hb_mc_response_packet_t resp_pkt;
+  recv_mc_response_packet(zpl, &resp_pkt);
+
+  return resp_pkt.data;
+}
 
 #ifndef VCS
 int main(int argc, char **argv) {
@@ -141,16 +202,11 @@ extern "C" void cosim_main(char *argstr) {
   int finished = 0;
   while(1) {
     bsg_pr_dbg_ps("Waiting for incoming request packet\n");
-    while(zpl->axil_read(GP0_RD_MC_REQ_FIFO_CTR) == 0);
+    hb_mc_request_packet_t mc_pkt;
+    recv_mc_request_packet(zpl, &mc_pkt);
     bsg_pr_dbg_ps("Request packet signaled\n");
-    int32_t pkt_data[4];
-    pkt_data[0] = zpl->axil_read(GP0_RD_MC_REQ_FIFO_DATA);
-    pkt_data[1] = zpl->axil_read(GP0_RD_MC_REQ_FIFO_DATA);
-    pkt_data[2] = zpl->axil_read(GP0_RD_MC_REQ_FIFO_DATA);
-    pkt_data[3] = zpl->axil_read(GP0_RD_MC_REQ_FIFO_DATA);
-    hb_mc_request_packet_t *mc_pkt = reinterpret_cast<hb_mc_request_packet_t *>(&pkt_data[0]);
-    int mc_epa = mc_pkt->addr << 2;
-    int mc_data = mc_pkt->payload;
+    int mc_epa = mc_pkt.addr << 2;
+    int mc_data = mc_pkt.payload;
     bsg_pr_dbg_ps("Request packet [%x] = %x\n", mc_epa, mc_data);
     if (mc_epa == 0xeadc || mc_epa == 0xeee0) {
         printf("%c", mc_data & 0xff);
@@ -219,54 +275,15 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
       bsg_pr_info("Credits drained\n");
       continue;
     } else {
-      hb_mc_request_packet_t req_pkt;
-      req_pkt.op_v2   = 2; // SW
-      req_pkt.reg_id  = 0xff; // unused
-      req_pkt.payload = nbf_data;
-      req_pkt.x_src   = 2; // Hardcoded host coord
-      req_pkt.y_src   = 0; //
-      req_pkt.x_dst   = x_tile;
-      req_pkt.y_dst   = y_tile;
-      req_pkt.addr    = epa;
-
-      uint32_t *pkt_data = reinterpret_cast<uint32_t *>(&req_pkt);
-      zpl->axil_write(GP0_WR_EP_REQ_FIFO_DATA, pkt_data[0], 0xf);
-      zpl->axil_write(GP0_WR_EP_REQ_FIFO_DATA, pkt_data[1], 0xf);
-      zpl->axil_write(GP0_WR_EP_REQ_FIFO_DATA, pkt_data[2], 0xf);
-      zpl->axil_write(GP0_WR_EP_REQ_FIFO_DATA, pkt_data[3], 0xf);
+      bsg_pr_dbg_ps("Writing: [%x]<-%x\n", req_pkt.addr, req_pkt.payload);
+      send_mc_write(zpl, x_tile, y_tile, epa, nbf_data);
 
 #ifdef VERIFY_NBF
-      bsg_pr_dbg_ps("Writing: [%x]<-%x\n", req_pkt.addr, req_pkt.payload);
 
-      hb_mc_request_packet_t read_pkt;
-      read_pkt.op_v2   = 0; // LD
-      read_pkt.reg_id  = 0xff; // unused
-      read_pkt.payload = 0; // Ignore payload
-      read_pkt.x_src   = 2; // Hardcoded host coord
-      read_pkt.y_src   = 0; //
-      read_pkt.x_dst   = x_tile;
-      read_pkt.y_dst   = y_tile;
-      read_pkt.addr    = epa;
-
-      pkt_data = reinterpret_cast<uint32_t *>(&read_pkt);
-      zpl->axil_write(GP0_WR_EP_REQ_FIFO_DATA, pkt_data[0], 0xf);
-      zpl->axil_write(GP0_WR_EP_REQ_FIFO_DATA, pkt_data[1], 0xf);
-      zpl->axil_write(GP0_WR_EP_REQ_FIFO_DATA, pkt_data[2], 0xf);
-      zpl->axil_write(GP0_WR_EP_REQ_FIFO_DATA, pkt_data[3], 0xf);
-
-      bsg_pr_dbg_ps("Querying: %x\n", req_pkt.addr);
-
-      while(zpl->axil_read(GP0_RD_MC_RSP_FIFO_CTR) == 0);
-
-      hb_mc_response_packet_t resp_pkt;
-      pkt_data = reinterpret_cast<uint32_t *>(&resp_pkt);
-      pkt_data[0] = zpl->axil_read(GP0_RD_MC_RSP_FIFO_DATA);
-      pkt_data[1] = zpl->axil_read(GP0_RD_MC_RSP_FIFO_DATA);
-      pkt_data[2] = zpl->axil_read(GP0_RD_MC_RSP_FIFO_DATA);
-      pkt_data[3] = zpl->axil_read(GP0_RD_MC_RSP_FIFO_DATA);
-
-      bsg_pr_dbg_ps("x_dst: %x y_dst: %x, load_id: %x data: %x, op: %x\n",
-        	   resp_pkt.x_dst, resp_pkt.y_dst, resp_pkt.load_id, resp_pkt.data, resp_pkt.op);
+      int32_t verif_data;
+     
+      bsg_pr_dbg_ps("Querying: %x\n", epa);
+      verif_data = send_mc_read(zpl, x_tile, y_tile, epa);
 
       // Some verification reads are expected to fail e.g. CSRs
       if (req_pkt.payload == resp_pkt.data) {

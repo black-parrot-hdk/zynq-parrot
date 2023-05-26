@@ -77,23 +77,10 @@ bool decode_bp_output(bp_zynq_pl *zpl, uint32_t addr, int32_t data);
 std::queue<int> getchar_queue;
 std::bitset<BP_NCPUS> done_vec;
 
-inline void send_bp_fwd_packet(bp_zynq_pl *zpl, uint64_t addr, int32_t data, int8_t wmask, bool wr_not_rd) {
-  bp_bedrock_packet packet;
-  bp_bedrock_mem_payload payload;
-  
-  payload.lce_id = 2; // I/O in unicore
-  
-  packet.msg_type = wr_not_rd ? BEDROCK_MEM_UC_WR : BEDROCK_MEM_UC_RD;
-  packet.subop    = BEDROCK_STORE; 
-  packet.addr0    = (addr >> 0 ) & 0xffffffff;
-  packet.addr1    = (addr >> 32) & 0xffffffff;
-  packet.size     = 2; // Only support 32b currently
-  packet.payload  = payload;
-  packet.data     = data;
-  
+inline void send_bp_fwd_packet(bp_zynq_pl *zpl, bp_bedrock_packet *packet) {
   int axil_len = sizeof(bp_bedrock_packet) / 4;
   
-  uint32_t *pkt_data = reinterpret_cast<uint32_t *>(&packet);
+  uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
   for (int i = 0; i < axil_len; i++) {
     while (!zpl->axil_read(GP0_RD_PS2PL_FIFO_CTRS));
     zpl->axil_write(GP0_WR_PS2PL_FIFO_DATA, pkt_data[i], 0xf);
@@ -111,15 +98,41 @@ inline void recv_rev_packet(bp_zynq_pl *zpl, bp_bedrock_packet *packet) {
 }
 
 inline void send_bp_write(bp_zynq_pl *zpl, uint64_t addr, int32_t data, int8_t wmask) {
-  send_bp_fwd_packet(zpl, addr, data, wmask, 1);
+  bp_bedrock_packet fwd_packet;
+  bp_bedrock_mem_payload payload;
+
+  payload.lce_id = 2; // I/O in unicore
+
+  fwd_packet.msg_type = BEDROCK_MEM_UC_WR;
+  fwd_packet.subop    = BEDROCK_STORE;
+  fwd_packet.addr0    = (addr >> 0 ) & 0xffffffff;
+  fwd_packet.addr1    = (addr >> 32) & 0xffffffff;
+  fwd_packet.size     = 2; // Only support 32b currently
+  fwd_packet.payload  = payload;
+  fwd_packet.data     = data;
+
+  send_bp_fwd_packet(zpl, &fwd_packet);
 }
 
 inline int32_t send_bp_read(bp_zynq_pl *zpl, uint64_t addr) {
-  bp_bedrock_packet packet;
-  send_bp_fwd_packet(zpl, addr, 0, 0, 0);
-  recv_rev_packet(zpl, &packet);
+  bp_bedrock_packet fwd_packet;
+  bp_bedrock_mem_payload payload;
 
-  return packet.data;
+  payload.lce_id = 2; // I/O in unicore
+
+  fwd_packet.msg_type = BEDROCK_MEM_UC_RD;
+  fwd_packet.subop    = BEDROCK_STORE;
+  fwd_packet.addr0    = (addr >> 0 ) & 0xffffffff;
+  fwd_packet.addr1    = (addr >> 32) & 0xffffffff;
+  fwd_packet.size     = 2; // Only support 32b currently
+  fwd_packet.payload  = payload;
+
+  send_bp_fwd_packet(zpl, &fwd_packet);
+
+  bp_bedrock_packet rev_packet;
+  recv_rev_packet(zpl, &rev_packet);
+
+  return rev_packet.data;
 }
 
 void *monitor(void *vargp) {
