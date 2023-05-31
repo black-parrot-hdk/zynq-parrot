@@ -40,6 +40,9 @@ clean:
 	rm -rf *.nbf
 	rm -rf *.elf
 	rm -rf *.trace
+	rm -rf *.riscv*
+	rm -rf *.rv*o*
+	rm -rf *.dump*
 
 view:
 	gtkwave -f trace.fst

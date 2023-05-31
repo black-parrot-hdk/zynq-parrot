@@ -107,6 +107,7 @@ inline void send_mc_write(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa, i
   req_pkt.y_dst   = y;
   req_pkt.addr    = epa;
 
+  bsg_pr_dbg_ps("Writing: [%x]<-%x\n", req_pkt.addr, req_pkt.payload);
   send_mc_request_packet(zpl, &req_pkt);
 }
 
@@ -205,7 +206,7 @@ extern "C" void cosim_main(char *argstr) {
     hb_mc_request_packet_t mc_pkt;
     recv_mc_request_packet(zpl, &mc_pkt);
     bsg_pr_dbg_ps("Request packet signaled\n");
-    int mc_epa = mc_pkt.addr << 2;
+    int mc_epa = (mc_pkt.addr << 2) & 0xffff; // Trim to 16b EPA
     int mc_data = mc_pkt.payload;
     bsg_pr_dbg_ps("Request packet [%x] = %x\n", mc_epa, mc_data);
     if (mc_epa == 0xeadc || mc_epa == 0xeee0) {
@@ -216,6 +217,8 @@ extern "C" void cosim_main(char *argstr) {
       if (finished == NUM_FINISH) {
         break;
       }
+    } else {
+      bsg_pr_info("Errant request packet: %x %x\n", mc_epa, mc_data);
     }
   }
 
@@ -275,7 +278,6 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
       bsg_pr_info("Credits drained\n");
       continue;
     } else {
-      bsg_pr_dbg_ps("Writing: [%x]<-%x\n", req_pkt.addr, req_pkt.payload);
       send_mc_write(zpl, x_tile, y_tile, epa, nbf_data);
 
 #ifdef VERIFY_NBF

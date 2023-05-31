@@ -205,7 +205,7 @@ extern "C" void cosim_main(char *argstr) {
     hb_mc_request_packet_t mc_pkt;
     recv_mc_request_packet(zpl, &mc_pkt);
     bsg_pr_dbg_ps("Request packet signaled\n");
-    int mc_epa = mc_pkt.addr << 2;
+    int mc_epa = (mc_pkt.addr << 2) & 0xffff; // Trim to 16b EPA
     int mc_data = mc_pkt.payload;
     bsg_pr_dbg_ps("Request packet [%x] = %x\n", mc_epa, mc_data);
     if (mc_epa == 0xeadc || mc_epa == 0xeee0) {
@@ -216,6 +216,8 @@ extern "C" void cosim_main(char *argstr) {
       if (finished == NUM_FINISH) {
         break;
       }
+    } else {
+      bsg_pr_info("Errant request packet: %x %x\n", mc_epa, mc_data);
     }
   }
 

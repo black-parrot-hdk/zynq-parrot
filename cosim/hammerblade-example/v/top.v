@@ -16,6 +16,7 @@ module top
 `ifdef FPGA
     input wire                                   aclk
     ,input wire                                  aresetn
+    ,input wire                                  rt_clk
 
     ,input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
     ,input wire [2 : 0]                          s00_axi_awprot
@@ -82,6 +83,13 @@ module top
     );
 `else
     );
+
+    localparam rt_clk_period_lp = 2500000;
+    logic rt_clk;
+    bsg_nonsynth_clock_gen
+     #(.cycle_time_p(rt_clk_period_lp))
+     rt_clk_gen
+      (.o(rt_clk));
 
     localparam aclk_period_lp = 50000;
     logic aclk;
@@ -234,6 +242,7 @@ module top
      top_fpga_inst
      ( .aclk           (aclk)
       ,.aresetn        (aresetn)
+      ,.rt_clk         (rt_clk)
       ,.s00_axi_awaddr (s00_axi_awaddr)
       ,.s00_axi_awprot (s00_axi_awprot)
       ,.s00_axi_awvalid(s00_axi_awvalid)

@@ -12,9 +12,39 @@ BASENAME   ?= hammerblade
 #############################
 # Run Collateral
 #############################
-%.nbf:
-	$(MAKE) -C $(BSG_MANYCORE_SOFTWARE_DIR)/spmd/$* clean main.nbf
-	mv $(BSG_MANYCORE_SOFTWARE_DIR)/spmd/$*/main.nbf $@
+include $(BSG_MACHINE_PATH)/Makefile.machine.include
+NBF_SCRIPT ?= $(BSG_MANYCORE_DIR)/software/py/nbf.py
+%.riscv32:
+	$(MAKE) -C $(BSG_MANYCORE_SOFTWARE_DIR)/spmd/$* clean main.riscv
+	mv $(BSG_MANYCORE_SOFTWARE_DIR)/spmd/$*/main.riscv $@
 
+# Vary per program
+bsg_tiles_org_X            ?= 0
+bsg_tiles_org_Y            ?= 0
+bsg_tiles_X                ?= 1
+bsg_tiles_Y                ?= 1
+bsg_pods_X                 ?= 1
+bsg_pods_Y                 ?= 1
+bsg_elf_off_chip_mem       ?= 1
+skip_dram_instruction_load ?= 0
+
+%.nbf: %.riscv32
+	python $(NBF_SCRIPT) \
+		$< \
+		$(BSG_MACHINE_GLOBAL_X) $(BSG_MACHINE_GLOBAL_Y) \
+		$(BSG_MACHINE_VCACHE_WAY) $(BSG_MACHINE_VCACHE_SET) \
+		$(BSG_MACHINE_VCACHE_BLOCK_SIZE_WORDS) \
+		$(BSG_MACHINE_DRAM_SIZE_WORDS) $(BSG_MACHINE_MAX_EPA_WIDTH) \
+		$(bsg_tiles_org_X) $(bsg_tiles_org_Y) \
+		$(bsg_tiles_X) $(bsg_tiles_Y) $(bsg_elf_off_chip_mem) \
+		$(BSG_MACHINE_ORIGIN_X_CORD) $(BSG_MACHINE_ORIGIN_Y_CORD) \
+		$(BSG_MACHINE_PODS_X) $(BSG_MACHINE_PODS_Y) \
+		$(bsg_pods_X) $(bsg_pods_Y) \
+		$(BSG_MACHINE_NUM_VCACHE_ROWS) \
+		$(skip_dram_instruction_load) \
+		$(NBF_PARAMS) > $*.nbf
+	rm main_dram.mem main_dmem.mem
+
+NBF_FILE ?= hello.nbf
 RUN_COLLATERAL = $(NBF_FILE)
 

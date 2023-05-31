@@ -30,6 +30,7 @@ module top_zynq
    )
   (  input wire                                  aclk
    , input wire                                  aresetn
+   , input wire                                  rt_clk
    
    // Ports of Axi Slave Bus Interface S00_AXI
    , input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
@@ -206,16 +207,16 @@ module top_zynq
    `declare_bsg_manycore_link_sif_s(addr_width_p,data_width_p,x_cord_width_p,y_cord_width_p);
    `declare_bsg_manycore_ruche_x_link_sif_s(addr_width_p,data_width_p,x_cord_width_p,y_cord_width_p);
    `declare_bsg_ready_and_link_sif_s(wh_flit_width_p, wh_link_sif_s);
-   bsg_manycore_link_sif_s [S:N][(num_pods_x_p*num_tiles_x_p)-1:0] ver_link_sif_li;
-   bsg_manycore_link_sif_s [S:N][(num_pods_x_p*num_tiles_x_p)-1:0] ver_link_sif_lo;
-   wh_link_sif_s [E:W][num_pods_y_p-1:0][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0] wh_link_sif_li;
-   wh_link_sif_s [E:W][num_pods_y_p-1:0][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0] wh_link_sif_lo;
-   bsg_manycore_link_sif_s [E:W][num_pods_y_p-1:0][num_tiles_y_p-1:0] hor_link_sif_li;
-   bsg_manycore_link_sif_s [E:W][num_pods_y_p-1:0][num_tiles_y_p-1:0] hor_link_sif_lo;
+   bsg_manycore_link_sif_s [S:N][num_tiles_x_p-1:0] ver_link_sif_li;
+   bsg_manycore_link_sif_s [S:N][num_tiles_x_p-1:0] ver_link_sif_lo;
+   bsg_manycore_link_sif_s [E:W][num_tiles_y_p-1:0] hor_link_sif_li;
+   bsg_manycore_link_sif_s [E:W][num_tiles_y_p-1:0] hor_link_sif_lo;
+   wh_link_sif_s [E:W][S:N] wh_link_sif_li;
+   wh_link_sif_s [E:W][S:N] wh_link_sif_lo;
 
    // BSG TAG MASTER
    logic tag_done_lo;
-   bsg_tag_s [num_pods_y_p-1:0][num_pods_x_p-1:0] pod_tags_lo;
+   bsg_tag_s pod_tags_lo;
  
    // Tag bitbang
    logic tag_clk_r_lo, tag_data_r_lo;
@@ -250,17 +251,18 @@ module top_zynq
 
    logic reset_r;
    wire reset_n = ~sys_resetn;
-   bsg_dff_chain #(
-     .width_p(1)
-     ,.num_stages_p(reset_depth_p)
-   ) reset_dff (
-     .clk_i(aclk)
-     ,.data_i(reset_n)
-     ,.data_o(reset_r)
-   );
+   bsg_dff_chain
+    #(.width_p(1)
+      ,.num_stages_p(reset_depth_p)
+      )
+    reset_dff
+     (.clk_i(aclk)
+      ,.data_i(reset_n)
+      ,.data_o(reset_r)
+      );
 
-   bsg_manycore_pod_mesh_array #(
-      .num_tiles_x_p(num_tiles_x_p)
+   bsg_manycore_pod_mesh_array
+    #(.num_tiles_x_p(num_tiles_x_p)
       ,.num_tiles_y_p(num_tiles_y_p)
       ,.pod_x_cord_width_p(pod_x_cord_width_p)
       ,.pod_y_cord_width_p(pod_y_cord_width_p)
@@ -297,8 +299,9 @@ module top_zynq
       ,.num_pods_x_p(num_pods_x_p)
 
       ,.reset_depth_p(reset_depth_p)
-    ) DUT (
-      .clk_i(aclk)
+      )
+    manycore
+     (.clk_i(aclk)
 
       ,.ver_link_sif_i(ver_link_sif_li)
       ,.ver_link_sif_o(ver_link_sif_lo)
@@ -310,358 +313,350 @@ module top_zynq
       ,.hor_link_sif_o(hor_link_sif_lo)
 
       ,.pod_tags_i(tag_lines_lo) 
-    );
+      );
 
   // IO ROUTER
-  bsg_manycore_link_sif_s [(num_pods_x_p*num_tiles_x_p)-1:0][S:P] io_link_sif_li;
-  bsg_manycore_link_sif_s [(num_pods_x_p*num_tiles_x_p)-1:0][S:P] io_link_sif_lo;
+  bsg_manycore_link_sif_s [num_tiles_x_p-1:0][S:P] io_link_sif_li;
+  bsg_manycore_link_sif_s [num_tiles_x_p-1:0][S:P] io_link_sif_lo;
 
-  for (genvar x = 0; x < num_pods_x_p*num_tiles_x_p; x++) begin: io_rtr_x
-    bsg_manycore_mesh_node #(
-      .x_cord_width_p(x_cord_width_p)
-      ,.y_cord_width_p(y_cord_width_p)
-      ,.addr_width_p(addr_width_p)
-      ,.data_width_p(data_width_p)
-      ,.stub_p(4'b0100) // stub north
-      ,.rev_use_credits_p(rev_use_credits_lp)
-      ,.rev_fifo_els_p(rev_fifo_els_lp)
-    ) io_rtr (
-      .clk_i(aclk)
-      ,.reset_i(reset_r)
+  for (genvar x = 0; x < num_tiles_x_p; x++)
+    begin : io_rtr_x
+      bsg_manycore_mesh_node
+       #(.x_cord_width_p(x_cord_width_p)
+         ,.y_cord_width_p(y_cord_width_p)
+         ,.addr_width_p(addr_width_p)
+         ,.data_width_p(data_width_p)
+         ,.stub_p(4'b0100) // stub north
+         ,.rev_use_credits_p(rev_use_credits_lp)
+         ,.rev_fifo_els_p(rev_fifo_els_lp)
+         )
+       io_rtr
+        (.clk_i(aclk)
+         ,.reset_i(reset_r)
+ 
+         ,.links_sif_i(io_link_sif_li[x][S:W])
+         ,.links_sif_o(io_link_sif_lo[x][S:W])
+ 
+         ,.proc_link_sif_i(io_link_sif_li[x][P])
+         ,.proc_link_sif_o(io_link_sif_lo[x][P])
+ 
+         ,.global_x_i(x_cord_width_p'(num_tiles_x_p+x))
+         ,.global_y_i(y_cord_width_p'(0))
+         );
 
-      ,.links_sif_i(io_link_sif_li[x][S:W])
-      ,.links_sif_o(io_link_sif_lo[x][S:W])
+      // connect to pod array
+      assign ver_link_sif_li[N][x] = io_link_sif_lo[x][S];
+      assign io_link_sif_li[x][S] = ver_link_sif_lo[N][x];
 
-      ,.proc_link_sif_i(io_link_sif_li[x][P])
-      ,.proc_link_sif_o(io_link_sif_lo[x][P])
+      // connect between io rtr
+      if (x < num_tiles_x_p-1)
+        begin
+          assign io_link_sif_li[x][E] = io_link_sif_lo[x+1][W];
+          assign io_link_sif_li[x+1][W] = io_link_sif_lo[x][E];
+        end
+  end
 
-      ,.global_x_i(x_cord_width_p'(num_tiles_x_p+x))
-      ,.global_y_i(y_cord_width_p'(0))
-    );
+  logic [C_S00_AXI_DATA_WIDTH-1:0] mc_req_lo;
+  logic mc_req_v_lo, mc_req_ready_li;
+  logic [C_S00_AXI_DATA_WIDTH-1:0] mc_rsp_lo;
+  logic mc_rsp_v_lo, mc_rsp_ready_li;
+  logic [C_S00_AXI_DATA_WIDTH-1:0] host_req_li;
+  logic host_req_v_li, host_req_ready_lo;
+  logic [C_S00_AXI_DATA_WIDTH-1:0] host_rsp_li;
+  logic host_rsp_v_li, host_rsp_ready_lo;
+  wire [x_cord_width_p-1:0] io_global_x_li = num_tiles_x_p;
+  wire [y_cord_width_p-1:0] io_global_y_li = 0;
+  bsg_manycore_endpoint_to_fifos
+   #(.fifo_width_p(4*C_S00_AXI_DATA_WIDTH)
+     ,.axil_width_p(C_S00_AXI_DATA_WIDTH)
+     ,.x_cord_width_p(x_cord_width_p)
+     ,.y_cord_width_p(y_cord_width_p)
+     ,.addr_width_p(addr_width_p)
+     ,.data_width_p(data_width_p)
+     ,.ep_fifo_els_p(ep_fifo_els_p)
+     ,.credit_counter_width_p(`BSG_WIDTH(max_credits_p))
+     ,.rev_fifo_els_p(rev_fifo_els_lp[0])
+     ,.icache_block_size_in_words_p(icache_block_size_in_words_p)
+     )
+   mc_ep_to_fifos
+    (.clk_i(aclk)
+     ,.reset_i(reset_r)
 
-    // connect to pod array
-    assign ver_link_sif_li[N][x] = io_link_sif_lo[x][S];
-    assign io_link_sif_li[x][S] = ver_link_sif_lo[N][x];
+     // fifo interface
+     ,.mc_req_o(mc_req_lo)
+     ,.mc_req_v_o(mc_req_v_lo)
+     ,.mc_req_ready_i(mc_req_ready_li)
 
-    // connect between io rtr
-    if (x < (num_pods_x_p*num_tiles_x_p)-1) begin
-      assign io_link_sif_li[x][E] = io_link_sif_lo[x+1][W];
-      assign io_link_sif_li[x+1][W] = io_link_sif_lo[x][E];
+     ,.endpoint_req_i(host_req_li)
+     ,.endpoint_req_v_i(host_req_v_li)
+     ,.endpoint_req_ready_o(host_req_ready_lo)
+
+     ,.endpoint_rsp_i(host_rsp_li)
+     ,.endpoint_rsp_v_i(host_rsp_v_li)
+     ,.endpoint_rsp_ready_o(host_rsp_ready_lo)
+
+     ,.mc_rsp_o(mc_rsp_lo)
+     ,.mc_rsp_v_o(mc_rsp_v_lo)
+     ,.mc_rsp_ready_i(mc_rsp_ready_li)
+
+     // manycore link
+     ,.link_sif_i(io_link_sif_lo[0][P])
+     ,.link_sif_o(io_link_sif_li[0][P])
+
+     // Parameterize
+     ,.global_y_i(io_global_y_li)
+     ,.global_x_i(io_global_x_li)
+
+     /* Unused currently */
+     ,.out_credits_used_o(credits_used_lo)
+     );
+
+  assign pl_to_ps_fifo_data_li[0+:1]  = mc_req_lo;
+  assign pl_to_ps_fifo_v_li[0+:1]     = {1{mc_req_ready_li & mc_req_v_lo}};
+  assign mc_req_ready_li              = &pl_to_ps_fifo_ready_lo[0+:1];
+
+  assign pl_to_ps_fifo_data_li[1+:1]  = mc_rsp_lo;
+  assign pl_to_ps_fifo_v_li[1+:1]     = {1{mc_rsp_ready_li & mc_rsp_v_lo}};
+  assign mc_rsp_ready_li              = &pl_to_ps_fifo_ready_lo[1+:1];
+
+  assign host_req_li                  = ps_to_pl_fifo_data_lo[0+:1];
+  assign host_req_v_li                = &ps_to_pl_fifo_v_lo[0+:1];
+  assign ps_to_pl_fifo_yumi_li[0+:1]  = {1{host_req_v_li & host_req_ready_lo}};
+
+  assign host_rsp_li                  = ps_to_pl_fifo_data_lo[1+:1];
+  assign host_rsp_v_li                = &ps_to_pl_fifo_v_lo[1+:1];
+  assign ps_to_pl_fifo_yumi_li[1+:1]  = {1{host_rsp_v_li & host_rsp_ready_lo}};
+
+  // WH to cache dma
+  `declare_bsg_cache_dma_pkt_s(vcache_addr_width_p, vcache_block_size_in_words_p);
+  bsg_cache_dma_pkt_s [E:W][S:N][num_vcaches_per_link_lp-1:0] dma_pkt_lo;
+  logic [E:W][S:N][num_vcaches_per_link_lp-1:0] dma_pkt_v_lo;
+  logic [E:W][S:N][num_vcaches_per_link_lp-1:0] dma_pkt_yumi_li;
+
+  logic [E:W][S:N][num_vcaches_per_link_lp-1:0][vcache_dma_data_width_p-1:0] dma_data_li;
+  logic [E:W][S:N][num_vcaches_per_link_lp-1:0] dma_data_v_li;
+  logic [E:W][S:N][num_vcaches_per_link_lp-1:0] dma_data_ready_lo;
+
+  logic [E:W][S:N][num_vcaches_per_link_lp-1:0][vcache_dma_data_width_p-1:0] dma_data_lo;
+  logic [E:W][S:N][num_vcaches_per_link_lp-1:0] dma_data_v_lo;
+  logic [E:W][S:N][num_vcaches_per_link_lp-1:0] dma_data_yumi_li;
+
+  // Invert WH ruche links
+  // hardcoded for ruche factor = 2
+  `declare_bsg_cache_wh_header_flit_s(wh_flit_width_p, wh_cord_width_p, wh_len_width_p, wh_cid_width_p);
+  for (genvar i = W; i <= E; i++) begin: hs
+    for (genvar k = N; k <= S; k++) begin: py
+      bsg_cache_wh_header_flit_s header_flit_in;
+      assign header_flit_in = wh_link_sif_lo[i][k].data;
+
+      wire [lg_num_vcaches_per_link_lp-1:0] dma_id_li = (num_vcaches_per_link_lp == 1)
+        ? 1'b0
+        : header_flit_in.src_cord[lg_wh_ruche_factor_lp+:lg_num_vcaches_per_link_lp];
+
+      bsg_wormhole_to_cache_dma_fanout
+       #(.num_dma_p(num_vcaches_per_link_lp)
+         ,.dma_addr_width_p(vcache_addr_width_p)
+         ,.dma_mask_width_p(vcache_block_size_in_words_p)
+         ,.dma_burst_len_p(vcache_block_size_in_words_p*vcache_data_width_p/vcache_dma_data_width_p)
+
+         ,.wh_flit_width_p(wh_flit_width_p)
+         ,.wh_cid_width_p(wh_cid_width_p)
+         ,.wh_len_width_p(wh_len_width_p)
+         ,.wh_cord_width_p(wh_cord_width_p)
+         )
+       wh_to_dma
+        (.clk_i(aclk)
+         ,.reset_i(reset_r)
+  
+         ,.wh_link_sif_i(wh_link_sif_lo[i][k])
+         ,.wh_dma_id_i(dma_id_li)
+         ,.wh_link_sif_o(wh_link_sif_li[i][k])
+
+         ,.dma_pkt_o(dma_pkt_lo[i][k])
+         ,.dma_pkt_v_o(dma_pkt_v_lo[i][k])
+         ,.dma_pkt_yumi_i(dma_pkt_yumi_li[i][k])
+
+         ,.dma_data_i(dma_data_li[i][k])
+         ,.dma_data_v_i(dma_data_v_li[i][k])
+         ,.dma_data_ready_and_o(dma_data_ready_lo[i][k])
+
+         ,.dma_data_o(dma_data_lo[i][k])
+         ,.dma_data_v_o(dma_data_v_lo[i][k])
+         ,.dma_data_yumi_i(dma_data_yumi_li[i][k])
+         );
     end
   end
 
-    logic [C_S00_AXI_DATA_WIDTH-1:0] mc_req_lo;
-    logic mc_req_v_lo, mc_req_ready_li;
-    logic [C_S00_AXI_DATA_WIDTH-1:0] mc_rsp_lo;
-    logic mc_rsp_v_lo, mc_rsp_ready_li;
-    logic [C_S00_AXI_DATA_WIDTH-1:0] host_req_li;
-    logic host_req_v_li, host_req_ready_lo;
-    logic [C_S00_AXI_DATA_WIDTH-1:0] host_rsp_li;
-    logic host_rsp_v_li, host_rsp_ready_lo;
-    wire [x_cord_width_p-1:0] io_global_x_li = 0;
-    wire [y_cord_width_p-1:0] io_global_y_li = 0;
-    bsg_manycore_endpoint_to_fifos
-     #(.fifo_width_p(4*C_S00_AXI_DATA_WIDTH)
-       ,.axil_width_p(C_S00_AXI_DATA_WIDTH)
-       ,.x_cord_width_p(x_cord_width_p)
-       ,.y_cord_width_p(y_cord_width_p)
-       ,.addr_width_p(addr_width_p)
-       ,.data_width_p(data_width_p)
-       ,.ep_fifo_els_p(ep_fifo_els_p)
-       ,.credit_counter_width_p(`BSG_WIDTH(max_credits_p))
-       ,.rev_fifo_els_p(rev_fifo_els_lp[0])
-       ,.icache_block_size_in_words_p(icache_block_size_in_words_p)
-       )
-     mc_ep_to_fifos
-      (.clk_i(aclk)
-       ,.reset_i(reset_r)
+  logic [C_M00_AXI_ADDR_WIDTH-1:0] axi_awaddr, axi_araddr;
+  logic [`BSG_SAFE_CLOG2(num_dma_p)-1:0] axi_awaddr_cache_id, axi_araddr_cache_id;
+  bsg_cache_to_axi
+   #(.addr_width_p(vcache_addr_width_p)
+     ,.mask_width_p(vcache_block_size_in_words_p)
+     ,.data_width_p(vcache_dma_data_width_p)
+     ,.block_size_in_words_p(vcache_block_size_in_words_p)
+     ,.num_cache_p(num_dma_p)
+     ,.axi_data_width_p(vcache_dma_data_width_p)
+     ,.axi_id_width_p(6)
+     ,.axi_burst_len_p(vcache_block_size_in_words_p)
+     ,.axi_burst_type_p(e_axi_burst_incr)
+     )
+   cache2axi
+    (.clk_i(aclk)
+     ,.reset_i(reset_r)
 
-       // fifo interface
-       ,.mc_req_o(mc_req_lo)
-       ,.mc_req_v_o(mc_req_v_lo)
-       ,.mc_req_ready_i(mc_req_ready_li)
+     ,.dma_pkt_i(dma_pkt_lo)
+     ,.dma_pkt_v_i(dma_pkt_v_lo)
+     ,.dma_pkt_yumi_o(dma_pkt_yumi_li)
 
-       ,.endpoint_req_i(host_req_li)
-       ,.endpoint_req_v_i(host_req_v_li)
-       ,.endpoint_req_ready_o(host_req_ready_lo)
+     ,.dma_data_o(dma_data_li)
+     ,.dma_data_v_o(dma_data_v_li)
+     ,.dma_data_ready_i(dma_data_ready_lo)
 
-       ,.endpoint_rsp_i(host_rsp_li)
-       ,.endpoint_rsp_v_i(host_rsp_v_li)
-       ,.endpoint_rsp_ready_o(host_rsp_ready_lo)
+     ,.dma_data_i(dma_data_lo)
+     ,.dma_data_v_i(dma_data_v_lo)
+     ,.dma_data_yumi_o(dma_data_yumi_li)
 
-       ,.mc_rsp_o(mc_rsp_lo)
-       ,.mc_rsp_v_o(mc_rsp_v_lo)
-       ,.mc_rsp_ready_i(mc_rsp_ready_li)
+     ,.axi_awid_o(m00_axi_awid)
+     ,.axi_awaddr_addr_o(axi_awaddr)
+     ,.axi_awaddr_cache_id_o(axi_awaddr_cache_id)
+     ,.axi_awlen_o(m00_axi_awlen)
+     ,.axi_awsize_o(m00_axi_awsize)
+     ,.axi_awburst_o(m00_axi_awburst)
+     ,.axi_awcache_o(m00_axi_awcache)
+     ,.axi_awprot_o(m00_axi_awprot)
+     ,.axi_awlock_o(m00_axi_awlock)
+     ,.axi_awvalid_o(m00_axi_awvalid)
+     ,.axi_awready_i(m00_axi_awready)
 
-       // manycore link
-       ,.link_sif_i(io_link_sif_lo[0][P])
-       ,.link_sif_o(io_link_sif_li[0][P])
+     ,.axi_wdata_o(m00_axi_wdata)
+     ,.axi_wstrb_o(m00_axi_wstrb)
+     ,.axi_wlast_o(m00_axi_wlast)
+     ,.axi_wvalid_o(m00_axi_wvalid)
+     ,.axi_wready_i(m00_axi_wready)
 
-       // Parameterize
-       ,.global_y_i(io_global_y_li)
-       ,.global_x_i(io_global_x_li)
+     ,.axi_bid_i(m00_axi_bid)
+     ,.axi_bresp_i(m00_axi_bresp)
+     ,.axi_bvalid_i(m00_axi_bvalid)
+     ,.axi_bready_o(m00_axi_bready)
 
-       /* Unused currently */
-       ,.out_credits_used_o(credits_used_lo)
-       );
+     ,.axi_arid_o(m00_axi_arid)
+     ,.axi_araddr_addr_o(axi_araddr)
+     ,.axi_araddr_cache_id_o(axi_araddr_cache_id)
+     ,.axi_arlen_o(m00_axi_arlen)
+     ,.axi_arsize_o(m00_axi_arsize)
+     ,.axi_arburst_o(m00_axi_arburst)
+     ,.axi_arcache_o(m00_axi_arcache)
+     ,.axi_arprot_o(m00_axi_arprot)
+     ,.axi_arlock_o(m00_axi_arlock)
+     ,.axi_arvalid_o(m00_axi_arvalid)
+     ,.axi_arready_i(m00_axi_arready)
 
-     assign pl_to_ps_fifo_data_li[0+:1]  = mc_req_lo;
-     assign pl_to_ps_fifo_v_li[0+:1]     = {1{mc_req_ready_li & mc_req_v_lo}};
-     assign mc_req_ready_li              = &pl_to_ps_fifo_ready_lo[0+:1];
-
-     assign pl_to_ps_fifo_data_li[1+:1]  = mc_rsp_lo;
-     assign pl_to_ps_fifo_v_li[1+:1]     = {1{mc_rsp_ready_li & mc_rsp_v_lo}};
-     assign mc_rsp_ready_li              = &pl_to_ps_fifo_ready_lo[1+:1];
-
-     assign host_req_li                  = ps_to_pl_fifo_data_lo[0+:1];
-     assign host_req_v_li                = &ps_to_pl_fifo_v_lo[0+:1];
-     assign ps_to_pl_fifo_yumi_li[0+:1]  = {1{host_req_v_li & host_req_ready_lo}};
-
-     assign host_rsp_li                  = ps_to_pl_fifo_data_lo[1+:1];
-     assign host_rsp_v_li                = &ps_to_pl_fifo_v_lo[1+:1];
-     assign ps_to_pl_fifo_yumi_li[1+:1]  = {1{host_rsp_v_li & host_rsp_ready_lo}};
-
-      // WH to cache dma
-      `declare_bsg_cache_dma_pkt_s(vcache_addr_width_p, vcache_block_size_in_words_p);
-      bsg_cache_dma_pkt_s [E:W][num_pods_y_p-1:0][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0] dma_pkt_lo;
-      logic [E:W][num_pods_y_p-1:0][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0] dma_pkt_v_lo;
-      logic [E:W][num_pods_y_p-1:0][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0] dma_pkt_yumi_li;
-
-      logic [E:W][num_pods_y_p-1:0][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0][vcache_dma_data_width_p-1:0] dma_data_li;
-      logic [E:W][num_pods_y_p-1:0][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0] dma_data_v_li;
-      logic [E:W][num_pods_y_p-1:0][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0] dma_data_ready_lo;
-
-      logic [E:W][num_pods_y_p-1:0][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0][vcache_dma_data_width_p-1:0] dma_data_lo;
-      logic [E:W][num_pods_y_p-1:0][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0] dma_data_v_lo;
-      logic [E:W][num_pods_y_p-1:0][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0] dma_data_yumi_li;
-
-    // Invert WH ruche links
-    // hardcoded for ruche factor = 2
-    wh_link_sif_s [E:W][num_pods_y_p-1:0][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0] buffered_wh_link_sif_li;
-    wh_link_sif_s [E:W][num_pods_y_p-1:0][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0] buffered_wh_link_sif_lo;
-    for (genvar i = W; i <= E; i++) begin
-      for (genvar j = 0; j < num_pods_y_p; j++) begin
-        for (genvar k = N; k <= S; k++) begin
-          for (genvar v = 0; v < num_vcache_rows_p; v++) begin
-            for (genvar r = 0; r < wh_ruche_factor_p; r++) begin
-              if (r == 0) begin
-                assign wh_link_sif_li[i][j][k][v][r] = buffered_wh_link_sif_li[i][j][k][v][r];
-                assign buffered_wh_link_sif_lo[i][j][k][v][r] = wh_link_sif_lo[i][j][k][v][r];
-              end
-              else begin
-                assign wh_link_sif_li[i][j][k][v][r] = ~buffered_wh_link_sif_li[i][j][k][v][r];
-                assign buffered_wh_link_sif_lo[i][j][k][v][r] = ~wh_link_sif_lo[i][j][k][v][r];
-              end
-            end
-          end
-        end
-      end
-    end
-
-      for (genvar i = W; i <= E; i++) begin: hs
-        for (genvar j = 0; j < num_pods_y_p; j++) begin: py
-          for (genvar k = N; k <= S; k++) begin: py
-            for (genvar n = 0; n < num_vcache_rows_p; n++) begin: row
-              for (genvar r = 0; r < wh_ruche_factor_p; r++) begin: rf
-
-                `declare_bsg_cache_wh_header_flit_s(wh_flit_width_p,wh_cord_width_p,wh_len_width_p,wh_cid_width_p);
-                bsg_cache_wh_header_flit_s header_flit_in;
-                assign header_flit_in = buffered_wh_link_sif_lo[i][j][k][n][r].data;
-
-                wire [lg_num_vcaches_per_link_lp-1:0] dma_id_li = (num_vcaches_per_link_lp == 1)
-                  ? 1'b0
-                  : header_flit_in.src_cord[lg_wh_ruche_factor_lp+:lg_num_vcaches_per_link_lp];
-
-                bsg_wormhole_to_cache_dma_fanout#(
-                  .num_dma_p(num_vcaches_per_link_lp)
-                  ,.dma_addr_width_p(vcache_addr_width_p)
-                  ,.dma_mask_width_p(vcache_block_size_in_words_p)
-                  ,.dma_burst_len_p(vcache_block_size_in_words_p*vcache_data_width_p/vcache_dma_data_width_p)
-
-                  ,.wh_flit_width_p(wh_flit_width_p)
-                  ,.wh_cid_width_p(wh_cid_width_p)
-                  ,.wh_len_width_p(wh_len_width_p)
-                  ,.wh_cord_width_p(wh_cord_width_p)
-                ) wh_to_dma (
-                  .clk_i(aclk)
-                  ,.reset_i(reset_r)
-      
-                  ,.wh_link_sif_i     (buffered_wh_link_sif_lo[i][j][k][n][r])
-                  ,.wh_dma_id_i       (dma_id_li)
-                  ,.wh_link_sif_o     (buffered_wh_link_sif_li[i][j][k][n][r])
-
-                  ,.dma_pkt_o         (dma_pkt_lo[i][j][k][n][r])
-                  ,.dma_pkt_v_o       (dma_pkt_v_lo[i][j][k][n][r])
-                  ,.dma_pkt_yumi_i    (dma_pkt_yumi_li[i][j][k][n][r])
-
-                  ,.dma_data_i        (dma_data_li[i][j][k][n][r])
-                  ,.dma_data_v_i      (dma_data_v_li[i][j][k][n][r])
-                  ,.dma_data_ready_and_o (dma_data_ready_lo[i][j][k][n][r])
-
-                  ,.dma_data_o        (dma_data_lo[i][j][k][n][r])
-                  ,.dma_data_v_o      (dma_data_v_lo[i][j][k][n][r])
-                  ,.dma_data_yumi_i   (dma_data_yumi_li[i][j][k][n][r])
-                );
-              end
-            end
-          end
-        end
-      end
-
-     logic [C_M00_AXI_ADDR_WIDTH-1:0] axi_awaddr, axi_araddr;
-     bsg_cache_to_axi
-      #(.addr_width_p(vcache_addr_width_p)
-        ,.mask_width_p(vcache_block_size_in_words_p)
-        ,.data_width_p(vcache_dma_data_width_p)
-        ,.block_size_in_words_p(vcache_block_size_in_words_p)
-        ,.num_cache_p(num_dma_p)
-        ,.axi_data_width_p(vcache_dma_data_width_p)
-        ,.axi_id_width_p(6)
-        ,.axi_burst_len_p(vcache_block_size_in_words_p)
-        ,.axi_burst_type_p(e_axi_burst_incr)
-        )
-      cache2axi
-       (.clk_i(aclk)
-        ,.reset_i(reset_r)
-
-        ,.dma_pkt_i(dma_pkt_lo)
-        ,.dma_pkt_v_i(dma_pkt_v_lo)
-        ,.dma_pkt_yumi_o(dma_pkt_yumi_li)
-
-        ,.dma_data_o(dma_data_li)
-        ,.dma_data_v_o(dma_data_v_li)
-        ,.dma_data_ready_i(dma_data_ready_lo)
-
-        ,.dma_data_i(dma_data_lo)
-        ,.dma_data_v_i(dma_data_v_lo)
-        ,.dma_data_yumi_o(dma_data_yumi_li)
-
-        ,.axi_awid_o(m00_axi_awid)
-        ,.axi_awaddr_addr_o(axi_awaddr)
-        ,.axi_awlen_o(m00_axi_awlen)
-        ,.axi_awsize_o(m00_axi_awsize)
-        ,.axi_awburst_o(m00_axi_awburst)
-        ,.axi_awcache_o(m00_axi_awcache)
-        ,.axi_awprot_o(m00_axi_awprot)
-        ,.axi_awlock_o(m00_axi_awlock)
-        ,.axi_awvalid_o(m00_axi_awvalid)
-        ,.axi_awready_i(m00_axi_awready)
-
-        ,.axi_wdata_o(m00_axi_wdata)
-        ,.axi_wstrb_o(m00_axi_wstrb)
-        ,.axi_wlast_o(m00_axi_wlast)
-        ,.axi_wvalid_o(m00_axi_wvalid)
-        ,.axi_wready_i(m00_axi_wready)
-
-        ,.axi_bid_i(m00_axi_bid)
-        ,.axi_bresp_i(m00_axi_bresp)
-        ,.axi_bvalid_i(m00_axi_bvalid)
-        ,.axi_bready_o(m00_axi_bready)
-
-        ,.axi_arid_o(m00_axi_arid)
-        ,.axi_araddr_addr_o(axi_araddr)
-        ,.axi_arlen_o(m00_axi_arlen)
-        ,.axi_arsize_o(m00_axi_arsize)
-        ,.axi_arburst_o(m00_axi_arburst)
-        ,.axi_arcache_o(m00_axi_arcache)
-        ,.axi_arprot_o(m00_axi_arprot)
-        ,.axi_arlock_o(m00_axi_arlock)
-        ,.axi_arvalid_o(m00_axi_arvalid)
-        ,.axi_arready_i(m00_axi_arready)
-
-        ,.axi_rid_i(m00_axi_rid)
-        ,.axi_rdata_i(m00_axi_rdata)
-        ,.axi_rresp_i(m00_axi_rresp)
-        ,.axi_rlast_i(m00_axi_rlast)
-        ,.axi_rvalid_i(m00_axi_rvalid)
-        ,.axi_rready_o(m00_axi_rready)
-
-        // Unused
-        ,.axi_awaddr_cache_id_o()
-        ,.axi_araddr_cache_id_o()
-        );
+     ,.axi_rid_i(m00_axi_rid)
+     ,.axi_rdata_i(m00_axi_rdata)
+     ,.axi_rresp_i(m00_axi_rresp)
+     ,.axi_rlast_i(m00_axi_rlast)
+     ,.axi_rvalid_i(m00_axi_rvalid)
+     ,.axi_rready_o(m00_axi_rready)
+     );
+  wire [C_M00_AXI_ADDR_WIDTH-1:0] axi_awaddr_hash = {axi_awaddr_cache_id, axi_awaddr[0+:vcache_addr_width_p-lg_num_dma_lp]};
+  wire [C_M00_AXI_ADDR_WIDTH-1:0] axi_araddr_hash = {axi_araddr_cache_id, axi_araddr[0+:vcache_addr_width_p-lg_num_dma_lp]};
 
   // IO P tie off all but first (host)
-  for (genvar i = 1; i < num_pods_x_p*num_tiles_x_p; i++) begin
-    bsg_manycore_link_sif_tieoff #(
-      .addr_width_p(addr_width_p)
-      ,.data_width_p(data_width_p)
-      ,.x_cord_width_p(x_cord_width_p)
-      ,.y_cord_width_p(y_cord_width_p)
-    ) io_p_tieoff (
-      .clk_i(aclk)
-      ,.reset_i(reset_r)
-      ,.link_sif_i(io_link_sif_lo[i][P])
-      ,.link_sif_o(io_link_sif_li[i][P])
-    );
-  end
+  for (genvar i = 1; i < num_tiles_x_p; i++)
+    begin : io_p_tieoff
+      bsg_manycore_link_sif_tieoff
+       #(.addr_width_p(addr_width_p)
+         ,.data_width_p(data_width_p)
+         ,.x_cord_width_p(x_cord_width_p)
+         ,.y_cord_width_p(y_cord_width_p)
+         )
+       rtr
+        (.clk_i(aclk)
+         ,.reset_i(reset_r)
+         ,.link_sif_i(io_link_sif_lo[i][P])
+         ,.link_sif_o(io_link_sif_li[i][P])
+         );
+    end
 
   // IO west end tieoff
-  bsg_manycore_link_sif_tieoff #(
-    .addr_width_p(addr_width_p)
-    ,.data_width_p(data_width_p)
-    ,.x_cord_width_p(x_cord_width_p)
-    ,.y_cord_width_p(y_cord_width_p)
-  ) io_w_tieoff (
-    .clk_i(aclk)
-    ,.reset_i(reset_r)
-    ,.link_sif_i(io_link_sif_lo[0][W])
-    ,.link_sif_o(io_link_sif_li[0][W])
-  );
+  bsg_manycore_link_sif_tieoff
+   #(.addr_width_p(addr_width_p)
+     ,.data_width_p(data_width_p)
+     ,.x_cord_width_p(x_cord_width_p)
+     ,.y_cord_width_p(y_cord_width_p)
+     )
+   io_w_tieoff
+    (.clk_i(aclk)
+     ,.reset_i(reset_r)
+     ,.link_sif_i(io_link_sif_lo[0][W])
+     ,.link_sif_o(io_link_sif_li[0][W])
+     );
 
   // IO east end tieoff
-  bsg_manycore_link_sif_tieoff #(
-    .addr_width_p(addr_width_p)
-    ,.data_width_p(data_width_p)
-    ,.x_cord_width_p(x_cord_width_p)
-    ,.y_cord_width_p(y_cord_width_p)
-  ) io_e_tieoff (
-    .clk_i(aclk)
-    ,.reset_i(reset_r)
-    ,.link_sif_i(io_link_sif_lo[(num_pods_x_p*num_tiles_x_p)-1][E])
-    ,.link_sif_o(io_link_sif_li[(num_pods_x_p*num_tiles_x_p)-1][E])
-  );
+  bsg_manycore_link_sif_tieoff
+   #(.addr_width_p(addr_width_p)
+     ,.data_width_p(data_width_p)
+     ,.x_cord_width_p(x_cord_width_p)
+     ,.y_cord_width_p(y_cord_width_p)
+     )
+   io_e_tieoff
+    (.clk_i(aclk)
+     ,.reset_i(reset_r)
+     ,.link_sif_i(io_link_sif_lo[num_tiles_x_p-1][E])
+     ,.link_sif_o(io_link_sif_li[num_tiles_x_p-1][E])
+     );
 
-  // SOUTH VER LINK TIE OFFS
-  for (genvar i = 0; i < num_pods_x_p*num_tiles_x_p; i++) begin
-    bsg_manycore_link_sif_tieoff #(
-      .addr_width_p(addr_width_p)
-      ,.data_width_p(data_width_p)
-      ,.x_cord_width_p(x_cord_width_p)
-      ,.y_cord_width_p(y_cord_width_p)
-    ) ver_s_tieoff (
-      .clk_i(aclk)
-      ,.reset_i(reset_r)
-      ,.link_sif_i(ver_link_sif_lo[S][i])
-      ,.link_sif_o(ver_link_sif_li[S][i])
-    );
-  end
-
-
-  // HOR TIEOFF (local link) all except BP
-  for (genvar i = W; i <= E; i++) begin
-    for (genvar j = 0; j < num_pods_y_p; j++) begin
-      for (genvar k = 0; k < num_tiles_y_p; k++) begin
-        if (i == E || j != 0 || k > 3) begin
-          bsg_manycore_link_sif_tieoff #(
-            .addr_width_p(addr_width_p)
-            ,.data_width_p(data_width_p)
-            ,.x_cord_width_p(x_cord_width_p)
-            ,.y_cord_width_p(y_cord_width_p)
-          ) hor_tieoff (
-            .clk_i(aclk)
-            ,.reset_i(reset_r)
-            ,.link_sif_i(hor_link_sif_lo[i][j][k])
-            ,.link_sif_o(hor_link_sif_li[i][j][k])
-          );
-        end
-      end
+  // IO N tie off
+  for (genvar i = 0; i < num_tiles_x_p; i++)
+    begin : io_n_tieoff
+      bsg_manycore_link_sif_tieoff
+       #(.addr_width_p(addr_width_p)
+         ,.data_width_p(data_width_p)
+         ,.x_cord_width_p(x_cord_width_p)
+         ,.y_cord_width_p(y_cord_width_p)
+         )
+       tieoff
+        (.clk_i(aclk)
+         ,.reset_i(reset_r)
+         ,.link_sif_i(io_link_sif_lo[i][N])
+         ,.link_sif_o(io_link_sif_li[i][N])
+         );
     end
-  end
 
-  wire [x_cord_width_p-1:0] bp_global_x_li = num_tiles_x_p;
-  wire [y_cord_width_p-1:0] bp_global_y_li = 0;
-  bsg_manycore_tile_blackparrot
+  // HOR TIEOFF (local link)
+  for (genvar i = W; i <= E; i++)
+    begin : mc_e_w
+      for (genvar k = 0; k < num_tiles_y_p; k++)
+        begin : col
+          bsg_manycore_link_sif_tieoff
+           #(.addr_width_p(addr_width_p)
+             ,.data_width_p(data_width_p)
+             ,.x_cord_width_p(x_cord_width_p)
+             ,.y_cord_width_p(y_cord_width_p)
+             )
+           tieoff
+            (.clk_i(aclk)
+             ,.reset_i(reset_r)
+             ,.link_sif_i(hor_link_sif_lo[i][k])
+             ,.link_sif_o(hor_link_sif_li[i][k])
+             );
+        end
+    end
+
+  logic [3:0][x_cord_width_p-1:0] bp_global_x_li;
+  logic [0:0][y_cord_width_p-1:0] bp_global_y_li;
+  assign bp_global_x_li[0] = (1 << x_subcord_width_p) | (0);
+  assign bp_global_x_li[1] = (1 << x_subcord_width_p) | (1);
+  assign bp_global_x_li[2] = (2 << x_subcord_width_p) | (0);
+  assign bp_global_x_li[3] = (2 << x_subcord_width_p) | (1);
+
+  assign bp_global_y_li[0] = (3 << y_subcord_width_p) | (0);
+
+  bsg_manycore_link_sif_s [S:N][3:0] bp_ver_link_sif_li;
+  bsg_manycore_link_sif_s [S:N][3:0] bp_ver_link_sif_lo;
+  bsg_manycore_link_sif_s [E:W][0:0] bp_hor_link_sif_li;
+  bsg_manycore_link_sif_s [E:W][0:0] bp_hor_link_sif_lo;
+  bsg_manycore_tile_blackparrot_mesh
    #(.bp_params_p(bp_params_p)
      ,.x_cord_width_p(x_cord_width_p)
      ,.y_cord_width_p(y_cord_width_p)
@@ -677,31 +672,50 @@ module top_zynq
      ,.num_tiles_x_p(num_tiles_x_p)
      ,.num_tiles_y_p(num_tiles_y_p)
      ,.scratchpad_els_p(scratchpad_els_p)
+     ,.rev_use_credits_p(rev_use_credits_lp)
+     ,.rev_fifo_els_p(rev_fifo_els_lp)
      )
-   blackparrot
+   blackparrot_mesh
     (.clk_i(aclk)
-     ,.rt_clk_i(aclk) // TODO: Replace with rt_clk
+     ,.rt_clk_i(rt_clk)
      ,.reset_i(reset_r)
 
      ,.global_x_i(bp_global_x_li)
      ,.global_y_i(bp_global_y_li)
 
-     ,.link_sif_i(hor_link_sif_lo[W][0][0+:4])
-     ,.link_sif_o(hor_link_sif_li[W][0][0+:4])
-     );
+     ,.hor_link_sif_i(bp_hor_link_sif_li)
+     ,.hor_link_sif_o(bp_hor_link_sif_lo)
 
-  assign m00_axi_awaddr = axi_awaddr + dram_base_li;
-  assign m00_axi_araddr = axi_araddr + dram_base_li;
+     ,.ver_link_sif_i(bp_ver_link_sif_li)
+     ,.ver_link_sif_o(bp_ver_link_sif_lo)
+     );
+  assign bp_ver_link_sif_li[N][0+:2] = ver_link_sif_lo[S];
+  assign ver_link_sif_li[S] = bp_ver_link_sif_lo[N][0+:2];
+
+  assign bp_ver_link_sif_li[N][2+:2] = '0;
+  assign bp_ver_link_sif_li[S] = '0;
+  assign bp_hor_link_sif_li = '0;
+
+  assign m00_axi_awaddr = axi_awaddr_hash + dram_base_li;
+  assign m00_axi_araddr = axi_araddr_hash + dram_base_li;
 
   // synopsys translate_off
 
   always @(negedge aclk)
     if (m00_axi_awvalid & m00_axi_awready)
-      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_awaddr,m00_axi_awaddr);
+      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_awaddr_hash,m00_axi_awaddr);
+
+  always @(negedge aclk)
+    if (m00_axi_wvalid & m00_axi_wready)
+      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Data %x (AXI HP0)",m00_axi_wdata);
 
   always @(negedge aclk)
     if (m00_axi_arvalid & m00_axi_arready)
-      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_araddr,m00_axi_araddr);
+      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Read Addr %x -> %x (AXI HP0)",axi_araddr_hash,m00_axi_araddr);
+
+  always @(negedge aclk)
+    if (m00_axi_rvalid & m00_axi_rready)
+      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Read Data %x (AXI HP0)",m00_axi_rdata);
 
   // synopsys translate_on
 
