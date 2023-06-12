@@ -682,6 +682,9 @@ module top_zynq
       ,.s_axil_data_width_p(bp_axil_data_width_lp)
       ,.axi_addr_width_p(bp_axi_addr_width_lp)
       ,.axi_data_width_p(bp_axi_data_width_lp)
+      ,.axi_id_width_p(6)
+      ,.axi_size_width_p(3)
+      ,.axi_len_width_p(4)
       )
    blackparrot
      (.clk_i(aclk)
