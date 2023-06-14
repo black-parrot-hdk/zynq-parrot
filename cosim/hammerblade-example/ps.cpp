@@ -105,7 +105,7 @@ inline void send_mc_write(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa, i
   req_pkt.y_src   = 0; //
   req_pkt.x_dst   = x;
   req_pkt.y_dst   = y;
-  req_pkt.addr    = epa;
+  req_pkt.addr    = epa >> 2;
 
   bsg_pr_dbg_ps("Writing: [%x]<-%x\n", req_pkt.addr, req_pkt.payload);
   send_mc_request_packet(zpl, &req_pkt);
@@ -121,7 +121,7 @@ inline int32_t send_mc_read(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa)
   req_pkt.y_src   = 0; //
   req_pkt.x_dst   = x;
   req_pkt.y_dst   = y;
-  req_pkt.addr    = epa;
+  req_pkt.addr    = epa >> 2;
 
   send_mc_request_packet(zpl, &req_pkt);
 
@@ -200,7 +200,48 @@ extern "C" void cosim_main(char *argstr) {
 
   nbf_load(zpl, argv[1]);
 
-  int finished = 0;
+  // Configure BlackParrot
+  //
+  // TODO: Hardcoded for 2x2
+  int x_cord_width = 7;
+  int y_cord_width = 7;
+  int x_subcord_width = 1;
+  int y_subcord_width = 1;
+  int pod_x_cord_width = x_cord_width - x_subcord_width;
+  int pod_y_cord_width = y_cord_width - y_subcord_width;
+  int bp_y_tile = (3 << y_subcord_width) | 0;
+  int bp_x_tile = (1 << x_subcord_width) | 0;
+  int bp_dram_pod_cord = (1 << pod_y_cord_width) | 1;
+  int bp_host_cord = 2;
+  int bp_cfg_base_epa        = 0x2000;
+  int bp_cfg_reg_unused      = bp_cfg_base_epa | 0x0000;
+  int bp_cfg_reg_freeze      = bp_cfg_base_epa | 0x0008;
+  int bp_cfg_reg_npc         = bp_cfg_base_epa | 0x0010;
+  int bp_cfg_reg_hio_mask    = bp_cfg_base_epa | 0x0038;
+  int bp_cfg_reg_icache_id   = bp_cfg_base_epa | 0x0200;
+  int bp_cfg_reg_icache_mode = bp_cfg_base_epa | 0x0208;
+  int bp_cfg_reg_dcache_id   = bp_cfg_base_epa | 0x0400;
+  int bp_cfg_reg_dcache_mode = bp_cfg_base_epa | 0x0408;
+
+  int bp_bridge_base_epa        = 0x4000;
+  int bp_bridge_reg_dram_offset = bp_bridge_base_epa | 0x0000;
+  int bp_bridge_reg_dram_pod    = bp_bridge_base_epa | 0x0008;
+  int bp_bridge_reg_my_cord     = bp_bridge_base_epa | 0x0010;
+  int bp_bridge_reg_host_cord   = bp_bridge_base_epa | 0x0018;
+  int bp_bridge_reg_scratchpad  = bp_bridge_base_epa | 0x1000;
+
+  send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_cfg_reg_freeze, 1);
+  send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_cfg_reg_npc, 0x80000000);
+  send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_cfg_reg_icache_mode, 1);
+  send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_cfg_reg_dcache_mode, 1);
+  send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_bridge_reg_dram_offset, 0x2000000);
+  send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_bridge_reg_dram_pod, bp_dram_pod_cord);
+  send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_bridge_reg_my_cord, 0);
+  send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_bridge_reg_host_cord, bp_host_cord);
+  send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_cfg_reg_freeze, 0);
+
+  int mc_finished = 0;
+  int bp_finished = 0;
   while(1) {
     bsg_pr_dbg_ps("Waiting for incoming request packet\n");
     hb_mc_request_packet_t mc_pkt;
@@ -209,16 +250,19 @@ extern "C" void cosim_main(char *argstr) {
     int mc_epa = (mc_pkt.addr << 2) & 0xffff; // Trim to 16b EPA
     int mc_data = mc_pkt.payload;
     bsg_pr_dbg_ps("Request packet [%x] = %x\n", mc_epa, mc_data);
-    if (mc_epa == 0xeadc || mc_epa == 0xeee0) {
+    if (mc_epa == 0xeadc || mc_epa == 0xeee0 || mc_epa == 0x1000) {
         printf("%c", mc_data & 0xff);
         fflush(stdout);
     } else if (mc_epa == 0xead0) {
-      bsg_pr_info("Finish packet received %d\n", ++finished);
-      if (finished == NUM_FINISH) {
-        break;
-      }
+      bsg_pr_info("MC finish packet received %d\n", ++mc_finished);
+    } else if (mc_epa == 0x2000) {
+      bsg_pr_info("BP finish packet received %d\n", ++bp_finished);
     } else {
       bsg_pr_info("Errant request packet: %x %x\n", mc_epa, mc_data);
+    }
+    
+    if (mc_finished == NUM_MC_FINISH && bp_finished == NUM_BP_FINISH) {
+      break;
     }
   }
 
@@ -262,14 +306,14 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
 
     int x_tile   = nbf[0];
     int y_tile   = nbf[1];
-    int epa      = nbf[2];
+    int epa      = nbf[2]; // word addr
     int nbf_data = nbf[3];
 
     bool finish = (x_tile == 0xff) && (y_tile == 0xff) && (epa == 0x00000000) && (nbf_data == 0x00000000);
     bool fence  = (x_tile == 0xff) && (y_tile == 0xff) && (epa == 0xffffffff) && (nbf_data == 0xffffffff);
 
     if (finish) {
-      bsg_pr_dbg_ps("ps.cpp: nbf finish command, line %d\n", line_count);
+      bsg_pr_info("ps.cpp: nbf finish command, line %d\n", line_count);
       continue;
     } else if (fence) {
       bsg_pr_dbg_ps("ps.cpp: nbf fence command (ignoring), line %d\n", line_count);
@@ -278,14 +322,14 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
       bsg_pr_info("Credits drained\n");
       continue;
     } else {
-      send_mc_write(zpl, x_tile, y_tile, epa, nbf_data);
+      send_mc_write(zpl, x_tile, y_tile, epa << 2, nbf_data);
 
 #ifdef VERIFY_NBF
 
       int32_t verif_data;
      
-      bsg_pr_dbg_ps("Querying: %x\n", epa);
-      verif_data = send_mc_read(zpl, x_tile, y_tile, epa);
+      bsg_pr_dbg_ps("Querying: %x\n", epa << 2);
+      verif_data = send_mc_read(zpl, x_tile, y_tile, epa << 2);
 
       // Some verification reads are expected to fail e.g. CSRs
       if (req_pkt.payload == resp_pkt.data) {

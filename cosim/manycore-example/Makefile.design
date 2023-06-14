@@ -27,6 +27,7 @@ bsg_pods_X                 ?= 1
 bsg_pods_Y                 ?= 1
 bsg_elf_off_chip_mem       ?= 1
 skip_dram_instruction_load ?= 0
+skip_zeros                 ?= 1
 
 %.nbf: %.riscv32
 	python $(NBF_SCRIPT) \
@@ -42,6 +43,7 @@ skip_dram_instruction_load ?= 0
 		$(bsg_pods_X) $(bsg_pods_Y) \
 		$(BSG_MACHINE_NUM_VCACHE_ROWS) \
 		$(skip_dram_instruction_load) \
+		$(skip_zeros) \
 		$(NBF_PARAMS) > $*.nbf
 	rm main_dram.mem main_dmem.mem
 

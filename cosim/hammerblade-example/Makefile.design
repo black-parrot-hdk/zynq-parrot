@@ -10,7 +10,7 @@ TOP_MODULE ?= top
 BASENAME   ?= hammerblade
 
 MANYCORE_DRAM_BASE    ?= 0x80000000
-BLACKPARROT_DRAM_BASE ?= 0x81100000
+BLACKPARROT_DRAM_BASE ?= 0x82000000
 
 #############################
 # Run Collateral

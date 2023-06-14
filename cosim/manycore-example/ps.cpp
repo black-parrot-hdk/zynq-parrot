@@ -105,7 +105,7 @@ inline void send_mc_write(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa, i
   req_pkt.y_src   = 0; //
   req_pkt.x_dst   = x;
   req_pkt.y_dst   = y;
-  req_pkt.addr    = epa;
+  req_pkt.addr    = epa >> 2;
 
   send_mc_request_packet(zpl, &req_pkt);
 }
@@ -120,7 +120,7 @@ inline int32_t send_mc_read(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa)
   req_pkt.y_src   = 0; //
   req_pkt.x_dst   = x;
   req_pkt.y_dst   = y;
-  req_pkt.addr    = epa;
+  req_pkt.addr    = epa >> 2;
 
   send_mc_request_packet(zpl, &req_pkt);
 
@@ -261,7 +261,7 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
 
     int x_tile   = nbf[0];
     int y_tile   = nbf[1];
-    int epa      = nbf[2];
+    int epa      = nbf[2]; // word addr
     int nbf_data = nbf[3];
 
     bool finish = (x_tile == 0xff) && (y_tile == 0xff) && (epa == 0x00000000) && (nbf_data == 0x00000000);
@@ -278,14 +278,14 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
       continue;
     } else {
       bsg_pr_dbg_ps("Writing: [%x]<-%x\n", req_pkt.addr, req_pkt.payload);
-      send_mc_write(zpl, x_tile, y_tile, epa, nbf_data);
+      send_mc_write(zpl, x_tile, y_tile, epa << 2, nbf_data);
 
 #ifdef VERIFY_NBF
 
       int32_t verif_data;
      
-      bsg_pr_dbg_ps("Querying: %x\n", epa);
-      verif_data = send_mc_read(zpl, x_tile, y_tile, epa);
+      bsg_pr_dbg_ps("Querying: %x\n", epa << 2);
+      verif_data = send_mc_read(zpl, x_tile, y_tile, epa << 2);
 
       // Some verification reads are expected to fail e.g. CSRs
       if (req_pkt.payload == resp_pkt.data) {
