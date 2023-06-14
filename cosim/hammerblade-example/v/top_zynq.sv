@@ -97,223 +97,224 @@ module top_zynq
    , input wire [1:0]                            m00_axi_rresp
    );
 
-   localparam num_regs_ps_to_pl_lp = 5;
-   localparam num_regs_pl_to_ps_lp = 2;
-   localparam num_fifos_ps_to_pl_lp = 2;
-   localparam num_fifos_pl_to_ps_lp = 2;
+  localparam num_regs_ps_to_pl_lp = 5;
+  localparam num_regs_pl_to_ps_lp = 2;
+  localparam num_fifos_ps_to_pl_lp = 2;
+  localparam num_fifos_pl_to_ps_lp = 2;
 
-   logic [num_regs_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0]       csr_data_li;
-   logic [num_regs_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0]       csr_data_lo;
-   logic [num_regs_ps_to_pl_lp-1:0]                                 csr_data_new_lo;
-   logic [num_fifos_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0]      pl_to_ps_fifo_data_li, ps_to_pl_fifo_data_lo;
-   logic [num_fifos_pl_to_ps_lp-1:0]                                pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
-   logic [num_fifos_ps_to_pl_lp-1:0]                                ps_to_pl_fifo_v_lo, ps_to_pl_fifo_yumi_li;
+  logic [num_regs_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0]       csr_data_li;
+  logic [num_regs_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0]       csr_data_lo;
+  logic [num_regs_ps_to_pl_lp-1:0]                                 csr_data_new_lo;
+  logic [num_fifos_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0]      pl_to_ps_fifo_data_li, ps_to_pl_fifo_data_lo;
+  logic [num_fifos_pl_to_ps_lp-1:0]                                pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
+  logic [num_fifos_ps_to_pl_lp-1:0]                                ps_to_pl_fifo_v_lo, ps_to_pl_fifo_yumi_li;
 
-   localparam debug_lp = 0;
-   localparam memory_upper_limit_lp = 256*1024*1024;
+  localparam debug_lp = 0;
+  localparam memory_upper_limit_lp = 256*1024*1024;
 
-   // Connect Shell to AXI Bus Interface S00_AXI
-   bsg_zynq_pl_shell #
-     (
-      .num_regs_ps_to_pl_p (num_regs_ps_to_pl_lp)
-      ,.num_regs_pl_to_ps_p(num_regs_pl_to_ps_lp)
-      ,.num_fifo_ps_to_pl_p(num_fifos_ps_to_pl_lp)
-      ,.num_fifo_pl_to_ps_p(num_fifos_pl_to_ps_lp)
-      ,.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH)
-      ,.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
-      ) zps
-       (
-        .csr_data_o(csr_data_lo)
-        ,.csr_data_new_o(csr_data_new_lo)
+  // Connect Shell to AXI Bus Interface S00_AXI
+  bsg_zynq_pl_shell #
+    (
+     .num_regs_ps_to_pl_p (num_regs_ps_to_pl_lp)
+     ,.num_regs_pl_to_ps_p(num_regs_pl_to_ps_lp)
+     ,.num_fifo_ps_to_pl_p(num_fifos_ps_to_pl_lp)
+     ,.num_fifo_pl_to_ps_p(num_fifos_pl_to_ps_lp)
+     ,.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH)
+     ,.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
+     ) zps
+      (
+       .csr_data_o(csr_data_lo)
+       ,.csr_data_new_o(csr_data_new_lo)
 
-        // (MBT)
-        // note: this ability to probe into the core is not supported in ASIC toolflows but
-        // is supported in Verilator, VCS, and Vivado Synthesis.
+       // (MBT)
+       // note: this ability to probe into the core is not supported in ASIC toolflows but
+       // is supported in Verilator, VCS, and Vivado Synthesis.
 
-        // it is very helpful for adding instrumentation to a pre-existing design that you are
-        // prototyping in FPGA, where you don't necessarily want to put the support into the ASIC version
-        // or don't know yet if you want to.
+       // it is very helpful for adding instrumentation to a pre-existing design that you are
+       // prototyping in FPGA, where you don't necessarily want to put the support into the ASIC version
+       // or don't know yet if you want to.
 
-        // in additional to this approach of poking down into pre-existing registers, you can also
-        // instantiate counters, and then pull control signals out of the DUT in order to figure out when
-        // to increment the counters.
-        //
+       // in additional to this approach of poking down into pre-existing registers, you can also
+       // instantiate counters, and then pull control signals out of the DUT in order to figure out when
+       // to increment the counters.
+       //
 
-        ,.csr_data_i(csr_data_li)
+       ,.csr_data_i(csr_data_li)
 
-        ,.pl_to_ps_fifo_data_i (pl_to_ps_fifo_data_li)
-        ,.pl_to_ps_fifo_v_i    (pl_to_ps_fifo_v_li)
-        ,.pl_to_ps_fifo_ready_o(pl_to_ps_fifo_ready_lo)
+       ,.pl_to_ps_fifo_data_i (pl_to_ps_fifo_data_li)
+       ,.pl_to_ps_fifo_v_i    (pl_to_ps_fifo_v_li)
+       ,.pl_to_ps_fifo_ready_o(pl_to_ps_fifo_ready_lo)
 
-        ,.ps_to_pl_fifo_data_o (ps_to_pl_fifo_data_lo)
-        ,.ps_to_pl_fifo_v_o    (ps_to_pl_fifo_v_lo)
-        ,.ps_to_pl_fifo_yumi_i (ps_to_pl_fifo_yumi_li)
+       ,.ps_to_pl_fifo_data_o (ps_to_pl_fifo_data_lo)
+       ,.ps_to_pl_fifo_v_o    (ps_to_pl_fifo_v_lo)
+       ,.ps_to_pl_fifo_yumi_i (ps_to_pl_fifo_yumi_li)
 
-        ,.S_AXI_ACLK   (aclk)
-        ,.S_AXI_ARESETN(aresetn)
-        ,.S_AXI_AWADDR (s00_axi_awaddr)
-        ,.S_AXI_AWPROT (s00_axi_awprot)
-        ,.S_AXI_AWVALID(s00_axi_awvalid)
-        ,.S_AXI_AWREADY(s00_axi_awready)
-        ,.S_AXI_WDATA  (s00_axi_wdata)
-        ,.S_AXI_WSTRB  (s00_axi_wstrb)
-        ,.S_AXI_WVALID (s00_axi_wvalid)
-        ,.S_AXI_WREADY (s00_axi_wready)
-        ,.S_AXI_BRESP  (s00_axi_bresp)
-        ,.S_AXI_BVALID (s00_axi_bvalid)
-        ,.S_AXI_BREADY (s00_axi_bready)
-        ,.S_AXI_ARADDR (s00_axi_araddr)
-        ,.S_AXI_ARPROT (s00_axi_arprot)
-        ,.S_AXI_ARVALID(s00_axi_arvalid)
-        ,.S_AXI_ARREADY(s00_axi_arready)
-        ,.S_AXI_RDATA  (s00_axi_rdata)
-        ,.S_AXI_RRESP  (s00_axi_rresp)
-        ,.S_AXI_RVALID (s00_axi_rvalid)
-        ,.S_AXI_RREADY (s00_axi_rready)
-        );
+       ,.S_AXI_ACLK   (aclk)
+       ,.S_AXI_ARESETN(aresetn)
+       ,.S_AXI_AWADDR (s00_axi_awaddr)
+       ,.S_AXI_AWPROT (s00_axi_awprot)
+       ,.S_AXI_AWVALID(s00_axi_awvalid)
+       ,.S_AXI_AWREADY(s00_axi_awready)
+       ,.S_AXI_WDATA  (s00_axi_wdata)
+       ,.S_AXI_WSTRB  (s00_axi_wstrb)
+       ,.S_AXI_WVALID (s00_axi_wvalid)
+       ,.S_AXI_WREADY (s00_axi_wready)
+       ,.S_AXI_BRESP  (s00_axi_bresp)
+       ,.S_AXI_BVALID (s00_axi_bvalid)
+       ,.S_AXI_BREADY (s00_axi_bready)
+       ,.S_AXI_ARADDR (s00_axi_araddr)
+       ,.S_AXI_ARPROT (s00_axi_arprot)
+       ,.S_AXI_ARVALID(s00_axi_arvalid)
+       ,.S_AXI_ARREADY(s00_axi_arready)
+       ,.S_AXI_RDATA  (s00_axi_rdata)
+       ,.S_AXI_RRESP  (s00_axi_rresp)
+       ,.S_AXI_RVALID (s00_axi_rvalid)
+       ,.S_AXI_RREADY (s00_axi_rready)
+       );
 
-   ///////////////////////////////////////////////////////////////////////////////////////
-   // TODO: User code goes here
-   ///////////////////////////////////////////////////////////////////////////////////////
-   logic sys_resetn;
-   logic bb_data_li, bb_v_li;
-   logic dram_init_li;
-   logic [C_M00_AXI_ADDR_WIDTH-1:0] dram_base_li;
-   logic [`BSG_WIDTH(max_credits_p)-1:0] credits_used_lo;
-   logic [`BSG_SAFE_CLOG2(bsg_machine_rom_els_gp)-1:0] rom_addr_lo;
-   logic [bsg_machine_rom_width_gp-1:0] rom_data_li;
+  ///////////////////////////////////////////////////////////////////////////////////////
+  // TODO: User code goes here
+  ///////////////////////////////////////////////////////////////////////////////////////
 
-   assign sys_resetn   = csr_data_lo[0][0]; // active-low
-   assign bb_data_li   = csr_data_lo[1][0]; assign bb_v_li = csr_data_new_lo[1];
-   assign dram_init_li = csr_data_lo[2];
-   assign dram_base_li = csr_data_lo[3];
-   assign rom_addr_lo  = csr_data_lo[4];
+  logic sys_resetn;
+  logic bb_data_li, bb_v_li;
+  logic dram_init_li;
+  logic [C_M00_AXI_ADDR_WIDTH-1:0] dram_base_li;
+  logic [`BSG_WIDTH(max_credits_p)-1:0] credits_used_lo;
+  logic [`BSG_SAFE_CLOG2(bsg_machine_rom_els_gp)-1:0] rom_addr_lo;
+  logic [bsg_machine_rom_width_gp-1:0] rom_data_li;
 
-   assign csr_data_li[0] = |credits_used_lo;
-   assign csr_data_li[1] = rom_data_li;
+  assign sys_resetn   = csr_data_lo[0][0]; // active-low
+  assign bb_data_li   = csr_data_lo[1][0]; assign bb_v_li = csr_data_new_lo[1];
+  assign dram_init_li = csr_data_lo[2];
+  assign dram_base_li = csr_data_lo[3];
+  assign rom_addr_lo  = csr_data_lo[4];
 
-   bsg_rom_param
-    #(.data_p(bsg_machine_rom_arr_gp)
-      ,.data_width_p($bits(bsg_machine_rom_arr_gp))
-      ,.width_p(bsg_machine_rom_width_gp)
-      ,.els_p(bsg_machine_rom_els_gp)
-      )
-    rom
-     (.addr_i(rom_addr_lo)
-      ,.data_o(rom_data_li)
-      );
+  assign csr_data_li[0] = |credits_used_lo;
+  assign csr_data_li[1] = rom_data_li;
 
-   // instantiate manycore
-   `declare_bsg_manycore_link_sif_s(addr_width_p,data_width_p,x_cord_width_p,y_cord_width_p);
-   `declare_bsg_manycore_ruche_x_link_sif_s(addr_width_p,data_width_p,x_cord_width_p,y_cord_width_p);
-   `declare_bsg_ready_and_link_sif_s(wh_flit_width_p, wh_link_sif_s);
-   bsg_manycore_link_sif_s [S:N][num_tiles_x_p-1:0] ver_link_sif_li;
-   bsg_manycore_link_sif_s [S:N][num_tiles_x_p-1:0] ver_link_sif_lo;
-   bsg_manycore_link_sif_s [E:W][num_tiles_y_p-1:0] hor_link_sif_li;
-   bsg_manycore_link_sif_s [E:W][num_tiles_y_p-1:0] hor_link_sif_lo;
-   wh_link_sif_s [E:W][S:N] wh_link_sif_li;
-   wh_link_sif_s [E:W][S:N] wh_link_sif_lo;
+  bsg_rom_param
+   #(.data_p(bsg_machine_rom_arr_gp)
+     ,.data_width_p($bits(bsg_machine_rom_arr_gp))
+     ,.width_p(bsg_machine_rom_width_gp)
+     ,.els_p(bsg_machine_rom_els_gp)
+     )
+   rom
+    (.addr_i(rom_addr_lo)
+     ,.data_o(rom_data_li)
+     );
 
-   // BSG TAG MASTER
-   logic tag_done_lo;
-   bsg_tag_s pod_tags_lo;
+  // instantiate manycore
+  `declare_bsg_manycore_link_sif_s(addr_width_p,data_width_p,x_cord_width_p,y_cord_width_p);
+  `declare_bsg_manycore_ruche_x_link_sif_s(addr_width_p,data_width_p,x_cord_width_p,y_cord_width_p);
+  `declare_bsg_ready_and_link_sif_s(wh_flit_width_p, wh_link_sif_s);
+  bsg_manycore_link_sif_s [S:N][num_tiles_x_p-1:0] ver_link_sif_li;
+  bsg_manycore_link_sif_s [S:N][num_tiles_x_p-1:0] ver_link_sif_lo;
+  bsg_manycore_link_sif_s [E:W][num_tiles_y_p-1:0] hor_link_sif_li;
+  bsg_manycore_link_sif_s [E:W][num_tiles_y_p-1:0] hor_link_sif_lo;
+  wh_link_sif_s [E:W][S:N] wh_link_sif_li;
+  wh_link_sif_s [E:W][S:N] wh_link_sif_lo;
+
+  // BSG TAG MASTER
+  logic tag_done_lo;
+  bsg_tag_s pod_tags_lo;
  
-   // Tag bitbang
-   logic tag_clk_r_lo, tag_data_r_lo;
-   logic bb_ready_and_lo;
-   bsg_tag_bitbang
-    bb
-     (.clk_i(aclk)
-      ,.reset_i(~aresetn)
-      ,.data_i(bb_data_li)
-      ,.v_i(bb_v_li)
-      ,.ready_and_o(bb_ready_and_lo) // UNUSED
+  // Tag bitbang
+  logic tag_clk_r_lo, tag_data_r_lo;
+  logic bb_ready_and_lo;
+  bsg_tag_bitbang
+   bb
+    (.clk_i(aclk)
+     ,.reset_i(~aresetn)
+     ,.data_i(bb_data_li)
+     ,.v_i(bb_v_li)
+     ,.ready_and_o(bb_ready_and_lo) // UNUSED
 
-      ,.tag_clk_r_o(tag_clk_r_lo)
-      ,.tag_data_r_o(tag_data_r_lo)
-      );
-   assign tag_clk = tag_clk_r_lo;
-   assign tag_data = tag_data_r_lo;
+     ,.tag_clk_r_o(tag_clk_r_lo)
+     ,.tag_data_r_o(tag_data_r_lo)
+     );
+  assign tag_clk = tag_clk_r_lo;
+  assign tag_data = tag_data_r_lo;
 
-   // Tag master and clients for PL
-   zynq_pl_tag_lines_s tag_lines_lo;
-   bsg_tag_master_decentralized
-    #(.els_p(tag_els_gp)
-      ,.local_els_p(tag_pl_local_els_gp)
-      ,.lg_width_p(tag_lg_width_gp)
-      )
-    master
-     (.clk_i(tag_clk_r_lo)
-      ,.data_i(tag_data_r_lo)
-      ,.node_id_offset_i(tag_pl_offset_gp)
-      ,.clients_o(tag_lines_lo)
-      );
+  // Tag master and clients for PL
+  zynq_pl_tag_lines_s tag_lines_lo;
+  bsg_tag_master_decentralized
+   #(.els_p(tag_els_gp)
+     ,.local_els_p(tag_pl_local_els_gp)
+     ,.lg_width_p(tag_lg_width_gp)
+     )
+   master
+    (.clk_i(tag_clk_r_lo)
+     ,.data_i(tag_data_r_lo)
+     ,.node_id_offset_i(tag_pl_offset_gp)
+     ,.clients_o(tag_lines_lo)
+     );
 
-   logic reset_r;
-   wire reset_n = ~sys_resetn;
-   bsg_dff_chain
-    #(.width_p(1)
-      ,.num_stages_p(reset_depth_p)
-      )
-    reset_dff
-     (.clk_i(aclk)
-      ,.data_i(reset_n)
-      ,.data_o(reset_r)
-      );
+  logic reset_r;
+  wire reset_n = ~sys_resetn;
+  bsg_dff_chain
+   #(.width_p(1)
+     ,.num_stages_p(reset_depth_p)
+     )
+   reset_dff
+    (.clk_i(aclk)
+     ,.data_i(reset_n)
+     ,.data_o(reset_r)
+     );
 
-   bsg_manycore_pod_mesh_array
-    #(.num_tiles_x_p(num_tiles_x_p)
-      ,.num_tiles_y_p(num_tiles_y_p)
-      ,.pod_x_cord_width_p(pod_x_cord_width_p)
-      ,.pod_y_cord_width_p(pod_y_cord_width_p)
-      ,.x_cord_width_p(x_cord_width_p)
-      ,.y_cord_width_p(y_cord_width_p)
-      ,.addr_width_p(addr_width_p)
-      ,.data_width_p(data_width_p)
-      ,.barrier_ruche_factor_X_p(barrier_ruche_factor_X_p)
-      ,.num_subarray_x_p(num_subarray_x_p)
-      ,.num_subarray_y_p(num_subarray_y_p)
+  bsg_manycore_pod_mesh_array
+   #(.num_tiles_x_p(num_tiles_x_p)
+     ,.num_tiles_y_p(num_tiles_y_p)
+     ,.pod_x_cord_width_p(pod_x_cord_width_p)
+     ,.pod_y_cord_width_p(pod_y_cord_width_p)
+     ,.x_cord_width_p(x_cord_width_p)
+     ,.y_cord_width_p(y_cord_width_p)
+     ,.addr_width_p(addr_width_p)
+     ,.data_width_p(data_width_p)
+     ,.barrier_ruche_factor_X_p(barrier_ruche_factor_X_p)
+     ,.num_subarray_x_p(num_subarray_x_p)
+     ,.num_subarray_y_p(num_subarray_y_p)
 
-      ,.dmem_size_p(dmem_size_p)
-      ,.icache_entries_p(icache_entries_p)
-      ,.icache_tag_width_p(icache_tag_width_p)
-      ,.icache_block_size_in_words_p(icache_block_size_in_words_p)
+     ,.dmem_size_p(dmem_size_p)
+     ,.icache_entries_p(icache_entries_p)
+     ,.icache_tag_width_p(icache_tag_width_p)
+     ,.icache_block_size_in_words_p(icache_block_size_in_words_p)
 
-      ,.num_vcache_rows_p(num_vcache_rows_p)
-      ,.vcache_addr_width_p(vcache_addr_width_p)
-      ,.vcache_data_width_p(vcache_data_width_p)
-      ,.vcache_ways_p(vcache_ways_p)
-      ,.vcache_sets_p(vcache_sets_p)
-      ,.vcache_block_size_in_words_p(vcache_block_size_in_words_p)
-      ,.vcache_size_p(vcache_size_p)
-      ,.vcache_dma_data_width_p(vcache_dma_data_width_p)
-      ,.vcache_word_tracking_p(vcache_word_tracking_p)
+     ,.num_vcache_rows_p(num_vcache_rows_p)
+     ,.vcache_addr_width_p(vcache_addr_width_p)
+     ,.vcache_data_width_p(vcache_data_width_p)
+     ,.vcache_ways_p(vcache_ways_p)
+     ,.vcache_sets_p(vcache_sets_p)
+     ,.vcache_block_size_in_words_p(vcache_block_size_in_words_p)
+     ,.vcache_size_p(vcache_size_p)
+     ,.vcache_dma_data_width_p(vcache_dma_data_width_p)
+     ,.vcache_word_tracking_p(vcache_word_tracking_p)
 
-      ,.wh_ruche_factor_p(wh_ruche_factor_p)
-      ,.wh_cid_width_p(wh_cid_width_p)
-      ,.wh_flit_width_p(wh_flit_width_p)
-      ,.wh_cord_width_p(wh_cord_width_p)
-      ,.wh_len_width_p(wh_len_width_p)
+     ,.wh_ruche_factor_p(wh_ruche_factor_p)
+     ,.wh_cid_width_p(wh_cid_width_p)
+     ,.wh_flit_width_p(wh_flit_width_p)
+     ,.wh_cord_width_p(wh_cord_width_p)
+     ,.wh_len_width_p(wh_len_width_p)
 
-      ,.num_pods_y_p(num_pods_y_p)
-      ,.num_pods_x_p(num_pods_x_p)
+     ,.num_pods_y_p(num_pods_y_p)
+     ,.num_pods_x_p(num_pods_x_p)
 
-      ,.reset_depth_p(reset_depth_p)
-      )
-    manycore
-     (.clk_i(aclk)
+     ,.reset_depth_p(reset_depth_p)
+     )
+   manycore
+    (.clk_i(aclk)
 
-      ,.ver_link_sif_i(ver_link_sif_li)
-      ,.ver_link_sif_o(ver_link_sif_lo)
+     ,.ver_link_sif_i(ver_link_sif_li)
+     ,.ver_link_sif_o(ver_link_sif_lo)
 
-      ,.wh_link_sif_i(wh_link_sif_li)
-      ,.wh_link_sif_o(wh_link_sif_lo)
+     ,.wh_link_sif_i(wh_link_sif_li)
+     ,.wh_link_sif_o(wh_link_sif_lo)
 
-      ,.hor_link_sif_i(hor_link_sif_li)
-      ,.hor_link_sif_o(hor_link_sif_lo)
+     ,.hor_link_sif_i(hor_link_sif_li)
+     ,.hor_link_sif_o(hor_link_sif_lo)
 
-      ,.pod_tags_i(tag_lines_lo) 
-      );
+     ,.pod_tags_i(tag_lines_lo) 
+     );
 
   // IO ROUTER
   bsg_manycore_link_sif_s [num_tiles_x_p-1:0][S:P] io_link_sif_li;

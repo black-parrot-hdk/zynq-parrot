@@ -63,6 +63,8 @@
 #include "bsg_manycore_request_packet.h"
 #include "bsg_manycore_response_packet.h"
 
+void configure_blackparrot(bp_zynq_pl *zpl);
+
 void nbf_load(bp_zynq_pl *zpl, char *filename);
 
 inline void send_mc_request_packet(bp_zynq_pl *zpl, hb_mc_request_packet_t *packet) {
@@ -131,6 +133,66 @@ inline int32_t send_mc_read(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa)
   return resp_pkt.data;
 }
 
+void *device_manycore_poll(void *vargp) {
+  bp_zynq_pl *zpl = (bp_zynq_pl *)vargp;
+
+  int mc_finished = 0;
+  while (1) {
+    bsg_pr_dbg_ps("Waiting for incoming request packet\n");
+    hb_mc_request_packet_t mc_pkt;
+    recv_mc_request_packet(zpl, &mc_pkt);
+    bsg_pr_dbg_ps("Request packet signaled\n");
+    int mc_epa = (mc_pkt.addr << 2) & 0xffff; // Trim to 16b EPA
+    int mc_data = mc_pkt.payload;
+    bsg_pr_dbg_ps("Request packet [%x] = %x\n", mc_epa, mc_data);
+    if (mc_epa == 0xeadc || mc_epa == 0xeee0) {
+        printf("%c", mc_data & 0xff);
+        fflush(stdout);
+    } else if (mc_epa == 0xead0) {
+      bsg_pr_info("MC finish packet received %d\n", ++mc_finished);
+    } else {
+      bsg_pr_info("Errant request packet: %x %x\n", mc_epa, mc_data);
+    }
+
+    if (mc_finished == NUM_MC_FINISH) {
+      break;
+    }
+  }
+
+  bsg_pr_info("Exiting from pthread\n");
+  return NULL;
+}
+
+void *device_blackparrot_poll(void *vargp) {
+  bp_zynq_pl *zpl = (bp_zynq_pl *)vargp;
+
+  int bp_finished = 0;
+  while(1) {
+    bsg_pr_dbg_ps("Waiting for incoming request packet\n");
+    hb_mc_request_packet_t mc_pkt;
+    recv_mc_request_packet(zpl, &mc_pkt);
+    bsg_pr_dbg_ps("Request packet signaled\n");
+    int mc_epa = (mc_pkt.addr << 2) & 0xffff; // Trim to 16b EPA
+    int mc_data = mc_pkt.payload;
+    bsg_pr_dbg_ps("Request packet [%x] = %x\n", mc_epa, mc_data);
+    if (mc_epa == 0x1000) {
+        printf("%c", mc_data & 0xff);
+        fflush(stdout);
+    } else if (mc_epa == 0x2000) {
+      bsg_pr_info("BP finish packet received %d\n", ++bp_finished);
+    } else {
+      bsg_pr_info("Errant request packet: %x %x\n", mc_epa, mc_data);
+    }
+
+    if (bp_finished == NUM_BP_FINISH) {
+      break;
+    }
+  }
+
+  bsg_pr_info("Exiting from pthread\n");
+  return NULL;
+}
+
 #ifndef VCS
 int main(int argc, char **argv) {
 #else
@@ -145,6 +207,8 @@ extern "C" void cosim_main(char *argstr) {
   setvbuf(stdout, NULL, _IOLBF, 0);
 
   bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
+
+  pthread_t thread_id;
 
   bsg_pr_info("ps.cpp: reading three base registers\n");
   bsg_pr_info("ps.cpp: dram_base=%lx\n", zpl->axil_read(0x00 + gp0_addr_base));
@@ -200,9 +264,31 @@ extern "C" void cosim_main(char *argstr) {
 
   nbf_load(zpl, argv[1]);
 
-  // Configure BlackParrot
-  //
-  // TODO: Hardcoded for 2x2
+  bsg_pr_info("ps.cpp: Starting MC i/o polling thread\n");
+  pthread_create(&thread_id, NULL, device_manycore_poll, (void *)zpl);
+  bsg_pr_info("ps.cpp: waiting for manycore to finish\n");
+  pthread_join(thread_id, NULL);
+
+  configure_blackparrot(zpl);
+
+  bsg_pr_info("ps.cpp: Starting BP i/o polling thread\n");
+  pthread_create(&thread_id, NULL, device_blackparrot_poll, (void *)zpl);
+  bsg_pr_info("ps.cpp: waiting for BlackParrot to finish\n");
+  pthread_join(thread_id, NULL);
+
+  zpl->done();
+  delete zpl;
+#ifdef VCS
+  return;
+#else
+  exit(EXIT_SUCCESS);
+#endif
+}
+
+// Configure BlackParrot
+//
+// TODO: Hardcoded for 2x2
+void configure_blackparrot(bp_zynq_pl *zpl) {
   int x_cord_width = 7;
   int y_cord_width = 7;
   int x_subcord_width = 1;
@@ -239,40 +325,6 @@ extern "C" void cosim_main(char *argstr) {
   send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_bridge_reg_my_cord, 0);
   send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_bridge_reg_host_cord, bp_host_cord);
   send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_cfg_reg_freeze, 0);
-
-  int mc_finished = 0;
-  int bp_finished = 0;
-  while(1) {
-    bsg_pr_dbg_ps("Waiting for incoming request packet\n");
-    hb_mc_request_packet_t mc_pkt;
-    recv_mc_request_packet(zpl, &mc_pkt);
-    bsg_pr_dbg_ps("Request packet signaled\n");
-    int mc_epa = (mc_pkt.addr << 2) & 0xffff; // Trim to 16b EPA
-    int mc_data = mc_pkt.payload;
-    bsg_pr_dbg_ps("Request packet [%x] = %x\n", mc_epa, mc_data);
-    if (mc_epa == 0xeadc || mc_epa == 0xeee0 || mc_epa == 0x1000) {
-        printf("%c", mc_data & 0xff);
-        fflush(stdout);
-    } else if (mc_epa == 0xead0) {
-      bsg_pr_info("MC finish packet received %d\n", ++mc_finished);
-    } else if (mc_epa == 0x2000) {
-      bsg_pr_info("BP finish packet received %d\n", ++bp_finished);
-    } else {
-      bsg_pr_info("Errant request packet: %x %x\n", mc_epa, mc_data);
-    }
-    
-    if (mc_finished == NUM_MC_FINISH && bp_finished == NUM_BP_FINISH) {
-      break;
-    }
-  }
-
-  zpl->done();
-  delete zpl;
-#ifdef VCS
-  return;
-#else
-  exit(EXIT_SUCCESS);
-#endif
 }
 
 void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {

@@ -96,6 +96,7 @@ inline void recv_mc_request_packet(bp_zynq_pl *zpl, hb_mc_request_packet_t *pack
 }
 
 inline void send_mc_write(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa, int32_t data) {
+  bsg_pr_dbg_ps("Writing: [%x]<-%x\n", epa, data);
   hb_mc_request_packet_t req_pkt;
 
   req_pkt.op_v2   = 2; // SW
@@ -126,6 +127,7 @@ inline int32_t send_mc_read(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa)
 
   hb_mc_response_packet_t resp_pkt;
   recv_mc_response_packet(zpl, &resp_pkt);
+  bsg_pr_dbg_ps("Querying: [%x] == %x\n", epa, resp_pkt.data);
 
   return resp_pkt.data;
 }
@@ -277,14 +279,12 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
       bsg_pr_info("Credits drained\n");
       continue;
     } else {
-      bsg_pr_dbg_ps("Writing: [%x]<-%x\n", req_pkt.addr, req_pkt.payload);
       send_mc_write(zpl, x_tile, y_tile, epa << 2, nbf_data);
 
 #ifdef VERIFY_NBF
 
       int32_t verif_data;
      
-      bsg_pr_dbg_ps("Querying: %x\n", epa << 2);
       verif_data = send_mc_read(zpl, x_tile, y_tile, epa << 2);
 
       // Some verification reads are expected to fail e.g. CSRs
