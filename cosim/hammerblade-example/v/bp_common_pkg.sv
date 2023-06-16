@@ -26,6 +26,18 @@ package bp_common_pkg;
       ,itlb_els_1g          : 0
       ,dtlb_els_1g          : 8
 
+      ,icache_sets          : 256
+      ,icache_assoc         : 2
+      ,icache_block_width   : 128
+      ,icache_fill_width    : 64
+
+      ,dcache_sets          : 256
+      ,dcache_assoc         : 2
+      ,dcache_block_width   : 128
+      ,dcache_fill_width    : 64
+
+      ,bedrock_fill_width   : 64
+
       ,l2_features          : 0
 
       // Used for carrying payload of return packets
