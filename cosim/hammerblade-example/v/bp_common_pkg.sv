@@ -21,19 +21,19 @@ package bp_common_pkg;
   localparam bp_proc_param_s bp_unicore_hammerblade_cfg_override_p =
     '{paddr_width           : 42 // TODO: Justify maps
 
-      ,itlb_els_4k          : 8
-      ,dtlb_els_4k          : 8
+      ,itlb_els_4k          : 4
+      ,dtlb_els_4k          : 4
       ,itlb_els_1g          : 0
-      ,dtlb_els_1g          : 8
+      ,dtlb_els_1g          : 4
 
-      ,icache_sets          : 256
-      ,icache_assoc         : 2
-      ,icache_block_width   : 128
+      ,icache_sets          : 512
+      ,icache_assoc         : 1
+      ,icache_block_width   : 64
       ,icache_fill_width    : 64
 
-      ,dcache_sets          : 256
-      ,dcache_assoc         : 2
-      ,dcache_block_width   : 128
+      ,dcache_sets          : 512
+      ,dcache_assoc         : 1
+      ,dcache_block_width   : 64
       ,dcache_fill_width    : 64
 
       ,bedrock_fill_width   : 64

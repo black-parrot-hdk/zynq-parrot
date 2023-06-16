@@ -23,9 +23,5 @@ CFLAGS += -DGP0_ENABLE -DGP0_ADDR_BASE=0x400000000
 CFLAGS += -DDRAM_ALLOCATE_SIZE_MB=200
 endif
 
-%.nbf:
-	$(MAKE) -C $(BSG_MANYCORE_SOFTWARE_DIR)/spmd/$* main.nbf
-	mv $(BSG_MANYCORE_SOFTWARE_DIR)/spmd/$*/main.nbf $@
-
 include $(TOP)/cosim/mk/Makefile.fpga
 
