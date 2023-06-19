@@ -77,6 +77,7 @@ export PYTHON          ?= $(PYTHON3)
 
 export SED      ?= sed
 export GREP     ?= grep
+export CAT      ?= cat
 
 export PATH := $(BP_TOOLS_DIR)/install/bin:$(BP_SDK_DIR)/install/bin:$(COSIM_PY_DIR):$(PATH)
 

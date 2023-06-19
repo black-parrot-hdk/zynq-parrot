@@ -24,5 +24,6 @@ VPATH := $(wildcard $(BLACKPARROT_SDK_DIR)/prog/*)
 		--skip_zeros --config --boot_pc 0x80000000 --mem $*.mem --ncpus $(NBF_NCPUS) > $@
 	rm $*.mem
 
+NBF_FILE ?= hello
 RUN_COLLATERAL = $(NBF_FILE)
 

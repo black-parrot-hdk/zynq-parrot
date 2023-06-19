@@ -9,14 +9,37 @@ BOARDNAME  ?= pynqz2
 TOP_MODULE ?= top
 BASENAME   ?= hammerblade
 
+MANYCORE_DRAM_BASE    ?= 0x80000000
+BLACKPARROT_DRAM_BASE ?= 0x82000000
+
 #############################
 # Run Collateral
 #############################
 include $(BSG_MACHINE_PATH)/Makefile.machine.include
 NBF_SCRIPT ?= $(BSG_MANYCORE_DIR)/software/py/nbf.py
+RISCV_OBJCOPY ?= riscv64-unknown-elf-dramfs-objcopy
 %.riscv32:
 	$(MAKE) -C $(BSG_MANYCORE_SOFTWARE_DIR)/spmd/$* clean main.riscv
 	mv $(BSG_MANYCORE_SOFTWARE_DIR)/spmd/$*/main.riscv $@
+
+VPATH := $(wildcard $(BLACKPARROT_SDK_DIR)/prog/*)
+%.riscv64: %.riscv
+	cp $< $@
+
+%.rv64o: %.riscv64
+	$(RISCV_OBJCOPY) -O binary $< $@
+
+%.rv32o: %.riscv32
+	$(RISCV_OBJCOPY) -O binary $< $@
+
+NBF_FILE         ?= hello.hello_world.nbf
+MANYCORE_PROG    ?= $(word 1, $(subst ., ,$(NBF_FILE))).riscv32
+BLACKPARROT_PROG ?= $(word 2, $(subst ., ,$(NBF_FILE))).riscv64
+BLACKPARROT_OBJ  ?= $(subst .riscv64,.rv64o,$(BLACKPARROT_PROG))
+
+COMBINED_PROG    ?= combined.riscv
+$(COMBINED_PROG): $(MANYCORE_PROG) $(BLACKPARROT_OBJ)
+	$(RISCV_OBJCOPY) $(MANYCORE_PROG) $(COMBINED_PROG) -O elf32-littleriscv --add-section .blackparrot.dram=$(BLACKPARROT_OBJ) --set-section-flags .blackparrot.dram="alloc,contents,load"  --change-section-address .text.dram=$(MANYCORE_DRAM_BASE) --change-section-address .blackparrot.dram=$(BLACKPARROT_DRAM_BASE)
 
 # Vary per program
 bsg_tiles_org_X            ?= 0
@@ -29,8 +52,8 @@ bsg_elf_off_chip_mem       ?= 1
 skip_dram_instruction_load ?= 0
 skip_zeros                 ?= 1
 
-%.nbf: %.riscv32
-	python $(NBF_SCRIPT) \
+%.nbf: $(COMBINED_PROG)
+	$(PYTHON) $(NBF_SCRIPT) \
 		$< \
 		$(BSG_MACHINE_GLOBAL_X) $(BSG_MACHINE_GLOBAL_Y) \
 		$(BSG_MACHINE_VCACHE_WAY) $(BSG_MACHINE_VCACHE_SET) \
@@ -44,9 +67,9 @@ skip_zeros                 ?= 1
 		$(BSG_MACHINE_NUM_VCACHE_ROWS) \
 		$(skip_dram_instruction_load) \
 		$(skip_zeros) \
-		$(NBF_PARAMS) > $*.nbf
+		$(NBF_PARAMS) > $@
 	rm main_dram.mem main_dmem.mem
 
-NBF_FILE ?= hello.nbf
+# Manycore program . BlackParrot program
 RUN_COLLATERAL = $(NBF_FILE)
 
