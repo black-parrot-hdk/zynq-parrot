@@ -272,14 +272,6 @@ module top_zynq
 
    // Add user logic here
 
-   `declare_bsg_cache_dma_pkt_s(caddr_width_p, l2_block_size_in_words_p);
-   bsg_cache_dma_pkt_s         dma_pkt_lo;
-   logic                       dma_pkt_v_lo, dma_pkt_yumi_li;
-   logic [l2_fill_width_p-1:0] dma_data_lo;
-   logic                       dma_data_v_lo, dma_data_yumi_li;
-   logic [l2_fill_width_p-1:0] dma_data_li;
-   logic                       dma_data_v_li, dma_data_ready_and_lo;
-
    logic [bp_axil_addr_width_lp-1:0] waddr_translated_lo, raddr_translated_lo;
 
    // Address Translation (MBT):
@@ -604,17 +596,86 @@ module top_zynq
       ,.m_axi_rresp_i    (m00_axi_rresp)
       );
 
-   logic l2_cmd_v_li, l2_backlog_li, l2_serving_ic_li, l2_serving_dc_li, l2_serving_evict_li;
-   logic [l2_banks_p-1:0] l2_ready_li, l2_miss_done_li;
-   assign l2_cmd_v_li = `L2PATH.cce_to_cache.mem_cmd_new_lo & `L2PATH.cce_to_cache.mem_cmd_yumi_li;
-   assign l2_backlog_li = ~`L2PATH.cce_to_cache.mem_cmd_ready_and_o;
-   assign l2_serving_ic_li = `L2PATH.cce_to_cache.mem_cmd_v_lo & ~`L2PATH.cce_to_cache.mem_cmd_header_lo.payload.lce_id[0];
-   assign l2_serving_dc_li = `L2PATH.cce_to_cache.mem_cmd_v_lo & `L2PATH.cce_to_cache.mem_cmd_header_lo.payload.lce_id[0];
-   assign l2_serving_evict_li = l2_serving_dc_li & (`L2PATH.cce_to_cache.mem_cmd_header_lo.msg_type.mem == e_bedrock_mem_wr);
-   for (genvar i = 0; i < l2_banks_p; i++) begin : bank_sel
-     assign l2_ready_li[i] = `L2PATH.bank[i].cache.ready_o;
-     assign l2_miss_done_li[i] = `L2PATH.bank[i].cache.miss_done_lo;
-   end
+
+   `declare_bp_bedrock_mem_if(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p);
+   bp_bedrock_mem_header_s mem_cmd_header_li, mem_resp_header_li;
+   assign mem_cmd_header_li = `L2PATH.mem_cmd_header_i;
+   assign mem_resp_header_li = `L2PATH.mem_resp_header_o;
+
+   logic l2_backlog_li, l2_serving_ic_li, l2_serving_dfetch_li, l2_serving_devict_li;
+   logic [dma_els_p-1:0] l2_ready_li, l2_miss_done_li;
+   logic [`BSG_SAFE_CLOG2(l2_banks_p)-1:0] l2_bank_li;
+
+   logic mem_cmd_new_r;
+   bsg_dff_reset_en
+    #(.width_p(1), .reset_val_p(1))
+    new_reg
+     (.clk_i(s01_axi_aclk)
+     ,.reset_i(bp_reset_li)
+     ,.en_i(`L2PATH.mem_cmd_v_i & `L2PATH.mem_cmd_ready_and_o)
+     ,.data_i(`L2PATH.mem_cmd_last_i)
+     ,.data_o(mem_cmd_new_r)
+     );
+
+  wire mem_cmd_new_li = `L2PATH.mem_cmd_v_i & `L2PATH.mem_cmd_ready_and_o & mem_cmd_new_r;
+  wire mem_resp_last_li = `L2PATH.mem_resp_v_o & `L2PATH.mem_resp_ready_and_i & `L2PATH.mem_resp_last_o;
+
+  bsg_dff_reset_set_clear
+   #(.width_p(1))
+   ic_reg
+    (.clk_i(s01_axi_aclk)
+    ,.reset_i(bp_reset_li)
+    ,.set_i(mem_cmd_new_li & ~mem_cmd_header_li.payload.lce_id[0])
+    ,.clear_i(mem_resp_last_li & ~mem_resp_header_li.payload.lce_id[0])
+    ,.data_o(l2_serving_ic_li)
+    );
+
+  bsg_dff_reset_set_clear
+   #(.width_p(1))
+   dfetch_reg
+    (.clk_i(s01_axi_aclk)
+    ,.reset_i(bp_reset_li)
+    ,.set_i(mem_cmd_new_li & mem_cmd_header_li.payload.lce_id[0] & (mem_cmd_header_li.msg_type.mem != e_bedrock_mem_wr))
+    ,.clear_i(mem_resp_last_li & mem_resp_header_li.payload.lce_id[0] & (mem_resp_header_li.msg_type.mem != e_bedrock_mem_wr))
+    ,.data_o(l2_serving_dfetch_li)
+    );
+
+  bsg_dff_reset_set_clear
+   #(.width_p(1))
+   devict_reg
+    (.clk_i(s01_axi_aclk)
+    ,.reset_i(bp_reset_li)
+    ,.set_i(mem_cmd_new_li & mem_cmd_header_li.payload.lce_id[0] & (mem_cmd_header_li.msg_type.mem == e_bedrock_mem_wr))
+    ,.clear_i(mem_resp_last_li & mem_resp_header_li.payload.lce_id[0] & (mem_resp_header_li.msg_type.mem == e_bedrock_mem_wr))
+    ,.data_o(l2_serving_devict_li)
+    );
+
+   logic [1:0] dma_sel_li;
+   assign l2_backlog_li = `L2PATH.mem_cmd_v_i & ~`L2PATH.mem_cmd_ready_and_o;
+   generate
+     if(l2_en_p) begin
+       assign dma_sel_li = `L2PATH.l2.cce_to_cache.mem_cmd_header_lo.payload.lce_id[0]
+                           ? (`L2PATH.l2.cce_to_cache.mem_cmd_header_lo.msg_type.mem == e_bedrock_mem_wr)
+                             ? 2'b10
+                             : 2'b01
+                           :2'b00;
+       assign l2_bank_li = `L2PATH.l2.cce_to_cache.cache_cmd_bank_lo;
+       for (genvar i = 0; i < l2_banks_p; i++) begin : bank_sel
+         assign l2_ready_li[i] = `L2PATH.l2.bank[i].cache.v_i ? `L2PATH.l2.bank[i].cache.yumi_o : 1'b1;
+         assign l2_miss_done_li[i] = `L2PATH.l2.bank[i].cache.miss_done_lo;
+       end
+     end
+     else begin
+       assign dma_sel_li = `L2PATH.nol2.cce_to_cache_dma.mem_cmd_header_lo.payload.lce_id[0]
+                           ? (`L2PATH.nol2.cce_to_cache_dma.mem_cmd_header_lo.msg_type.mem == e_bedrock_mem_wr)
+                             ? 2'b10
+                             : 2'b01
+                           :2'b00;
+       assign l2_bank_li = '0;
+       assign l2_ready_li = 1'b0;
+       assign l2_miss_done_li = 1'b0;
+     end
+   endgenerate
 
    bp_commit_profiler
     #(.bp_params_p(bp_params_p)
@@ -690,14 +751,13 @@ module top_zynq
      ,.sb_rd_i(`COREPATH.be.detector.score_rd_li)
      ,.sb_irs_match_i(`COREPATH.be.detector.irs_match_lo)
 
-     ,.l2_bank_i(`L2PATH.cce_to_cache.cache_cmd_bank_lo)
+     ,.l2_bank_i(l2_bank_li)
      ,.l2_ready_i(l2_ready_li)
      ,.l2_miss_done_i(l2_miss_done_li)
-     ,.l2_cmd_v_i(l2_cmd_v_li)
      ,.l2_backlog_i(l2_backlog_li)
      ,.l2_serving_ic_i(l2_serving_ic_li)
-     ,.l2_serving_dc_i(l2_serving_dc_li)
-     ,.l2_serving_evict_i(l2_serving_evict_li)
+     ,.l2_serving_dfetch_i(l2_serving_dfetch_li)
+     ,.l2_serving_devict_i(l2_serving_devict_li)
 
      ,.dc_miss_i(`COREPATH.be.calculator.pipe_mem.dcache.is_miss)
      ,.dc_late_i(`COREPATH.be.calculator.pipe_mem.dcache.is_late)
@@ -706,10 +766,13 @@ module top_zynq
 
      ,.m_arvalid_i(m00_axi_arvalid)
      ,.m_arready_i(m00_axi_arready)
-     ,.m_rlast_i(m00_axi_rlast)
+     ,.m_rlast_i(m00_axi_rvalid & m00_axi_rlast)
+     ,.m_rready_i(m00_axi_rready)
      ,.m_awvalid_i(m00_axi_awvalid)
      ,.m_awready_i(m00_axi_awready)
      ,.m_bvalid_i(m00_axi_bvalid)
+     ,.m_bready_i(m00_axi_bready)
+     ,.dma_sel_i(dma_sel_li)
 
      ,.icache_valid_i(`COREPATH.fe.icache.v_i)
      ,.dcache_valid_i(`COREPATH.be.calculator.pipe_mem.dcache.v_i)

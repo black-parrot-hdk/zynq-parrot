@@ -93,6 +93,7 @@ module bsg_nonsynth_axi_mem
 
       WR_WAIT_ADDR: begin
         axi_awready_o = 1'b1;
+        wr_cnt_clr_li = 1'b1;
         awid_n = axi_awvalid_i 
           ? axi_awid_i
           : awid_r;
@@ -106,7 +107,6 @@ module bsg_nonsynth_axi_mem
       
       WR_WAIT_DATA: begin
         axi_wready_o = 1'b1;
-        wr_cnt_clr_li = 1'b1;
         awaddr_n = axi_wvalid_i
           ? awaddr_r + (1 << `BSG_SAFE_CLOG2(axi_data_width_p>>3))
           : awaddr_r;

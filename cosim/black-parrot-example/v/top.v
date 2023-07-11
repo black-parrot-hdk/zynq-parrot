@@ -314,7 +314,6 @@ module top
        ,.axi_data_width_p(axi_data_width_p)
        ,.axi_len_width_p(4)
        ,.mem_els_p(2**28) // 256 MB
-       ,.delay_p(31)
        ,.init_data_p('0)
      )
    axi_mem
@@ -324,6 +323,7 @@ module top
       ,.axi_awid_i    (m00_axi_awid)
       ,.axi_awaddr_i  (m00_axi_awaddr)
       ,.axi_awlen_i   (m00_axi_awlen)
+      ,.axi_awburst_i (m00_axi_awburst)
       ,.axi_awvalid_i (m00_axi_awvalid)
       ,.axi_awready_o (m00_axi_awready)
 
@@ -341,6 +341,7 @@ module top
       ,.axi_arid_i    (m00_axi_arid)
       ,.axi_araddr_i  (m00_axi_araddr)
       ,.axi_arlen_i   (m00_axi_arlen)
+      ,.axi_arburst_i (m00_axi_arburst)
       ,.axi_arvalid_i (m00_axi_arvalid)
       ,.axi_arready_o (m00_axi_arready)
 
