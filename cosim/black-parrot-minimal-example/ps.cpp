@@ -192,10 +192,12 @@ inline uint64_t get_counter_64(bp_zynq_pl *zpl, uint64_t addr, bool bp_not_shell
   } while (1);
 }
 
-#ifndef VCS
+#ifdef VERILATOR
+int main(int argc, char **argv) {
+#elif FPGA
 int main(int argc, char **argv) {
 #else
-extern "C" void cosim_main(char *argstr) {
+extern "C" int cosim_main(char *argstr) {
   int argc = get_argc(argstr);
   char *argv[argc];
   get_argv(argstr, argc, argv);
@@ -271,7 +273,7 @@ extern "C" void cosim_main(char *argstr) {
         "onto allocated DRAM)\n");
     sleep(1U << 31);
     delete zpl;
-    exit(0);
+    return -1;
   }
 
   bsg_pr_info("ps.cpp: attempting to read mtime reg in BP CFG space, should "
@@ -437,11 +439,7 @@ extern "C" void cosim_main(char *argstr) {
 
   zpl->done();
   delete zpl;
-#ifdef VCS
-  return;
-#else
-  exit(EXIT_SUCCESS);
-#endif
+  return -1;
 }
 
 std::uint32_t rotl(std::uint32_t v, std::int32_t shift) {
@@ -462,8 +460,7 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
 
   if (!nbf_file.is_open()) {
     bsg_pr_err("ps.cpp: error opening nbf file.\n");
-    delete zpl;
-    exit(-1);
+    return;
   }
 
   int line_count = 0;

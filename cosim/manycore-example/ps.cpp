@@ -132,10 +132,12 @@ inline int32_t send_mc_read(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa)
   return resp_pkt.data;
 }
 
-#ifndef VCS
+#ifdef VERILATOR
+int main(int argc, char **argv) {
+#elif FPGA
 int main(int argc, char **argv) {
 #else
-extern "C" void cosim_main(char *argstr) {
+extern "C" int cosim_main(char *argstr) {
   int argc = get_argc(argstr);
   char *argv[argc];
   get_argv(argstr, argc, argv);
@@ -196,7 +198,7 @@ extern "C" void cosim_main(char *argstr) {
         "onto allocated DRAM)\n");
     sleep(1U << 31);
     delete zpl;
-    exit(0);
+    return -1;
   }
 
   nbf_load(zpl, argv[1]);
@@ -225,11 +227,7 @@ extern "C" void cosim_main(char *argstr) {
 
   zpl->done();
   delete zpl;
-#ifdef VCS
-  return;
-#else
-  exit(EXIT_SUCCESS);
-#endif
+  return 0;
 }
 
 void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
@@ -246,7 +244,7 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
   if (!nbf_file.is_open()) {
     bsg_pr_err("ps.cpp: error opening nbf file.\n");
     delete zpl;
-    exit(-1);
+    return;
   }
 
   int line_count = 0;

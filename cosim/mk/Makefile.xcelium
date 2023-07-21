@@ -1,0 +1,64 @@
+
+XRUN_OPTS += -64bit
+XRUN_OPTS += -sv
+XRUN_OPTS += -assert
+XRUN_OPTS += -timescale 1ps/1ps
+XRUN_OPTS += -elaborate -notimingchecks
+XRUN_OPTS += -f flist.vcs
+XRUN_OPTS += -top $(TOP_MODULE)
+XRUN_OPTS += +incdir+$(COSIM_DIR)/include/xcelium
+XRUN_OPTS += -access +rc
+XRUN_OPTS += -dpi -dynamic
+
+CFLAGS += -DXCELIUM
+
+CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
+CINCLUDES += -I$(COSIM_INCLUDE_DIR)/xcelium
+CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
+CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_test
+
+XMSIM_FLAGS += -64BIT
+XMSIM_FLAGS += -SV_ROOT . -SV_LIB libdpi.so
+
+TRACE ?= +bsg_trace
+
+all:
+	@echo "## See the makefile for the fun things you can do in this directory"
+
+BUILD_LOG ?= build.log
+xcelium.d: $(HOST_PROGRAM) $(FLIST)
+	$(XRUN) $(XRUN_OPTS) $(CFLAGS) $(CINCLUDES) $< \
+		2>&1 | tee -i $(BUILD_LOG)
+
+RUN_LOG ?= run.log
+run: xcelium.d $(RUN_COLLATERAL)
+	$(XMSIM) $(XMSIM_FLAGS) top $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
+
+clean:
+	rm -rf csrc/
+	rm -rf ucli.key
+	rm -rf vc_hdrs.h
+	rm -rf flist*.vcs
+	rm -rf xcelium.d/
+	rm -rf xm*
+	rm -rf xrun.log xrun.history
+	rm -rf build.log
+	rm -rf run.log
+	rm -rf *.nbf
+	rm -rf *.elf
+	rm -rf *.trace
+	rm -rf *.riscv*
+	rm -rf *.rv*o*
+	rm -rf *.dump*
+
+view:
+	$(SIMVISION) dump.shm &
+
+help:
+	@echo -e "Usage: make"
+	@echo -e "\tclean - Cleans directory"
+	@echo -e "\tview - Open waveform in gtkwave"
+	@echo -e "\tall - Runs the current test"
+	@echo -e "Options"
+	@echo -e "\tTRACE = whether to dump a .fst waveform"
+

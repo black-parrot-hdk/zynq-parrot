@@ -9,10 +9,12 @@
 #include <stdio.h>
 #include "bp_zynq_pl.h"
 
-#ifndef VCS
+#ifdef VERILATOR
+int main(int argc, char **argv) {
+#elif FPGA
 int main(int argc, char **argv) {
 #else
-extern "C" void cosim_main(char *argstr) {
+extern "C" int cosim_main(char *argstr) {
   int argc = get_argc(argstr);
   char *argv[argc];
   get_argv(argstr, argc, argv);
@@ -36,5 +38,5 @@ extern "C" void cosim_main(char *argstr) {
   zpl->done();
 
   delete zpl;
-  exit(EXIT_SUCCESS);
+  return 0;
 }
