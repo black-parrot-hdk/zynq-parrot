@@ -68,6 +68,9 @@ endif
 export VIVADO    ?= vivado
 export VCS       ?= vcs
 export _DVE      ?= dve
+export XRUN      ?= xrun
+export XMSIM     ?= xmsim
+export SIMVISION ?= simvision
 export GCC       ?= g++
 export PYTHON    ?= PYTHONPATH=$(COSIM_PY_DIR) python
 

@@ -307,18 +307,36 @@ module top
       ,.m00_axi_rresp  (m00_axi_rresp)
       );
 
-`ifdef VCS
+`ifdef VERILATOR
+   initial
+     begin
+       if ($test$plusargs("bsg_trace") != 0)
+         begin
+           $display("[%0t] Tracing to trace.fst...\n", $time);
+           $dumpfile("trace.fst");
+           $dumpvars();
+         end
+     end
+`else
    import "DPI-C" context task cosim_main(string c_args);
    string c_args;
    initial
      begin
        if ($test$plusargs("bsg_trace") != 0)
+`ifdef VCS
          begin
            $display("[%0t] Tracing to vcdplus.vpd...\n", $time);
            $vcdplusfile("vcdplus.vpd");
            $vcdpluson();
            $vcdplusautoflushon();
          end
+`endif
+`ifdef XCELIUM
+         begin
+           $shm_open("dump.shm");
+           $shm_probe("ASM");
+         end 
+`endif
        if ($test$plusargs("c_args") != 0)
          begin
            $value$plusargs("c_args=%s", c_args);
@@ -340,15 +358,7 @@ module top
      @(posedge aclk);
      #1;
    endtask
-
-  initial
-    begin
-      $assertoff();
-      @(posedge aclk);
-      @(negedge aresetn);
-      $asserton();
-    end
 `endif
 
-endmodule
+ endmodule
 

@@ -130,10 +130,12 @@ inline uint64_t get_counter_64(bp_zynq_pl *zpl, uint64_t addr) {
   } while (1);
 }
 
-#ifndef VCS
+#ifdef VERILATOR
+int main(int argc, char **argv) {
+#elif FPGA
 int main(int argc, char **argv) {
 #else
-extern "C" void cosim_main(char *argstr) {
+extern "C" int cosim_main(char *argstr) {
   int argc = get_argc(argstr);
   char *argv[argc];
   get_argv(argstr, argc, argv);
@@ -409,11 +411,6 @@ extern "C" void cosim_main(char *argstr) {
 
   zpl->done();
   delete zpl;
-#ifdef VCS
-  return;
-#else
-  exit(EXIT_SUCCESS);
-#endif
 }
 
 std::uint32_t rotl(std::uint32_t v, std::int32_t shift) {

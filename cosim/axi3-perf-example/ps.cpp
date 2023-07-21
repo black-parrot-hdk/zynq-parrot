@@ -34,7 +34,9 @@ inline uint32x4_t set4(uint32_t a, uint32_t b, uint32_t c, uint32_t d) {
 
 #endif
 
-#ifndef VCS
+#ifdef VERILATOR
+int main(int argc, char **argv) {
+#elif FPGA
 int main(int argc, char **argv) {
 #else
 extern "C" void cosim_main(char *argstr) {
@@ -104,7 +106,7 @@ extern "C" void cosim_main(char *argstr) {
 
 #endif
 
-  if {0} {  
+  if (0) {  
   // write to two registers, checking our address snoop to see
   // actual address that was received over the AXI bus
   zpl->axil_write(0x0 + GP0_ADDR_BASE, val1, mask1);
@@ -180,5 +182,4 @@ extern "C" void cosim_main(char *argstr) {
   zpl->done();
 
   delete zpl;
-  exit(EXIT_SUCCESS);
 }

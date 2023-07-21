@@ -20,3 +20,14 @@ bsg_cadenv/
 *.hwh
 control-program
 sds_trace_data.dat
+xcelium.d/
+.simvision/
+dump.shm/
+.bpad/
+xrun.history
+*.riscv32
+*.riscv64
+flist.*.vcs
+*.rv64o
+*.rv32o
+*.riscv
