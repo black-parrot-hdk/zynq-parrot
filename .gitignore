@@ -27,7 +27,7 @@ dump.shm/
 xrun.history
 *.riscv32
 *.riscv64
-flist.*.vcs
+flist.*vcs
 *.rv64o
 *.rv32o
 *.riscv

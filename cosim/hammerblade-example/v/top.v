@@ -358,6 +358,14 @@ module top
      @(posedge aclk);
      #1;
    endtask
+
+  initial
+    begin
+       $assertoff();
+       @(posedge aclk);
+       @(negedge aresetn);
+       $asserton();
+     end
 `endif
 
  endmodule
