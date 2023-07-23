@@ -11,6 +11,9 @@ export TOP_MODULE ?= top
 #############################
 export NBF_FILE     ?= $(abspath ../hello.nbf)
 export HOST_PROGRAM ?= $(abspath ../ps.cpp)
+ifdef PK
+export HOST_PROGRAM += $(abspath $(shell find ../htif/ -name '*.cc'))
+endif
 export BASE_FLIST   ?= $(abspath ../flist.vcs)
 export FLIST        ?= $(abspath flist.vcs)
 export SIM_ARGS     += $(NBF_FILE)
@@ -26,10 +29,15 @@ BP_NCPUS ?= 1
 CFLAGS += -DZYNQ_PS_DEBUG
 CFLAGS += -DGP0_ENABLE -DGP0_ADDR_BASE=0x40000000U -DGP0_ADDR_WIDTH=10 -DGP0_DATA_WIDTH=32 -DGP0_HIER_BASE=TOP.top.axil0
 CFLAGS += -DGP1_ENABLE -DGP1_ADDR_BASE=0x80000000U -DGP1_ADDR_WIDTH=30 -DGP1_DATA_WIDTH=32 -DGP1_HIER_BASE=TOP.top.axil1
+ifndef PK
 CFLAGS += -DHP0_ENABLE -DHP0_ADDR_BASE=0x1000000U -DHP0_ADDR_WIDTH=32 -DHP0_DATA_WIDTH=32 -DHP0_HIER_BASE=TOP.top.axil2
+endif
 CFLAGS += -DSCRATCHPAD_ENABLE
 CFLAGS += -DBP_NCPUS=$(BP_NCPUS)
 CFLAGS += $(INCLUDES) $(SKIP_DRAM)
+ifdef PK
+CFLAGS += -DPK -I$(abspath ../htif/)
+endif
 # Enable backpressure
 #CFLAGS += -DSIM_BACKPRESSURE_ENABLE
 #CFLAGS += -DSIM_BACKPRESSURE_CHANCE=5

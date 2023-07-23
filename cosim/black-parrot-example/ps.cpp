@@ -23,6 +23,10 @@
 #include "bsg_printing.h"
 #include "bsg_argparse.h"
 
+#ifdef PK
+#include "htif.h"
+#endif
+
 #define FREE_DRAM 0
 #define DRAM_ALLOCATE_SIZE 241 * 1024 * 1024
 
@@ -131,6 +135,12 @@ extern "C" void cosim_main(char *argstr) {
   setvbuf(stdout, NULL, _IOLBF, 0);
 
   bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
+
+#ifdef PK
+  printf("Running with HTIF\n");
+  htif_t* htif = new htif_t(zpl);
+  int htif_cntr = 0;
+#endif
 
   // the read memory map is essentially
   //
@@ -327,7 +337,17 @@ extern "C" void cosim_main(char *argstr) {
   std::thread t(sample, zpl, argv[1]);
 #endif
   while (1) {
-#ifndef FPGA
+#ifdef PK
+    htif_cntr++;
+    if(htif_cntr % 1000 == 0)
+      if(htif->step()) {
+        // deasserting counter enable
+        zpl->axil_write(0xC + GP0_ADDR_BASE, 0x0, mask1);
+        break;
+      }
+#endif
+
+#ifdef HP0_ENABLE
     zpl->axil_poll();
 #endif
 #ifdef SIM_BACKPRESSURE_ENABLE

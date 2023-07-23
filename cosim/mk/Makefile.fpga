@@ -15,6 +15,8 @@ LFLAGS += -lcma -lpthread
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/fpga
 
+HOST_PROGRAM += $(COSIM_INCLUDE_DIR)/fpga/bp_zynq_pl.cc
+
 all:
 	@echo "Rules for FPGA; see $(TOP)/cosim/mk/Makefile.fpga for more:"
 	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.fpga
@@ -24,7 +26,7 @@ run: $(EXE)
 	sudo ./$< $(SIM_ARGS)
 
 $(EXE): $(HOST_PROGRAM)
-	$(GCC) $(CFLAGS) $(CINCLUDES) $(CSOURCES) $< $(LFLAGS) -o $@
+	$(GCC) $(CFLAGS) $(CINCLUDES) $(CSOURCES) $^ $(LFLAGS) -o $@
 
 fpga_report_build_block:
 	-@grep --color "CRITICAL WARNING" vivado.log
@@ -38,7 +40,8 @@ fpga_report_build_block:
 # on the x86 server
 fpga_build_ip: clean_fpga_build $(FLIST)
 	mkdir fpga_build
-	$(XILINX_ENV) && $(VIVADO) -source $(COSIM_TCL_DIR)/vivado-build-ip.tcl -mode $(MODE)
+	#$(XILINX_ENV) && 
+	$(VIVADO) -source $(COSIM_TCL_DIR)/vivado-build-ip.tcl -mode $(MODE)
 	-@grep --color "CRITICAL WARNING" vivado.log
 	-@grep --color "ERROR" vivado.log
 	-@tail -n5 vivado.log

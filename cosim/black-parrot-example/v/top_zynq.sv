@@ -9,6 +9,7 @@ module top_zynq
  import bp_common_pkg::*;
  import bp_be_pkg::*;
  import bp_me_pkg::*;
+ import bsg_axi_pkg::*;
  #(parameter bp_params_e bp_params_p = e_bp_default_cfg
    `declare_bp_proc_params(bp_params_p)
    `declare_bp_bedrock_mem_if_widths(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p)
@@ -167,25 +168,85 @@ module top_zynq
    logic                                        pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
    logic                                        ps_to_pl_fifo_v_lo, ps_to_pl_fifo_ready_li;
 
-   logic [bp_axil_addr_width_lp-1:0]            bp_axi_awaddr;
-   logic [2:0]                                  bp_axi_awprot;
-   logic                                        bp_axi_awvalid;
-   logic                                        bp_axi_awready;
-   logic [bp_axil_data_width_lp-1:0]            bp_axi_wdata;
-   logic [(bp_axil_data_width_lp/8)-1:0]        bp_axi_wstrb;
-   logic                                        bp_axi_wvalid;
-   logic                                        bp_axi_wready;
-   logic [1:0]                                  bp_axi_bresp;
-   logic                                        bp_axi_bvalid;
-   logic                                        bp_axi_bready;
-   logic [bp_axil_addr_width_lp-1:0]            bp_axi_araddr;
-   logic [2:0]                                  bp_axi_arprot;
-   logic                                        bp_axi_arvalid;
-   logic                                        bp_axi_arready;
-   logic [bp_axil_data_width_lp-1:0]            bp_axi_rdata;
-   logic [1:0]                                  bp_axi_rresp;
-   logic                                        bp_axi_rvalid;
-   logic                                        bp_axi_rready;
+   logic [bp_axil_addr_width_lp-1:0]            m_bp_axi_awaddr;
+   logic [2:0]                                  m_bp_axi_awprot;
+   logic                                        m_bp_axi_awvalid;
+   logic                                        m_bp_axi_awready;
+   logic [bp_axil_data_width_lp-1:0]            m_bp_axi_wdata;
+   logic [(bp_axil_data_width_lp/8)-1:0]        m_bp_axi_wstrb;
+   logic                                        m_bp_axi_wvalid;
+   logic                                        m_bp_axi_wready;
+   logic [1:0]                                  m_bp_axi_bresp;
+   logic                                        m_bp_axi_bvalid;
+   logic                                        m_bp_axi_bready;
+   logic [bp_axil_addr_width_lp-1:0]            m_bp_axi_araddr;
+   logic [2:0]                                  m_bp_axi_arprot;
+   logic                                        m_bp_axi_arvalid;
+   logic                                        m_bp_axi_arready;
+   logic [bp_axil_data_width_lp-1:0]            m_bp_axi_rdata;
+   logic [1:0]                                  m_bp_axi_rresp;
+   logic                                        m_bp_axi_rvalid;
+   logic                                        m_bp_axi_rready;
+
+   logic [bp_axil_addr_width_lp-1:0]            s_bp_axi_awaddr;
+   logic [2:0]                                  s_bp_axi_awprot;
+   logic                                        s_bp_axi_awvalid;
+   logic                                        s_bp_axi_awready;
+   logic [bp_axil_data_width_lp-1:0]            s_bp_axi_wdata;
+   logic [(bp_axil_data_width_lp/8)-1:0]        s_bp_axi_wstrb;
+   logic                                        s_bp_axi_wvalid;
+   logic                                        s_bp_axi_wready;
+   logic [1:0]                                  s_bp_axi_bresp;
+   logic                                        s_bp_axi_bvalid;
+   logic                                        s_bp_axi_bready;
+   logic [bp_axil_addr_width_lp-1:0]            s_bp_axi_araddr;
+   logic [2:0]                                  s_bp_axi_arprot;
+   logic                                        s_bp_axi_arvalid;
+   logic                                        s_bp_axi_arready;
+   logic [bp_axil_data_width_lp-1:0]            s_bp_axi_rdata;
+   logic [1:0]                                  s_bp_axi_rresp;
+   logic                                        s_bp_axi_rvalid;
+   logic                                        s_bp_axi_rready;
+
+   logic [bp_axil_addr_width_lp-1:0]            m02_axi_awaddr;
+   logic [2:0]                                  m02_axi_awprot;
+   logic                                        m02_axi_awvalid;
+   logic                                        m02_axi_awready;
+   logic [bp_axil_data_width_lp-1:0]            m02_axi_wdata;
+   logic [(bp_axil_data_width_lp/8)-1:0]        m02_axi_wstrb;
+   logic                                        m02_axi_wvalid;
+   logic                                        m02_axi_wready;
+   logic [1:0]                                  m02_axi_bresp;
+   logic                                        m02_axi_bvalid;
+   logic                                        m02_axi_bready;
+   logic [bp_axil_addr_width_lp-1:0]            m02_axi_araddr;
+   logic [2:0]                                  m02_axi_arprot;
+   logic                                        m02_axi_arvalid;
+   logic                                        m02_axi_arready;
+   logic [bp_axil_data_width_lp-1:0]            m02_axi_rdata;
+   logic [1:0]                                  m02_axi_rresp;
+   logic                                        m02_axi_rvalid;
+   logic                                        m02_axi_rready;
+
+   logic [bp_axil_addr_width_lp-1:0]            m03_axi_awaddr;
+   logic [2:0]                                  m03_axi_awprot;
+   logic                                        m03_axi_awvalid;
+   logic                                        m03_axi_awready;
+   logic [bp_axil_data_width_lp-1:0]            m03_axi_wdata;
+   logic [(bp_axil_data_width_lp/8)-1:0]        m03_axi_wstrb;
+   logic                                        m03_axi_wvalid;
+   logic                                        m03_axi_wready;
+   logic [1:0]                                  m03_axi_bresp;
+   logic                                        m03_axi_bvalid;
+   logic                                        m03_axi_bready;
+   logic [bp_axil_addr_width_lp-1:0]            m03_axi_araddr;
+   logic [2:0]                                  m03_axi_arprot;
+   logic                                        m03_axi_arvalid;
+   logic                                        m03_axi_arready;
+   logic [bp_axil_data_width_lp-1:0]            m03_axi_rdata;
+   logic [1:0]                                  m03_axi_rresp;
+   logic                                        m03_axi_rvalid;
+   logic                                        m03_axi_rready;
 
    // BlackParrot reset signal is connected to a CSR (along with
    // the AXI interface reset) so that a regression can be launched
@@ -401,72 +462,212 @@ module top_zynq
   bsg_axil_demux
    #(.addr_width_p(bp_axil_addr_width_lp)
      ,.data_width_p(32)
-     // BP host address space is below this
-     ,.split_addr_p(32'h0020_0000)
+     // BP host address space is above this
+     ,.split_addr_p(32'h0010_0000)
      )
-   axil_demux
+   axil_demux_m
     (.clk_i(s01_axi_aclk)
      ,.reset_i(~s01_axi_aresetn)
 
-     ,.s00_axil_awaddr(bp_axi_awaddr)
-     ,.s00_axil_awprot(bp_axi_awprot)
-     ,.s00_axil_awvalid(bp_axi_awvalid)
-     ,.s00_axil_awready(bp_axi_awready)
-     ,.s00_axil_wdata(bp_axi_wdata)
-     ,.s00_axil_wstrb(bp_axi_wstrb)
-     ,.s00_axil_wvalid(bp_axi_wvalid)
-     ,.s00_axil_wready(bp_axi_wready)
-     ,.s00_axil_bresp(bp_axi_bresp)
-     ,.s00_axil_bvalid(bp_axi_bvalid)
-     ,.s00_axil_bready(bp_axi_bready)
-     ,.s00_axil_araddr(bp_axi_araddr)
-     ,.s00_axil_arprot(bp_axi_arprot)
-     ,.s00_axil_arvalid(bp_axi_arvalid)
-     ,.s00_axil_arready(bp_axi_arready)
-     ,.s00_axil_rdata(bp_axi_rdata)
-     ,.s00_axil_rresp(bp_axi_rresp)
-     ,.s00_axil_rvalid(bp_axi_rvalid)
-     ,.s00_axil_rready(bp_axi_rready)
+     ,.s00_axil_awaddr(m_bp_axi_awaddr)
+     ,.s00_axil_awprot(m_bp_axi_awprot)
+     ,.s00_axil_awvalid(m_bp_axi_awvalid)
+     ,.s00_axil_awready(m_bp_axi_awready)
+     ,.s00_axil_wdata(m_bp_axi_wdata)
+     ,.s00_axil_wstrb(m_bp_axi_wstrb)
+     ,.s00_axil_wvalid(m_bp_axi_wvalid)
+     ,.s00_axil_wready(m_bp_axi_wready)
+     ,.s00_axil_bresp(m_bp_axi_bresp)
+     ,.s00_axil_bvalid(m_bp_axi_bvalid)
+     ,.s00_axil_bready(m_bp_axi_bready)
+     ,.s00_axil_araddr(m_bp_axi_araddr)
+     ,.s00_axil_arprot(m_bp_axi_arprot)
+     ,.s00_axil_arvalid(m_bp_axi_arvalid)
+     ,.s00_axil_arready(m_bp_axi_arready)
+     ,.s00_axil_rdata(m_bp_axi_rdata)
+     ,.s00_axil_rresp(m_bp_axi_rresp)
+     ,.s00_axil_rvalid(m_bp_axi_rvalid)
+     ,.s00_axil_rready(m_bp_axi_rready)
 
-     ,.m00_axil_awaddr(s02_axi_awaddr)
-     ,.m00_axil_awprot(s02_axi_awprot)
-     ,.m00_axil_awvalid(s02_axi_awvalid)
-     ,.m00_axil_awready(s02_axi_awready)
-     ,.m00_axil_wdata(s02_axi_wdata)
-     ,.m00_axil_wstrb(s02_axi_wstrb)
-     ,.m00_axil_wvalid(s02_axi_wvalid)
-     ,.m00_axil_wready(s02_axi_wready)
-     ,.m00_axil_bresp(s02_axi_bresp)
-     ,.m00_axil_bvalid(s02_axi_bvalid)
-     ,.m00_axil_bready(s02_axi_bready)
-     ,.m00_axil_araddr(s02_axi_araddr)
-     ,.m00_axil_arprot(s02_axi_arprot)
-     ,.m00_axil_arvalid(s02_axi_arvalid)
-     ,.m00_axil_arready(s02_axi_arready)
-     ,.m00_axil_rdata(s02_axi_rdata)
-     ,.m00_axil_rresp(s02_axi_rresp)
-     ,.m00_axil_rvalid(s02_axi_rvalid)
-     ,.m00_axil_rready(s02_axi_rready)
+     ,.m00_axil_awaddr(m02_axi_awaddr)
+     ,.m00_axil_awprot(m02_axi_awprot)
+     ,.m00_axil_awvalid(m02_axi_awvalid)
+     ,.m00_axil_awready(m02_axi_awready)
+     ,.m00_axil_wdata(m02_axi_wdata)
+     ,.m00_axil_wstrb(m02_axi_wstrb)
+     ,.m00_axil_wvalid(m02_axi_wvalid)
+     ,.m00_axil_wready(m02_axi_wready)
+     ,.m00_axil_bresp(m02_axi_bresp)
+     ,.m00_axil_bvalid(m02_axi_bvalid)
+     ,.m00_axil_bready(m02_axi_bready)
+     ,.m00_axil_araddr(m02_axi_araddr)
+     ,.m00_axil_arprot(m02_axi_arprot)
+     ,.m00_axil_arvalid(m02_axi_arvalid)
+     ,.m00_axil_arready(m02_axi_arready)
+     ,.m00_axil_rdata(m02_axi_rdata)
+     ,.m00_axil_rresp(m02_axi_rresp)
+     ,.m00_axil_rvalid(m02_axi_rvalid)
+     ,.m00_axil_rready(m02_axi_rready)
 
-     ,.m01_axil_awaddr(m01_axi_awaddr)
-     ,.m01_axil_awprot(m01_axi_awprot)
-     ,.m01_axil_awvalid(m01_axi_awvalid)
-     ,.m01_axil_awready(m01_axi_awready)
-     ,.m01_axil_wdata(m01_axi_wdata)
-     ,.m01_axil_wstrb(m01_axi_wstrb)
-     ,.m01_axil_wvalid(m01_axi_wvalid)
-     ,.m01_axil_wready(m01_axi_wready)
-     ,.m01_axil_bresp(m01_axi_bresp)
-     ,.m01_axil_bvalid(m01_axi_bvalid)
-     ,.m01_axil_bready(m01_axi_bready)
-     ,.m01_axil_araddr(m01_axi_araddr)
-     ,.m01_axil_arprot(m01_axi_arprot)
-     ,.m01_axil_arvalid(m01_axi_arvalid)
-     ,.m01_axil_arready(m01_axi_arready)
-     ,.m01_axil_rdata(m01_axi_rdata)
-     ,.m01_axil_rresp(m01_axi_rresp)
-     ,.m01_axil_rvalid(m01_axi_rvalid)
-     ,.m01_axil_rready(m01_axi_rready)
+     ,.m01_axil_awaddr(s02_axi_awaddr)
+     ,.m01_axil_awprot(s02_axi_awprot)
+     ,.m01_axil_awvalid(s02_axi_awvalid)
+     ,.m01_axil_awready(s02_axi_awready)
+     ,.m01_axil_wdata(s02_axi_wdata)
+     ,.m01_axil_wstrb(s02_axi_wstrb)
+     ,.m01_axil_wvalid(s02_axi_wvalid)
+     ,.m01_axil_wready(s02_axi_wready)
+     ,.m01_axil_bresp(s02_axi_bresp)
+     ,.m01_axil_bvalid(s02_axi_bvalid)
+     ,.m01_axil_bready(s02_axi_bready)
+     ,.m01_axil_araddr(s02_axi_araddr)
+     ,.m01_axil_arprot(s02_axi_arprot)
+     ,.m01_axil_arvalid(s02_axi_arvalid)
+     ,.m01_axil_arready(s02_axi_arready)
+     ,.m01_axil_rdata(s02_axi_rdata)
+     ,.m01_axil_rresp(s02_axi_rresp)
+     ,.m01_axil_rvalid(s02_axi_rvalid)
+     ,.m01_axil_rready(s02_axi_rready)
+     );
+
+  bsg_axil_demux
+   #(.addr_width_p(bp_axil_addr_width_lp)
+     ,.data_width_p(32)
+     // BP local address space is above this
+     ,.split_addr_p(32'h0020_0000)
+     )
+   axil_demux_s
+    (.clk_i(s01_axi_aclk)
+     ,.reset_i(~s01_axi_aresetn)
+
+     ,.s00_axil_awaddr(waddr_translated_lo)
+     ,.s00_axil_awprot(s01_axi_awprot)
+     ,.s00_axil_awvalid(s01_axi_awvalid)
+     ,.s00_axil_awready(s01_axi_awready)
+     ,.s00_axil_wdata(s01_axi_wdata)
+     ,.s00_axil_wstrb(s01_axi_wstrb)
+     ,.s00_axil_wvalid(s01_axi_wvalid)
+     ,.s00_axil_wready(s01_axi_wready)
+     ,.s00_axil_bresp(s01_axi_bresp)
+     ,.s00_axil_bvalid(s01_axi_bvalid)
+     ,.s00_axil_bready(s01_axi_bready)
+     ,.s00_axil_araddr(raddr_translated_lo)
+     ,.s00_axil_arprot(s01_axi_arprot)
+     ,.s00_axil_arvalid(s01_axi_arvalid)
+     ,.s00_axil_arready(s01_axi_arready)
+     ,.s00_axil_rdata(s01_axi_rdata)
+     ,.s00_axil_rresp(s01_axi_rresp)
+     ,.s00_axil_rvalid(s01_axi_rvalid)
+     ,.s00_axil_rready(s01_axi_rready)
+
+     ,.m00_axil_awaddr(m03_axi_awaddr)
+     ,.m00_axil_awprot(m03_axi_awprot)
+     ,.m00_axil_awvalid(m03_axi_awvalid)
+     ,.m00_axil_awready(m03_axi_awready)
+     ,.m00_axil_wdata(m03_axi_wdata)
+     ,.m00_axil_wstrb(m03_axi_wstrb)
+     ,.m00_axil_wvalid(m03_axi_wvalid)
+     ,.m00_axil_wready(m03_axi_wready)
+     ,.m00_axil_bresp(m03_axi_bresp)
+     ,.m00_axil_bvalid(m03_axi_bvalid)
+     ,.m00_axil_bready(m03_axi_bready)
+     ,.m00_axil_araddr(m03_axi_araddr)
+     ,.m00_axil_arprot(m03_axi_arprot)
+     ,.m00_axil_arvalid(m03_axi_arvalid)
+     ,.m00_axil_arready(m03_axi_arready)
+     ,.m00_axil_rdata(m03_axi_rdata)
+     ,.m00_axil_rresp(m03_axi_rresp)
+     ,.m00_axil_rvalid(m03_axi_rvalid)
+     ,.m00_axil_rready(m03_axi_rready)
+
+     ,.m01_axil_awaddr(s_bp_axi_awaddr)
+     ,.m01_axil_awprot(s_bp_axi_awprot)
+     ,.m01_axil_awvalid(s_bp_axi_awvalid)
+     ,.m01_axil_awready(s_bp_axi_awready)
+     ,.m01_axil_wdata(s_bp_axi_wdata)
+     ,.m01_axil_wstrb(s_bp_axi_wstrb)
+     ,.m01_axil_wvalid(s_bp_axi_wvalid)
+     ,.m01_axil_wready(s_bp_axi_wready)
+     ,.m01_axil_bresp(s_bp_axi_bresp)
+     ,.m01_axil_bvalid(s_bp_axi_bvalid)
+     ,.m01_axil_bready(s_bp_axi_bready)
+     ,.m01_axil_araddr(s_bp_axi_araddr)
+     ,.m01_axil_arprot(s_bp_axi_arprot)
+     ,.m01_axil_arvalid(s_bp_axi_arvalid)
+     ,.m01_axil_arready(s_bp_axi_arready)
+     ,.m01_axil_rdata(s_bp_axi_rdata)
+     ,.m01_axil_rresp(s_bp_axi_rresp)
+     ,.m01_axil_rvalid(s_bp_axi_rvalid)
+     ,.m01_axil_rready(s_bp_axi_rready)
+     );
+
+  bsg_axil_mux
+   #(.addr_width_p(bp_axil_addr_width_lp)
+     ,.data_width_p(32)
+     )
+   axil_mux
+    (.clk_i(s01_axi_aclk)
+     ,.reset_i(~s01_axi_aresetn)
+
+     ,.s00_axil_awaddr(m02_axi_awaddr)
+     ,.s00_axil_awprot(m02_axi_awprot)
+     ,.s00_axil_awvalid(m02_axi_awvalid)
+     ,.s00_axil_awready(m02_axi_awready)
+     ,.s00_axil_wdata(m02_axi_wdata)
+     ,.s00_axil_wstrb(m02_axi_wstrb)
+     ,.s00_axil_wvalid(m02_axi_wvalid)
+     ,.s00_axil_wready(m02_axi_wready)
+     ,.s00_axil_bresp(m02_axi_bresp)
+     ,.s00_axil_bvalid(m02_axi_bvalid)
+     ,.s00_axil_bready(m02_axi_bready)
+     ,.s00_axil_araddr(m02_axi_araddr)
+     ,.s00_axil_arprot(m02_axi_arprot)
+     ,.s00_axil_arvalid(m02_axi_arvalid)
+     ,.s00_axil_arready(m02_axi_arready)
+     ,.s00_axil_rdata(m02_axi_rdata)
+     ,.s00_axil_rresp(m02_axi_rresp)
+     ,.s00_axil_rvalid(m02_axi_rvalid)
+     ,.s00_axil_rready(m02_axi_rready)
+
+     ,.s01_axil_awaddr(m03_axi_awaddr)
+     ,.s01_axil_awprot(m03_axi_awprot)
+     ,.s01_axil_awvalid(m03_axi_awvalid)
+     ,.s01_axil_awready(m03_axi_awready)
+     ,.s01_axil_wdata(m03_axi_wdata)
+     ,.s01_axil_wstrb(m03_axi_wstrb)
+     ,.s01_axil_wvalid(m03_axi_wvalid)
+     ,.s01_axil_wready(m03_axi_wready)
+     ,.s01_axil_bresp(m03_axi_bresp)
+     ,.s01_axil_bvalid(m03_axi_bvalid)
+     ,.s01_axil_bready(m03_axi_bready)
+     ,.s01_axil_araddr(m03_axi_araddr)
+     ,.s01_axil_arprot(m03_axi_arprot)
+     ,.s01_axil_arvalid(m03_axi_arvalid)
+     ,.s01_axil_arready(m03_axi_arready)
+     ,.s01_axil_rdata(m03_axi_rdata)
+     ,.s01_axil_rresp(m03_axi_rresp)
+     ,.s01_axil_rvalid(m03_axi_rvalid)
+     ,.s01_axil_rready(m03_axi_rready)
+
+     ,.m00_axil_awaddr(m01_axi_awaddr)
+     ,.m00_axil_awprot(m01_axi_awprot)
+     ,.m00_axil_awvalid(m01_axi_awvalid)
+     ,.m00_axil_awready(m01_axi_awready)
+     ,.m00_axil_wdata(m01_axi_wdata)
+     ,.m00_axil_wstrb(m01_axi_wstrb)
+     ,.m00_axil_wvalid(m01_axi_wvalid)
+     ,.m00_axil_wready(m01_axi_wready)
+     ,.m00_axil_bresp(m01_axi_bresp)
+     ,.m00_axil_bvalid(m01_axi_bvalid)
+     ,.m00_axil_bready(m01_axi_bready)
+     ,.m00_axil_araddr(m01_axi_araddr)
+     ,.m00_axil_arprot(m01_axi_arprot)
+     ,.m00_axil_arvalid(m01_axi_arvalid)
+     ,.m00_axil_arready(m01_axi_arready)
+     ,.m00_axil_rdata(m01_axi_rdata)
+     ,.m00_axil_rresp(m01_axi_rresp)
+     ,.m00_axil_rvalid(m01_axi_rvalid)
+     ,.m00_axil_rready(m01_axi_rready)
      );
 
    localparam axi_addr_width_p = 32;
@@ -502,55 +703,55 @@ module top_zynq
       ,.reset_i(bp_reset_li)
 
       // these are reads/write from BlackParrot
-      ,.m_axil_awaddr_o (bp_axi_awaddr)
-      ,.m_axil_awprot_o (bp_axi_awprot)
-      ,.m_axil_awvalid_o(bp_axi_awvalid)
-      ,.m_axil_awready_i(bp_axi_awready)
+      ,.m_axil_awaddr_o (m_bp_axi_awaddr)
+      ,.m_axil_awprot_o (m_bp_axi_awprot)
+      ,.m_axil_awvalid_o(m_bp_axi_awvalid)
+      ,.m_axil_awready_i(m_bp_axi_awready)
 
-      ,.m_axil_wdata_o  (bp_axi_wdata)
-      ,.m_axil_wstrb_o  (bp_axi_wstrb)
-      ,.m_axil_wvalid_o (bp_axi_wvalid)
-      ,.m_axil_wready_i (bp_axi_wready)
+      ,.m_axil_wdata_o  (m_bp_axi_wdata)
+      ,.m_axil_wstrb_o  (m_bp_axi_wstrb)
+      ,.m_axil_wvalid_o (m_bp_axi_wvalid)
+      ,.m_axil_wready_i (m_bp_axi_wready)
 
-      ,.m_axil_bresp_i  (bp_axi_bresp)
-      ,.m_axil_bvalid_i (bp_axi_bvalid)
-      ,.m_axil_bready_o (bp_axi_bready)
+      ,.m_axil_bresp_i  (m_bp_axi_bresp)
+      ,.m_axil_bvalid_i (m_bp_axi_bvalid)
+      ,.m_axil_bready_o (m_bp_axi_bready)
 
-      ,.m_axil_araddr_o (bp_axi_araddr)
-      ,.m_axil_arprot_o (bp_axi_arprot)
-      ,.m_axil_arvalid_o(bp_axi_arvalid)
-      ,.m_axil_arready_i(bp_axi_arready)
+      ,.m_axil_araddr_o (m_bp_axi_araddr)
+      ,.m_axil_arprot_o (m_bp_axi_arprot)
+      ,.m_axil_arvalid_o(m_bp_axi_arvalid)
+      ,.m_axil_arready_i(m_bp_axi_arready)
 
-      ,.m_axil_rdata_i  (bp_axi_rdata)
-      ,.m_axil_rresp_i  (bp_axi_rresp)
-      ,.m_axil_rvalid_i (bp_axi_rvalid)
-      ,.m_axil_rready_o (bp_axi_rready)
+      ,.m_axil_rdata_i  (m_bp_axi_rdata)
+      ,.m_axil_rresp_i  (m_bp_axi_rresp)
+      ,.m_axil_rvalid_i (m_bp_axi_rvalid)
+      ,.m_axil_rready_o (m_bp_axi_rready)
 
       // these are reads/writes into BlackParrot
       // from the Zynq PS ARM core
-      ,.s_axil_awaddr_i (waddr_translated_lo)
-      ,.s_axil_awprot_i (s01_axi_awprot)
-      ,.s_axil_awvalid_i(s01_axi_awvalid)
-      ,.s_axil_awready_o(s01_axi_awready)
+      ,.s_axil_awaddr_i (s_bp_axi_awaddr)
+      ,.s_axil_awprot_i (s_bp_axi_awprot)
+      ,.s_axil_awvalid_i(s_bp_axi_awvalid)
+      ,.s_axil_awready_o(s_bp_axi_awready)
 
-      ,.s_axil_wdata_i  (s01_axi_wdata)
-      ,.s_axil_wstrb_i  (s01_axi_wstrb)
-      ,.s_axil_wvalid_i (s01_axi_wvalid)
-      ,.s_axil_wready_o (s01_axi_wready)
+      ,.s_axil_wdata_i  (s_bp_axi_wdata)
+      ,.s_axil_wstrb_i  (s_bp_axi_wstrb)
+      ,.s_axil_wvalid_i (s_bp_axi_wvalid)
+      ,.s_axil_wready_o (s_bp_axi_wready)
 
-      ,.s_axil_bresp_o  (s01_axi_bresp)
-      ,.s_axil_bvalid_o (s01_axi_bvalid)
-      ,.s_axil_bready_i (s01_axi_bready)
+      ,.s_axil_bresp_o  (s_bp_axi_bresp)
+      ,.s_axil_bvalid_o (s_bp_axi_bvalid)
+      ,.s_axil_bready_i (s_bp_axi_bready)
 
-      ,.s_axil_araddr_i (raddr_translated_lo)
-      ,.s_axil_arprot_i (s01_axi_arprot)
-      ,.s_axil_arvalid_i(s01_axi_arvalid)
-      ,.s_axil_arready_o(s01_axi_arready)
+      ,.s_axil_araddr_i (s_bp_axi_araddr)
+      ,.s_axil_arprot_i (s_bp_axi_arprot)
+      ,.s_axil_arvalid_i(s_bp_axi_arvalid)
+      ,.s_axil_arready_o(s_bp_axi_arready)
 
-      ,.s_axil_rdata_o  (s01_axi_rdata)
-      ,.s_axil_rresp_o  (s01_axi_rresp)
-      ,.s_axil_rvalid_o (s01_axi_rvalid)
-      ,.s_axil_rready_i (s01_axi_rready)
+      ,.s_axil_rdata_o  (s_bp_axi_rdata)
+      ,.s_axil_rresp_o  (s_bp_axi_rresp)
+      ,.s_axil_rvalid_o (s_bp_axi_rvalid)
+      ,.s_axil_rready_i (s_bp_axi_rready)
 
       ,.m_axi_awaddr_o   (axi_awaddr)
       ,.m_axi_awvalid_o  (m00_axi_awvalid)
@@ -791,17 +992,67 @@ module top_zynq
      );
 
    // synopsys translate_off
+   integer f;
+   initial begin
+     f = $fopen("axi.txt","w");
+   end
+
    always @(negedge s01_axi_aclk) begin
      if (debug_lp) begin
        if (s01_axi_awvalid & s01_axi_awready)
          $display("top_zynq: AXI Write Addr %x -> %x (BP)",s01_axi_awaddr,waddr_translated_lo);
        if (s01_axi_arvalid & s01_axi_arready)
          $display("top_zynq: AXI Read Addr %x -> %x (BP)",s01_axi_araddr,raddr_translated_lo);
-       if (m00_axi_awvalid & m00_axi_awready)
-         $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_awaddr,m00_axi_awaddr);
-       if (m00_axi_arvalid & m00_axi_arready)
-         $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_araddr,m00_axi_araddr);
      end
+       if (m00_axi_awvalid & m00_axi_awready)
+         $fwrite(f, "top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)\n",axi_awaddr,m00_axi_awaddr);
+       if (m00_axi_arvalid & m00_axi_arready)
+         $fwrite(f, "top_zynq: (BP DRAM) AXI Read Addr %x -> %x (AXI HP0)\n",axi_araddr,m00_axi_araddr);
+
+       if (m00_axi_wvalid & m00_axi_wready)
+         $fwrite(f, "top_zynq: (BP DRAM) AXI Write Data %x (AXI HP0)\n",m00_axi_wdata);
+       if (m00_axi_rvalid & m00_axi_rready)
+         $fwrite(f, "top_zynq: (BP DRAM) AXI Read Data %x (AXI HP0)\n",m00_axi_rdata);
+
+       if (s01_axi_awvalid & s01_axi_awready)
+         $fwrite(f, "top_zynq: (BP HOST) AXI Write Addr %x\n",s01_axi_awaddr);
+       if (s01_axi_arvalid & s01_axi_arready)
+         $fwrite(f, "top_zynq: (BP HOST) AXI Read Addr %x\n",s01_axi_araddr);
+
+       if (s01_axi_wvalid & s01_axi_wready)
+         $fwrite(f, "top_zynq: (BP HOST) AXI Write Data %x\n",s01_axi_wdata);
+       if (s01_axi_rvalid & s01_axi_rready)
+         $fwrite(f, "top_zynq: (BP HOST) AXI Read Data %x\n",s01_axi_rdata);
+
+       if (m01_axi_awvalid & m01_axi_awready)
+         $fwrite(f, "top_zynq: (BP ROM) AXI Write Addr %x\n",m01_axi_awaddr);
+       if (m01_axi_arvalid & m01_axi_arready)
+         $fwrite(f, "top_zynq: (BP ROM) AXI Read Addr %x\n",m01_axi_araddr);
+
+       if (m01_axi_wvalid & m01_axi_wready)
+         $fwrite(f, "top_zynq: (BP ROM) AXI Write Data %x\n",m01_axi_wdata);
+       if (m01_axi_rvalid & m01_axi_rready)
+         $fwrite(f, "top_zynq: (BP ROM) AXI Read Data %x\n",m01_axi_rdata);
+
+       if (m02_axi_awvalid & m02_axi_awready)
+         $fwrite(f, "top_zynq: (BP MUX1) AXI Write Addr %x\n",m02_axi_awaddr);
+       if (m02_axi_arvalid & m02_axi_arready)
+         $fwrite(f, "top_zynq: (BP MUX1) AXI Read Addr %x\n",m02_axi_araddr);
+
+       if (m02_axi_wvalid & m02_axi_wready)
+         $fwrite(f, "top_zynq: (BP MUX1) AXI Write Data %x\n",m02_axi_wdata);
+       if (m02_axi_rvalid & m02_axi_rready)
+         $fwrite(f, "top_zynq: (BP MUX1) AXI Read Data %x\n",m02_axi_rdata);
+
+       if (m03_axi_awvalid & m03_axi_awready)
+         $fwrite(f, "top_zynq: (BP MUX2) AXI Write Addr %x\n",m03_axi_awaddr);
+       if (m03_axi_arvalid & m03_axi_arready)
+         $fwrite(f, "top_zynq: (BP MUX2) AXI Read Addr %x\n",m03_axi_araddr);
+
+       if (m03_axi_wvalid & m03_axi_wready)
+         $fwrite(f, "top_zynq: (BP MUX2) AXI Write Data %x\n",m03_axi_wdata);
+       if (m03_axi_rvalid & m03_axi_rready)
+         $fwrite(f, "top_zynq: (BP MUX2) AXI Read Data %x\n",m03_axi_rdata);
 
      if (m00_axi_awvalid && ((axi_awaddr ^ 32'h8000_0000) >= memory_upper_limit_lp))
        $display("top_zynq: unexpectedly high DRAM write: %x",axi_awaddr);

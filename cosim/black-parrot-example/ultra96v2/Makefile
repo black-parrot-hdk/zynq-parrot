@@ -13,6 +13,9 @@ export BASENAME   ?= blackparrot
 #############################
 export NBF_FILE     ?= $(abspath ../prog.nbf)
 export HOST_PROGRAM ?= $(abspath ../ps.cpp)
+ifdef PK
+export HOST_PROGRAM += $(abspath $(shell find ../htif/ -name '*.cc'))
+endif
 export BASE_FLIST   ?= $(abspath ../flist.vcs)
 export FLIST        ?= $(abspath flist.vcs)
 export SIM_ARGS     += $(NBF_FILE)
@@ -29,6 +32,9 @@ CFLAGS += -DGP0_ENABLE -DGP0_ADDR_BASE=0x400000000 -DGP0_ADDR_WIDTH=10
 CFLAGS += -DGP0_ADDR_SIZE_BYTES=4096 -DGP0_DATA_WIDTH=32
 CFLAGS += -DGP1_ENABLE -DGP1_ADDR_BASE=0x500000000 -DGP1_ADDR_WIDTH=30
 CFLAGS += -DGP1_ADDR_SIZE_BYTES=0x30000000 -DGP1_DATA_WIDTH=32
+ifdef PK
+CFLAGS += -DPK -I$(abspath ../htif/)
+endif
 
 include $(TOP)/cosim/mk/Makefile.fpga
 

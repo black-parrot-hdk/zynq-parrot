@@ -218,7 +218,7 @@ module top
 
     // TODO: Fix widths
     logic m01_axi_aclk, m01_axi_aresetn;
-    logic [C_M01_AXI_ADDR_WIDTH-1:0] m01_axi_awaddr;
+    logic [C_M01_AXI_ADDR_WIDTH-1:0] m01_axi_awaddr, m01_axi_awaddr_offset;
     logic [2:0] m01_axi_awprot;
     logic m01_axi_awvalid, m01_axi_awready;
     logic [C_M01_AXI_DATA_WIDTH-1:0] m01_axi_wdata;
@@ -226,12 +226,65 @@ module top
     logic m01_axi_wvalid, m01_axi_wready;
     logic [1:0] m01_axi_bresp;
     logic m01_axi_bvalid, m01_axi_bready;
-    logic [C_M01_AXI_ADDR_WIDTH-1:0] m01_axi_araddr;
+    logic [C_M01_AXI_ADDR_WIDTH-1:0] m01_axi_araddr, m01_axi_araddr_offset;
     logic [2:0] m01_axi_arprot;
     logic m01_axi_arvalid, m01_axi_arready;
     logic [C_M01_AXI_DATA_WIDTH-1:0] m01_axi_rdata;
     logic [1:0] m01_axi_rresp;
     logic m01_axi_rvalid, m01_axi_rready;
+
+
+    assign m01_axi_aclk = s00_axi_aclk;
+    assign m01_axi_aresetn = s00_axi_aresetn;
+    assign m01_axi_awaddr_offset = m01_axi_awaddr - 32'h10000;
+    assign m01_axi_araddr_offset = m01_axi_araddr - 32'h10000;
+
+   bsg_nonsynth_axi_mem
+     #(.axi_id_width_p(axi_id_width_p)
+       ,.axi_addr_width_p(C_M01_AXI_DATA_WIDTH)
+       ,.axi_data_width_p(C_M01_AXI_DATA_WIDTH)
+       ,.axi_len_width_p(1)
+       ,.mem_els_p(2**13) //8KB
+       ,.init_data_p('0)
+     )
+   axi_boot_mem
+     (.clk_i          (m01_axi_aclk)
+      ,.reset_i       (~m01_axi_aresetn)
+
+      ,.axi_awid_i    ('0)
+      ,.axi_awaddr_i  (m01_axi_awaddr_offset)
+      ,.axi_awlen_i   ('0)
+      ,.axi_awburst_i (e_axi_burst_wrap)
+      ,.axi_awvalid_i (m01_axi_awvalid)
+      ,.axi_awready_o (m01_axi_awready)
+
+      ,.axi_wdata_i   (m01_axi_wdata)
+      ,.axi_wstrb_i   (m01_axi_wstrb)
+      ,.axi_wlast_i   (m01_axi_wvalid)
+      ,.axi_wvalid_i  (m01_axi_wvalid)
+      ,.axi_wready_o  (m01_axi_wready)
+
+      ,.axi_bid_o     ()
+      ,.axi_bresp_o   (m01_axi_bresp)
+      ,.axi_bvalid_o  (m01_axi_bvalid)
+      ,.axi_bready_i  (m01_axi_bready)
+
+      ,.axi_arid_i    ('0)
+      ,.axi_araddr_i  (m01_axi_araddr_offset)
+      ,.axi_arlen_i   ('0)
+      ,.axi_arburst_i (e_axi_burst_wrap)
+      ,.axi_arvalid_i (m01_axi_arvalid)
+      ,.axi_arready_o (m01_axi_arready)
+
+      ,.axi_rid_o     ()
+      ,.axi_rdata_o   (m01_axi_rdata)
+      ,.axi_rresp_o   (m01_axi_rresp)
+      ,.axi_rlast_o   (m01_axi_rvalid)
+      ,.axi_rvalid_o  (m01_axi_rvalid)
+      ,.axi_rready_i  (m01_axi_rready)
+      );
+
+/*
     bsg_nonsynth_axil_to_dpi
      #(.addr_width_p(C_M01_AXI_ADDR_WIDTH), .data_width_p(C_M01_AXI_DATA_WIDTH))
      axil2
@@ -259,7 +312,7 @@ module top
        ,.rvalid_o(m01_axi_rvalid)
        ,.rready_i(m01_axi_rready)
        );
-
+*/
    localparam axi_id_width_p = 6;
    localparam axi_addr_width_p = 32;
    localparam axi_data_width_p = 64;

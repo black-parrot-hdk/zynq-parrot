@@ -21,6 +21,8 @@ CINCLUDES += -I$(COSIM_INCLUDE_DIR)/verilator
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_test
 
+HOST_PROGRAM += $(COSIM_INCLUDE_DIR)/verilator/bp_zynq_pl.cc
+
 TRACE ?= +bsg_trace
 
 all:
@@ -31,9 +33,9 @@ run: obj_dir/V$(TOP_MODULE)
 	$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
 
 BUILD_LOG ?= build.log
-obj_dir/V$(TOP_MODULE): $(HOST_PROGRAM) $(FLIST)
+obj_dir/V$(TOP_MODULE): $(FLIST) $(HOST_PROGRAM)
 	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" \
-		-LDFLAGS "$(LDFLAGS)" $< \
+		-LDFLAGS "$(LDFLAGS)" $(filter-out $<,$^) \
 		2>&1 | tee -i $(BUILD_LOG)
 
 clean:
