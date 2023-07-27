@@ -22,6 +22,7 @@ include $(BSG_REPLICANT_DIR)/hardware/hardware.mk
 
 $(CURR_SRC_DIR)/bsg_bladerunner_pkg.v: $(BSG_MACHINE_PATH)/bsg_bladerunner_pkg.v
 	cp $< $@
+	$(SED) -i "/parameter int bsg_machine_hetero_type_vec_gp/d" $@
 
 $(CURR_DESIGN_DIR)/bsg_manycore_machine.h: $(BSG_MACHINE_PATH)/bsg_manycore_machine.h
 	cp $< $@

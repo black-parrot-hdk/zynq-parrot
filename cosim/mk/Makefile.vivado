@@ -57,7 +57,7 @@ fpga_report_build_block:
 # this packages the IP, but does not continue to synthesis, pnr and bitfile generation
 # on the x86 server
 fpga_build_ip: ip_repo
-ip_repo: $(FLIST)
+ip_repo: $(FLIST) $(BUILD_COLLATERAL)
 	mkdir $@
 	source $(XILINX_SETTINGS) && $(VIVADO) -source $(CURR)/vivado-build-ip.tcl -mode $(VIVADO_MODE)
 	-@grep --color "CRITICAL WARNING" vivado.log
@@ -91,6 +91,7 @@ endif
 	tar -Jc $(BASENAME)_bd_1* | base64 > ../$(BASENAME)_bd_1.$(BOARDNAME).tar.xz.b64
 
 clean:
+	rm -rf $(BUILD_COLLATERAL)
 	rm -rf flist*.vcs
 	rm -rf *.fpga
 	rm -rf *.log

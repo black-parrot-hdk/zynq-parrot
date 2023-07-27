@@ -25,7 +25,7 @@ module top #
     // Do not modify the ports beyond this line
 
 
-`ifdef FPGA
+`ifdef SYNTHESIS
     input wire                                  aclk,
     input wire                                  aresetn,
     // Ports of Axi Slave Bus Interface S00_AXI
@@ -311,6 +311,7 @@ module top #
 
         // User logic ends
 
+`ifndef SYNTHESIS
 `ifdef VERILATOR
    initial
      begin
@@ -370,6 +371,7 @@ module top #
        @(negedge aresetn);
        $asserton();
      end
+`endif
 `endif
 
  endmodule

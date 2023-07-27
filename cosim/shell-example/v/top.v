@@ -21,7 +21,7 @@ module top #
     // User ports ends
     // Do not modify the ports beyond this line
 
-`ifdef FPGA 
+`ifdef SYNTHESIS
     input wire                                  aclk,
     input wire                                  aresetn,
     // Ports of Axi Slave Bus Interface S00_AXI
@@ -198,6 +198,7 @@ module top #
 
         // User logic ends
 
+`ifndef SYNTHESIS
 `ifdef VERILATOR
    initial
      begin
@@ -249,6 +250,7 @@ module top #
      @(posedge aclk);
      #1;
    endtask
+`endif
 `endif
 
  endmodule

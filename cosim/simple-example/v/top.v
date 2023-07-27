@@ -22,7 +22,7 @@
 
         // Ports of Axi Slave Bus Interface S00_AXI
 // TODO: This must be set in the vivado gui
-`ifdef FPGA
+`ifdef SYNTHESIS
         input wire  aclk,
         input wire  aresetn,
 
@@ -137,7 +137,7 @@
     // Add user logic here
 
     // User logic ends
-
+`ifndef SYNTHESIS
 `ifdef VERILATOR
    initial
      begin
@@ -189,6 +189,7 @@
      @(posedge aclk);
      #1;
    endtask
+`endif
 `endif
 
  endmodule

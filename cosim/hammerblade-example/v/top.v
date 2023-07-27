@@ -13,7 +13,7 @@ module top
     )
    (
     // Ports of Axi Slave Bus Interface S00_AXI
-`ifdef FPGA
+`ifdef SYNTHESIS
     input wire                                   aclk
     ,input wire                                  aresetn
     ,input wire                                  rt_clk
@@ -307,6 +307,7 @@ module top
       ,.m00_axi_rresp  (m00_axi_rresp)
       );
 
+`ifndef SYNTHESIS
 `ifdef VERILATOR
    initial
      begin
@@ -366,6 +367,7 @@ module top
        @(negedge aresetn);
        $asserton();
      end
+`endif
 `endif
 
  endmodule
