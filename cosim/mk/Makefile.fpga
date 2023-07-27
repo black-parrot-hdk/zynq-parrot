@@ -12,6 +12,7 @@ CFLAGS += -std=c++14
 
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/fpga
+CINCLUDES += -I$(CURR_DESIGN_DIR)
 
 all:
 	@echo "Rules for FPGA; see $(TOP)/cosim/mk/Makefile.fpga for more:"

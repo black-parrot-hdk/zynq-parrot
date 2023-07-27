@@ -18,6 +18,8 @@
 #include "bsg_tag_bitbang.h"
 #include "bsg_argparse.h"
 
+#include "bsg_manycore_machine.h"
+
 #ifndef DRAM_ALLOCATE_SIZE_MB
 #define DRAM_ALLOCATE_SIZE_MB 128
 #endif
@@ -102,8 +104,8 @@ inline void send_mc_write(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa, i
   req_pkt.op_v2   = 2; // SW
   req_pkt.reg_id  = 0xff; // unused
   req_pkt.payload = data;
-  req_pkt.x_src   = 2; // Hardcoded host coord
-  req_pkt.y_src   = 0; //
+  req_pkt.x_src   = BSG_MANYCORE_MACHINE_HOST_COORD_X;
+  req_pkt.y_src   = BSG_MANYCORE_MACHINE_HOST_COORD_Y;
   req_pkt.x_dst   = x;
   req_pkt.y_dst   = y;
   req_pkt.addr    = epa >> 2;
@@ -117,8 +119,8 @@ inline int32_t send_mc_read(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa)
   req_pkt.op_v2   = 0; // LD
   req_pkt.reg_id  = 0xff; // unused
   req_pkt.payload = 0; // Ignore payload
-  req_pkt.x_src   = 2; // Hardcoded host coord
-  req_pkt.y_src   = 0; //
+  req_pkt.x_src   = BSG_MANYCORE_MACHINE_HOST_COORD_X;
+  req_pkt.y_src   = BSG_MANYCORE_MACHINE_HOST_COORD_Y;
   req_pkt.x_dst   = x;
   req_pkt.y_dst   = y;
   req_pkt.addr    = epa >> 2;

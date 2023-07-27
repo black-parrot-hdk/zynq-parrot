@@ -16,6 +16,7 @@ module top_zynq
  import bsg_cache_pkg::*;
  import bsg_noc_pkg::*;
  import bsg_tag_pkg::*;
+ import bsg_manycore_network_cfg_pkg::*;
  #(parameter bp_params_e bp_params_p = e_bp_unicore_hammerblade_cfg
    `declare_bp_proc_params(bp_params_p)
    // NOTE these parameters are usually overridden by the parent module (top.v)
@@ -209,7 +210,7 @@ module top_zynq
   `declare_bsg_manycore_ruche_x_link_sif_s(addr_width_p, data_width_p, x_cord_width_p, y_cord_width_p);
   `declare_bsg_ready_and_link_sif_s(wh_flit_width_p, wh_link_sif_s);
   bsg_manycore_link_sif_s io_link_sif_li, io_link_sif_lo;
-  wh_link_sif_s [E:W][S:N] wh_link_sif_li, wh_link_sif_lo;
+  wh_link_sif_s [E:W][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0] wh_link_sif_li, wh_link_sif_lo;
 
   // BSG TAG MASTER
   logic tag_done_lo;
@@ -269,6 +270,8 @@ module top_zynq
      ,.y_cord_width_p(y_cord_width_p)
      ,.addr_width_p(addr_width_p)
      ,.data_width_p(data_width_p)
+     ,.ruche_factor_X_p(ruche_factor_X_p)
+
      ,.barrier_ruche_factor_X_p(barrier_ruche_factor_X_p)
      ,.num_subarray_x_p(num_subarray_x_p)
      ,.num_subarray_y_p(num_subarray_y_p)
@@ -301,6 +304,8 @@ module top_zynq
 
      ,.rev_use_credits_p(rev_use_credits_lp)
      ,.rev_fifo_els_p(rev_fifo_els_lp)
+
+     ,.bsg_manycore_network_cfg_p(bsg_manycore_network_cfg_p)
      )
    hammerblade
     (.clk_i(aclk)
@@ -388,63 +393,81 @@ module top_zynq
 
   // WH to cache dma
   `declare_bsg_cache_dma_pkt_s(vcache_addr_width_p, vcache_block_size_in_words_p);
-  bsg_cache_dma_pkt_s [E:W][S:N][num_vcaches_per_link_lp-1:0] dma_pkt_lo;
-  logic [E:W][S:N][num_vcaches_per_link_lp-1:0] dma_pkt_v_lo;
-  logic [E:W][S:N][num_vcaches_per_link_lp-1:0] dma_pkt_yumi_li;
+  bsg_cache_dma_pkt_s [E:W][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0] dma_pkt_lo;
+  logic [E:W][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0] dma_pkt_v_lo;
+  logic [E:W][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0] dma_pkt_yumi_li;
 
-  logic [E:W][S:N][num_vcaches_per_link_lp-1:0][vcache_dma_data_width_p-1:0] dma_data_li;
-  logic [E:W][S:N][num_vcaches_per_link_lp-1:0] dma_data_v_li;
-  logic [E:W][S:N][num_vcaches_per_link_lp-1:0] dma_data_ready_lo;
+  logic [E:W][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0][vcache_dma_data_width_p-1:0] dma_data_li;
+  logic [E:W][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0] dma_data_v_li;
+  logic [E:W][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0] dma_data_ready_lo;
 
-  logic [E:W][S:N][num_vcaches_per_link_lp-1:0][vcache_dma_data_width_p-1:0] dma_data_lo;
-  logic [E:W][S:N][num_vcaches_per_link_lp-1:0] dma_data_v_lo;
-  logic [E:W][S:N][num_vcaches_per_link_lp-1:0] dma_data_yumi_li;
+  logic [E:W][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0][vcache_dma_data_width_p-1:0] dma_data_lo;
+  logic [E:W][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0] dma_data_v_lo;
+  logic [E:W][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0][num_vcaches_per_link_lp-1:0] dma_data_yumi_li;
 
-  // Invert WH ruche links
-  // hardcoded for ruche factor = 2
   `declare_bsg_cache_wh_header_flit_s(wh_flit_width_p, wh_cord_width_p, wh_len_width_p, wh_cid_width_p);
-  for (genvar i = W; i <= E; i++) begin: hs
-    for (genvar k = N; k <= S; k++) begin: py
-      bsg_cache_wh_header_flit_s header_flit_in;
-      assign header_flit_in = wh_link_sif_lo[i][k].data;
+  wh_link_sif_s [E:W][S:N][num_vcache_rows_p-1:0][wh_ruche_factor_p-1:0] buffered_wh_link_sif_li, buffered_wh_link_sif_lo;
+  for (genvar i = W; i <= E; i++)
+    begin : hs
+      for (genvar k = N; k <= S; k++)
+        begin : py
+          for (genvar n = 0; n < num_vcache_rows_p; n++)
+            begin : row
+              for (genvar r = 0; r < wh_ruche_factor_p; r++)
+                begin : rf
+                  if (r == 0)
+                    begin : ninvert
+                      assign wh_link_sif_li[i][k][n][r] = buffered_wh_link_sif_li[i][k][n][r];
+                      assign buffered_wh_link_sif_lo[i][k][n][r] = wh_link_sif_lo[i][k][n][r];
+                    end
+                  else
+                    begin : invert
+                      assign wh_link_sif_li[i][k][n][r] = ~buffered_wh_link_sif_li[i][k][n][r];
+                      assign buffered_wh_link_sif_lo[i][k][n][r] = ~wh_link_sif_lo[i][k][n][r];
+                    end
 
-      wire [lg_num_vcaches_per_link_lp-1:0] dma_id_li = (num_vcaches_per_link_lp == 1)
-        ? 1'b0
-        : header_flit_in.src_cord[lg_wh_ruche_factor_lp+:lg_num_vcaches_per_link_lp];
+                  bsg_cache_wh_header_flit_s header_flit_in;
+                  assign header_flit_in = buffered_wh_link_sif_lo[i][k][n][r].data;
 
-      bsg_wormhole_to_cache_dma_fanout
-       #(.num_dma_p(num_vcaches_per_link_lp)
-         ,.dma_addr_width_p(vcache_addr_width_p)
-         ,.dma_mask_width_p(vcache_block_size_in_words_p)
-         ,.dma_burst_len_p(vcache_block_size_in_words_p*vcache_data_width_p/vcache_dma_data_width_p)
+                  wire [lg_num_vcaches_per_link_lp-1:0] dma_id_li = (num_vcaches_per_link_lp == 1)
+                    ? 1'b0
+                    : header_flit_in.src_cord[lg_wh_ruche_factor_lp+:lg_num_vcaches_per_link_lp];
 
-         ,.wh_flit_width_p(wh_flit_width_p)
-         ,.wh_cid_width_p(wh_cid_width_p)
-         ,.wh_len_width_p(wh_len_width_p)
-         ,.wh_cord_width_p(wh_cord_width_p)
-         )
-       wh_to_dma
-        (.clk_i(aclk)
-         ,.reset_i(reset_r)
+                  bsg_wormhole_to_cache_dma_fanout
+                   #(.num_dma_p(num_vcaches_per_link_lp)
+                     ,.dma_addr_width_p(vcache_addr_width_p)
+                     ,.dma_mask_width_p(vcache_block_size_in_words_p)
+                     ,.dma_burst_len_p(vcache_block_size_in_words_p*vcache_data_width_p/vcache_dma_data_width_p)
+
+                     ,.wh_flit_width_p(wh_flit_width_p)
+                     ,.wh_cid_width_p(wh_cid_width_p)
+                     ,.wh_len_width_p(wh_len_width_p)
+                     ,.wh_cord_width_p(wh_cord_width_p)
+                     )
+                   wh_to_dma
+                    (.clk_i(aclk)
+                     ,.reset_i(reset_r)
   
-         ,.wh_link_sif_i(wh_link_sif_lo[i][k])
-         ,.wh_dma_id_i(dma_id_li)
-         ,.wh_link_sif_o(wh_link_sif_li[i][k])
+                     ,.wh_link_sif_i(buffered_wh_link_sif_lo[i][k][n][r])
+                     ,.wh_dma_id_i(dma_id_li)
+                     ,.wh_link_sif_o(buffered_wh_link_sif_li[i][k][n][r])
 
-         ,.dma_pkt_o(dma_pkt_lo[i][k])
-         ,.dma_pkt_v_o(dma_pkt_v_lo[i][k])
-         ,.dma_pkt_yumi_i(dma_pkt_yumi_li[i][k])
+                     ,.dma_pkt_o(dma_pkt_lo[i][k][n][r])
+                     ,.dma_pkt_v_o(dma_pkt_v_lo[i][k][n][r])
+                     ,.dma_pkt_yumi_i(dma_pkt_yumi_li[i][k][n][r])
 
-         ,.dma_data_i(dma_data_li[i][k])
-         ,.dma_data_v_i(dma_data_v_li[i][k])
-         ,.dma_data_ready_and_o(dma_data_ready_lo[i][k])
+                     ,.dma_data_i(dma_data_li[i][k][n][r])
+                     ,.dma_data_v_i(dma_data_v_li[i][k][n][r])
+                     ,.dma_data_ready_and_o(dma_data_ready_lo[i][k][n][r])
 
-         ,.dma_data_o(dma_data_lo[i][k])
-         ,.dma_data_v_o(dma_data_v_lo[i][k])
-         ,.dma_data_yumi_i(dma_data_yumi_li[i][k])
-         );
+                     ,.dma_data_o(dma_data_lo[i][k][n][r])
+                     ,.dma_data_v_o(dma_data_v_lo[i][k][n][r])
+                     ,.dma_data_yumi_i(dma_data_yumi_li[i][k][n][r])
+                     );
+                end
+            end
+        end
     end
-  end
 
   logic [C_M00_AXI_ADDR_WIDTH-1:0] axi_awaddr, axi_araddr;
   logic [`BSG_SAFE_CLOG2(num_dma_p)-1:0] axi_awaddr_cache_id, axi_araddr_cache_id;

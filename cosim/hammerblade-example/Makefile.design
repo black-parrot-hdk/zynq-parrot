@@ -70,6 +70,9 @@ skip_zeros                 ?= 1
 		$(NBF_PARAMS) > $@
 	rm main_dram.mem main_dmem.mem
 
+zynq_pkg.v:
+	
+
 # Manycore program . BlackParrot program
 RUN_COLLATERAL = $(NBF_FILE)
 

@@ -10,9 +10,27 @@ TOP_MODULE ?= top
 BASENAME   ?= hammerblade
 
 #############################
-# Run Collateral
+# Build Collateral
 #############################
 include $(BSG_MACHINE_PATH)/Makefile.machine.include
+# Arbitrary, need to be set
+HARDWARE_PATH     := $(BSG_REPLICANT_DIR)/hardware
+LIBRARIES_PATH    := $(BSG_REPLICANT_DIR)/libraries
+BSG_PLATFORM_PATH := $(LIBRARIES_PATH)/platforms/bigblade-vcs
+BSG_F1_DIR        := $(BSG_REPLICANT_DIR)
+include $(BSG_REPLICANT_DIR)/hardware/hardware.mk
+
+$(CURR_SRC_DIR)/bsg_bladerunner_pkg.v: $(BSG_MACHINE_PATH)/bsg_bladerunner_pkg.v
+	cp $< $@
+
+$(CURR_DESIGN_DIR)/bsg_manycore_machine.h: $(BSG_MACHINE_PATH)/bsg_manycore_machine.h
+	cp $< $@
+
+BUILD_COLLATERAL = $(CURR_SRC_DIR)/bsg_bladerunner_pkg.v $(CURR_DESIGN_DIR)/bsg_manycore_machine.h
+
+#############################
+# Run Collateral
+#############################
 NBF_SCRIPT ?= $(BSG_MANYCORE_DIR)/software/py/nbf.py
 %.riscv32:
 	$(MAKE) -C $(BSG_MANYCORE_SOFTWARE_DIR)/spmd/$* clean main.riscv
@@ -35,16 +53,16 @@ skip_zeros                 ?= 1
 		$(BSG_MACHINE_GLOBAL_X) $(BSG_MACHINE_GLOBAL_Y) \
 		$(BSG_MACHINE_VCACHE_WAY) $(BSG_MACHINE_VCACHE_SET) \
 		$(BSG_MACHINE_VCACHE_BLOCK_SIZE_WORDS) \
-		$(BSG_MACHINE_DRAM_SIZE_WORDS) $(BSG_MACHINE_MAX_EPA_WIDTH) \
+		$(__BSG_MACHINE_DRAMSIM3_CHIP_SIZE_IN_WORDS) $(BSG_MACHINE_MAX_EPA_WIDTH) \
 		$(bsg_tiles_org_X) $(bsg_tiles_org_Y) \
 		$(bsg_tiles_X) $(bsg_tiles_Y) $(bsg_elf_off_chip_mem) \
-		$(BSG_MACHINE_ORIGIN_X_CORD) $(BSG_MACHINE_ORIGIN_Y_CORD) \
+		$(BSG_MACHINE_ORIGIN_COORD_X) $(BSG_MACHINE_ORIGIN_COORD_Y) \
 		$(BSG_MACHINE_PODS_X) $(BSG_MACHINE_PODS_Y) \
 		$(bsg_pods_X) $(bsg_pods_Y) \
 		$(BSG_MACHINE_NUM_VCACHE_ROWS) \
 		$(skip_dram_instruction_load) \
 		$(skip_zeros) \
-		$(NBF_PARAMS) > $*.nbf
+		  > $*.nbf
 	rm main_dram.mem main_dmem.mem
 
 NBF_FILE ?= hello.nbf

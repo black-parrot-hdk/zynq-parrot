@@ -6,6 +6,7 @@ $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_master_decentralized.v
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_bitbang.v
 $BSG_MANYCORE_DIR/testbenches/common/v/bsg_nonsynth_manycore_tag_master.v
 $BSG_MANYCORE_DIR/v/bsg_manycore_reg_id_encode.v
+$BSG_MANYCORE_DIR/testbenches/common/v/bsg_manycore_network_cfg_pkg.v
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_trace_replay.v
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_master.v
 $BASEJUMP_STL_DIR/bsg_fsb/bsg_fsb_node_trace_replay.v
