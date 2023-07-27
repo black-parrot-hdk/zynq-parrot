@@ -22,7 +22,7 @@ EXE ?= control-program
 run: $(EXE) $(RUN_COLLATERAL)
 	sudo ./$< $(SIM_ARGS) | tee run.log
 
-$(EXE): $(HOST_PROGRAM)
+$(EXE): $(HOST_PROGRAM) $(BUILD_COLLATERAL)
 	$(GCC) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $(CSOURCES) $< $(CFLAGS) $(LDFLAGS) -o $@
 
 reset_pl:
@@ -56,6 +56,7 @@ print_clocks:
 	echo 'from pynq import Clocks;  Clocks.fclk0_mhz = $*; print("PL Clock Set To:: ",Clocks.fclk0_mhz,"MHz"); ' | sudo -E $(PYTHON3)
 
 clean:
+	rm -rf $(BUILD_COLLATERAL)
 	rm -rf $(EXE)
 	rm -rf sds_trace_data.dat
 	rm -rf *.nbf

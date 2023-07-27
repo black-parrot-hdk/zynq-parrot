@@ -356,9 +356,8 @@ import bsg_tag_pkg::*;
   logic [C_S00_AXI_DATA_WIDTH-1:0] host_req_li;
   logic host_req_v_li, host_req_ready_lo;
   logic [C_S00_AXI_DATA_WIDTH-1:0] host_rsp_li;
-  logic host_rsp_v_li, host_rsp_ready_lo;
-  wire [bsg_machine_noc_coord_x_width_gp-1:0] global_x_li = bsg_machine_pod_tiles_x_gp;
   wire [bsg_machine_noc_coord_y_width_gp-1:0] global_y_li = 0;
+  wire [bsg_machine_noc_coord_x_width_gp-1:0] global_x_li = bsg_machine_pod_tiles_x_gp;
   bsg_manycore_endpoint_to_fifos
    #(.fifo_width_p(4*C_S00_AXI_DATA_WIDTH)
      ,.axil_width_p(C_S00_AXI_DATA_WIDTH)
