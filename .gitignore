@@ -31,6 +31,8 @@ flist.*vcs
 *.rv64o
 *.rv32o
 *.riscv
+*.swp
 bsg_bladerunner_pkg.v
+bsg_blackparrot_pkg.sv
 bsg_manycore_machine.h
 

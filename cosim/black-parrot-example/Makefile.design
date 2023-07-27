@@ -10,6 +10,21 @@ TOP_MODULE ?= top
 BASENAME   ?= blackparrot
 
 #############################
+# Build Collateral
+#############################
+$(CURR_SRC_DIR)/bsg_blackparrot_pkg.sv:
+	echo "package bsg_blackparrot_pkg;" >> $@
+	echo >> $@
+	echo "import bp_common_pkg::*;" >> $@
+	echo >> $@
+	echo "localparam bp_params_e bp_cfg_gp = $(CFG);" >> $@
+	echo >> $@
+	echo "endpackage" >> $@
+	echo >> $@
+
+BUILD_COLLATERAL = $(CURR_SRC_DIR)/bsg_blackparrot_pkg.sv
+
+#############################
 # Run Collateral
 #############################
 RISCV_OBJCOPY ?= riscv64-unknown-elf-dramfs-objcopy

@@ -18,6 +18,7 @@ $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_demux.v
 $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_mux.v
 $COSIM_SRC_DIR/bsg_zynq_pl_shell.v
 $CURR_SRC_DIR/bp_me_endpoint_to_fifos.sv
+$CURR_SRC_DIR/bsg_blackparrot_pkg.sv
 $CURR_SRC_DIR/zynq_pkg.sv
 $CURR_SRC_DIR/top_zynq.sv
 $CURR_SRC_DIR/top.v

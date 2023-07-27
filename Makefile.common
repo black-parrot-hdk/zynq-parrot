@@ -52,6 +52,7 @@ export BLACKPARROT_SDK_DIR   ?= $(SOFTWARE_IMPORT_DIR)/black-parrot-sdk
 # Override to zynq-parrot version
 export BP_SDK_DIR            ?= $(BLACKPARROT_SDK_DIR)
 export PLATFORM              ?= zynqparrot
+export CFG                   ?= e_bp_unicore_cfg
 
 # TODO: Check verilator version
 ifeq ($(shell /usr/bin/arch),armv7l)
