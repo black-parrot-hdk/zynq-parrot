@@ -21,11 +21,12 @@ all:
 	@echo "Rules for FPGA; see $(TOP)/cosim/mk/Makefile.fpga for more:"
 	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.fpga
 
-EXE ?= control-program
+EXE ?= work/control-program
 run: $(EXE)
-	sudo ./$< $(SIM_ARGS)
+	cd $(dir $<); sudo ./$(notdir $<) $(SIM_ARGS)
 
 $(EXE): $(HOST_PROGRAM)
+	mkdir -p $(dir $@)
 	$(GCC) $(CFLAGS) $(CINCLUDES) $(CSOURCES) $^ $(LFLAGS) -o $@
 
 fpga_report_build_block:
