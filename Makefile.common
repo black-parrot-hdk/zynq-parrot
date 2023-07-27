@@ -37,7 +37,7 @@ export BSG_MANYCORE_SOFTWARE_DIR ?= $(BSG_MANYCORE_DIR)/software
 export BSG_MANYCORE_RTL_DIR      ?= $(BSG_MANYCORE_DIR)/v
 # Override to zynq-parrot machine path
 # Only 2x2 is supported at the moment
-export BSG_MACHINE_PATH          ?= $(BSG_MANYCORE_DIR)/machines/pod_1x1_2X2Y
+export BSG_MACHINE_PATH          ?= $(BSG_MANYCORE_DIR)/machines/pod_1x1_4X2Y
 ifeq (,$(wildcard $(BSG_CADENV_DIR)/cadenv.mk))
 export IGNORE_CADENV 			 ?= 1
 else

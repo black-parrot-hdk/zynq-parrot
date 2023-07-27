@@ -205,15 +205,11 @@ module top_zynq
      );
 
   // instantiate manycore
-  `declare_bsg_manycore_link_sif_s(addr_width_p,data_width_p,x_cord_width_p,y_cord_width_p);
-  `declare_bsg_manycore_ruche_x_link_sif_s(addr_width_p,data_width_p,x_cord_width_p,y_cord_width_p);
+  `declare_bsg_manycore_link_sif_s(addr_width_p, data_width_p, x_cord_width_p, y_cord_width_p);
+  `declare_bsg_manycore_ruche_x_link_sif_s(addr_width_p, data_width_p, x_cord_width_p, y_cord_width_p);
   `declare_bsg_ready_and_link_sif_s(wh_flit_width_p, wh_link_sif_s);
-  bsg_manycore_link_sif_s [S:N][num_tiles_x_p-1:0] ver_link_sif_li;
-  bsg_manycore_link_sif_s [S:N][num_tiles_x_p-1:0] ver_link_sif_lo;
-  bsg_manycore_link_sif_s [E:W][num_tiles_y_p-1:0] hor_link_sif_li;
-  bsg_manycore_link_sif_s [E:W][num_tiles_y_p-1:0] hor_link_sif_lo;
-  wh_link_sif_s [E:W][S:N] wh_link_sif_li;
-  wh_link_sif_s [E:W][S:N] wh_link_sif_lo;
+  bsg_manycore_link_sif_s io_link_sif_li, io_link_sif_lo;
+  wh_link_sif_s [E:W][S:N] wh_link_sif_li, wh_link_sif_lo;
 
   // BSG TAG MASTER
   logic tag_done_lo;
@@ -262,8 +258,10 @@ module top_zynq
      ,.data_o(reset_r)
      );
 
-  bsg_manycore_pod_mesh_array
-   #(.num_tiles_x_p(num_tiles_x_p)
+  bsg_hammerblade
+   #(.bp_params_p(bp_params_p)
+     ,.scratchpad_els_p(scratchpad_els_p)
+     ,.num_tiles_x_p(num_tiles_x_p)
      ,.num_tiles_y_p(num_tiles_y_p)
      ,.pod_x_cord_width_p(pod_x_cord_width_p)
      ,.pod_y_cord_width_p(pod_y_cord_width_p)
@@ -300,62 +298,23 @@ module top_zynq
      ,.num_pods_x_p(num_pods_x_p)
 
      ,.reset_depth_p(reset_depth_p)
-     )
-   manycore
-    (.clk_i(aclk)
 
-     ,.ver_link_sif_i(ver_link_sif_li)
-     ,.ver_link_sif_o(ver_link_sif_lo)
+     ,.rev_use_credits_p(rev_use_credits_lp)
+     ,.rev_fifo_els_p(rev_fifo_els_lp)
+     )
+   hammerblade
+    (.clk_i(aclk)
+     ,.reset_i(reset_r)
+     ,.rt_clk_i(rt_clk)
+
+     ,.io_link_sif_i(io_link_sif_li)
+     ,.io_link_sif_o(io_link_sif_lo)
 
      ,.wh_link_sif_i(wh_link_sif_li)
      ,.wh_link_sif_o(wh_link_sif_lo)
 
-     ,.hor_link_sif_i(hor_link_sif_li)
-     ,.hor_link_sif_o(hor_link_sif_lo)
-
      ,.pod_tags_i(tag_lines_lo) 
      );
-
-  // IO ROUTER
-  bsg_manycore_link_sif_s [num_tiles_x_p-1:0][S:P] io_link_sif_li;
-  bsg_manycore_link_sif_s [num_tiles_x_p-1:0][S:P] io_link_sif_lo;
-
-  for (genvar x = 0; x < num_tiles_x_p; x++)
-    begin : io_rtr_x
-      bsg_manycore_mesh_node
-       #(.x_cord_width_p(x_cord_width_p)
-         ,.y_cord_width_p(y_cord_width_p)
-         ,.addr_width_p(addr_width_p)
-         ,.data_width_p(data_width_p)
-         ,.stub_p(4'b0100) // stub north
-         ,.rev_use_credits_p(rev_use_credits_lp)
-         ,.rev_fifo_els_p(rev_fifo_els_lp)
-         )
-       io_rtr
-        (.clk_i(aclk)
-         ,.reset_i(reset_r)
- 
-         ,.links_sif_i(io_link_sif_li[x][S:W])
-         ,.links_sif_o(io_link_sif_lo[x][S:W])
- 
-         ,.proc_link_sif_i(io_link_sif_li[x][P])
-         ,.proc_link_sif_o(io_link_sif_lo[x][P])
- 
-         ,.global_x_i(x_cord_width_p'(num_tiles_x_p+x))
-         ,.global_y_i(y_cord_width_p'(0))
-         );
-
-      // connect to pod array
-      assign ver_link_sif_li[N][x] = io_link_sif_lo[x][S];
-      assign io_link_sif_li[x][S] = ver_link_sif_lo[N][x];
-
-      // connect between io rtr
-      if (x < num_tiles_x_p-1)
-        begin
-          assign io_link_sif_li[x][E] = io_link_sif_lo[x+1][W];
-          assign io_link_sif_li[x+1][W] = io_link_sif_lo[x][E];
-        end
-  end
 
   logic [C_S00_AXI_DATA_WIDTH-1:0] mc_req_lo;
   logic mc_req_v_lo, mc_req_ready_li;
@@ -401,14 +360,13 @@ module top_zynq
      ,.mc_rsp_ready_i(mc_rsp_ready_li)
 
      // manycore link
-     ,.link_sif_i(io_link_sif_lo[0][P])
-     ,.link_sif_o(io_link_sif_li[0][P])
+     ,.link_sif_i(io_link_sif_lo)
+     ,.link_sif_o(io_link_sif_li)
 
      // Parameterize
      ,.global_y_i(io_global_y_li)
      ,.global_x_i(io_global_x_li)
 
-     /* Unused currently */
      ,.out_credits_used_o(credits_used_lo)
      );
 
@@ -561,141 +519,6 @@ module top_zynq
      );
   wire [C_M00_AXI_ADDR_WIDTH-1:0] axi_awaddr_hash = {axi_awaddr_cache_id, axi_awaddr[0+:vcache_addr_width_p-lg_num_dma_lp]};
   wire [C_M00_AXI_ADDR_WIDTH-1:0] axi_araddr_hash = {axi_araddr_cache_id, axi_araddr[0+:vcache_addr_width_p-lg_num_dma_lp]};
-
-  // IO P tie off all but first (host)
-  for (genvar i = 1; i < num_tiles_x_p; i++)
-    begin : io_p_tieoff
-      bsg_manycore_link_sif_tieoff
-       #(.addr_width_p(addr_width_p)
-         ,.data_width_p(data_width_p)
-         ,.x_cord_width_p(x_cord_width_p)
-         ,.y_cord_width_p(y_cord_width_p)
-         )
-       rtr
-        (.clk_i(aclk)
-         ,.reset_i(reset_r)
-         ,.link_sif_i(io_link_sif_lo[i][P])
-         ,.link_sif_o(io_link_sif_li[i][P])
-         );
-    end
-
-  // IO west end tieoff
-  bsg_manycore_link_sif_tieoff
-   #(.addr_width_p(addr_width_p)
-     ,.data_width_p(data_width_p)
-     ,.x_cord_width_p(x_cord_width_p)
-     ,.y_cord_width_p(y_cord_width_p)
-     )
-   io_w_tieoff
-    (.clk_i(aclk)
-     ,.reset_i(reset_r)
-     ,.link_sif_i(io_link_sif_lo[0][W])
-     ,.link_sif_o(io_link_sif_li[0][W])
-     );
-
-  // IO east end tieoff
-  bsg_manycore_link_sif_tieoff
-   #(.addr_width_p(addr_width_p)
-     ,.data_width_p(data_width_p)
-     ,.x_cord_width_p(x_cord_width_p)
-     ,.y_cord_width_p(y_cord_width_p)
-     )
-   io_e_tieoff
-    (.clk_i(aclk)
-     ,.reset_i(reset_r)
-     ,.link_sif_i(io_link_sif_lo[num_tiles_x_p-1][E])
-     ,.link_sif_o(io_link_sif_li[num_tiles_x_p-1][E])
-     );
-
-  // IO N tie off
-  for (genvar i = 0; i < num_tiles_x_p; i++)
-    begin : io_n_tieoff
-      bsg_manycore_link_sif_tieoff
-       #(.addr_width_p(addr_width_p)
-         ,.data_width_p(data_width_p)
-         ,.x_cord_width_p(x_cord_width_p)
-         ,.y_cord_width_p(y_cord_width_p)
-         )
-       tieoff
-        (.clk_i(aclk)
-         ,.reset_i(reset_r)
-         ,.link_sif_i(io_link_sif_lo[i][N])
-         ,.link_sif_o(io_link_sif_li[i][N])
-         );
-    end
-
-  // HOR TIEOFF (local link)
-  for (genvar i = W; i <= E; i++)
-    begin : mc_e_w
-      for (genvar k = 0; k < num_tiles_y_p; k++)
-        begin : col
-          bsg_manycore_link_sif_tieoff
-           #(.addr_width_p(addr_width_p)
-             ,.data_width_p(data_width_p)
-             ,.x_cord_width_p(x_cord_width_p)
-             ,.y_cord_width_p(y_cord_width_p)
-             )
-           tieoff
-            (.clk_i(aclk)
-             ,.reset_i(reset_r)
-             ,.link_sif_i(hor_link_sif_lo[i][k])
-             ,.link_sif_o(hor_link_sif_li[i][k])
-             );
-        end
-    end
-
-  logic [3:0][x_cord_width_p-1:0] bp_global_x_li;
-  logic [0:0][y_cord_width_p-1:0] bp_global_y_li;
-  assign bp_global_x_li[0] = (1 << x_subcord_width_p) | (0);
-  assign bp_global_x_li[1] = (1 << x_subcord_width_p) | (1);
-  assign bp_global_x_li[2] = (2 << x_subcord_width_p) | (0);
-  assign bp_global_x_li[3] = (2 << x_subcord_width_p) | (1);
-
-  assign bp_global_y_li[0] = (3 << y_subcord_width_p) | (0);
-
-  bsg_manycore_link_sif_s [S:N][3:0] bp_ver_link_sif_li;
-  bsg_manycore_link_sif_s [S:N][3:0] bp_ver_link_sif_lo;
-  bsg_manycore_link_sif_s [E:W][0:0] bp_hor_link_sif_li;
-  bsg_manycore_link_sif_s [E:W][0:0] bp_hor_link_sif_lo;
-  bsg_manycore_tile_blackparrot_mesh
-   #(.bp_params_p(bp_params_p)
-     ,.x_cord_width_p(x_cord_width_p)
-     ,.y_cord_width_p(y_cord_width_p)
-     ,.pod_x_cord_width_p(pod_x_cord_width_p)
-     ,.pod_y_cord_width_p(pod_y_cord_width_p)
-     ,.data_width_p(data_width_p)
-     ,.addr_width_p(addr_width_p)
-     ,.icache_block_size_in_words_p(icache_block_size_in_words_p)
-     ,.num_vcache_rows_p(num_vcache_rows_p)
-     ,.vcache_block_size_in_words_p(vcache_block_size_in_words_p)
-     ,.vcache_size_p(vcache_size_p)
-     ,.vcache_sets_p(vcache_sets_p)
-     ,.num_tiles_x_p(num_tiles_x_p)
-     ,.num_tiles_y_p(num_tiles_y_p)
-     ,.scratchpad_els_p(scratchpad_els_p)
-     ,.rev_use_credits_p(rev_use_credits_lp)
-     ,.rev_fifo_els_p(rev_fifo_els_lp)
-     )
-   blackparrot_mesh
-    (.clk_i(aclk)
-     ,.rt_clk_i(rt_clk)
-     ,.reset_i(reset_r)
-
-     ,.global_x_i(bp_global_x_li)
-     ,.global_y_i(bp_global_y_li)
-
-     ,.hor_link_sif_i(bp_hor_link_sif_li)
-     ,.hor_link_sif_o(bp_hor_link_sif_lo)
-
-     ,.ver_link_sif_i(bp_ver_link_sif_li)
-     ,.ver_link_sif_o(bp_ver_link_sif_lo)
-     );
-  assign bp_ver_link_sif_li[N][0+:2] = ver_link_sif_lo[S];
-  assign ver_link_sif_li[S] = bp_ver_link_sif_lo[N][0+:2];
-
-  assign bp_ver_link_sif_li[N][2+:2] = '0;
-  assign bp_ver_link_sif_li[S] = '0;
-  assign bp_hor_link_sif_li = '0;
 
   assign m00_axi_awaddr = axi_awaddr_hash + dram_base_li;
   assign m00_axi_araddr = axi_araddr_hash + dram_base_li;

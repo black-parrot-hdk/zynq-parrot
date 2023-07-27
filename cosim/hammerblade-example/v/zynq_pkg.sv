@@ -7,7 +7,7 @@ package zynq_pkg;
   localparam data_width_p = 32;
   localparam x_cord_width_p = 7;
   localparam y_cord_width_p = 7;
-  localparam num_tiles_x_p = 2;
+  localparam num_tiles_x_p = 4;
   localparam num_tiles_y_p = 2;
   localparam x_subcord_width_p = `BSG_SAFE_CLOG2(num_tiles_x_p);
   localparam y_subcord_width_p = `BSG_SAFE_CLOG2(num_tiles_y_p);

@@ -26,6 +26,7 @@ $BLACKPARROT_SUB_DIR/manycore/v/bp_cce_to_mc_bridge.sv
 $BLACKPARROT_SUB_DIR/manycore/v/bsg_manycore_tile_blackparrot.sv
 $BLACKPARROT_SUB_DIR/manycore/v/bsg_manycore_tile_blackparrot_mesh.sv
 $BLACKPARROT_SUB_DIR/manycore/v/bsg_manycore_endpoint_to_fifos.v
+$BLACKPARROT_SUB_DIR/manycore/v/bsg_hammerblade.sv
 $COSIM_SRC_DIR/bsg_zynq_pl_shell.v
 $CURR_SRC_DIR/zynq_pkg.sv
 $CURR_SRC_DIR/top_zynq.sv

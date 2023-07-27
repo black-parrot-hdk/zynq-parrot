@@ -12,6 +12,7 @@
 #include <queue>
 #include <unistd.h>
 #include <bitset>
+#include <cmath>
 
 #include "bp_zynq_pl.h"
 #include "bsg_printing.h"
@@ -103,7 +104,7 @@ inline void send_mc_write(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa, i
   req_pkt.op_v2   = 2; // SW
   req_pkt.reg_id  = 0xff; // unused
   req_pkt.payload = data;
-  req_pkt.x_src   = 2; // Hardcoded host coord
+  req_pkt.x_src   = 4; // Hardcoded host coord
   req_pkt.y_src   = 0; //
   req_pkt.x_dst   = x;
   req_pkt.y_dst   = y;
@@ -119,7 +120,7 @@ inline int32_t send_mc_read(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa)
   req_pkt.op_v2   = 0; // LD
   req_pkt.reg_id  = 0xff; // unused
   req_pkt.payload = 0; // Ignore payload
-  req_pkt.x_src   = 2; // Hardcoded host coord
+  req_pkt.x_src   = 4; // Hardcoded host coord
   req_pkt.y_src   = 0; //
   req_pkt.x_dst   = x;
   req_pkt.y_dst   = y;
@@ -285,18 +286,22 @@ extern "C" int cosim_main(char *argstr) {
 
 // Configure BlackParrot
 //
-// TODO: Hardcoded for 2x2
 void configure_blackparrot(bp_zynq_pl *zpl) {
-  int x_cord_width = 7;
-  int y_cord_width = 7;
-  int x_subcord_width = 1;
-  int y_subcord_width = 1;
-  int pod_x_cord_width = x_cord_width - x_subcord_width;
-  int pod_y_cord_width = y_cord_width - y_subcord_width;
-  int bp_y_tile = (3 << y_subcord_width) | 0;
-  int bp_x_tile = (1 << x_subcord_width) | 0;
-  int bp_dram_pod_cord = (1 << pod_y_cord_width) | 1;
-  int bp_host_cord = 2;
+  // From Makefile
+  int num_tiles_x            = 4;
+  int num_tiles_y            = 2;
+  int x_cord_width           = 7;
+  int y_cord_width           = 7;
+  int x_subcord_width        = (int) std::log2(num_tiles_x);
+  int y_subcord_width        = (int) std::log2(num_tiles_y);
+  int pod_x_cord_width       = x_cord_width - x_subcord_width;
+  int pod_y_cord_width       = y_cord_width - y_subcord_width;
+  int bp_y_tile              = (3 << y_subcord_width) | 0;
+  int bp_x_tile              = (1 << x_subcord_width) | 0;
+  int bp_dram_pod_cord       = (1 << pod_y_cord_width) | 1;
+  printf("PXW: %d PYW: %d\n", pod_x_cord_width, pod_y_cord_width);
+  printf("DRAM POD CORD %x\n", bp_dram_pod_cord);
+  int bp_host_cord           = (1 << (y_cord_width+x_subcord_width));
   int bp_cfg_base_epa        = 0x2000;
   int bp_cfg_reg_unused      = bp_cfg_base_epa | 0x0000;
   int bp_cfg_reg_freeze      = bp_cfg_base_epa | 0x0008;
