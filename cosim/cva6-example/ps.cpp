@@ -3,6 +3,7 @@
 #include <locale.h>
 #include <time.h>
 #include <unistd.h>
+#include <string.h>
 #include <bitset>
 #include <cstdint>
 #include <iostream>

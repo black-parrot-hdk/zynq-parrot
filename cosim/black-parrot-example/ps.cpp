@@ -11,6 +11,7 @@
 #include <time.h>
 #include <queue>
 #include <unistd.h>
+#include <string.h>
 #include <bitset>
 #include <cstdint>
 #include <iostream>
