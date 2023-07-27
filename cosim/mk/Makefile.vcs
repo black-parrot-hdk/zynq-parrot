@@ -53,6 +53,7 @@ clean:
 	rm -rf *.riscv*
 	rm -rf *.rv*o*
 	rm -rf *.dump*
+	rm -rf $(BUILD_COLLATERAL) $(SIM_COLLATERAL)
 
 view:
 	$(_DVE) -full64 -vpd vcdplus.vpd

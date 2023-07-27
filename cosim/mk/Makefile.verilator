@@ -44,6 +44,7 @@ clean:
 	rm -rf *.riscv*
 	rm -rf *.rv*o*
 	rm -rf *.dump*
+	rm -rf $(BUILD_COLLATERAL) $(SIM_COLLATERAL)
 
 view:
 	gtkwave -f trace.fst

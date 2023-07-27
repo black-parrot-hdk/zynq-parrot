@@ -7,7 +7,7 @@ include $(TOP)/Makefile.common
 #############################
 BOARDNAME  ?= pynqz2
 TOP_MODULE ?= top
-BASENAME   ?= hammerblade
+BASENAME   ?= manycore
 
 #############################
 # Build Collateral
@@ -26,6 +26,7 @@ $(CURR_SRC_DIR)/bsg_bladerunner_pkg.v: $(BSG_MACHINE_PATH)/bsg_bladerunner_pkg.v
 $(CURR_DESIGN_DIR)/bsg_manycore_machine.h: $(BSG_MACHINE_PATH)/bsg_manycore_machine.h
 	cp $< $@
 
+.PHONY: $(BUILD_COLLATERAL)
 BUILD_COLLATERAL = $(CURR_SRC_DIR)/bsg_bladerunner_pkg.v $(CURR_DESIGN_DIR)/bsg_manycore_machine.h
 
 #############################

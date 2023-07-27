@@ -19,6 +19,8 @@
 #include "bsg_tag_bitbang.h"
 #include "bsg_argparse.h"
 
+#include "bsg_manycore_machine.h"
+
 #ifndef DRAM_ALLOCATE_SIZE_MB
 #define DRAM_ALLOCATE_SIZE_MB 128
 #endif
@@ -104,8 +106,8 @@ inline void send_mc_write(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa, i
   req_pkt.op_v2   = 2; // SW
   req_pkt.reg_id  = 0xff; // unused
   req_pkt.payload = data;
-  req_pkt.x_src   = HB_NUM_TILES_X; // Hardcoded host coord
-  req_pkt.y_src   = 0; //
+  req_pkt.x_src   = BSG_MANYCORE_MACHINE_HOST_COORD_X;
+  req_pkt.y_src   = BSG_MANYCORE_MACHINE_HOST_COORD_Y;
   req_pkt.x_dst   = x;
   req_pkt.y_dst   = y;
   req_pkt.addr    = epa >> 2;
@@ -120,8 +122,8 @@ inline int32_t send_mc_read(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa)
   req_pkt.op_v2   = 0; // LD
   req_pkt.reg_id  = 0xff; // unused
   req_pkt.payload = 0; // Ignore payload
-  req_pkt.x_src   = HB_NUM_TILES_X; // Hardcoded host coord
-  req_pkt.y_src   = 0; //
+  req_pkt.x_src   = BSG_MANYCORE_MACHINE_HOST_COORD_X;
+  req_pkt.y_src   = BSG_MANYCORE_MACHINE_HOST_COORD_Y;
   req_pkt.x_dst   = x;
   req_pkt.y_dst   = y;
   req_pkt.addr    = epa >> 2;
@@ -288,10 +290,10 @@ extern "C" int cosim_main(char *argstr) {
 //
 void configure_blackparrot(bp_zynq_pl *zpl) {
   // From Makefile
-  int num_tiles_x            = HB_NUM_TILES_X;
-  int num_tiles_y            = HB_NUM_TILES_Y;
-  int x_cord_width           = 7;
-  int y_cord_width           = 7;
+  int num_tiles_x            = BSG_MANYCORE_POD_TILES_X;
+  int num_tiles_y            = BSG_MANYCORE_POD_TILES_Y;
+  int x_cord_width           = BSG_MANYCORE_NOC_COORD_X_WIDTH;
+  int y_cord_width           = BSG_MANYCORE_NOC_COORD_Y_WIDTH;
   int x_subcord_width        = (int) std::log2(num_tiles_x);
   int y_subcord_width        = (int) std::log2(num_tiles_y);
   int pod_x_cord_width       = x_cord_width - x_subcord_width;
