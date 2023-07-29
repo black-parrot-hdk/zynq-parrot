@@ -98,7 +98,7 @@ inline void recv_mc_request_packet(bp_zynq_pl *zpl, hb_mc_request_packet_t *pack
 }
 
 inline void send_mc_write(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa, int32_t data) {
-  bsg_pr_dbg_ps("Writing: [%x]<-%x\n", epa, data);
+  bsg_pr_dbg_ps("Writing: (%x %x) [%x]<-%x\n", x, y, epa, data);
   hb_mc_request_packet_t req_pkt;
 
   req_pkt.op_v2   = 2; // SW
@@ -187,10 +187,9 @@ extern "C" int cosim_main(char *argstr) {
   zpl->axil_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, 0xf);
   assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == phys_ptr));
   bsg_pr_info("ps.cpp: wrote and verified base register\n");
-
 #else
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, 0x1234, 0xf);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == 0x1234));
+  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, 0xdeadbeef, 0xf);
+  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == 0xdeadbeef));
   bsg_pr_info("ps.cpp: wrote and verified base register\n");
 #endif
 
@@ -275,7 +274,7 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
     } else if (fence) {
       bsg_pr_dbg_ps("ps.cpp: nbf fence command (ignoring), line %d\n", line_count);
       bsg_pr_info("Waiting for credit drain\n");
-      while(zpl->axil_read(GP0_RD_CREDIT_COUNT) == 1);
+      while(zpl->axil_read(GP0_RD_CREDIT_COUNT) > 0);
       bsg_pr_info("Credits drained\n");
       continue;
     } else {

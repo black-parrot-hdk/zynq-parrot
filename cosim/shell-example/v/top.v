@@ -21,7 +21,7 @@ module top #
     // User ports ends
     // Do not modify the ports beyond this line
 
-`ifdef SYNTHESIS
+`ifdef FGPA
     input wire                                  aclk,
     input wire                                  aresetn,
     // Ports of Axi Slave Bus Interface S00_AXI

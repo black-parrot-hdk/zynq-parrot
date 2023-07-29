@@ -20,7 +20,7 @@ import bsg_tag_pkg::*;
   // by bsg_zynq_pl_shell read_locs_lp (update in top.v as well)
     parameter integer C_S00_AXI_DATA_WIDTH   = 32
   , parameter integer C_S00_AXI_ADDR_WIDTH   = 10
-  , parameter integer C_M00_AXI_DATA_WIDTH   = 32
+  , parameter integer C_M00_AXI_DATA_WIDTH   = 64
   , parameter integer C_M00_AXI_ADDR_WIDTH   = 32
   )
  (  input wire                                  aclk
@@ -104,7 +104,7 @@ import bsg_tag_pkg::*;
   logic [num_fifos_ps_to_pl_lp-1:0]                                ps_to_pl_fifo_v_lo, ps_to_pl_fifo_yumi_li;
 
   localparam debug_lp = 0;
-  localparam memory_upper_limit_lp = 256*1024*1024;
+  localparam memory_upper_limit_lp = 128*1024*1024;
 
   // Connect Shell to AXI Bus Interface S00_AXI
   bsg_zynq_pl_shell #
@@ -183,23 +183,24 @@ import bsg_tag_pkg::*;
   assign dram_base_li = csr_data_lo[3];
   assign rom_addr_lo  = csr_data_lo[4];
 
-  assign csr_data_li[0] = |credits_used_lo;
+  assign csr_data_li[0] = credits_used_lo;
   assign csr_data_li[1] = rom_data_li;
 
   assign rom_data_li = bsg_machine_rom_arr_gp[rom_addr_lo];
 
   // instantiate manycore
   localparam bsg_machine_llcache_data_width_lp = bsg_machine_noc_data_width_gp;
-  localparam bsg_machine_llcache_addr_width_lp=(bsg_machine_noc_epa_width_gp-1+`BSG_SAFE_CLOG2(bsg_machine_noc_data_width_gp>>3));
+  localparam bsg_machine_llcache_addr_width_lp = (bsg_machine_noc_epa_width_gp-1+`BSG_SAFE_CLOG2(bsg_machine_noc_data_width_gp>>3));
 
   localparam bsg_machine_wh_flit_width_lp = bsg_machine_llcache_channel_width_gp;
-  localparam bsg_machine_wh_cid_width_lp = `BSG_SAFE_CLOG2(bsg_machine_wh_ruche_factor_gp*2);
-  localparam bsg_machine_wh_len_width_lp = `BSG_SAFE_CLOG2(1 + ((bsg_machine_llcache_line_words_gp * bsg_machine_llcache_data_width_lp) / bsg_machine_llcache_channel_width_gp));
+  localparam bsg_machine_wh_cid_width_lp  = `BSG_SAFE_CLOG2(bsg_machine_wh_ruche_factor_gp*2);
+  localparam bsg_machine_wh_len_width_lp  = `BSG_SAFE_CLOG2(1 + ((bsg_machine_llcache_line_words_gp * bsg_machine_llcache_data_width_lp) / bsg_machine_llcache_channel_width_gp));
   localparam bsg_machine_wh_cord_width_lp = bsg_machine_noc_coord_x_width_gp;
   localparam lg_wh_ruche_factor_lp = `BSG_SAFE_CLOG2(bsg_machine_wh_ruche_factor_gp);
 
   localparam num_vcaches_per_link_lp = (2*bsg_machine_pods_x_gp*bsg_machine_pod_tiles_x_gp)/bsg_machine_wh_ruche_factor_gp/2;
-  localparam num_dma_lp = 2*bsg_machine_pods_y_gp*2*bsg_machine_pod_llcache_rows_gp*bsg_machine_wh_ruche_factor_gp*num_vcaches_per_link_lp;
+  localparam num_dma_lp              = 2*bsg_machine_pods_y_gp*2*bsg_machine_pod_llcache_rows_gp*bsg_machine_wh_ruche_factor_gp*num_vcaches_per_link_lp;
+  localparam lg_num_dma_lp = `BSG_SAFE_CLOG2(num_dma_lp);
   localparam lg_num_vcaches_per_link_lp = `BSG_SAFE_CLOG2(num_vcaches_per_link_lp);
 
   `declare_bsg_manycore_link_sif_s(bsg_machine_noc_epa_width_gp,bsg_machine_noc_data_width_gp,bsg_machine_noc_coord_x_width_gp,bsg_machine_noc_coord_y_width_gp);
@@ -509,9 +510,9 @@ import bsg_tag_pkg::*;
      ,.data_width_p(bsg_machine_llcache_channel_width_gp)
      ,.block_size_in_words_p(bsg_machine_llcache_line_words_gp)
      ,.num_cache_p(num_dma_lp)
-     ,.axi_data_width_p(bsg_machine_llcache_channel_width_gp)
+     ,.axi_data_width_p(C_M00_AXI_DATA_WIDTH)
      ,.axi_id_width_p(6)
-     ,.axi_burst_len_p(bsg_machine_llcache_line_words_gp)
+     ,.axi_burst_len_p(bsg_machine_llcache_channel_width_gp*bsg_machine_llcache_line_words_gp/C_M00_AXI_DATA_WIDTH)
      ,.axi_burst_type_p(e_axi_burst_incr)
      )
    cache2axi
@@ -572,8 +573,9 @@ import bsg_tag_pkg::*;
      ,.axi_rvalid_i(m00_axi_rvalid)
      ,.axi_rready_o(m00_axi_rready)
      );
-  wire [C_M00_AXI_ADDR_WIDTH-1:0] axi_awaddr_hash = {axi_awaddr_cache_id, axi_awaddr[0+:26]};
-  wire [C_M00_AXI_ADDR_WIDTH-1:0] axi_araddr_hash = {axi_araddr_cache_id, axi_araddr[0+:26]};
+  localparam dram_addr_width_lp = `BSG_SAFE_CLOG2(memory_upper_limit_lp);
+  wire [C_M00_AXI_ADDR_WIDTH-1:0] axi_awaddr_hash = {axi_awaddr_cache_id, axi_awaddr[0+:dram_addr_width_lp-lg_num_dma_lp]};
+  wire [C_M00_AXI_ADDR_WIDTH-1:0] axi_araddr_hash = {axi_araddr_cache_id, axi_araddr[0+:dram_addr_width_lp-lg_num_dma_lp]};
 
   // IO P tie off
   for (genvar i = 1; i < bsg_machine_pod_tiles_x_gp; i++)
@@ -668,7 +670,7 @@ import bsg_tag_pkg::*;
 
   always @(negedge aclk)
     if (m00_axi_arvalid & m00_axi_arready)
-      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_araddr,m00_axi_araddr);
+      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Read Addr %x -> %x (AXI HP0)",axi_araddr,m00_axi_araddr);
 
   // synopsys translate_on
 

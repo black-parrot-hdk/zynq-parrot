@@ -13,7 +13,7 @@ module top
     )
    (
     // Ports of Axi Slave Bus Interface S00_AXI
-`ifdef SYNTHESIS
+`ifdef FPGA
     input wire                                   aclk
     ,input wire                                  aresetn
     ,input wire                                  rt_clk

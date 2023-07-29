@@ -22,7 +22,7 @@
 
         // Ports of Axi Slave Bus Interface S00_AXI
 // TODO: This must be set in the vivado gui
-`ifdef SYNTHESIS
+`ifdef FPGA
         input wire  aclk,
         input wire  aresetn,
 
