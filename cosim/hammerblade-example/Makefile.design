@@ -9,12 +9,31 @@ BOARDNAME  ?= pynqz2
 TOP_MODULE ?= top
 BASENAME   ?= hammerblade
 
-MANYCORE_DRAM_BASE    ?= 0x80000000
-BLACKPARROT_DRAM_BASE ?= 0x82000000
+#############################
+# Build Collateral
+#############################
+include $(BSG_MACHINE_PATH)/Makefile.machine.include
+# Arbitrary, need to be set
+HARDWARE_PATH     := $(BSG_REPLICANT_DIR)/hardware
+LIBRARIES_PATH    := $(BSG_REPLICANT_DIR)/libraries
+BSG_PLATFORM_PATH := $(LIBRARIES_PATH)/platforms/bigblade-vcs
+BSG_F1_DIR        := $(BSG_REPLICANT_DIR)
+include $(BSG_REPLICANT_DIR)/hardware/hardware.mk
+
+$(CURR_SRC_DIR)/bsg_bladerunner_pkg.v: $(BSG_MACHINE_PATH)/bsg_bladerunner_pkg.v
+	cp $< $@
+
+$(CURR_DESIGN_DIR)/bsg_manycore_machine.h: $(BSG_MACHINE_PATH)/bsg_manycore_machine.h
+	cp $< $@
+
+BUILD_COLLATERAL = $(CURR_SRC_DIR)/bsg_bladerunner_pkg.v $(CURR_DESIGN_DIR)/bsg_manycore_machine.h
 
 #############################
 # Run Collateral
 #############################
+MANYCORE_DRAM_BASE    ?= 0x80000000
+BLACKPARROT_DRAM_BASE ?= 0x82000000
+
 include $(BSG_MACHINE_PATH)/Makefile.machine.include
 NBF_SCRIPT ?= $(BSG_MANYCORE_DIR)/software/py/nbf.py
 RISCV_OBJCOPY ?= riscv64-unknown-elf-dramfs-objcopy
@@ -58,10 +77,10 @@ skip_zeros                 ?= 1
 		$(BSG_MACHINE_GLOBAL_X) $(BSG_MACHINE_GLOBAL_Y) \
 		$(BSG_MACHINE_VCACHE_WAY) $(BSG_MACHINE_VCACHE_SET) \
 		$(BSG_MACHINE_VCACHE_BLOCK_SIZE_WORDS) \
-		$(BSG_MACHINE_DRAM_SIZE_WORDS) $(BSG_MACHINE_MAX_EPA_WIDTH) \
+		$(__BSG_MACHINE_DRAMSIM3_CHIP_SIZE_IN_WORDS) $(BSG_MACHINE_MAX_EPA_WIDTH) \
 		$(bsg_tiles_org_X) $(bsg_tiles_org_Y) \
 		$(bsg_tiles_X) $(bsg_tiles_Y) $(bsg_elf_off_chip_mem) \
-		$(BSG_MACHINE_ORIGIN_X_CORD) $(BSG_MACHINE_ORIGIN_Y_CORD) \
+		$(BSG_MACHINE_ORIGIN_COORD_X) $(BSG_MACHINE_ORIGIN_COORD_Y) \
 		$(BSG_MACHINE_PODS_X) $(BSG_MACHINE_PODS_Y) \
 		$(bsg_pods_X) $(bsg_pods_Y) \
 		$(BSG_MACHINE_NUM_VCACHE_ROWS) \

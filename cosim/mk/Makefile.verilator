@@ -16,6 +16,7 @@ CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/verilator
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_test
+CINCLUDES += -I$(CURR_DESIGN_DIR)
 
 TRACE ?= +bsg_trace
 
@@ -27,7 +28,7 @@ run: obj_dir/V$(TOP_MODULE) $(RUN_COLLATERAL)
 	$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
 
 BUILD_LOG ?= build.log
-obj_dir/V$(TOP_MODULE): $(HOST_PROGRAM) $(FLIST)
+obj_dir/V$(TOP_MODULE): $(HOST_PROGRAM) $(FLIST) $(BUILD_COLLATERAL)
 	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" \
 		-LDFLAGS "$(LDFLAGS)" $< \
 		2>&1 | tee -i $(BUILD_LOG)
@@ -43,6 +44,7 @@ clean:
 	rm -rf *.riscv*
 	rm -rf *.rv*o*
 	rm -rf *.dump*
+	rm -rf $(BUILD_COLLATERAL) $(SIM_COLLATERAL)
 
 view:
 	gtkwave -f trace.fst

@@ -137,7 +137,7 @@
     // Add user logic here
 
     // User logic ends
-
+`ifndef SYNTHESIS
 `ifdef VERILATOR
    initial
      begin
@@ -189,6 +189,7 @@
      @(posedge aclk);
      #1;
    endtask
+`endif
 `endif
 
  endmodule

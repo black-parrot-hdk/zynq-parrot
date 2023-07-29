@@ -11,11 +11,12 @@ update_ip_catalog
 
 startgroup
 create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.3 zynq_ultra_ps_e_0
-set_property -dict [list CONFIG.PSU__FPGA_PL0_ENABLE {1}  CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {32}] [get_bd_cells zynq_ultra_ps_e_0]
+set_property -dict [list CONFIG.PSU__FPGA_PL0_ENABLE {1}  CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {40}] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP0 {1} CONFIG.PSU__MAXIGP0__DATA_WIDTH {32}] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP1 {0}] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP2 {0}] [get_bd_cells zynq_ultra_ps_e_0]
-set_property -dict [list CONFIG.PSU__USE__S_AXI_GP3 {1} CONFIG.PSU__SAXIGP3__DATA_WIDTH {32}] [get_bd_cells zynq_ultra_ps_e_0]
+set_property -dict [list CONFIG.PSU__USE__S_AXI_GP3 {1} CONFIG.PSU__SAXIGP3__DATA_WIDTH {64}] [get_bd_cells zynq_ultra_ps_e_0]
+set_property -dict [list CONFIG.PSU__DDRC__BUS_WIDTH {32 Bit} CONFIG.PSU__DDRC__DEVICE_CAPACITY {16384 MBits} CONFIG.PSU__DDRC__MEMORY_TYPE {LPDDR 4} CONFIG.PSU__DDRC__ROW_ADDR_COUNT {16}] [get_bd_cells zynq_ultra_ps_e_0]
 endgroup
 
 create_bd_cell -type ip -vlnv user.org:user:top:1.0 top_0
@@ -44,9 +45,9 @@ connect_bd_intf_net [get_bd_intf_pins top_0/m00_axi] [get_bd_intf_pins smartconn
 connect_bd_intf_net [get_bd_intf_pins smartconnect_1/M00_AXI] [get_bd_intf_pins zynq_ultra_ps_e_0/S_AXI_HP1_FPD]
 
 startgroup
-apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps_e_0/pl_clk0 (32 MHz)" }  [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk]
-apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps_e_0/pl_clk0 (32 MHz)" }  [get_bd_pins zynq_ultra_ps_e_0/saxihp1_fpd_aclk]
-apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps_e_0/pl_clk0 (32 MHz)" }  [get_bd_pins proc_sys_reset_0/slowest_sync_clk]
+apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps_e_0/pl_clk0 (40 MHz)" }  [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk]
+apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps_e_0/pl_clk0 (40 MHz)" }  [get_bd_pins zynq_ultra_ps_e_0/saxihp1_fpd_aclk]
+apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps_e_0/pl_clk0 (40 MHz)" }  [get_bd_pins proc_sys_reset_0/slowest_sync_clk]
 apply_bd_automation -rule xilinx.com:bd_rule:board -config {Manual_Source {Auto}}  [get_bd_pins proc_sys_reset_0/ext_reset_in]
 endgroup
 
@@ -60,12 +61,17 @@ add_files -norecurse ${project_name}.srcs/sources_1/bd/${project_bd}/hdl/${proje
 
 save_bd_design
 
-# change this to a 0 to have it stop before synthesis and implementation
+# Change to 0 to have it stop before synthesis / implementation
 # so you can inspect the design with the GUI
 
 if {1} {
-launch_runs impl_1 -to_step write_bitstream -jobs 4
-wait_on_run impl_1
+  launch_runs synth_1 -jobs 16
+  wait_on_run synth_1
+}
+
+if {1} {
+  launch_runs impl_1 -to_step write_bitstream -jobs 16
+  wait_on_run impl_1
 }
 
 puts "Completed. Type start_gui to enter vivado GUI; quit to exit"

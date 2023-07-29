@@ -8,11 +8,12 @@
 
 module top_zynq
  import zynq_pkg::*;
+ import bsg_blackparrot_pkg::*;
  import bp_common_pkg::*;
  import bp_be_pkg::*;
  import bp_me_pkg::*;
  import bsg_tag_pkg::*;
- #(parameter bp_params_e bp_params_p = e_bp_default_cfg
+ #(parameter bp_params_e bp_params_p = bp_cfg_gp
    `declare_bp_proc_params(bp_params_p)
    `declare_bp_bedrock_mem_if_widths(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p)
 

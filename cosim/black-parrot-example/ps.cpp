@@ -231,7 +231,7 @@ extern "C" int cosim_main(char *argstr) {
         "onto allocated DRAM)\n");
     sleep(1U << 31);
     delete zpl;
-    exit(0);
+    return -1;
   }
 
   bsg_pr_info("ps.cpp: attempting to read mtime reg in BP CFG space, should "
@@ -411,6 +411,7 @@ extern "C" int cosim_main(char *argstr) {
 
   zpl->done();
   delete zpl;
+  return 0;
 }
 
 std::uint32_t rotl(std::uint32_t v, std::int32_t shift) {
@@ -432,7 +433,7 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
   if (!nbf_file.is_open()) {
     bsg_pr_err("ps.cpp: error opening nbf file.\n");
     delete zpl;
-    exit(-1);
+    return;
   }
 
   int line_count = 0;

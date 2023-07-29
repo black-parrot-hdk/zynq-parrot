@@ -311,6 +311,7 @@ module top #
 
         // User logic ends
 
+`ifndef SYNTHESIS
 `ifdef VERILATOR
    initial
      begin
@@ -370,6 +371,7 @@ module top #
        @(negedge aresetn);
        $asserton();
      end
+`endif
 `endif
 
  endmodule

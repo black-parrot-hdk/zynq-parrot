@@ -12,6 +12,7 @@ CFLAGS += -std=c++14
 
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/fpga
+CINCLUDES += -I$(CURR_DESIGN_DIR)
 
 all:
 	@echo "Rules for FPGA; see $(TOP)/cosim/mk/Makefile.fpga for more:"
@@ -21,7 +22,7 @@ EXE ?= control-program
 run: $(EXE) $(RUN_COLLATERAL)
 	sudo ./$< $(SIM_ARGS) | tee run.log
 
-$(EXE): $(HOST_PROGRAM)
+$(EXE): $(HOST_PROGRAM) $(BUILD_COLLATERAL)
 	$(GCC) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $(CSOURCES) $< $(CFLAGS) $(LDFLAGS) -o $@
 
 reset_pl:
@@ -55,9 +56,11 @@ print_clocks:
 	echo 'from pynq import Clocks;  Clocks.fclk0_mhz = $*; print("PL Clock Set To:: ",Clocks.fclk0_mhz,"MHz"); ' | sudo -E $(PYTHON3)
 
 clean:
+	rm -rf $(BUILD_COLLATERAL)
 	rm -rf $(EXE)
 	rm -rf sds_trace_data.dat
 	rm -rf *.nbf
 	rm -rf *.elf
 	rm -rf $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.hwh $(BASENAME)_bd_1_bd.tcl
+	rm -rf $(BUILD_COLLATERAL) $(SIM_COLLATERAL)
 

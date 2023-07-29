@@ -22,6 +22,7 @@ CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/vcs
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_test
+CINCLUDES += -I$(CURR_DESIGN_DIR)
 
 TRACE ?= +bsg_trace
 
@@ -29,7 +30,7 @@ all:
 	@echo "## See the makefile for the fun things you can do in this directory"
 
 BUILD_LOG ?= build.log
-simv: $(HOST_PROGRAM) $(FLIST)
+simv: $(HOST_PROGRAM) $(FLIST) $(BUILD_COLLATERAL)
 	$(VCS) $(VCS_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" \
 		-LDFLAGS "$(LDFLAGS)" -o $@ $< \
 		2>&1 | tee -i $(BUILD_LOG)
@@ -52,6 +53,7 @@ clean:
 	rm -rf *.riscv*
 	rm -rf *.rv*o*
 	rm -rf *.dump*
+	rm -rf $(BUILD_COLLATERAL) $(SIM_COLLATERAL)
 
 view:
 	$(_DVE) -full64 -vpd vcdplus.vpd

@@ -148,7 +148,7 @@ public:
 
   inline void axil_write(uintptr_t address, int32_t data, uint8_t wstrb) {
     if (debug)
-      printf("  bp_zynq_pl: AXI writing [%" PRIxPTR "]=%8.8d mask %" PRIu8 "\n", address, data,
+      printf("  bp_zynq_pl: AXI writing [%" PRIxPTR "]=%8.8x mask %" PRIu8 "\n", address, data,
              wstrb);
 
     // for now we don't support alternate write strobes

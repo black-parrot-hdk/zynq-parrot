@@ -307,6 +307,7 @@ module top
       ,.m00_axi_rresp  (m00_axi_rresp)
       );
 
+`ifndef SYNTHESIS
 `ifdef VERILATOR
    initial
      begin
@@ -366,6 +367,7 @@ module top
        @(negedge aresetn);
        $asserton();
      end
+`endif
 `endif
 
  endmodule

@@ -4,6 +4,8 @@
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_master_decentralized.v
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_bitbang.v
 $BSG_MANYCORE_DIR/testbenches/common/v/bsg_nonsynth_manycore_tag_master.v
+$BSG_MANYCORE_DIR/testbenches/common/v/bsg_manycore_network_cfg_pkg.v
+$BSG_MANYCORE_DIR/testbenches/common/v/bsg_manycore_mem_cfg_pkg.v
 $BASEJUMP_STL_DIR/bsg_cache/bsg_wormhole_to_cache_dma_fanout.v
 $BASEJUMP_STL_DIR/bsg_dataflow/bsg_serial_in_parallel_out_full.v
 $BASEJUMP_STL_DIR/bsg_dataflow/bsg_round_robin_1_to_n.v
@@ -24,8 +26,8 @@ $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_demux.v
 $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_mux.v
 $BLACKPARROT_SUB_DIR/manycore/v/bsg_manycore_endpoint_to_fifos.v
 $COSIM_SRC_DIR/bsg_zynq_pl_shell.v
+$CURR_SRC_DIR/bsg_bladerunner_pkg.v
 $CURR_SRC_DIR/zynq_pkg.sv
-$CURR_SRC_DIR/bsg_rom_param.v
 $CURR_SRC_DIR/top_zynq.sv
 $CURR_SRC_DIR/top.v
 
