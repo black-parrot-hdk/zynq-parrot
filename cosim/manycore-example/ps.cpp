@@ -58,12 +58,7 @@
 #define TAG_CLIENT_MC_RESET_ID 0
 #define TAG_CLIENT_MC_RESET_WIDTH 1
 
-// DRAM
-#define DRAM_BASE_ADDR  0x80000000U
-#define DRAM_MAX_ALLOC_SIZE 0x20000000U
-
-#include "bsg_manycore_request_packet.h"
-#include "bsg_manycore_response_packet.h"
+#include "bsg_manycore_packet.h"
 
 void nbf_load(bsg_zynq_pl *zpl, char *filename);
 
@@ -205,7 +200,7 @@ extern "C" int cosim_main(char *argstr) {
   nbf_load(zpl, argv[1]);
 
   int finished = 0;
-  while(1) {
+  while (finished != NUM_FINISH) {
     bsg_pr_dbg_ps("Waiting for incoming request packet\n");
     hb_mc_request_packet_t mc_pkt;
     recv_mc_request_packet(zpl, &mc_pkt);
@@ -218,9 +213,6 @@ extern "C" int cosim_main(char *argstr) {
         fflush(stdout);
     } else if (mc_epa == 0xead0) {
       bsg_pr_info("Finish packet received %d\n", ++finished);
-      if (finished == NUM_FINISH) {
-        break;
-      }
     } else {
       bsg_pr_info("Errant request packet: %x %x\n", mc_epa, mc_data);
     }

@@ -9,6 +9,10 @@ BOARDNAME  ?= pynqz2
 TOP_MODULE ?= top
 BASENAME   ?= hammerblade
 
+# Override to zynq-parrot machine path
+export BSG_MACHINE_PATH ?= $(BSG_REPLICANT_DIR)/machines/pod_X1Y1_mesh_X2Y2_hbm_one_pseudo_channel
+export CFG ?= e_bp_unicore_hammerblade_cfg
+
 #############################
 # Build Collateral
 #############################
@@ -20,19 +24,34 @@ BSG_PLATFORM_PATH := $(LIBRARIES_PATH)/platforms/bigblade-vcs
 BSG_F1_DIR        := $(BSG_REPLICANT_DIR)
 include $(BSG_REPLICANT_DIR)/hardware/hardware.mk
 
+$(CURR_SRC_DIR)/bsg_blackparrot_pkg.sv:
+	echo "package bsg_blackparrot_pkg;" >> $@
+	echo >> $@
+	echo "import bp_common_pkg::*;" >> $@
+	echo >> $@
+	echo "localparam bp_params_e bp_cfg_gp = $(CFG);" >> $@
+	echo >> $@
+	echo "endpackage" >> $@
+	echo >> $@
+
 $(CURR_SRC_DIR)/bsg_bladerunner_pkg.v: $(BSG_MACHINE_PATH)/bsg_bladerunner_pkg.v
 	cp $< $@
+	$(SED) -i "/parameter int bsg_machine_hetero_type_vec_gp/d" $@
+
+$(CURR_SRC_DIR)/bsg_bladerunner_configuration.v: $(BSG_MACHINE_PATH)/bsg_bladerunner_configuration.rom
+	$(PYTHON2) $(ASCII_TO_ROM_PY) $< bsg_bladerunner_configuration > $@
 
 $(CURR_DESIGN_DIR)/bsg_manycore_machine.h: $(BSG_MACHINE_PATH)/bsg_manycore_machine.h
 	cp $< $@
 
-BUILD_COLLATERAL = $(CURR_SRC_DIR)/bsg_bladerunner_pkg.v $(CURR_DESIGN_DIR)/bsg_manycore_machine.h
+BUILD_COLLATERAL = $(CURR_SRC_DIR)/bsg_bladerunner_pkg.v $(CURR_SRC_DIR)/bsg_bladerunner_configuration.v $(CURR_DESIGN_DIR)/bsg_manycore_machine.h $(CURR_SRC_DIR)/bsg_blackparrot_pkg.sv
 
 #############################
 # Run Collateral
 #############################
 MANYCORE_DRAM_BASE    ?= 0x80000000
 BLACKPARROT_DRAM_BASE ?= 0x82000000
+BLACKPARROT_DRAM_OFFSET ?= 0x02000000
 
 include $(BSG_MACHINE_PATH)/Makefile.machine.include
 NBF_SCRIPT ?= $(BSG_MANYCORE_DIR)/software/py/nbf.py

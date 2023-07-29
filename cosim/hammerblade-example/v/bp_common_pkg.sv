@@ -26,14 +26,14 @@ package bp_common_pkg;
       ,itlb_els_1g          : 0
       ,dtlb_els_1g          : 4
 
-      ,icache_sets          : 512
-      ,icache_assoc         : 1
-      ,icache_block_width   : 64
+      ,icache_sets          : 64
+      ,icache_assoc         : 8
+      ,icache_block_width   : 512
       ,icache_fill_width    : 64
 
-      ,dcache_sets          : 512
-      ,dcache_assoc         : 1
-      ,dcache_block_width   : 64
+      ,dcache_sets          : 64
+      ,dcache_assoc         : 8
+      ,dcache_block_width   : 512
       ,dcache_fill_width    : 64
 
       ,bedrock_fill_width   : 64

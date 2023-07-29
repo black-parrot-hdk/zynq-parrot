@@ -34,6 +34,7 @@ flist.*vcs
 *.swp
 bsg_bladerunner_pkg.v
 bsg_blackparrot_pkg.sv
+bsg_bladerunner_configuration.v
 bsg_manycore_machine.h
 *_bd_proj*
 *_ip_proj*

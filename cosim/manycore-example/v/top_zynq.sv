@@ -186,7 +186,10 @@ import bsg_tag_pkg::*;
   assign csr_data_li[0] = credits_used_lo;
   assign csr_data_li[1] = rom_data_li;
 
-  assign rom_data_li = bsg_machine_rom_arr_gp[rom_addr_lo];
+  bsg_bladerunner_configuration
+   #(.width_p(bsg_machine_rom_width_gp), .addr_width_p(`BSG_SAFE_CLOG2(bsg_machine_rom_els_gp)))
+   configuration_rom
+    (.addr_i(rom_addr_lo), .data_o(rom_data_li));
 
   // instantiate manycore
   localparam bsg_machine_llcache_data_width_lp = bsg_machine_noc_data_width_gp;
