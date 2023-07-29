@@ -9,7 +9,7 @@
 #endif
 #include <stdlib.h>
 #include <stdio.h>
-#include "bp_zynq_pl.h"
+#include "bsg_zynq_pl.h"
 #include "bsg_printing.h"
 #include "bsg_argparse.h"
 
@@ -49,7 +49,7 @@ extern "C" void cosim_main(char *argstr) {
 
   setvbuf(stdout, NULL, _IOLBF, 0);
 
-  bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
+  bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
   // the read memory map is essentially
   //

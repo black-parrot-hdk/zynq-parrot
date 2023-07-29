@@ -14,7 +14,7 @@
 #include <bitset>
 
 #include "bp_bedrock_packet.h"
-#include "bp_zynq_pl.h"
+#include "bsg_zynq_pl.h"
 #include "bsg_printing.h"
 #include "bsg_argparse.h"
 
@@ -70,14 +70,14 @@
 #define BP_MTIMECMP 0x304000
 
 // Helper functions
-void nbf_load(bp_zynq_pl *zpl, char *filename);
-bool decode_bp_output(bp_zynq_pl *zpl, uint32_t addr, int32_t data);
+void nbf_load(bsg_zynq_pl *zpl, char *filename);
+bool decode_bp_output(bsg_zynq_pl *zpl, uint32_t addr, int32_t data);
 
 // Globals
 std::queue<int> getchar_queue;
 std::bitset<BP_NCPUS> done_vec;
 
-inline void send_bp_fwd_packet(bp_zynq_pl *zpl, bp_bedrock_packet *packet) {
+inline void send_bp_fwd_packet(bsg_zynq_pl *zpl, bp_bedrock_packet *packet) {
   int axil_len = sizeof(bp_bedrock_packet) / 4;
   
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
@@ -87,7 +87,7 @@ inline void send_bp_fwd_packet(bp_zynq_pl *zpl, bp_bedrock_packet *packet) {
   }
 }
 
-inline void recv_rev_packet(bp_zynq_pl *zpl, bp_bedrock_packet *packet) {
+inline void recv_rev_packet(bsg_zynq_pl *zpl, bp_bedrock_packet *packet) {
   int axil_len = sizeof(bp_bedrock_packet) / 4;
 
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
@@ -97,7 +97,7 @@ inline void recv_rev_packet(bp_zynq_pl *zpl, bp_bedrock_packet *packet) {
   }
 }
 
-inline void send_bp_write(bp_zynq_pl *zpl, uint64_t addr, int32_t data, int8_t wmask) {
+inline void send_bp_write(bsg_zynq_pl *zpl, uint64_t addr, int32_t data, int8_t wmask) {
   bp_bedrock_packet fwd_packet;
   bp_bedrock_mem_payload payload;
 
@@ -114,7 +114,7 @@ inline void send_bp_write(bp_zynq_pl *zpl, uint64_t addr, int32_t data, int8_t w
   send_bp_fwd_packet(zpl, &fwd_packet);
 }
 
-inline int32_t send_bp_read(bp_zynq_pl *zpl, uint64_t addr) {
+inline int32_t send_bp_read(bsg_zynq_pl *zpl, uint64_t addr) {
   bp_bedrock_packet fwd_packet;
   bp_bedrock_mem_payload payload;
 
@@ -148,7 +148,7 @@ void *monitor(void *vargp) {
 }
 
 void *device_poll(void *vargp) {
-  bp_zynq_pl *zpl = (bp_zynq_pl *)vargp;
+  bsg_zynq_pl *zpl = (bsg_zynq_pl *)vargp;
   int axil_len = sizeof(bp_bedrock_packet) / 4;
   while (1) {
     uint32_t pkt_data[axil_len];
@@ -171,7 +171,7 @@ void *device_poll(void *vargp) {
   return NULL;
 }
 
-inline uint64_t get_counter_64(bp_zynq_pl *zpl, uint64_t addr, bool bp_not_shell) {
+inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr, bool bp_not_shell) {
   uint64_t val, val_hi, val_lo, val_hi2;
   do {
     if (bp_not_shell) {
@@ -207,7 +207,7 @@ extern "C" int cosim_main(char *argstr) {
 
   setvbuf(stdout, NULL, _IOLBF, 0);
 
-  bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
+  bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
   long data;
   long val1 = 0x1;
@@ -447,7 +447,7 @@ std::uint32_t rotl(std::uint32_t v, std::int32_t shift) {
   return (v<<s) | (v>>(32-s));
 }
 
-void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
+void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
   string nbf_command;
   string tmp;
   string delimiter = "_";
@@ -501,7 +501,7 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
   bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
 }
 
-bool decode_bp_output(bp_zynq_pl *zpl, uint32_t address, int32_t data) {
+bool decode_bp_output(bsg_zynq_pl *zpl, uint32_t address, int32_t data) {
   char print_data = data & 0xFF;
   char core = (address-0x102000) >> 3;
   // write from BP

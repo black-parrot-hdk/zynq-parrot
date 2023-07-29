@@ -14,12 +14,12 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "bp_zynq_pl.h"
+#include "bsg_zynq_pl.h"
 
 #define DRAM_ALLOC_SIZE_BYTES 16384
 
 int main(int argc, char **argv) {
-  bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
+  bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
   int mask1 = 0xf;
   unsigned long phys_ptr;

@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include <bitset>
 
-#include "bp_zynq_pl.h"
+#include "bsg_zynq_pl.h"
 #include "bsg_printing.h"
 #include "bsg_tag_bitbang.h"
 #include "bsg_argparse.h"
@@ -65,9 +65,9 @@
 #include "bsg_manycore_request_packet.h"
 #include "bsg_manycore_response_packet.h"
 
-void nbf_load(bp_zynq_pl *zpl, char *filename);
+void nbf_load(bsg_zynq_pl *zpl, char *filename);
 
-inline void send_mc_request_packet(bp_zynq_pl *zpl, hb_mc_request_packet_t *packet) {
+inline void send_mc_request_packet(bsg_zynq_pl *zpl, hb_mc_request_packet_t *packet) {
   int axil_len = sizeof(hb_mc_request_packet_t) / 4;
 
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
@@ -77,7 +77,7 @@ inline void send_mc_request_packet(bp_zynq_pl *zpl, hb_mc_request_packet_t *pack
   }
 }
 
-inline void recv_mc_response_packet(bp_zynq_pl *zpl, hb_mc_response_packet_t *packet) {
+inline void recv_mc_response_packet(bsg_zynq_pl *zpl, hb_mc_response_packet_t *packet) {
   int axil_len = sizeof(hb_mc_response_packet_t) / 4;
 
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
@@ -87,7 +87,7 @@ inline void recv_mc_response_packet(bp_zynq_pl *zpl, hb_mc_response_packet_t *pa
   }
 }
 
-inline void recv_mc_request_packet(bp_zynq_pl *zpl, hb_mc_request_packet_t *packet) {
+inline void recv_mc_request_packet(bsg_zynq_pl *zpl, hb_mc_request_packet_t *packet) {
   int axil_len = sizeof(hb_mc_request_packet_t) / 4;
 
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
@@ -97,7 +97,7 @@ inline void recv_mc_request_packet(bp_zynq_pl *zpl, hb_mc_request_packet_t *pack
   }
 }
 
-inline void send_mc_write(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa, int32_t data) {
+inline void send_mc_write(bsg_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa, int32_t data) {
   bsg_pr_dbg_ps("Writing: (%x %x) [%x]<-%x\n", x, y, epa, data);
   hb_mc_request_packet_t req_pkt;
 
@@ -113,7 +113,7 @@ inline void send_mc_write(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa, i
   send_mc_request_packet(zpl, &req_pkt);
 }
 
-inline int32_t send_mc_read(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa) {
+inline int32_t send_mc_read(bsg_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa) {
   hb_mc_request_packet_t req_pkt;
 
   req_pkt.op_v2   = 0; // LD
@@ -149,7 +149,7 @@ extern "C" int cosim_main(char *argstr) {
 
   setvbuf(stdout, NULL, _IOLBF, 0);
 
-  bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
+  bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
   bsg_pr_info("ps.cpp: reading three base registers\n");
   bsg_pr_info("ps.cpp: dram_base=%lx\n", zpl->axil_read(0x00 + gp0_addr_base));
@@ -231,7 +231,7 @@ extern "C" int cosim_main(char *argstr) {
   return 0;
 }
 
-void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
+void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
   string nbf_command;
   string tmp;
   string delimiter = "_";

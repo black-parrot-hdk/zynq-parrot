@@ -1,12 +1,12 @@
 
-#ifndef BP_ZYNQ_PL_H
-#define BP_ZYNQ_PL_H
+#ifndef BSG_ZYNQ_PL_H
+#define BSG_ZYNQ_PL_H
 
 #if !defined(__arm__) && !defined(__aarch64__)
 #error this file intended only to be compiled on an ARM (Zynq) platform
 #endif
 
-// This is an implementation of the standardized host bp_zynq_pl API
+// This is an implementation of the standardized host bsg_zynq_pl API
 // that runs on the real Zynq chip.
 //
 
@@ -48,16 +48,16 @@ void _xlnk_reset();
 #include "zynq_headers.h"
 using namespace std;
 
-class bp_zynq_pl {
+class bsg_zynq_pl {
 public:
   bool debug = ZYNQ_PL_DEBUG;
   uintptr_t gp0_base_offset = 0;
   uintptr_t gp1_base_offset = 0;
 
-  bp_zynq_pl(int argc, char *argv[]) {
-    printf("// bp_zynq_pl: be sure to run as root\n");
+  bsg_zynq_pl(int argc, char *argv[]) {
+    printf("// bsg_zynq_pl: be sure to run as root\n");
 #ifdef SIM_BACKPRESSURE_ENABLE
-    printf("// bp_zynq_pl: warning does not support SIM_BACKPRESSURE_ENABLE\n");
+    printf("// bsg_zynq_pl: warning does not support SIM_BACKPRESSURE_ENABLE\n");
 #endif
 
     // open memory device
@@ -71,7 +71,7 @@ public:
                     MAP_SHARED, fd, gp0_addr_base);
     assert(ptr0 == (uintptr_t)gp0_addr_base);
 
-    printf("// bp_zynq_pl: mmap returned %" PRIxPTR " (offset %" PRIxPTR ") errno=%x\n", ptr0,
+    printf("// bsg_zynq_pl: mmap returned %" PRIxPTR " (offset %" PRIxPTR ") errno=%x\n", ptr0,
            gp0_base_offset, errno);
 #endif
     
@@ -82,7 +82,7 @@ public:
                     MAP_SHARED, fd, gp1_addr_base);
     assert(ptr1 == (uintptr_t)gp1_addr_base);
 
-    printf("// bp_zynq_pl: mmap returned %" PRIxPTR " (offset %" PRIxPTR ") errno=%x\n", ptr1,
+    printf("// bsg_zynq_pl: mmap returned %" PRIxPTR " (offset %" PRIxPTR ") errno=%x\n", ptr1,
            gp1_base_offset, errno);
 
 #endif
@@ -90,7 +90,7 @@ public:
     close(fd);
   }
 
-  ~bp_zynq_pl(void) {}
+  ~bsg_zynq_pl(void) {}
 
   // returns virtual pointer, writes physical parameter into arguments
   void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) {
@@ -106,20 +106,20 @@ public:
         cma_alloc(len_in_bytes, 0); // 1 = cacheable, 0 = uncacheable
     assert(virtual_ptr != NULL);
     *physical_ptr = cma_get_phy_addr(virtual_ptr);
-    printf("bp_zynq_pl: allocate_dram() called with size %ld bytes --> virtual "
+    printf("bsg_zynq_pl: allocate_dram() called with size %ld bytes --> virtual "
            "ptr=%p, physical ptr=0x%8.8lx\n",
            len_in_bytes, virtual_ptr, *physical_ptr);
     return virtual_ptr;
   }
 
   void free_dram(void *virtual_ptr) {
-    printf("bp_zynq_pl: free_dram() called on virtual ptr=%p\n", virtual_ptr);
+    printf("bsg_zynq_pl: free_dram() called on virtual ptr=%p\n", virtual_ptr);
     cma_free(virtual_ptr);
   }
 
   static void tick(void) { /* Does nothing on PS */ }
 
-  static bool done(void) { printf("bp_zynq_pl: done() called, exiting\n"); return true; }
+  static bool done(void) { printf("bsg_zynq_pl: done() called, exiting\n"); return true; }
 
   inline volatile void *axil_get_ptr(uintptr_t address) {
     if (address >= gp1_addr_base)
@@ -148,7 +148,7 @@ public:
 
   inline void axil_write(uintptr_t address, int32_t data, uint8_t wstrb) {
     if (debug)
-      printf("  bp_zynq_pl: AXI writing [%" PRIxPTR "]=%8.8x mask %" PRIu8 "\n", address, data,
+      printf("  bsg_zynq_pl: AXI writing [%" PRIxPTR "]=%8.8x mask %" PRIu8 "\n", address, data,
              wstrb);
 
     // for now we don't support alternate write strobes
@@ -177,7 +177,7 @@ public:
     int32_t data = *ptr32;
 
     if (debug)
-      printf("  bp_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n", address, data);
+      printf("  bsg_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n", address, data);
 
     return data;
   }

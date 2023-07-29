@@ -14,7 +14,7 @@
 #include <bitset>
 
 #include "bsg_tag_bitbang.h"
-#include "bp_zynq_pl.h"
+#include "bsg_zynq_pl.h"
 #include "bsg_printing.h"
 #include "bsg_argparse.h"
 
@@ -77,8 +77,8 @@
 #define TAG_CLIENT_WD_RESET_WIDTH 1
 
 // Helper functions
-void nbf_load(bp_zynq_pl *zpl, char *filename);
-bool decode_bp_output(bp_zynq_pl *zpl, long data);
+void nbf_load(bsg_zynq_pl *zpl, char *filename);
+bool decode_bp_output(bsg_zynq_pl *zpl, long data);
 
 // Globals
 std::queue<int> getchar_queue;
@@ -97,7 +97,7 @@ void *monitor(void *vargp) {
 }
 
 void *device_poll(void *vargp) {
-  bp_zynq_pl *zpl = (bp_zynq_pl *)vargp;
+  bsg_zynq_pl *zpl = (bsg_zynq_pl *)vargp;
   while (1) {
     zpl->axil_poll();
 
@@ -115,7 +115,7 @@ void *device_poll(void *vargp) {
   return NULL;
 }
 
-inline uint64_t get_counter_64(bp_zynq_pl *zpl, uint64_t addr) {
+inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr) {
   uint64_t val;
   do {
     uint64_t val_hi = zpl->axil_read(addr + 4);
@@ -145,7 +145,7 @@ extern "C" int cosim_main(char *argstr) {
 
   setvbuf(stdout, NULL, _IOLBF, 0);
 
-  bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
+  bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
   long data;
   long val1 = 0x1;
@@ -419,7 +419,7 @@ std::uint32_t rotl(std::uint32_t v, std::int32_t shift) {
   return (v<<s) | (v>>(32-s));
 }
 
-void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
+void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
   string nbf_command;
   string tmp;
   string delimiter = "_";
@@ -497,7 +497,7 @@ void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
   bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
 }
 
-bool decode_bp_output(bp_zynq_pl *zpl, long data) {
+bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
   long rd_wr = data >> 31;
   long address = (data >> 8) & 0x7FFFFF;
   char print_data = data & 0xFF;

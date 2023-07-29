@@ -14,7 +14,7 @@
 #include <bitset>
 #include <cmath>
 
-#include "bp_zynq_pl.h"
+#include "bsg_zynq_pl.h"
 #include "bsg_printing.h"
 #include "bsg_tag_bitbang.h"
 #include "bsg_argparse.h"
@@ -66,11 +66,11 @@
 #include "bsg_manycore_request_packet.h"
 #include "bsg_manycore_response_packet.h"
 
-void configure_blackparrot(bp_zynq_pl *zpl);
+void configure_blackparrot(bsg_zynq_pl *zpl);
 
-void nbf_load(bp_zynq_pl *zpl, char *filename);
+void nbf_load(bsg_zynq_pl *zpl, char *filename);
 
-inline void send_mc_request_packet(bp_zynq_pl *zpl, hb_mc_request_packet_t *packet) {
+inline void send_mc_request_packet(bsg_zynq_pl *zpl, hb_mc_request_packet_t *packet) {
   int axil_len = sizeof(hb_mc_request_packet_t) / 4;
 
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
@@ -80,7 +80,7 @@ inline void send_mc_request_packet(bp_zynq_pl *zpl, hb_mc_request_packet_t *pack
   }
 }
 
-inline void recv_mc_response_packet(bp_zynq_pl *zpl, hb_mc_response_packet_t *packet) {
+inline void recv_mc_response_packet(bsg_zynq_pl *zpl, hb_mc_response_packet_t *packet) {
   int axil_len = sizeof(hb_mc_response_packet_t) / 4;
 
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
@@ -90,7 +90,7 @@ inline void recv_mc_response_packet(bp_zynq_pl *zpl, hb_mc_response_packet_t *pa
   }
 }
 
-inline void recv_mc_request_packet(bp_zynq_pl *zpl, hb_mc_request_packet_t *packet) {
+inline void recv_mc_request_packet(bsg_zynq_pl *zpl, hb_mc_request_packet_t *packet) {
   int axil_len = sizeof(hb_mc_request_packet_t) / 4;
 
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
@@ -100,7 +100,7 @@ inline void recv_mc_request_packet(bp_zynq_pl *zpl, hb_mc_request_packet_t *pack
   }
 }
 
-inline void send_mc_write(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa, int32_t data) {
+inline void send_mc_write(bsg_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa, int32_t data) {
   hb_mc_request_packet_t req_pkt;
 
   req_pkt.op_v2   = 2; // SW
@@ -116,7 +116,7 @@ inline void send_mc_write(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa, i
   send_mc_request_packet(zpl, &req_pkt);
 }
 
-inline int32_t send_mc_read(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa) {
+inline int32_t send_mc_read(bsg_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa) {
   hb_mc_request_packet_t req_pkt;
 
   req_pkt.op_v2   = 0; // LD
@@ -137,7 +137,7 @@ inline int32_t send_mc_read(bp_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa)
 }
 
 void *device_manycore_poll(void *vargp) {
-  bp_zynq_pl *zpl = (bp_zynq_pl *)vargp;
+  bsg_zynq_pl *zpl = (bsg_zynq_pl *)vargp;
 
   int mc_finished = 0;
   while (1) {
@@ -167,7 +167,7 @@ void *device_manycore_poll(void *vargp) {
 }
 
 void *device_blackparrot_poll(void *vargp) {
-  bp_zynq_pl *zpl = (bp_zynq_pl *)vargp;
+  bsg_zynq_pl *zpl = (bsg_zynq_pl *)vargp;
 
   int bp_finished = 0;
   while(1) {
@@ -211,7 +211,7 @@ extern "C" int cosim_main(char *argstr) {
 
   setvbuf(stdout, NULL, _IOLBF, 0);
 
-  bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
+  bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
   pthread_t thread_id;
 
@@ -288,7 +288,7 @@ extern "C" int cosim_main(char *argstr) {
 
 // Configure BlackParrot
 //
-void configure_blackparrot(bp_zynq_pl *zpl) {
+void configure_blackparrot(bsg_zynq_pl *zpl) {
   // From Makefile
   int num_tiles_x            = BSG_MANYCORE_POD_TILES_X;
   int num_tiles_y            = BSG_MANYCORE_POD_TILES_Y;
@@ -330,7 +330,7 @@ void configure_blackparrot(bp_zynq_pl *zpl) {
   send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_cfg_reg_freeze, 0);
 }
 
-void nbf_load(bp_zynq_pl *zpl, char *nbf_filename) {
+void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
   string nbf_command;
   string tmp;
   string delimiter = "_";

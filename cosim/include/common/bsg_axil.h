@@ -130,11 +130,11 @@ public:
 
   // Wait for (low true) reset to be asserted by the testbench
   void reset(void (*tick)()) {
-    printf("bp_zynq_pl: Entering reset\n");
+    printf("bsg_zynq_pl: Entering reset\n");
     while (this->p_aresetn == 0) {
       tick();
     }
-    printf("bp_zynq_pl: Exiting reset\n");
+    printf("bsg_zynq_pl: Exiting reset\n");
   }
 
   int axil_read_helper(uintptr_t address, void (*tick)()) {
@@ -148,7 +148,7 @@ public:
     // stall while ready is not asserted
     while (this->p_arready == 0) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
-        bsg_pr_err("bp_zynq_pl: AXI M read arready timeout\n");
+        bsg_pr_err("bsg_zynq_pl: AXI M read arready timeout\n");
       }
 
       tick();
@@ -166,7 +166,7 @@ public:
     // stall while valid is not asserted
     while (this->p_rvalid == 0) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
-        bsg_pr_err("bp_zynq_pl: AXI M read rvalid timeout\n");
+        bsg_pr_err("bsg_zynq_pl: AXI M read rvalid timeout\n");
       }
 
       tick();
@@ -204,7 +204,7 @@ public:
     while (!(aw_done && w_done)) {
       // check timeout
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
-        bsg_pr_err("bp_zynq_pl: AXI M write timeout\n");
+        bsg_pr_err("bsg_zynq_pl: AXI M write timeout\n");
       }
 
       // check for handshake, lower valid signals independently
@@ -234,7 +234,7 @@ public:
     // wait for bvalid to go high
     while (this->p_bvalid == 0) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
-        bsg_pr_err("bp_zynq_pl: AXI M bvalid timeout\n");
+        bsg_pr_err("bsg_zynq_pl: AXI M bvalid timeout\n");
       }
 
       tick();
@@ -302,11 +302,11 @@ public:
 
   // Wait for (low true) reset to be asserted by the testbench
   void reset(void (*tick)()) {
-    printf("bp_zynq_pl: Entering reset\n");
+    printf("bsg_zynq_pl: Entering reset\n");
     while (this->p_aresetn == 0) {
       tick();
     }
-    printf("bp_zynq_pl: Exiting reset\n");
+    printf("bsg_zynq_pl: Exiting reset\n");
   }
 
   void axil_read_helper(s_axil_device *p, void (*tick)()) {
@@ -316,7 +316,7 @@ public:
     this->p_arready = 1;
     while (this->p_arvalid == 0) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
-        bsg_pr_err("bp_zynq_pl: AXI S read request timeout\n");
+        bsg_pr_err("bsg_zynq_pl: AXI S read request timeout\n");
       }
 
       tick();
@@ -334,7 +334,7 @@ public:
 
     while (this->p_rready == 0) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
-        bsg_pr_err("bp_zynq_pl: AXI S read data timeout\n");
+        bsg_pr_err("bsg_zynq_pl: AXI S read data timeout\n");
       }
 
       tick();
@@ -366,7 +366,7 @@ public:
     while (!(aw_done && w_done)) {
       // check timeout
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
-        bsg_pr_err("bp_zynq_pl: AXI S write timeout\n");
+        bsg_pr_err("bsg_zynq_pl: AXI S write timeout\n");
       }
 
       // check for handshake, lower ready signals independently
@@ -404,7 +404,7 @@ public:
     // wait for response ready
     while (this->p_bready == 0) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
-        bsg_pr_err("bp_zynq_pl: AXI S bvalid timeout\n");
+        bsg_pr_err("bsg_zynq_pl: AXI S bvalid timeout\n");
       }
 
       tick();

@@ -7,7 +7,7 @@
 #include <cassert>
 #include <stdlib.h>
 #include <stdio.h>
-#include "bp_zynq_pl.h"
+#include "bsg_zynq_pl.h"
 
 #ifdef VERILATOR
 int main(int argc, char **argv) {
@@ -19,7 +19,7 @@ extern "C" int cosim_main(char *argstr) {
   char *argv[argc];
   get_argv(argstr, argc, argv);
 #endif
-  bp_zynq_pl *zpl = new bp_zynq_pl(argc, argv);
+  bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
   // this program just communicates with a "loopback accelerator"
   // that has 4 control registers that you can read and write

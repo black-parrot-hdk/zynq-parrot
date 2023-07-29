@@ -1,9 +1,9 @@
-// This is an implementation of the standardized host bp_zynq_pl API
+// This is an implementation of the standardized host bsg_zynq_pl API
 // that can be swapped out with a separate implementation to run on the PS
 //
 
-#ifndef BP_ZYNQ_PL_H
-#define BP_ZYNQ_PL_H
+#ifndef BSG_ZYNQ_PL_H
+#define BSG_ZYNQ_PL_H
 
 #include <cassert>
 #include <stdio.h>
@@ -28,7 +28,7 @@ extern "C" { void bsg_dpi_next(); }
 using namespace std;
 using namespace bsg_nonsynth_dpi;
 
-class bp_zynq_pl {
+class bsg_zynq_pl {
 
   std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> > axi_gp0;
   std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > axi_gp1;
@@ -45,10 +45,10 @@ public:
   }
 
   static void done(void) { 
-    bsg_pr_info("  bp_zynq_pl: done() called, exiting\n");
+    bsg_pr_info("  bsg_zynq_pl: done() called, exiting\n");
   }
 
-  bp_zynq_pl(int argc, char *argv[]) {
+  bsg_zynq_pl(int argc, char *argv[]) {
     // Initialize backpressure (if any)
 #ifdef SIM_BACKPRESSURE_ENABLE
     srand(SIM_BACKPRESSURE_SEED);
@@ -83,7 +83,7 @@ public:
 #endif
   }
 
-  ~bp_zynq_pl(void) {}
+  ~bsg_zynq_pl(void) {}
 
   void axil_write(uintptr_t address, int32_t data, uint8_t wstrb) {
     uintptr_t address_orig = address;
@@ -101,10 +101,10 @@ public:
       index = 1;
       address = address - GP1_ADDR_BASE;
     } else {
-      bsg_pr_err("  bp_zynq_pl: unsupported AXIL port %d\n", index);
+      bsg_pr_err("  bsg_zynq_pl: unsupported AXIL port %d\n", index);
     }
 
-    bsg_pr_dbg_pl("  bp_zynq_pl: AXI writing [%x] -> port %d, [%x]<-%8.8x\n",
+    bsg_pr_dbg_pl("  bsg_zynq_pl: AXI writing [%x] -> port %d, [%x]<-%8.8x\n",
                   address_orig, index, address, data);
 
     if (index == 0) {
@@ -131,7 +131,7 @@ public:
       index = 1;
       address = address - GP1_ADDR_BASE;
     } else {
-      bsg_pr_err("  bp_zynq_pl: unsupported AXIL port %d\n", index);
+      bsg_pr_err("  bsg_zynq_pl: unsupported AXIL port %d\n", index);
     }
 
     if (index == 0) {
@@ -140,7 +140,7 @@ public:
       data = axi_gp1->axil_read_helper(address, tick);
     }
 
-    bsg_pr_dbg_pl("  bp_zynq_pl: AXI reading [%x] -> port %d, [%x]->%8.8x\n",
+    bsg_pr_dbg_pl("  bsg_zynq_pl: AXI reading [%x] -> port %d, [%x]->%8.8x\n",
                   address_orig, index, address, data);
 
     return data;
@@ -163,7 +163,7 @@ public:
       axi_hp0->axil_read_helper((s_axil_device *)scratchpad.get(), tick);
 #endif
     } else {
-      bsg_pr_err("  bp_zynq_pl: Unsupported AXI device read at [%x]\n", araddr);
+      bsg_pr_err("  bsg_zynq_pl: Unsupported AXI device read at [%x]\n", araddr);
     }
 #endif
 
@@ -175,7 +175,7 @@ public:
       axi_hp0->axil_write_helper((s_axil_device *)scratchpad.get(), tick);
 #endif
     } else {
-      bsg_pr_err("  bp_zynq_pl: Unsupported AXI device write at [%x]\n", awaddr);
+      bsg_pr_err("  bsg_zynq_pl: Unsupported AXI device write at [%x]\n", awaddr);
     }
 #endif
 
