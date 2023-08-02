@@ -26,6 +26,9 @@
 
 #ifdef PK
 #include "htif.h"
+#ifndef HTIF_INTERVAL
+#define HTIF_INTERVAL 1
+#endif
 #endif
 
 #define FREE_DRAM 0
@@ -340,7 +343,7 @@ extern "C" void cosim_main(char *argstr) {
   while (1) {
 #ifdef PK
     htif_cntr++;
-    if(htif_cntr % 1000 == 0)
+    if(htif_cntr % HTIF_INTERVAL == 0)
       if(htif->step()) {
         // deasserting counter enable
         zpl->axil_write(0xC + GP0_ADDR_BASE, 0x0, mask1);
