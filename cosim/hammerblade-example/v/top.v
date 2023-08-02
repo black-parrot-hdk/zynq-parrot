@@ -307,7 +307,7 @@ module top
       ,.m00_axi_rresp  (m00_axi_rresp)
       );
 
-`ifndef SYNTHESIS
+`ifndef VIVADO
 `ifdef VERILATOR
    initial
      begin

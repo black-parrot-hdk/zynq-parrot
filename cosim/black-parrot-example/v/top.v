@@ -19,7 +19,7 @@ module top
     )
    (
     // Ports of Axi Slave Bus Interface S00_AXI
-`ifdef SYNTHESIS
+`ifdef VIVADO
     input wire                                   aclk
     ,input wire                                  aresetn
     // In order to prevent X from propagating to any of the initialized AXI buses,
@@ -642,7 +642,7 @@ module top
         );
 `endif
 
-`ifndef SYNTHESIS
+`ifndef VIVADO
 `ifdef VERILATOR
    initial
      begin

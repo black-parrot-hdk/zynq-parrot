@@ -311,7 +311,7 @@ module top #
 
         // User logic ends
 
-`ifndef SYNTHESIS
+`ifndef VIVADO
 `ifdef VERILATOR
    initial
      begin

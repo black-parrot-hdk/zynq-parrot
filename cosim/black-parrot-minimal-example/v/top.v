@@ -308,7 +308,7 @@ module top
       ,.m00_axi_rresp  (m00_axi_rresp)
       );
 
-`ifndef SYNTHESIS
+`ifndef VIVADO
 `ifdef VCS
          begin
            $display("[%0t] Tracing to vcdplus.vpd...\n", $time);

@@ -137,7 +137,7 @@
     // Add user logic here
 
     // User logic ends
-`ifndef SYNTHESIS
+`ifndef VIVADO
 `ifdef VERILATOR
    initial
      begin

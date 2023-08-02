@@ -1,2 +1,2 @@
-`define FPGA
+`define VIVADO
 
