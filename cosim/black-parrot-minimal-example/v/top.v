@@ -309,6 +309,22 @@ module top
       );
 
 `ifndef VIVADO
+`ifdef VERILATOR
+   initial
+     begin
+       if ($test$plusargs("bsg_trace") != 0)
+         begin
+           $display("[%0t] Tracing to trace.fst...\n", $time);
+           $dumpfile("trace.fst");
+           $dumpvars();
+         end
+     end
+`else
+   import "DPI-C" context task cosim_main(string c_args);
+   string c_args;
+   initial
+     begin
+       if ($test$plusargs("bsg_trace") != 0)
 `ifdef VCS
          begin
            $display("[%0t] Tracing to vcdplus.vpd...\n", $time);
