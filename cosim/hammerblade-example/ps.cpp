@@ -375,9 +375,9 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
     return;
   }
 
+  bsg_pr_info("Starting NBF load\n");
   int line_count = 0;
   while (getline(nbf_file, nbf_command)) {
-    line_count++;
     int i = 0;
     while ((pos = nbf_command.find(delimiter)) != std::string::npos) {
       tmp = nbf_command.substr(0, pos);

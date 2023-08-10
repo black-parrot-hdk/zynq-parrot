@@ -364,7 +364,7 @@ import bsg_tag_pkg::*;
   wire [bsg_machine_noc_coord_x_width_gp-1:0] global_x_li = bsg_machine_pod_tiles_x_gp;
   bsg_manycore_endpoint_to_fifos
    #(.fifo_width_p(4*C_S00_AXI_DATA_WIDTH)
-     ,.axil_width_p(C_S00_AXI_DATA_WIDTH)
+     ,.host_width_p(C_S00_AXI_DATA_WIDTH)
      ,.x_cord_width_p(bsg_machine_noc_coord_x_width_gp)
      ,.y_cord_width_p(bsg_machine_noc_coord_y_width_gp)
      ,.addr_width_p(bsg_machine_noc_epa_width_gp)
