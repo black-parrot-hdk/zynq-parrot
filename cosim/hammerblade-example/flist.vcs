@@ -21,10 +21,10 @@ $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_fifo_master.sv
 $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_store_packer.sv
 $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_demux.v
 $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_mux.v
-$BLACKPARROT_SUB_DIR/manycore/v/bp_cce_to_mc_dram.sv
-$BLACKPARROT_SUB_DIR/manycore/v/bp_cce_to_mc_fifo.sv
-$BLACKPARROT_SUB_DIR/manycore/v/bp_cce_to_mc_mmio.sv
-$BLACKPARROT_SUB_DIR/manycore/v/bp_cce_to_mc_bridge.sv
+$BLACKPARROT_SUB_DIR/manycore/v/bp_me_manycore_dram.sv
+$BLACKPARROT_SUB_DIR/manycore/v/bp_me_manycore_fifo.sv
+$BLACKPARROT_SUB_DIR/manycore/v/bp_me_manycore_mmio.sv
+$BLACKPARROT_SUB_DIR/manycore/v/bp_me_manycore_bridge.sv
 $BLACKPARROT_SUB_DIR/manycore/v/bsg_manycore_tile_blackparrot.sv
 $BLACKPARROT_SUB_DIR/manycore/v/bsg_manycore_tile_blackparrot_mesh.sv
 $BLACKPARROT_SUB_DIR/manycore/v/bsg_manycore_endpoint_to_fifos.v

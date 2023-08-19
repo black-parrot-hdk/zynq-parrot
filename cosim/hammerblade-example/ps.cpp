@@ -321,6 +321,7 @@ void configure_blackparrot(bsg_zynq_pl *zpl) {
 
   send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_cfg_reg_freeze, 1);
   send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_cfg_reg_npc, 0x80000000);
+  send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_cfg_reg_hio_mask, 0xffff);
   send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_cfg_reg_icache_mode, 1);
   send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_cfg_reg_dcache_mode, 1);
   send_mc_write(zpl, bp_x_tile, bp_y_tile, bp_bridge_reg_dram_offset, 0x2000000);

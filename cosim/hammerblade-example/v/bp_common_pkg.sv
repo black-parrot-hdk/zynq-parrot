@@ -19,7 +19,7 @@ package bp_common_pkg;
   `include "bp_common_aviary_cfg_pkgdef.svh"
 
   localparam bp_proc_param_s bp_unicore_hammerblade_cfg_override_p =
-    '{paddr_width           : 42 // TODO: Justify maps
+    '{paddr_width           : 40
 
       ,itlb_els_4k          : 4
       ,dtlb_els_4k          : 4
