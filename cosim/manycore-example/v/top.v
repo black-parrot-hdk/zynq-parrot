@@ -13,7 +13,7 @@ module top
     )
    (
     // Ports of Axi Slave Bus Interface S00_AXI
-`ifdef FPGA
+`ifdef VIVADO
     input wire                                   aclk
     ,input wire                                  aresetn
 

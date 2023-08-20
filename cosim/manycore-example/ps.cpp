@@ -13,12 +13,15 @@
 #include <unistd.h>
 #include <bitset>
 
+#include "ps.hpp"
+
 #include "bsg_zynq_pl.h"
 #include "bsg_printing.h"
 #include "bsg_tag_bitbang.h"
 #include "bsg_argparse.h"
 
 #include "bsg_manycore_machine.h"
+#include "bsg_manycore_packet.h"
 
 #ifndef DRAM_ALLOCATE_SIZE_MB
 #define DRAM_ALLOCATE_SIZE_MB 128
@@ -28,42 +31,6 @@
 #ifndef ZYNQ_PL_DEBUG
 #define ZYNQ_PL_DEBUG 0
 #endif
-
-// GP0 Read Memory Map
-#define GP0_RD_CSR_SYS_RESETN    (GP0_ADDR_BASE                   )
-#define GP0_RD_CSR_TAG_BITBANG   (GP0_RD_CSR_SYS_RESETN    + 0x4  )
-#define GP0_RD_CSR_DRAM_INITED   (GP0_RD_CSR_TAG_BITBANG   + 0x4  )
-#define GP0_RD_CSR_DRAM_BASE     (GP0_RD_CSR_DRAM_INITED   + 0x4  )
-#define GP0_RD_CSR_ROM_ADDR      (GP0_RD_CSR_DRAM_BASE     + 0x4  )
-#define GP0_RD_MC_REQ_FIFO_DATA  (GP0_RD_CSR_ROM_ADDR      + 0x4  )
-#define GP0_RD_MC_RSP_FIFO_DATA  (GP0_RD_MC_REQ_FIFO_DATA  + 0x4  )
-#define GP0_RD_MC_REQ_FIFO_CTR   (GP0_RD_MC_RSP_FIFO_DATA  + 0x4  )
-#define GP0_RD_MC_RSP_FIFO_CTR   (GP0_RD_MC_REQ_FIFO_CTR   + 0x4  )
-#define GP0_RD_EP_REQ_FIFO_CTR   (GP0_RD_MC_RSP_FIFO_CTR   + 0x4  )
-#define GP0_RD_EP_RSP_FIFO_CTR   (GP0_RD_EP_REQ_FIFO_CTR   + 0x4  )
-#define GP0_RD_CREDIT_COUNT      (GP0_RD_EP_RSP_FIFO_CTR   + 0x4  )
-#define GP0_RD_ROM_DATA          (GP0_RD_CREDIT_COUNT      + 0x4  )
-
-// GP0 Write Memory Map
-#define GP0_WR_CSR_SYS_RESETN     GP0_RD_CSR_SYS_RESETN
-#define GP0_WR_CSR_TAG_BITBANG    GP0_RD_CSR_TAG_BITBANG
-#define GP0_WR_CSR_DRAM_INITED    GP0_RD_CSR_DRAM_INITED
-#define GP0_WR_CSR_DRAM_BASE      GP0_RD_CSR_DRAM_BASE
-#define GP0_WR_CSR_ROM_ADDR       GP0_RD_CSR_ROM_ADDR
-#define GP0_WR_EP_REQ_FIFO_DATA  (GP0_WR_CSR_ROM_ADDR + 0x4)
-#define GP0_WR_EP_RSP_FIFO_DATA  (GP0_WR_EP_REQ_FIFO_DATA + 0x4)
-
-#define TAG_NUM_CLIENTS 16
-#define TAG_MAX_LEN 1
-#define TAG_CLIENT_MC_RESET_ID 0
-#define TAG_CLIENT_MC_RESET_WIDTH 1
-
-// DRAM
-#define DRAM_BASE_ADDR  0x80000000U
-#define DRAM_MAX_ALLOC_SIZE 0x20000000U
-
-#include "bsg_manycore_request_packet.h"
-#include "bsg_manycore_response_packet.h"
 
 void nbf_load(bsg_zynq_pl *zpl, char *filename);
 
@@ -205,7 +172,7 @@ extern "C" int cosim_main(char *argstr) {
   nbf_load(zpl, argv[1]);
 
   int finished = 0;
-  while(1) {
+  while (finished != NUM_FINISH) {
     bsg_pr_dbg_ps("Waiting for incoming request packet\n");
     hb_mc_request_packet_t mc_pkt;
     recv_mc_request_packet(zpl, &mc_pkt);
@@ -218,9 +185,6 @@ extern "C" int cosim_main(char *argstr) {
         fflush(stdout);
     } else if (mc_epa == 0xead0) {
       bsg_pr_info("Finish packet received %d\n", ++finished);
-      if (finished == NUM_FINISH) {
-        break;
-      }
     } else {
       bsg_pr_info("Errant request packet: %x %x\n", mc_epa, mc_data);
     }

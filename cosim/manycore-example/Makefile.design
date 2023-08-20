@@ -9,6 +9,9 @@ BOARDNAME  ?= pynqz2
 TOP_MODULE ?= top
 BASENAME   ?= manycore
 
+# Override to zynq-parrot machine path
+export BSG_MACHINE_PATH ?= $(BSG_REPLICANT_DIR)/machines/pod_X1Y1_mesh_X2Y2_hbm_one_pseudo_channel
+
 #############################
 # Build Collateral
 #############################
@@ -24,11 +27,14 @@ $(CURR_SRC_DIR)/bsg_bladerunner_pkg.v: $(BSG_MACHINE_PATH)/bsg_bladerunner_pkg.v
 	cp $< $@
 	$(SED) -i "/parameter int bsg_machine_hetero_type_vec_gp/d" $@
 
+$(CURR_SRC_DIR)/bsg_bladerunner_configuration.v: $(BSG_MACHINE_PATH)/bsg_bladerunner_configuration.rom
+	$(PYTHON2) $(ASCII_TO_ROM_PY) $< bsg_bladerunner_configuration > $@
+
 $(CURR_DESIGN_DIR)/bsg_manycore_machine.h: $(BSG_MACHINE_PATH)/bsg_manycore_machine.h
 	cp $< $@
 
 .PHONY: $(BUILD_COLLATERAL)
-BUILD_COLLATERAL = $(CURR_SRC_DIR)/bsg_bladerunner_pkg.v $(CURR_DESIGN_DIR)/bsg_manycore_machine.h
+BUILD_COLLATERAL = $(CURR_SRC_DIR)/bsg_bladerunner_pkg.v $(CURR_SRC_DIR)/bsg_bladerunner_configuration.v $(CURR_DESIGN_DIR)/bsg_manycore_machine.h
 
 #############################
 # Run Collateral

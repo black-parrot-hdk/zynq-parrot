@@ -27,6 +27,7 @@ $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_mux.v
 $BLACKPARROT_SUB_DIR/manycore/v/bsg_manycore_endpoint_to_fifos.v
 $COSIM_SRC_DIR/bsg_zynq_pl_shell.v
 $CURR_SRC_DIR/bsg_bladerunner_pkg.v
+$CURR_SRC_DIR/bsg_bladerunner_configuration.v
 $CURR_SRC_DIR/zynq_pkg.sv
 $CURR_SRC_DIR/top_zynq.sv
 $CURR_SRC_DIR/top.v

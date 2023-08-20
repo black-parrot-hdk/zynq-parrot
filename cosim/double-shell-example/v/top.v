@@ -23,9 +23,7 @@ module top #
 
     // User ports ends
     // Do not modify the ports beyond this line
-
-
-`ifdef FPGA
+`ifdef VIVADO
     input wire                                  aclk,
     input wire                                  aresetn,
     // Ports of Axi Slave Bus Interface S00_AXI
