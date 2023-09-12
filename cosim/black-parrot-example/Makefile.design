@@ -9,7 +9,7 @@ BOARDNAME  ?= pynqz2
 TOP_MODULE ?= top
 BASENAME   ?= blackparrot
 
-export CFG ?= e_bp_unicore_cfg
+export CFG ?= e_bp_unicore_zynqparrot_cfg
 
 #############################
 # Build Collateral
