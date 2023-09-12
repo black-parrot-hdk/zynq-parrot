@@ -19,7 +19,7 @@ package bp_common_pkg;
   `include "bp_common_aviary_cfg_pkgdef.svh"
 
   localparam bp_proc_param_s bp_unicore_zynqparrot_cfg_override_p =
-    '{paddr_width           : 33
+    '{paddr_width: 34
 
       ,l2_slices : 1
       ,l2_banks  : 2
