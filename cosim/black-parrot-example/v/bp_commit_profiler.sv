@@ -14,9 +14,11 @@ module bp_commit_profiler
     , parameter els_p = 2
     , parameter width_p = 32
 
-    , localparam commit_pkt_width_lp = `bp_be_commit_pkt_width(vaddr_width_p, paddr_width_p)
-    , localparam retire_pkt_width_lp = `bp_be_retire_pkt_width(vaddr_width_p)
-    , localparam wb_pkt_width_lp     = `bp_be_wb_pkt_width(vaddr_width_p)
+    , localparam issue_pkt_width_lp    = `bp_be_issue_pkt_width(vaddr_width_p, branch_metadata_fwd_width_p)
+    , localparam dispatch_pkt_width_lp = `bp_be_dispatch_pkt_width(vaddr_width_p)
+    , localparam commit_pkt_width_lp   = `bp_be_commit_pkt_width(vaddr_width_p, paddr_width_p)
+    , localparam retire_pkt_width_lp   = `bp_be_retire_pkt_width(vaddr_width_p)
+    , localparam wb_pkt_width_lp       = `bp_be_wb_pkt_width(vaddr_width_p)
     , localparam lg_l2_banks_lp = `BSG_SAFE_CLOG2(l2_banks_p)
     )
    (input clk_i
@@ -38,9 +40,12 @@ module bp_commit_profiler
 
     , input fe_cmd_yumi_i
     , input [fe_cmd_width_lp-1:0] fe_cmd_i
+    , input issue_v_i
     , input suppress_iss_i
     , input clear_iss_i
     , input mispredict_i
+    , input dispatch_v_i
+    , input [vaddr_width_p-1:0] isd_expected_npc_i
 
     , input data_haz_i
     , input catchup_dep_i
@@ -55,23 +60,28 @@ module bp_commit_profiler
 
     , input sb_int_v_i
     , input sb_int_clr_i
-    , input [reg_addr_width_gp-1:0] sb_rs1_i
-    , input [reg_addr_width_gp-1:0] sb_rs2_i
-    , input [reg_addr_width_gp-1:0] sb_rd_i
+    , input sb_fp_v_i
+    , input sb_fp_clr_i
     , input [1:0] sb_irs_match_i
+    , input [2:0] sb_frs_match_i
+    , input [2:0] rs1_match_vector_i
+    , input [2:0] rs2_match_vector_i
+    , input [2:0] rs3_match_vector_i
 
     , input control_haz_i
     , input long_haz_i
 
     , input struct_haz_i
-    , input mem_busy_i
+    , input mem_haz_i
     , input idiv_haz_i
     , input fdiv_haz_i
     , input ptw_busy_i
 
-    , input [retire_pkt_width_lp-1:0] retire_pkt_i
-    , input [commit_pkt_width_lp-1:0] commit_pkt_i
-    , input [wb_pkt_width_lp-1:0]     iwb_pkt_i
+    , input [dispatch_pkt_width_lp-1:0] dispatch_pkt_i
+    , input [retire_pkt_width_lp-1:0]   retire_pkt_i
+    , input [commit_pkt_width_lp-1:0]   commit_pkt_i
+    , input [wb_pkt_width_lp-1:0]       iwb_pkt_i
+    , input [wb_pkt_width_lp-1:0]       fwb_pkt_i
 
     , input mem_fwd_v_i
     , input mem_fwd_ready_and_i
@@ -82,6 +92,7 @@ module bp_commit_profiler
     , input [mem_rev_header_width_lp-1:0] mem_rev_header_i
 
     , input dcache_v_i
+    , input dcache_miss_i
 
     , input [lg_l2_banks_lp-1:0] l2_bank_i
     , input [l2_banks_p-1:0] l2_ready_i
@@ -98,6 +109,9 @@ module bp_commit_profiler
     , input [1:0] dma_sel_i
 
     , output [els_p-1:0][width_p-1:0] data_o
+    , output instret_o
+    , output [$bits(bp_stall_reason_e)-1:0] stall_o
+    , output [vaddr_width_p-1:0] pc_o
     );
 
   `declare_bp_core_if(vaddr_width_p, paddr_width_p, asid_width_p, branch_metadata_fwd_width_p);
@@ -265,7 +279,11 @@ module bp_commit_profiler
 
   // Profiler
   // TODO: extend to multicore
-  wire stall_v = ~prof.commit_pkt.instret;
+  assign instret_o = prof.commit_pkt_cast_i.instret;
+  assign stall_o = prof.bp_stall_reason_enum;
+  assign pc_o = prof.pc_n[6];
+
+  wire stall_v = ~prof.commit_pkt_cast_i.instret;
   bp_nonsynth_core_profiler
    #(.bp_params_p(bp_params_p))
    prof
@@ -315,7 +333,7 @@ module bp_commit_profiler
 
   // mcycle and instret
   `declare_counter(mcycle,1'b1,0)
-  `declare_counter(minstret,prof.commit_pkt.instret,1)
+  `declare_counter(minstret,prof.commit_pkt_cast_i.instret,1)
 
   // Stalls
   // Assigned to counters: 2-32
@@ -354,7 +372,7 @@ module bp_commit_profiler
   // Events
   // L1
   wire icache_ready_li = ~icache_miss_i;
-  wire dcache_ready_li = ~mem_busy_i;
+  wire dcache_ready_li = ~dcache_miss_i;
   logic icache_ready_r, dcache_ready_r;
   logic dcache_v_r, dcache_v_rr;
   logic l2_serving_ic_r, l2_serving_dfetch_r, l2_serving_devict_r;
@@ -371,7 +389,7 @@ module bp_commit_profiler
   `declare_event_counter(e_ic_miss_cnt, ~icache_ready_li & icache_ready_r)
   `declare_event_counter(e_ic_miss, ~icache_ready_li)
 
-  `declare_event_counter(e_dc_req_cnt, dcache_v_rr & dcache_ready_r & ~prof.commit_pkt.dcache_replay)
+  `declare_event_counter(e_dc_req_cnt, dcache_v_rr & dcache_ready_r & ~prof.commit_pkt_cast_i.dcache_replay)
   `declare_event_counter(e_dc_miss_cnt, ~dcache_ready_li & dcache_ready_r)
   `declare_event_counter(e_dc_miss, ~dcache_ready_li)
 

@@ -17,9 +17,9 @@ module bp_nonsynth_core_profiler
     , parameter stall_trace_file_p = "stall"
 
     , localparam dispatch_pkt_width_lp = `bp_be_dispatch_pkt_width(vaddr_width_p)
-    , localparam commit_pkt_width_lp = `bp_be_commit_pkt_width(vaddr_width_p, paddr_width_p)
-    , localparam retire_pkt_width_lp = `bp_be_retire_pkt_width(vaddr_width_p)
-    , localparam wb_pkt_width_lp     = `bp_be_wb_pkt_width(vaddr_width_p)
+    , localparam commit_pkt_width_lp   = `bp_be_commit_pkt_width(vaddr_width_p, paddr_width_p)
+    , localparam retire_pkt_width_lp   = `bp_be_retire_pkt_width(vaddr_width_p)
+    , localparam wb_pkt_width_lp       = `bp_be_wb_pkt_width(vaddr_width_p)
     )
    (input clk_i
     , input reset_i
@@ -40,9 +40,12 @@ module bp_nonsynth_core_profiler
 
     , input fe_cmd_yumi_i
     , input [fe_cmd_width_lp-1:0] fe_cmd_i
+    , input issue_v_i
     , input suppress_iss_i
     , input clear_iss_i
     , input mispredict_i
+    , input dispatch_v_i
+    , input [vaddr_width_p-1:0] isd_expected_npc_i
 
     , input data_haz_i
     , input catchup_dep_i
@@ -57,23 +60,28 @@ module bp_nonsynth_core_profiler
 
     , input sb_int_v_i
     , input sb_int_clr_i
-    , input [reg_addr_width_gp-1:0] sb_rs1_i
-    , input [reg_addr_width_gp-1:0] sb_rs2_i
-    , input [reg_addr_width_gp-1:0] sb_rd_i
+    , input sb_fp_v_i
+    , input sb_fp_clr_i
     , input [1:0] sb_irs_match_i
+    , input [2:0] sb_frs_match_i
+    , input [2:0] rs1_match_vector_i
+    , input [2:0] rs2_match_vector_i
+    , input [2:0] rs3_match_vector_i
 
     , input control_haz_i
     , input long_haz_i
 
     , input struct_haz_i
-    , input mem_busy_i
+    , input mem_haz_i
     , input idiv_haz_i
     , input fdiv_haz_i
     , input ptw_busy_i
 
-    , input [retire_pkt_width_lp-1:0] retire_pkt_i
-    , input [commit_pkt_width_lp-1:0] commit_pkt_i
-    , input [wb_pkt_width_lp-1:0]     iwb_pkt_i
+    , input [dispatch_pkt_width_lp-1:0] dispatch_pkt_i
+    , input [retire_pkt_width_lp-1:0]   retire_pkt_i
+    , input [commit_pkt_width_lp-1:0]   commit_pkt_i
+    , input [wb_pkt_width_lp-1:0]       iwb_pkt_i
+    , input [wb_pkt_width_lp-1:0]       fwb_pkt_i
     );
 
   `declare_bp_be_internal_if_structs(vaddr_width_p, paddr_width_p, asid_width_p, branch_metadata_fwd_width_p);
@@ -81,14 +89,12 @@ module bp_nonsynth_core_profiler
 
   localparam num_stages_p = 7;
 
-  bp_be_commit_pkt_s commit_pkt;
-  bp_be_retire_pkt_s retire_pkt;
-  bp_be_wb_pkt_s iwb_pkt;
-  bp_fe_cmd_s fe_cmd_li;
-  assign retire_pkt = retire_pkt_i;
-  assign commit_pkt = commit_pkt_i;
-  assign iwb_pkt = iwb_pkt_i;
-  assign fe_cmd_li = fe_cmd_i;
+  `bp_cast_i(bp_fe_cmd_s, fe_cmd);
+  `bp_cast_i(bp_be_dispatch_pkt_s, dispatch_pkt);
+  `bp_cast_i(bp_be_retire_pkt_s, retire_pkt);
+  `bp_cast_i(bp_be_commit_pkt_s, commit_pkt);
+  `bp_cast_i(bp_be_wb_pkt_s, iwb_pkt);
+  `bp_cast_i(bp_be_wb_pkt_s, fwb_pkt);
 
   bp_stall_reason_s [num_stages_p-1:0] stall_stage_n, stall_stage_r;
   bsg_dff_reset
@@ -98,6 +104,16 @@ module bp_nonsynth_core_profiler
      ,.reset_i(reset_i)
      ,.data_i(stall_stage_n)
      ,.data_o(stall_stage_r)
+     );
+
+  logic [6:3][vaddr_width_p-1:0] pc_n, pc_r;
+  bsg_dff_reset
+   #(.width_p(vaddr_width_p*4))
+   pc_pipe
+    (.clk_i(clk_i)
+     ,.reset_i(reset_i)
+     ,.data_i(pc_n)
+     ,.data_o(pc_r)
      );
 
   logic [29:0] cycle_cnt;
@@ -111,7 +127,152 @@ module bp_nonsynth_core_profiler
      ,.count_o(cycle_cnt)
      );
 
+  // FE cmd
+  wire fe_cmd_nonattaboy_li = fe_cmd_yumi_i & (fe_cmd_cast_i.opcode != e_op_attaboy);
+  wire fe_cmd_br_mispredict_li = fe_cmd_yumi_i & (fe_cmd_cast_i.opcode == e_op_pc_redirection)
+                               & (fe_cmd_cast_i.operands.pc_redirect_operands.subopcode == e_subop_branch_mispredict);
+
+  // Scoreboard RD and PC
+  //// D$-miss
+  wire sb_int_dc_miss_w_li = sb_int_v_i & commit_pkt_cast_i.dcache_load_miss & (commit_pkt_cast_i.instr.t.fmatype.opcode inside {`RV64_LOAD_OP, `RV64_AMO_OP});
+  wire sb_fp_dc_miss_w_li = sb_fp_v_i & commit_pkt_cast_i.dcache_load_miss & (commit_pkt_cast_i.instr.t.fmatype.opcode inside {`RV64_FLOAD_OP});
+  wire sb_dc_miss_w_li =  sb_int_dc_miss_w_li | sb_fp_dc_miss_w_li;
+  wire sb_dc_miss_clr_li = sb_dc_miss_fp_lo
+                           ? (sb_fp_clr_i & (fwb_pkt_cast_i.rd_addr == sb_dc_miss_rd_lo))
+                           : (sb_int_clr_i & (iwb_pkt_cast_i.rd_addr == sb_dc_miss_rd_lo));
+
+  logic sb_dc_miss_fp_lo;
+  logic [vaddr_width_p-1:0] sb_dc_miss_pc_lo;
+  logic [reg_addr_width_gp-1:0] sb_dc_miss_rd_lo;
+  bsg_dff_reset_en
+   #(.width_p(reg_addr_width_gp+vaddr_width_p+1))
+   sb_dc_miss_reg
+    (.clk_i(clk_i)
+     ,.reset_i(reset_i)
+     ,.en_i(sb_dc_miss_w_li | sb_dc_miss_clr_li)
+     ,.data_i({sb_fp_dc_miss_w_li, commit_pkt_cast_i.pc, sb_dc_miss_w_li ? commit_pkt_cast_i.instr.t.fmatype.rd_addr : '0})
+     ,.data_o({sb_dc_miss_fp_lo, sb_dc_miss_pc_lo, sb_dc_miss_rd_lo})
+     );
+
+  wire sb_iraw_dc_miss_li = sb_iraw_dep_i & ~sb_dc_miss_fp_lo & (sb_dc_miss_rd_lo == (sb_irs_match_i[0] 
+                                                                                      ? dispatch_pkt_cast_i.instr.t.fmatype.rs1_addr 
+                                                                                      : dispatch_pkt_cast_i.instr.t.fmatype.rs2_addr));
+  wire sb_iwaw_dc_miss_li = sb_iwaw_dep_i & ~sb_dc_miss_fp_lo & (sb_dc_miss_rd_lo == dispatch_pkt_cast_i.instr.t.fmatype.rd_addr);
+  wire sb_fraw_dc_miss_li = sb_fraw_dep_i & sb_dc_miss_fp_lo & (sb_dc_miss_rd_lo == (sb_frs_match_i[0]
+                                                                                     ? dispatch_pkt_cast_i.instr.t.fmatype.rs1_addr
+                                                                                     : sb_frs_match_i[1]
+                                                                                       ? dispatch_pkt_cast_i.instr.t.fmatype.rs2_addr
+                                                                                       : dispatch_pkt_cast_i.instr.t.fmatype.rs3_addr));
+  wire sb_fwaw_dc_miss_li = sb_fwaw_dep_i & sb_dc_miss_fp_lo & (sb_dc_miss_rd_lo == dispatch_pkt_cast_i.instr.t.fmatype.rd_addr);
+  wire sb_int_dc_miss_li = sb_iraw_dc_miss_li | sb_iwaw_dc_miss_li;
+  wire sb_fp_dc_miss_li = sb_fraw_dc_miss_li | sb_fwaw_dc_miss_li;
+  wire sb_dc_miss_li = sb_int_dc_miss_li | sb_fp_dc_miss_li;
+
+  //// long int
+  wire sb_ilong_w_li = sb_int_v_i & ~sb_int_dc_miss_w_li;
+  wire sb_ilong_clr_li = sb_int_clr_i &  ~sb_dc_miss_clr_li;
+
+  logic [vaddr_width_p-1:0] sb_ilong_pc_lo;
+  logic [reg_addr_width_gp-1:0] sb_ilong_rd_lo;
+  bsg_dff_reset_en
+   #(.width_p(reg_addr_width_gp+vaddr_width_p))
+   sb_ilong_reg
+    (.clk_i(clk_i)
+     ,.reset_i(reset_i)
+     ,.en_i(sb_ilong_w_li | sb_ilong_clr_li)
+     ,.data_i({dispatch_pkt_cast_i.pc, sb_ilong_w_li ? dispatch_pkt_cast_i.instr.t.fmatype.rd_addr : '0})
+     ,.data_o({sb_ilong_pc_lo, sb_ilong_rd_lo})
+     );
+
+  //// long float
+  wire sb_flong_w_li = sb_int_v_i & ~sb_int_dc_miss_w_li;
+  wire sb_flong_clr_li = sb_int_clr_i &  ~sb_dc_miss_clr_li;
+
+  logic [vaddr_width_p-1:0] sb_flong_pc_lo;
+  logic [reg_addr_width_gp-1:0] sb_flong_rd_lo;
+  bsg_dff_reset_en
+   #(.width_p(reg_addr_width_gp+vaddr_width_p))
+   sb_flong_reg
+    (.clk_i(clk_i)
+     ,.reset_i(reset_i)
+     ,.en_i(sb_flong_w_li | sb_flong_clr_li)
+     ,.data_i({dispatch_pkt_cast_i.pc, sb_flong_w_li ? dispatch_pkt_cast_i.instr.t.fmatype.rd_addr : '0})
+     ,.data_o({sb_flong_pc_lo, sb_flong_rd_lo})
+     );
+
+  // ISD Hazard PC Selection
+  logic [2:0][vaddr_width_p-1:0] ex_pc_n, ex_pc_r;
+  bsg_dff_reset
+   #(.width_p(3*vaddr_width_p))
+   ex_pc_pipe
+    (.clk_i(clk_i)
+     ,.reset_i(reset_i)
+     ,.data_i(ex_pc_n)
+     ,.data_o(ex_pc_r)
+     );
+  assign ex_pc_n[0] = dispatch_pkt_cast_i.pc;
+  assign ex_pc_n[1] = ex_pc_r[0];
+  assign ex_pc_n[2] = ex_pc_r[1];
+
+  wire [2:0] rs_match_vector_li = ({3{dispatch_pkt_cast_i.decode.irs1_r_v}} & rs1_match_vector_i)
+                                | ({3{dispatch_pkt_cast_i.decode.irs2_r_v}} & rs2_match_vector_i)
+                                | ({3{dispatch_pkt_cast_i.decode.frs1_r_v}} & rs1_match_vector_i)
+                                | ({3{dispatch_pkt_cast_i.decode.frs2_r_v}} & rs2_match_vector_i)
+                                | ({3{dispatch_pkt_cast_i.decode.frs3_r_v}} & rs3_match_vector_i);
+
+  logic [vaddr_width_p-1:0] dep_pc_lo;
+  bsg_mux_one_hot
+   #(.width_p(vaddr_width_p)
+    ,.els_p(3)
+    )
+   ex_pc_mux
+    (.data_i(ex_pc_r)
+    ,.sel_one_hot_i(rs_match_vector_li)
+    ,.data_o(dep_pc_lo)
+    );
+
+  wire [vaddr_width_p-1:0] pc_chaz_lo = dispatch_pkt_cast_i.pc;
+  wire [vaddr_width_p-1:0] pc_dhaz_lo = sb_dc_miss_li
+                                        ? sb_dc_miss_pc_lo
+                                        : (sb_iraw_dep_i | sb_iwaw_dep_i)
+                                          ? sb_ilong_pc_lo
+                                          : (sb_fraw_dep_i | sb_fwaw_dep_i)
+                                            ? sb_flong_pc_lo
+                                            : dep_pc_lo;
+
+  logic [vaddr_width_p-1:0] dc_miss_pc_lo;
+  bsg_dff_reset_en
+   #(.width_p(vaddr_width_p))
+   dc_miss_pc_reg
+    (.clk_i(clk_i)
+     ,.reset_i(reset_i)
+     ,.en_i(commit_pkt_cast_i.dcache_load_miss | commit_pkt_cast_i.dcache_store_miss)
+     ,.data_i(commit_pkt_cast_i.pc)
+     ,.data_o(dc_miss_pc_lo)
+     );
+
+  logic [vaddr_width_p-1:0] long_pc_lo;
+  bsg_dff_reset_en
+   #(.width_p(vaddr_width_p))
+   long_pc_reg
+    (.clk_i(clk_i)
+     ,.reset_i(reset_i)
+     ,.en_i(dispatch_pkt_cast_i.v & dispatch_pkt_cast_i.decode.pipe_long_v)
+     ,.data_i(dispatch_pkt_cast_i.pc)
+     ,.data_o(long_pc_lo)
+     );
+
+  //TODO: cover ptw_busy and cmd_haz cases
+  wire [vaddr_width_p-1:0] pc_shaz_lo = mem_haz_i
+                                        ? dc_miss_pc_lo
+                                        : (idiv_haz_i | fdiv_haz_i)
+                                          ? long_pc_lo
+                                          : '0;
+  wire [vaddr_width_p-1:0] pc_isd_haz_lo = data_haz_i ? pc_dhaz_lo : (control_haz_i ? pc_chaz_lo : pc_shaz_lo);
+
+  // ISD suppression on misprediction
   logic mispredict_r;
+  logic [vaddr_width_p-1:0] mispredict_pc_r;
   bsg_dff_reset_set_clear
    #(.width_p(1))
    mispredict_reg
@@ -121,37 +282,28 @@ module bp_nonsynth_core_profiler
      ,.clear_i(clear_iss_i)
      ,.data_o(mispredict_r)
      );
-
-  wire sb_dc_miss_w_li = sb_int_v_i & commit_pkt.dcache_load_miss;
-  wire sb_dc_miss_clr_li = sb_int_clr_i & (iwb_pkt.rd_addr == sb_dc_miss_rd_lo);
-  logic [reg_addr_width_gp-1:0] sb_dc_miss_rd_lo;
   bsg_dff_reset_en
-   #(.width_p(reg_addr_width_gp))
-   sb_dc_miss_reg
+   #(.width_p(vaddr_width_p))
+   mispredict_pc_reg
     (.clk_i(clk_i)
      ,.reset_i(reset_i)
-     ,.en_i(sb_dc_miss_w_li | sb_dc_miss_clr_li)
-     ,.data_i(sb_dc_miss_w_li ? sb_rd_i : '0)
-     ,.data_o(sb_dc_miss_rd_lo)
+     ,.en_i(mispredict_i)
+     ,.data_i(ex_pc_r[0])
+     ,.data_o(mispredict_pc_r)
      );
 
-  wire sb_iraw_dc_miss_li = sb_iraw_dep_i & (sb_dc_miss_rd_lo == (sb_irs_match_i[0] ? sb_rs1_i : sb_rs2_i));
-  wire sb_iwaw_dc_miss_li = sb_iwaw_dep_i & (sb_dc_miss_rd_lo == sb_rd_i);
-  wire sb_dc_miss_li = (sb_iraw_dc_miss_li | sb_iwaw_dc_miss_li);
-
-  wire fe_cmd_nonattaboy_li = fe_cmd_yumi_i & (fe_cmd_li.opcode != e_op_attaboy);
-  wire fe_cmd_br_mispredict_li = fe_cmd_yumi_i & (fe_cmd_li.opcode == e_op_pc_redirection)
-                               & (fe_cmd_li.operands.pc_redirect_operands.subopcode == e_subop_branch_mispredict);
-
+  // debug
   wire unknown_fe = fe_queue_empty_i & ~(|stall_stage_r[2]);
   wire extra_fe = ~fe_queue_empty_i & (|stall_stage_r[2]);
+  wire tmp_isd = (pc_n[3] == '0) & ~dispatch_pkt_cast_i.v;
+  wire tmp_cmt = (pc_n[6] == '0);
 
   always_comb
     begin
       // IF0
       stall_stage_n[0]                    = '0;
 
-      // IF1
+      // IFr
       stall_stage_n[1]                    = icache_tl_we_i ? stall_stage_r[0] : stall_stage_r[1];
       stall_stage_n[1].fe_cmd            |= fe_cmd_nonattaboy_li & ~fe_cmd_br_mispredict_li;
       stall_stage_n[1].mispredict        |= fe_cmd_br_mispredict_li;
@@ -187,60 +339,71 @@ module bp_nonsynth_core_profiler
       stall_stage_n[3].control_haz       |= control_haz_i;
       stall_stage_n[3].long_haz          |= long_haz_i;
 
-      stall_stage_n[3].special           |= |retire_pkt.special;
-      //stall_stage_n[3].replay            |= |retire_pkt.exception;
-      stall_stage_n[3].mispredict        |= retire_pkt.exception.mispredict;
-      stall_stage_n[3].exception         |= commit_pkt.exception;
-      stall_stage_n[3]._interrupt        |= commit_pkt._interrupt;
-      stall_stage_n[3].itlb_miss         |= commit_pkt.itlb_miss | commit_pkt.itlb_fill_v;
-      stall_stage_n[3].ic_miss           |= commit_pkt.icache_miss;
-      stall_stage_n[3].dtlb_miss         |= commit_pkt.dtlb_load_miss | commit_pkt.dtlb_store_miss | commit_pkt.dtlb_fill_v;
-      stall_stage_n[3].dc_miss           |= commit_pkt.dcache_load_miss | commit_pkt.dcache_store_miss;
-      stall_stage_n[3].dc_miss           |= (mem_busy_i | sb_dc_miss_li);
-      stall_stage_n[3].dc_fail           |= commit_pkt.dcache_replay;
+      stall_stage_n[3].special           |= |retire_pkt_cast_i.special;
+      stall_stage_n[3].mispredict        |= retire_pkt_cast_i.exception.mispredict;
+      stall_stage_n[3].exception         |= commit_pkt_cast_i.exception;
+      stall_stage_n[3]._interrupt        |= commit_pkt_cast_i._interrupt;
+      stall_stage_n[3].itlb_miss         |= commit_pkt_cast_i.itlb_miss | commit_pkt_cast_i.itlb_fill_v;
+      stall_stage_n[3].ic_miss           |= commit_pkt_cast_i.icache_miss;
+      stall_stage_n[3].dtlb_miss         |= commit_pkt_cast_i.dtlb_load_miss | commit_pkt_cast_i.dtlb_store_miss | commit_pkt_cast_i.dtlb_fill_v;
+      stall_stage_n[3].dc_miss           |= commit_pkt_cast_i.dcache_load_miss | commit_pkt_cast_i.dcache_store_miss;
+      stall_stage_n[3].dc_miss           |= (mem_haz_i | sb_dc_miss_li);
+      stall_stage_n[3].dc_fail           |= commit_pkt_cast_i.dcache_replay;
+
+      pc_n[3]                             = commit_pkt_cast_i.npc_w_v
+                                            ? commit_pkt_cast_i.pc
+                                            : mispredict_i
+                                              ? ex_pc_r[0]
+                                              : stall_stage_n[3].mispredict
+                                                ? mispredict_pc_r
+                                                : (issue_v_i & ~dispatch_v_i)
+                                                  ? pc_isd_haz_lo
+                                                  : fe_queue_empty_i
+                                                    ? isd_expected_npc_i
+                                                    : '0;
 
       // EX1
       // BE exception stalls
       stall_stage_n[4]                    = stall_stage_r[3];
-      stall_stage_n[4].special           |= |retire_pkt.special;
-      //stall_stage_n[4].replay            |= |retire_pkt.exception;
-      stall_stage_n[4].mispredict        |= retire_pkt.exception.mispredict;
-      stall_stage_n[4].exception         |= commit_pkt.exception;
-      stall_stage_n[4]._interrupt        |= commit_pkt._interrupt;
-      stall_stage_n[4].itlb_miss         |= commit_pkt.itlb_miss | commit_pkt.itlb_fill_v;
-      stall_stage_n[4].ic_miss           |= commit_pkt.icache_miss;
-      stall_stage_n[4].dtlb_miss         |= commit_pkt.dtlb_load_miss | commit_pkt.dtlb_store_miss | commit_pkt.dtlb_fill_v;
-      stall_stage_n[4].dc_miss           |= commit_pkt.dcache_load_miss | commit_pkt.dcache_store_miss;
-      stall_stage_n[4].dc_fail           |= commit_pkt.dcache_replay;
+      stall_stage_n[4].special           |= |retire_pkt_cast_i.special;
+      stall_stage_n[4].mispredict        |= retire_pkt_cast_i.exception.mispredict;
+      stall_stage_n[4].exception         |= commit_pkt_cast_i.exception;
+      stall_stage_n[4]._interrupt        |= commit_pkt_cast_i._interrupt;
+      stall_stage_n[4].itlb_miss         |= commit_pkt_cast_i.itlb_miss | commit_pkt_cast_i.itlb_fill_v;
+      stall_stage_n[4].ic_miss           |= commit_pkt_cast_i.icache_miss;
+      stall_stage_n[4].dtlb_miss         |= commit_pkt_cast_i.dtlb_load_miss | commit_pkt_cast_i.dtlb_store_miss | commit_pkt_cast_i.dtlb_fill_v;
+      stall_stage_n[4].dc_miss           |= commit_pkt_cast_i.dcache_load_miss | commit_pkt_cast_i.dcache_store_miss;
+      stall_stage_n[4].dc_fail           |= commit_pkt_cast_i.dcache_replay;
+
+      pc_n[4]                             = commit_pkt_cast_i.npc_w_v ? commit_pkt_cast_i.pc : pc_r[3];
 
       // EX2
       // BE exception stalls
       stall_stage_n[5]                    = stall_stage_r[4];
-      stall_stage_n[5].special           |= |retire_pkt.special;
-      //stall_stage_n[5].replay            |= |retire_pkt.exception;
-      stall_stage_n[5].mispredict        |= retire_pkt.exception.mispredict;
-      stall_stage_n[5].exception         |= commit_pkt.exception;
-      stall_stage_n[5]._interrupt        |= commit_pkt._interrupt;
-      stall_stage_n[5].itlb_miss         |= commit_pkt.itlb_miss | commit_pkt.itlb_fill_v;
-      stall_stage_n[5].ic_miss           |= commit_pkt.icache_miss;
-      stall_stage_n[5].dtlb_miss         |= commit_pkt.dtlb_load_miss | commit_pkt.dtlb_store_miss | commit_pkt.dtlb_fill_v;
-      stall_stage_n[5].dc_miss           |= commit_pkt.dcache_load_miss | commit_pkt.dcache_store_miss;
-      stall_stage_n[5].dc_fail           |= commit_pkt.dcache_replay;
+      stall_stage_n[5].special           |= |retire_pkt_cast_i.special;
+      stall_stage_n[5].mispredict        |= retire_pkt_cast_i.exception.mispredict;
+      stall_stage_n[5].exception         |= commit_pkt_cast_i.exception;
+      stall_stage_n[5]._interrupt        |= commit_pkt_cast_i._interrupt;
+      stall_stage_n[5].itlb_miss         |= commit_pkt_cast_i.itlb_miss | commit_pkt_cast_i.itlb_fill_v;
+      stall_stage_n[5].ic_miss           |= commit_pkt_cast_i.icache_miss;
+      stall_stage_n[5].dtlb_miss         |= commit_pkt_cast_i.dtlb_load_miss | commit_pkt_cast_i.dtlb_store_miss | commit_pkt_cast_i.dtlb_fill_v;
+      stall_stage_n[5].dc_miss           |= commit_pkt_cast_i.dcache_load_miss | commit_pkt_cast_i.dcache_store_miss;
+      stall_stage_n[5].dc_fail           |= commit_pkt_cast_i.dcache_replay;
+
+      pc_n[5]                             = commit_pkt_cast_i.npc_w_v ? commit_pkt_cast_i.pc : pc_r[4];
 
       // EX3
       // BE exception stalls
       stall_stage_n[6]                    = stall_stage_r[5];
-      //stall_stage_n[6].special           |= |retire_pkt.special;
-      //stall_stage_n[6].replay            |= |retire_pkt.exception;
-      stall_stage_n[6].mispredict        |= retire_pkt.exception.mispredict;
-      stall_stage_n[6].exception         |= commit_pkt.exception;
-      stall_stage_n[6]._interrupt        |= commit_pkt._interrupt;
-      stall_stage_n[6].itlb_miss         |= commit_pkt.itlb_miss | commit_pkt.itlb_fill_v;
-      stall_stage_n[6].ic_miss           |= commit_pkt.icache_miss;
-      stall_stage_n[6].dtlb_miss         |= commit_pkt.dtlb_load_miss | commit_pkt.dtlb_store_miss | commit_pkt.dtlb_fill_v;
-      //stall_stage_n[6].dc_miss           |= commit_pkt.dcache_load_miss | commit_pkt.dcache_store_miss;
-      stall_stage_n[6].dc_fail           |= commit_pkt.dcache_replay;
+      stall_stage_n[6].mispredict        |= retire_pkt_cast_i.exception.mispredict;
+      stall_stage_n[6].exception         |= commit_pkt_cast_i.exception;
+      stall_stage_n[6]._interrupt        |= commit_pkt_cast_i._interrupt;
+      stall_stage_n[6].itlb_miss         |= commit_pkt_cast_i.itlb_miss | commit_pkt_cast_i.itlb_fill_v;
+      stall_stage_n[6].ic_miss           |= commit_pkt_cast_i.icache_miss;
+      stall_stage_n[6].dtlb_miss         |= commit_pkt_cast_i.dtlb_load_miss | commit_pkt_cast_i.dtlb_store_miss | commit_pkt_cast_i.dtlb_fill_v;
+      stall_stage_n[6].dc_fail           |= commit_pkt_cast_i.dcache_replay;
 
+      pc_n[6]                             = (commit_pkt_cast_i.npc_w_v | commit_pkt_cast_i.instret) ? commit_pkt_cast_i.pc : pc_r[5];
     end
 
   bp_stall_reason_s stall_reason_dec;
@@ -269,7 +432,7 @@ module bp_nonsynth_core_profiler
   // synopsys translate_off
   int stall_hist [bp_stall_reason_e];
   always_ff @(posedge clk_i)
-    if (~reset_i & ~freeze_r & ~commit_pkt.instret) begin
+    if (~reset_i & ~freeze_r & ~commit_pkt_cast_i.instret) begin
       stall_hist[bp_stall_reason_enum] <= stall_hist[bp_stall_reason_enum] + 1'b1;
     end
 
@@ -288,10 +451,10 @@ module bp_nonsynth_core_profiler
 
   always_ff @(negedge clk_i)
     begin
-      if (~reset_i & ~freeze_r & commit_pkt.instret)
-        $fwrite(file, "%0d,%x,%x,%x,%s", cycle_cnt, x_cord_li, y_cord_li, commit_pkt.pc, "instr");
+      if (~reset_i & ~freeze_r & commit_pkt_cast_i.instret)
+        $fwrite(file, "%0d,%x,%x,%x,%s", cycle_cnt, x_cord_li, y_cord_li, commit_pkt_cast_i.pc, "instr");
       else if (~reset_i & ~freeze_r)
-        $fwrite(file, "%0d,%x,%x,%x,%s", cycle_cnt, x_cord_li, y_cord_li, commit_pkt.pc, bp_stall_reason_enum.name());
+        $fwrite(file, "%0d,%x,%x,%x,%s", cycle_cnt, x_cord_li, y_cord_li, commit_pkt_cast_i.pc, bp_stall_reason_enum.name());
 
       if (~reset_i & ~freeze_r)
         $fwrite(file, "\n");

@@ -689,10 +689,14 @@ module top_zynq
      ,.axi_id_width_p(6)
      ,.axi_size_width_p(3)
      ,.axi_len_width_p(4)
+     ,.axi_async_p(0)
+     ,.async_fifo_size_p(8)
      )
   blackparrot
     (.clk_i(aclk)
      ,.reset_i(bp_reset_li)
+     ,.aclk_i(1'b0)
+     ,.areset_i(1'b0)
      ,.rt_clk_i(rt_clk)
 
      // these are reads/write from BlackParrot
@@ -848,9 +852,12 @@ module top_zynq
 
     ,.fe_cmd_yumi_i(`COREPATH.fe.fe_cmd_yumi_o)
     ,.fe_cmd_i(`COREPATH.fe.fe_cmd_cast_i)
+    ,.issue_v_i(`COREPATH.be.director.issue_pkt_cast_i.v)
     ,.suppress_iss_i(`COREPATH.be.director.suppress_iss_o)
     ,.clear_iss_i(`COREPATH.be.director.clear_iss_o)
     ,.mispredict_i(`COREPATH.be.director.npc_mismatch_v)
+    ,.dispatch_v_i(`COREPATH.be.director.dispatch_v_i)
+    ,.isd_expected_npc_i(`COREPATH.be.director.expected_npc_o)
 
     ,.data_haz_i(`COREPATH.be.detector.data_haz_v)
     ,.catchup_dep_i(`COREPATH.be.detector.dep_status_r[0].fint_iwb_v
@@ -892,23 +899,30 @@ module top_zynq
 
     ,.sb_int_v_i(`COREPATH.be.detector.score_int_v_li)
     ,.sb_int_clr_i(`COREPATH.be.detector.clear_int_v_li)
-    ,.sb_rs1_i(`COREPATH.be.detector.score_rs1_li)
-    ,.sb_rs2_i(`COREPATH.be.detector.score_rs2_li)
-    ,.sb_rd_i(`COREPATH.be.detector.score_rd_li)
+    ,.sb_fp_v_i(`COREPATH.be.detector.score_fp_v_li)
+    ,.sb_fp_clr_i(`COREPATH.be.detector.clear_fp_v_li)
     ,.sb_irs_match_i(`COREPATH.be.detector.irs_match_lo)
+    ,.sb_frs_match_i(`COREPATH.be.detector.frs_match_lo)
+    ,.rs1_match_vector_i(`COREPATH.be.detector.rs1_match_vector)
+    ,.rs2_match_vector_i(`COREPATH.be.detector.rs2_match_vector)
+    ,.rs3_match_vector_i(`COREPATH.be.detector.rs3_match_vector)
 
     ,.control_haz_i(`COREPATH.be.detector.control_haz_v)
     ,.long_haz_i(`COREPATH.be.detector.long_haz_v)
 
     ,.struct_haz_i(`COREPATH.be.detector.struct_haz_v)
-    ,.mem_busy_i(`COREPATH.be.calculator.pipe_mem.busy_o)
+    ,.mem_haz_i(`COREPATH.be.detector.mem_busy_i
+                & (`COREPATH.be.detector.issue_pkt_cast_i.decode.pipe_mem_early_v
+                 | `COREPATH.be.detector.issue_pkt_cast_i.decode.pipe_mem_final_v))
     ,.idiv_haz_i(`COREPATH.be.detector.idiv_busy_i & `COREPATH.be.detector.issue_pkt_cast_i.decode.pipe_long_v)
     ,.fdiv_haz_i(`COREPATH.be.detector.fdiv_busy_i & `COREPATH.be.detector.issue_pkt_cast_i.decode.pipe_long_v)
     ,.ptw_busy_i(`COREPATH.be.detector.ptw_busy_i)
 
+    ,.dispatch_pkt_i(`COREPATH.be.detector.dispatch_pkt_i)
     ,.retire_pkt_i(`COREPATH.be.calculator.pipe_sys.retire_pkt)
     ,.commit_pkt_i(`COREPATH.be.calculator.pipe_sys.commit_pkt)
     ,.iwb_pkt_i(`COREPATH.be.calculator.pipe_sys.iwb_pkt)
+    ,.fwb_pkt_i(`COREPATH.be.calculator.pipe_sys.fwb_pkt)
 
     ,.mem_fwd_v_i(`L2PATH.mem_fwd_v_i)
     ,.mem_fwd_ready_and_i(`L2PATH.mem_fwd_ready_and_o)
@@ -919,6 +933,7 @@ module top_zynq
     ,.mem_rev_header_i(`L2PATH.mem_rev_header_o)
 
     ,.dcache_v_i(`COREPATH.be.calculator.pipe_mem.dcache.v_i)
+    ,.dcache_miss_i(`COREPATH.be.calculator.pipe_mem.dcache.fill_pending_r)
 
     ,.l2_bank_i(l2_bank_li)
     ,.l2_ready_i(l2_ready_li)
@@ -935,6 +950,9 @@ module top_zynq
     ,.dma_sel_i(dma_sel_li)
 
     ,.data_o(profiler_data_lo[profiler_els_lp-1:0])
+    ,.instret_o()
+    ,.stall_o()
+    ,.pc_o()
     );
 
   // synopsys translate_off
