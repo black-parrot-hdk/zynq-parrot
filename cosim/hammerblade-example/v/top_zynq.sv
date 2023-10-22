@@ -496,6 +496,7 @@ module top_zynq
      ,.axi_id_width_p(6)
      ,.axi_burst_len_p(bsg_machine_llcache_line_words_gp)
      ,.axi_burst_type_p(e_axi_burst_incr)
+     ,.ordering_en_p(1)
      )
    cache2axi
     (.clk_i(aclk)

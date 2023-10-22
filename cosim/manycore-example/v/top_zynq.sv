@@ -517,6 +517,7 @@ import bsg_tag_pkg::*;
      ,.axi_id_width_p(6)
      ,.axi_burst_len_p(bsg_machine_llcache_channel_width_gp*bsg_machine_llcache_line_words_gp/C_M00_AXI_DATA_WIDTH)
      ,.axi_burst_type_p(e_axi_burst_incr)
+     ,.ordering_en_p(1)
      )
    cache2axi
     (.clk_i(aclk)
