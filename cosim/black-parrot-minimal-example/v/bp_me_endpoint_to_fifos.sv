@@ -8,7 +8,7 @@ module bp_me_endpoint_to_fifos
  import bp_me_pkg::*;
  #(parameter bp_params_e bp_params_p = e_bp_default_cfg
    `declare_bp_proc_params(bp_params_p)
-   `declare_bp_bedrock_mem_if_widths(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p)
+   `declare_bp_bedrock_if_widths(paddr_width_p, lce_id_width_p, cce_id_width_p, did_width_p, lce_assoc_p)
    , parameter `BSG_INV_PARAM(fifo_width_p)
    , parameter `BSG_INV_PARAM(num_credits_p)
 
@@ -64,7 +64,7 @@ module bp_me_endpoint_to_fifos
     logic [7:0] state;
     logic [7:0] way_id;
     logic [7:0] lce_id;
-    logic [7:0] did;
+    logic [7:0] src_did;
     logic [7:0] prefetch;
     logic [7:0] uncached;
     logic [7:0] speculative;
@@ -120,7 +120,7 @@ module bp_me_endpoint_to_fifos
      );
   assign aligned_rev_li.payload = aligned_rev_payload_li;
 
-  `declare_bp_bedrock_mem_if(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p);
+  `declare_bp_bedrock_if(paddr_width_p, lce_id_width_p, cce_id_width_p, did_width_p, lce_assoc_p);
   `bp_cast_i(bp_bedrock_mem_fwd_header_s, mem_fwd_header);
   `bp_cast_o(bp_bedrock_mem_rev_header_s, mem_rev_header);
   `bp_cast_o(bp_bedrock_mem_fwd_header_s, mem_fwd_header);
@@ -133,7 +133,7 @@ module bp_me_endpoint_to_fifos
   assign mem_fwd_header_cast_o.payload  = '{state        : bp_coh_states_e'(aligned_fwd_payload_lo.state)
                                             ,way_id      : aligned_fwd_payload_lo.way_id
                                             ,lce_id      : aligned_fwd_payload_lo.lce_id
-                                            ,did         : aligned_fwd_payload_lo.did
+                                            ,src_did     : aligned_fwd_payload_lo.src_did
                                             ,prefetch    : aligned_fwd_payload_lo.prefetch
                                             ,uncached    : aligned_fwd_payload_lo.uncached
                                             ,speculative : aligned_fwd_payload_lo.speculative
@@ -149,7 +149,7 @@ module bp_me_endpoint_to_fifos
   assign aligned_rev_payload_li  = '{state        : mem_rev_header_cast_i.payload.state
                                      ,way_id      : mem_rev_header_cast_i.payload.way_id
                                      ,lce_id      : mem_rev_header_cast_i.payload.lce_id
-                                     ,did         : mem_rev_header_cast_i.payload.did
+                                     ,src_did     : mem_rev_header_cast_i.payload.src_did
                                      ,prefetch    : mem_rev_header_cast_i.payload.prefetch
                                      ,uncached    : mem_rev_header_cast_i.payload.uncached
                                      ,speculative : mem_rev_header_cast_i.payload.speculative
@@ -189,7 +189,7 @@ module bp_me_endpoint_to_fifos
   assign aligned_fwd_payload_li  = '{state        : mem_fwd_header_cast_i.payload.state
                                      ,way_id      : mem_fwd_header_cast_i.payload.way_id
                                      ,lce_id      : mem_fwd_header_cast_i.payload.lce_id
-                                     ,did         : mem_fwd_header_cast_i.payload.did
+                                     ,src_did     : mem_fwd_header_cast_i.payload.src_did
                                      ,prefetch    : mem_fwd_header_cast_i.payload.prefetch
                                      ,uncached    : mem_fwd_header_cast_i.payload.uncached
                                      ,speculative : mem_fwd_header_cast_i.payload.speculative

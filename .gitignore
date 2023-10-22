@@ -38,3 +38,4 @@ bsg_bladerunner_configuration.v
 bsg_manycore_machine.h
 *_bd_proj*
 *_ip_proj*
+*_bd_1_bd.tcl
