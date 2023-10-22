@@ -22,7 +22,7 @@ package bp_common_pkg;
     '{paddr_width: 34
 
       ,l2_slices : 1
-      ,l2_banks  : 2
+      ,l2_banks  : 1
 
       ,default : "inv"
       };

@@ -14,7 +14,7 @@ module top_zynq
  import bsg_tag_pkg::*;
  #(parameter bp_params_e bp_params_p = e_bp_default_cfg
    `declare_bp_proc_params(bp_params_p)
-   `declare_bp_bedrock_mem_if_widths(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p)
+   `declare_bp_bedrock_if_widths(paddr_width_p, lce_id_width_p, cce_id_width_p, did_width_p, lce_assoc_p)
 
    // NOTE these parameters are usually overridden by the parent module (top.v)
    // but we set them to make expectations consistent
@@ -226,7 +226,7 @@ module top_zynq
    //
    assign minstret_lo = blackparrot.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
 
-   `declare_bp_bedrock_mem_if(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p);
+   `declare_bp_bedrock_if(paddr_width_p, lce_id_width_p, cce_id_width_p, did_width_p, lce_assoc_p);
    bp_bedrock_mem_fwd_header_s mem_fwd_header_li;
    logic [bedrock_fill_width_p-1:0] mem_fwd_data_li;
    logic mem_fwd_v_li, mem_fwd_ready_and_lo;
@@ -427,6 +427,7 @@ module top_zynq
       ,.axi_id_width_p(6)
       ,.axi_burst_len_p(l2_block_width_p/C_M00_AXI_DATA_WIDTH)
       ,.axi_burst_type_p(e_axi_burst_incr)
+      ,.ordering_en_p(1)
       )
     cache2axi
      (.clk_i(aclk)
