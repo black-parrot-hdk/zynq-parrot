@@ -3,6 +3,9 @@ include ../Makefile.design
 #############################
 # Modify base flist
 #############################
+export CLK_FREQ = 80
+export CLK_DIV  = 2
+
 BASE_FLIST ?= $(abspath ../flist.vcs)
 WD_FLIST   ?= $(abspath flist.watchdog.vcs)
 TOP_FLIST  ?= $(abspath flist.blackparrot.vcs)

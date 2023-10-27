@@ -11,17 +11,20 @@ module bp_commit_profiler
     `declare_bp_proc_params(bp_params_p)
     `declare_bp_core_if_widths(vaddr_width_p, paddr_width_p, asid_width_p, branch_metadata_fwd_width_p)
     `declare_bp_bedrock_mem_if_widths(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p)
-    , parameter els_p = 2
-    , parameter width_p = 32
+    , parameter `BSG_INV_PARAM(els_p)
+    , parameter `BSG_INV_PARAM(width_p)
 
     , localparam issue_pkt_width_lp    = `bp_be_issue_pkt_width(vaddr_width_p, branch_metadata_fwd_width_p)
     , localparam dispatch_pkt_width_lp = `bp_be_dispatch_pkt_width(vaddr_width_p)
     , localparam commit_pkt_width_lp   = `bp_be_commit_pkt_width(vaddr_width_p, paddr_width_p)
     , localparam retire_pkt_width_lp   = `bp_be_retire_pkt_width(vaddr_width_p)
     , localparam wb_pkt_width_lp       = `bp_be_wb_pkt_width(vaddr_width_p)
-    , localparam lg_l2_banks_lp = `BSG_SAFE_CLOG2(l2_banks_p)
+    , localparam lg_dma_els_lp = `BSG_SAFE_CLOG2(dma_els_p)
     )
-   (input clk_i
+   (input aclk_i
+    , input areset_i
+
+    , input clk_i
     , input reset_i
     , input freeze_i
     , input en_i
@@ -94,9 +97,9 @@ module bp_commit_profiler
     , input dcache_v_i
     , input dcache_miss_i
 
-    , input [lg_l2_banks_lp-1:0] l2_bank_i
-    , input [l2_banks_p-1:0] l2_ready_i
-    , input [l2_banks_p-1:0] l2_miss_done_i
+    , input [lg_dma_els_lp-1:0] l2_bank_i
+    , input [dma_els_p-1:0] l2_ready_i
+    , input [dma_els_p-1:0] l2_miss_done_i
 
     , input m_arvalid_i
     , input m_arready_i
@@ -109,6 +112,7 @@ module bp_commit_profiler
     , input [1:0] dma_sel_i
 
     , output [els_p-1:0][width_p-1:0] data_o
+    , output v_o
     , output instret_o
     , output [$bits(bp_stall_reason_e)-1:0] stall_o
     , output [vaddr_width_p-1:0] pc_o
@@ -117,7 +121,7 @@ module bp_commit_profiler
   `declare_bp_core_if(vaddr_width_p, paddr_width_p, asid_width_p, branch_metadata_fwd_width_p);
   `declare_bp_fe_branch_metadata_fwd_s(ras_idx_width_p, btb_tag_width_p, btb_idx_width_p, bht_idx_width_p, ghist_width_p, bht_row_els_p);
   `declare_bp_bedrock_mem_if(paddr_width_p, did_width_p, lce_id_width_p, lce_assoc_p);
-
+/*
   // L2
   `bp_cast_i(bp_bedrock_mem_fwd_header_s, mem_fwd_header);
   `bp_cast_i(bp_bedrock_mem_rev_header_s, mem_rev_header);
@@ -189,13 +193,12 @@ module bp_commit_profiler
   bp_fe_cmd_s fe_cmd_li;
   bp_fe_branch_metadata_fwd_s br_metadata;
   assign fe_cmd_li = fe_cmd_i;
+  wire attaboy_li = fe_cmd_yumi_i & (fe_cmd_li.opcode == e_op_attaboy);
+  wire br_mispredict_li = fe_cmd_yumi_i & (fe_cmd_li.opcode == e_op_pc_redirection)
+                               & (fe_cmd_li.operands.pc_redirect_operands.subopcode == e_subop_branch_mispredict);
   assign br_metadata = attaboy_li
                        ? fe_cmd_li.operands.attaboy.branch_metadata_fwd
                        : fe_cmd_li.operands.pc_redirect_operands.branch_metadata_fwd;
-
-  wire br_mispredict_li = fe_cmd_yumi_i & (fe_cmd_li.opcode == e_op_pc_redirection)
-                               & (fe_cmd_li.operands.pc_redirect_operands.subopcode == e_subop_branch_mispredict);
-  wire attaboy_li = fe_cmd_yumi_i & (fe_cmd_li.opcode == e_op_attaboy);
 
   // DMA
   logic [1:0] rdma_sel_li, wdma_sel_li;
@@ -276,9 +279,10 @@ module bp_commit_profiler
      ,.data_o(wdma_sel_li)
      ,.yumi_i(m_bvalid_i & m_bready_i)
      );
-
+*/
   // Profiler
   // TODO: extend to multicore
+  assign v_o = ~prof.freeze_r;
   assign instret_o = prof.commit_pkt_cast_i.instret;
   assign stall_o = prof.bp_stall_reason_enum;
   assign pc_o = prof.pc_n[6];
@@ -294,8 +298,8 @@ module bp_commit_profiler
    ,.*
    );
 
-  localparam stall_offset_lp = 2;
-  localparam event_offset_lp = 2 + $bits(bp_stall_reason_s);
+  localparam stall_offset_lp = 3;
+  localparam event_offset_lp = 3 + $bits(bp_stall_reason_s);
 
   // Output generation
   `define declare_counter(name,up,i)                                \
@@ -331,12 +335,22 @@ module bp_commit_profiler
    ,.count_o(data_o[bp_profiler_pkg::``name`` + stall_offset_lp])                    \
    );
 
-  // mcycle and instret
-  `declare_counter(mcycle,1'b1,0)
-  `declare_counter(minstret,prof.commit_pkt_cast_i.instret,1)
+  // cycle, mcycle, and instret
+  bsg_counter_clear_up
+   #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p(0))
+   cycle_cnt
+    (.clk_i(aclk_i)
+    ,.reset_i(areset_i)
+    ,.clear_i(freeze_i)
+    ,.up_i(en_i)
+    ,.count_o(data_o[0])
+    );
+
+  `declare_counter(mcycle,1'b1,1)
+  `declare_counter(minstret,prof.commit_pkt_cast_i.instret,2)
 
   // Stalls
-  // Assigned to counters: 2-32
+  // Assigned to counters: 3-33
   `declare_stall_counter(ic_miss)
   `declare_stall_counter(br_ovr)
   `declare_stall_counter(ret_ovr)
@@ -371,6 +385,7 @@ module bp_commit_profiler
 
   // Events
   // L1
+/*
   wire icache_ready_li = ~icache_miss_i;
   wire dcache_ready_li = ~dcache_miss_i;
   logic icache_ready_r, dcache_ready_r;
@@ -441,5 +456,5 @@ module bp_commit_profiler
 
   `declare_event_counter(e_wdma_devict_cnt, m_awvalid_i & m_awready_i & (dma_sel_i == 2'b10))
   `declare_event_counter(e_wdma_devict, devict_wdma_li)
-
+*/
 endmodule

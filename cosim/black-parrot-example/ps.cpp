@@ -14,6 +14,7 @@
 #include <bitset>
 #include <cstdint>
 #include <iostream>
+#include <iomanip>
 
 #include "ps.hpp"
 
@@ -49,7 +50,7 @@ bool decode_bp_output(bsg_zynq_pl *zpl, long data);
 void report(bsg_zynq_pl *zpl, char *);
 
 const char* metrics[] = {
-  "mcycle", "minstret",
+  "cycle", "mcycle", "minstret",
   "ic_miss",
   "br_ovr", "ret_ovr", "jal_ovr", "fe_cmd", "fe_cmd_fence",
   "mispredict", "control_haz", "long_haz", "data_haz",
@@ -59,7 +60,7 @@ const char* metrics[] = {
   "ptw_busy", "special", "exception", "_interrupt",
   "itlb_miss", "dtlb_miss",
   "dc_miss", "dc_fail", "unknown",
-
+/*
   "e_ic_req_cnt", "e_ic_miss_cnt", "e_ic_miss",
   "e_dc_req_cnt", "e_dc_miss_cnt", "e_dc_miss",
 
@@ -79,6 +80,7 @@ const char* metrics[] = {
   "e_wdma_ic_cnt", "e_rdma_ic_cnt", "e_wdma_ic", "e_rdma_ic", "e_dma_ic",
   "e_wdma_dfetch_cnt", "e_rdma_dfetch_cnt", "e_wdma_dfetch", "e_rdma_dfetch", "e_dma_dfetch",
   "e_wdma_devict_cnt", "e_wdma_devict",
+*/
 };
 
 const char* samples[] = {
@@ -117,34 +119,67 @@ void *monitor(void *vargp) {
   return NULL;
 }
 
+struct threadArgs {
+    bsg_zynq_pl* zpl;
+    char* nbf_filename;
+};
+
 void *device_poll(void *vargp) {
-  bsg_zynq_pl *zpl = (bsg_zynq_pl *)vargp;
+  bsg_zynq_pl *zpl = ((struct threadArgs*)vargp)->zpl;
+  char* nbf_filename = ((struct threadArgs*)vargp)->nbf_filename;
+
+  //open binary file for dumping samples
+  char filename[100];
+  if(strrchr(nbf_filename, '/') != NULL)
+    strcpy(filename, 1 + strrchr(nbf_filename, '/'));
+  else
+    strcpy(filename, nbf_filename);
+  *strrchr(filename, '.') = '\0';
+  strcat(filename, ".stall");
+  ofstream file(filename, ios::binary);
+
+  uint32_t pc;
+  uint8_t stall;
   while (1) {
-    zpl->axil_poll();
+    //zpl->axil_poll();
 
     // keep reading as long as there is data
-    if (zpl->axil_read(GP0_RD_PL2PS_FIFO_CTRS) != 0) {
-      decode_bp_output(zpl, zpl->axil_read(GP0_RD_PL2PS_FIFO_DATA));
+    if (zpl->axil_read(GP0_RD_PL2PS_FIFO_0_CTRS) != 0) {
+      decode_bp_output(zpl, zpl->axil_read(GP0_RD_PL2PS_FIFO_0_DATA));
     }
     // break loop when all cores done
     if (done_vec.all()) {
       break;
     }
+
+    // drain sample data from FIFOs
+    int cnt = zpl->axil_read(GP0_RD_PL2PS_FIFO_1_CTRS);
+    if(cnt != 0) {
+      for(int i = 0; i < cnt; i++) {
+/*
+        uint32x2_t data = zpl->axil_2read(GP0_RD_PL2PS_FIFO_1_DATA);
+        pc = data[0];
+        stall = ((data[1] & 0x1) << 7) | (data[1] >> 1);
+*/
+        pc = zpl->axil_read(GP0_RD_PL2PS_FIFO_1_DATA);
+        uint32_t data = zpl->axil_read(GP0_RD_PL2PS_FIFO_2_DATA);
+        stall = ((data & 0x1) << 7) | (data >> 1);
+
+        file.write((char*)&pc, sizeof(pc));
+        file.write((char*)&stall, sizeof(stall));
+      }
+    }
   }
   run = false;
+  file.close();
   bsg_pr_info("Exiting from pthread\n");
 
   return NULL;
 }
 
-struct sampleArgs {
-    bsg_zynq_pl* zpl;
-    char* nbf_filename;
-};
-
 void *sample(void *vargp) {
-  bsg_zynq_pl *zpl = ((struct sampleArgs*)vargp)->zpl;
-  char* nbf_filename = ((struct sampleArgs*)vargp)->nbf_filename;;
+  bsg_zynq_pl *zpl = ((struct threadArgs*)vargp)->zpl;
+  char* nbf_filename = ((struct threadArgs*)vargp)->nbf_filename;;
 
   char filename[100];
   if(strrchr(nbf_filename, '/') != NULL)
@@ -376,8 +411,8 @@ extern "C" int cosim_main(char *argstr) {
 #endif
 
   bsg_pr_info("ps.cpp: clearing pl to ps fifo\n");
-  while(zpl->axil_read(GP0_RD_PL2PS_FIFO_CTRS) != 0) {
-    zpl->axil_read(GP0_RD_PL2PS_FIFO_DATA);
+  while(zpl->axil_read(GP0_RD_PL2PS_FIFO_0_CTRS) != 0) {
+    zpl->axil_read(GP0_RD_PL2PS_FIFO_0_DATA);
   }
 
   bsg_pr_info("ps.cpp: beginning nbf load\n");
@@ -394,22 +429,29 @@ extern "C" int cosim_main(char *argstr) {
   // We need some additional toggles for data to propagate through
   btb->idle(50);
 
-  pthread_t monitor_id, sample_id, poll_id;
+  bsg_pr_info("ps.cpp: Asserting clock gate enable\n");
+  zpl->axil_write(GP0_WR_CSR_GATE_EN, 0x1, 0xf);
 
-  bsg_pr_info("ps.cpp: Starting scan thread\n");
+  bsg_pr_info("ps.cpp: Unfreezing BlackParrot\n");
+  zpl->axil_write(GP1_CSR_BASE_ADDR + 0x200008, 0x0, 0xf);
+
+  pthread_t monitor_id, poll_id;
+
+  //bsg_pr_info("ps.cpp: Starting scan thread\n");
   //pthread_create(&monitor_id, NULL, monitor, NULL);
 
-  bsg_pr_info("ps.cpp: Starting sample thread\n");
-  struct sampleArgs* args = (struct sampleArgs*)malloc(sizeof(struct sampleArgs));
+  struct threadArgs* args = (struct threadArgs*)malloc(sizeof(struct threadArgs));
   args->zpl = zpl;
   args->nbf_filename = argv[1];
-  //pthread_create(&sample_id, NULL, sample, (void *)args);
 
   bsg_pr_info("ps.cpp: Starting i/o polling thread\n");
-  pthread_create(&poll_id, NULL, device_poll, (void *)zpl);
+  pthread_create(&poll_id, NULL, device_poll, (void *)args);
 
   bsg_pr_info("ps.cpp: waiting for i/o packet\n");
   pthread_join(poll_id, NULL);
+
+  bsg_pr_info("ps.cpp: Deasserting clock gate enable\n");
+  zpl->axil_write(GP0_WR_CSR_GATE_EN, 0x0, 0xf);
 
   // Set bsg client1 to 0 (deassert BP counter en)
   btb->set_client(pl_cnten_client, 0x0);
@@ -464,7 +506,7 @@ extern "C" int cosim_main(char *argstr) {
               zpl->axil_read(GP0_RD_MEM_PROF_0));
 
   report(zpl, argv[1]);
-
+  //btb->idle(500000);
 #ifdef FPGA
   // in general we do not want to free the dram; the Xilinx allocator has a
   // tendency to

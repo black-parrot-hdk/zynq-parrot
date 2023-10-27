@@ -188,6 +188,11 @@ public:
       printf("[Error] Address misaligned\n");
     volatile uint32_t *ptr32x2 =  (uint32_t *)axil_get_ptr(address);
     uint32x2_t data = vld1_u32((const uint32_t *)ptr32x2);
+
+    if (debug) {
+      printf("  bsg_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n", address, data[0]);
+      printf("  bsg_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n", address+4, data[1]);
+    }
     return data;
   }
 
@@ -196,6 +201,13 @@ public:
       printf("[Error] Address misaligned\n");
     volatile uint32_t *ptr32x4 =  (uint32_t *)axil_get_ptr(address);
     uint32x4_t data = vld1q_u32((const uint32_t *)ptr32x4);
+
+    if (debug) {
+      printf("  bsg_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n", address, data[0]);
+      printf("  bsg_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n", address+4, data[1]);
+      printf("  bsg_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n", address+8, data[2]);
+      printf("  bsg_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n", address+12, data[3]);
+    }
     return data;
   }
 };

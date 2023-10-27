@@ -1,6 +1,7 @@
 
 `timescale 1 ps / 1 ps
 
+`include "bp_zynq_pl.vh"
 `include "bsg_tag.vh"
 `include "bp_common_defines.svh"
 `include "bp_be_defines.svh"
@@ -174,9 +175,19 @@ module top_zynq
   localparam bp_axil_data_width_lp = 32;
   localparam bp_axi_addr_width_lp  = 32;
   localparam bp_axi_data_width_lp  = 64;
-  localparam num_regs_ps_to_pl_lp  = 4;
-  localparam profiler_els_lp       = 2 + $bits(bp_stall_reason_s) + $bits(bp_event_reason_s);
+
+  localparam num_regs_ps_to_pl_lp  = 5;
+  localparam profiler_els_lp       = 3 + $bits(bp_stall_reason_s);// + $bits(bp_event_reason_s);
   localparam num_regs_pl_to_ps_lp  = 4 + ((64/C_S00_AXI_DATA_WIDTH) * profiler_els_lp);
+
+  localparam num_fifo_ps_to_pl_lp = 1;
+  localparam num_fifo_pl_to_ps_lp = 3;
+
+  localparam axi_async_lp = 1;
+  localparam async_fifo_size_lp = 5;
+  localparam skid_buffer_els_lp = 64;
+
+  localparam clk_div_lp = 2;
 
   `ifdef MULTICORE
      `define COREPATH blackparrot.processor.m.multicore.cc.y[0].x[0].tile_node.tile_node.tile.core.core_lite.core_minimal
@@ -198,11 +209,19 @@ module top_zynq
   logic [num_regs_ps_to_pl_lp-1:0]                           csr_data_new_lo;
 
   logic [num_regs_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_li;
-  logic [profiler_els_lp-1:0][64-1:0]     profiler_data_lo;
+  logic [profiler_els_lp-1:0][64-1:0]     prof_data_lo;
 
-  logic [C_S00_AXI_DATA_WIDTH-1:0]      pl_to_ps_fifo_data_li, ps_to_pl_fifo_data_lo;
-  logic                                 pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
-  logic                                 ps_to_pl_fifo_v_lo, ps_to_pl_fifo_ready_li;
+  logic prof_afifo_full_lo, prof_afifo_v_lo;
+  logic prof_fifo_ready_lo, prof_fifo_v_lo;
+  logic prof_v_lo, prof_instret_lo, prof_afifo_instret_lo, prof_fifo_instret_lo;
+  logic [$bits(bp_stall_reason_e)-1:0] prof_stall_lo, prof_afifo_stall_lo, prof_fifo_stall_lo;
+  logic [vaddr_width_p-1:0] prof_pc_lo, prof_afifo_pc_lo, prof_fifo_pc_lo;
+
+  logic [num_fifo_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] pl_to_ps_fifo_data_li;
+  logic [num_fifo_pl_to_ps_lp-1:0]                           pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
+
+  logic [num_fifo_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] ps_to_pl_fifo_data_lo;
+  logic [num_fifo_ps_to_pl_lp-1:0]                           ps_to_pl_fifo_v_lo, ps_to_pl_fifo_ready_li;
 
   logic [bp_axil_addr_width_lp-1:0]     bp_m_axil_awaddr;
   logic [2:0]                           bp_m_axil_awprot;
@@ -248,8 +267,8 @@ module top_zynq
   bsg_zynq_pl_shell #
     (
      // need to update C_S00_AXI_ADDR_WIDTH accordingly
-     .num_fifo_ps_to_pl_p(1)
-     ,.num_fifo_pl_to_ps_p(1)
+     .num_fifo_ps_to_pl_p(num_fifo_ps_to_pl_lp)
+     ,.num_fifo_pl_to_ps_p(num_fifo_pl_to_ps_lp)
      ,.num_regs_ps_to_pl_p (num_regs_ps_to_pl_lp)
      ,.num_regs_pl_to_ps_p(num_regs_pl_to_ps_lp)
      ,.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH)
@@ -310,7 +329,7 @@ module top_zynq
   assign csr_data_li[1] = mem_profiler_r[63:32];
   assign csr_data_li[2] = mem_profiler_r[95:64];
   assign csr_data_li[3] = mem_profiler_r[127:96];
-  assign csr_data_li[num_regs_pl_to_ps_lp-1:4] = profiler_data_lo[profiler_els_lp-1:0];
+  assign csr_data_li[num_regs_pl_to_ps_lp-1:4] = prof_data_lo[profiler_els_lp-1:0];
 
   // Tag bitbang
   logic tag_clk_r_lo, tag_data_r_lo;
@@ -366,6 +385,81 @@ module top_zynq
   // Reset BP during system reset or if bsg_tag says to
   wire bp_reset_li = ~sys_resetn | tag_reset_li;
   wire counter_en_li = sys_resetn & tag_en_li;
+
+  // Gating Logic
+  logic gated_aresetn, gate_r;
+  logic gated_bp_reset_li, gated_counter_en_li;
+
+  wire gate_en_li = csr_data_lo[4][0];
+
+  (* dont_touch = "yes" *) wire ds_aclk;
+  (* gated_clock = "yes" *) wire gated_aclk;
+
+`ifdef VIVADO
+  BUFGCE_DIV #(
+     .BUFGCE_DIVIDE(clk_div_lp),
+     .IS_CE_INVERTED(1'b0),
+     .IS_CLR_INVERTED(1'b0),
+     .IS_I_INVERTED(1'b0)
+  )
+  BUFGCE_DIV_inst (
+     .I(aclk),
+     .CE(1'b1),
+     .CLR(1'b0),
+     .O(ds_aclk)
+  );
+
+  BUFGCE #(
+     .CE_TYPE("SYNC"),
+     .IS_CE_INVERTED(1'b1),
+     .IS_I_INVERTED(1'b0)
+  )
+  BUFGCE_inst (
+     .I(ds_aclk),
+     .CE(gate_r),
+     .O(gated_aclk)
+  );
+`else
+  assign gated_aclk = ds_aclk & ~gate_r;
+
+  bsg_counter_clock_downsample #(.width_p(32))
+   clk_ds
+    (.clk_i(aclk)
+    ,.reset_i(~aresetn)
+    ,.val_i((clk_div_lp >> 1) - 1)
+    ,.clk_r_o(ds_aclk)
+    );
+`endif
+
+  bsg_sync_sync #(.width_p(1))
+   gated_reset
+    (.oclk_i(gated_aclk)
+    ,.iclk_data_i(aresetn)
+    ,.oclk_data_o(gated_aresetn)
+    );
+
+  bsg_sync_sync #(.width_p(1))
+   gated_bp_reset
+    (.oclk_i(gated_aclk)
+    ,.iclk_data_i(bp_reset_li)
+    ,.oclk_data_o(gated_bp_reset_li)
+    );
+
+  bsg_sync_sync #(.width_p(1))
+   gated_counter_en
+    (.oclk_i(gated_aclk)
+    ,.iclk_data_i(counter_en_li)
+    ,.oclk_data_o(gated_counter_en_li)
+    );
+
+  bsg_dff_reset_set_clear #(.width_p(1))
+   gate_reg
+    (.clk_i(~ds_aclk)
+    ,.reset_i(~aresetn)
+    ,.set_i(~gate_r & gate_en_li & ~prof_fifo_ready_lo)
+    ,.clear_i(gate_r & (~gate_en_li | ~prof_fifo_v_lo))
+    ,.data_o(gate_r)
+    );
 
   // (MBT)
   // note: this ability to probe into the core is not supported in ASIC toolflows but
@@ -490,9 +584,9 @@ module top_zynq
      ,.s_axil_rvalid_o (spack_axi_rvalid)
      ,.s_axil_rready_i (spack_axi_rready)
 
-     ,.data_o (pl_to_ps_fifo_data_li)
-     ,.v_o    (pl_to_ps_fifo_v_li)
-     ,.ready_i(pl_to_ps_fifo_ready_lo)
+     ,.data_o (pl_to_ps_fifo_data_li[0])
+     ,.v_o    (pl_to_ps_fifo_v_li[0])
+     ,.ready_i(pl_to_ps_fifo_ready_lo[0])
 
      ,.data_i(ps_to_pl_fifo_data_lo)
      ,.v_i(ps_to_pl_fifo_v_lo)
@@ -689,14 +783,14 @@ module top_zynq
      ,.axi_id_width_p(6)
      ,.axi_size_width_p(3)
      ,.axi_len_width_p(4)
-     ,.axi_async_p(0)
-     ,.async_fifo_size_p(8)
+     ,.axi_async_p(axi_async_lp)
+     ,.async_fifo_size_p(async_fifo_size_lp)
      )
   blackparrot
-    (.clk_i(aclk)
-     ,.reset_i(bp_reset_li)
-     ,.aclk_i(1'b0)
-     ,.areset_i(1'b0)
+    (.clk_i(gated_aclk)
+     ,.reset_i(gated_bp_reset_li)
+     ,.aclk_i(aclk)
+     ,.areset_i(bp_reset_li)
      ,.rt_clk_i(rt_clk)
 
      // these are reads/write from BlackParrot
@@ -829,9 +923,12 @@ module top_zynq
     ,.els_p(profiler_els_lp)
     ,.width_p(64)
     )
-    i_profiler
-    (.clk_i(aclk)
-    ,.reset_i(bp_reset_li)
+   i_profiler
+    (.aclk_i(aclk)
+    ,.areset_i(~aresetn)
+
+    ,.clk_i(gated_aclk)
+    ,.reset_i(gated_bp_reset_li)
     ,.freeze_i(`COREPATH.be.calculator.pipe_sys.csr.cfg_bus_cast_i.freeze)
     ,.en_i(counter_en_li)
 
@@ -949,29 +1046,56 @@ module top_zynq
     ,.m_bready_i(m00_axi_bready)
     ,.dma_sel_i(dma_sel_li)
 
-    ,.data_o(profiler_data_lo[profiler_els_lp-1:0])
-    ,.instret_o()
-    ,.stall_o()
-    ,.pc_o()
+    ,.data_o(prof_data_lo[profiler_els_lp-1:0])
+    ,.v_o(prof_v_lo)
+    ,.instret_o(prof_instret_lo)
+    ,.stall_o(prof_stall_lo)
+    ,.pc_o(prof_pc_lo)
     );
 
+  bsg_async_fifo
+   #(.width_p(1+$bits(bp_stall_reason_e)+vaddr_width_p)
+    ,.lg_size_p(async_fifo_size_lp)
+    )
+   i_afifo_prof
+    (.w_clk_i(gated_aclk)
+    ,.w_reset_i(~gated_aresetn)
+
+    ,.w_enq_i(prof_v_lo & ~prof_afifo_full_lo)
+    ,.w_data_i({prof_instret_lo, prof_stall_lo, prof_pc_lo})
+    ,.w_full_o(prof_afifo_full_lo)
+
+    ,.r_clk_i(aclk)
+    ,.r_reset_i(~aresetn)
+
+    ,.r_valid_o(prof_afifo_v_lo)
+    ,.r_data_o({prof_afifo_instret_lo, prof_afifo_stall_lo, prof_afifo_pc_lo})
+    ,.r_deq_i(prof_afifo_v_lo & prof_fifo_ready_lo)
+    );
+
+  bsg_fifo_1r1w_small
+   #(.width_p(1+$bits(bp_stall_reason_e)+vaddr_width_p)
+    ,.els_p(skid_buffer_els_lp)
+    )
+   i_fifo_prof
+    (.clk_i(aclk)
+    ,.reset_i(~aresetn)
+
+    ,.v_i(prof_afifo_v_lo)
+    ,.data_i({prof_afifo_instret_lo, prof_afifo_stall_lo, prof_afifo_pc_lo})
+    ,.ready_o(prof_fifo_ready_lo)
+
+    ,.v_o(prof_fifo_v_lo)
+    ,.data_o({prof_fifo_instret_lo, prof_fifo_stall_lo, prof_fifo_pc_lo})
+    ,.yumi_i(pl_to_ps_fifo_v_li[1])
+    );
+
+  assign pl_to_ps_fifo_v_li[1] = prof_fifo_v_lo & pl_to_ps_fifo_ready_lo[1] & pl_to_ps_fifo_ready_lo[2];
+  assign pl_to_ps_fifo_v_li[2] = pl_to_ps_fifo_v_li[1];
+  assign pl_to_ps_fifo_data_li[1] = prof_fifo_pc_lo[0+:32];
+  assign pl_to_ps_fifo_data_li[2] = {prof_fifo_stall_lo, prof_fifo_instret_lo};
+
   // synopsys translate_off
-  integer f;
-  initial begin
-    f = $fopen("mem.txt", "w");
-  end
-
-  always @(negedge aclk) begin
-    if(m00_axi_awvalid & m00_axi_awready) begin
-      $fwrite(f, "[%t] w addr: %x\n", $time, m00_axi_awaddr);
-      $fflush();
-    end
-    if(m00_axi_arvalid & m00_axi_arready) begin
-      $fwrite(f, "[%t] r addr: %x\n", $time, m00_axi_araddr);
-      $fflush();
-    end
-  end
-
   always @(negedge aclk)
     if (aresetn !== '0 & bb_v_li & ~bb_ready_and_lo == 1'b1)
       $error("top_zynq: bitbang bit drop occurred");

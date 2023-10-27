@@ -134,6 +134,10 @@ module bp_nonsynth_core_profiler
 
   // Scoreboard RD and PC
   //// D$-miss
+  logic sb_dc_miss_fp_lo;
+  logic [vaddr_width_p-1:0] sb_dc_miss_pc_lo;
+  logic [reg_addr_width_gp-1:0] sb_dc_miss_rd_lo;
+
   wire sb_int_dc_miss_w_li = sb_int_v_i & commit_pkt_cast_i.dcache_load_miss & (commit_pkt_cast_i.instr.t.fmatype.opcode inside {`RV64_LOAD_OP, `RV64_AMO_OP});
   wire sb_fp_dc_miss_w_li = sb_fp_v_i & commit_pkt_cast_i.dcache_load_miss & (commit_pkt_cast_i.instr.t.fmatype.opcode inside {`RV64_FLOAD_OP});
   wire sb_dc_miss_w_li =  sb_int_dc_miss_w_li | sb_fp_dc_miss_w_li;
@@ -141,9 +145,6 @@ module bp_nonsynth_core_profiler
                            ? (sb_fp_clr_i & (fwb_pkt_cast_i.rd_addr == sb_dc_miss_rd_lo))
                            : (sb_int_clr_i & (iwb_pkt_cast_i.rd_addr == sb_dc_miss_rd_lo));
 
-  logic sb_dc_miss_fp_lo;
-  logic [vaddr_width_p-1:0] sb_dc_miss_pc_lo;
-  logic [reg_addr_width_gp-1:0] sb_dc_miss_rd_lo;
   bsg_dff_reset_en
    #(.width_p(reg_addr_width_gp+vaddr_width_p+1))
    sb_dc_miss_reg
@@ -169,11 +170,12 @@ module bp_nonsynth_core_profiler
   wire sb_dc_miss_li = sb_int_dc_miss_li | sb_fp_dc_miss_li;
 
   //// long int
+  logic [vaddr_width_p-1:0] sb_ilong_pc_lo;
+  logic [reg_addr_width_gp-1:0] sb_ilong_rd_lo;
+
   wire sb_ilong_w_li = sb_int_v_i & ~sb_int_dc_miss_w_li;
   wire sb_ilong_clr_li = sb_int_clr_i &  ~sb_dc_miss_clr_li;
 
-  logic [vaddr_width_p-1:0] sb_ilong_pc_lo;
-  logic [reg_addr_width_gp-1:0] sb_ilong_rd_lo;
   bsg_dff_reset_en
    #(.width_p(reg_addr_width_gp+vaddr_width_p))
    sb_ilong_reg
