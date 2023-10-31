@@ -40,3 +40,4 @@ bsg_manycore_machine.h
 *_ip_proj*
 *_bd_1_bd.tcl
 boost
+.Xil/

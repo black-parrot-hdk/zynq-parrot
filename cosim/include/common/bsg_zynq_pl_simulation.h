@@ -38,6 +38,8 @@ class bsg_zynq_pl_simulation {
         std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH> > axi_gp1;
         std::unique_ptr<axilm<GP2_ADDR_WIDTH, GP2_DATA_WIDTH> > axi_gp2;
         std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> > axi_hp0;
+        std::unique_ptr<axils<HP1_ADDR_WIDTH, HP1_DATA_WIDTH> > axi_hp1;
+        std::unique_ptr<axils<HP2_ADDR_WIDTH, HP2_DATA_WIDTH> > axi_hp2;
 
         std::unique_ptr<zynq_scratchpad> scratchpad;
         std::unique_ptr<zynq_watchdog> watchdog;
@@ -81,22 +83,32 @@ class bsg_zynq_pl_simulation {
             axi_gp2 = std::make_unique<axilm<GP2_ADDR_WIDTH, GP2_DATA_WIDTH> >(
                     STRINGIFY(GP2_HIER_BASE));
             axi_gp2->reset(f_tick);
-            co_pollm = new coroutine<void>::pull_type{std::bind(&bsg_zynq_pl_simulation::axilm_poll, this, _1)};
-            (*co_pollm)();
 #endif
 #ifdef HP0_ENABLE
+#ifndef AXI_MEM_ENABLE
             axi_hp0 = std::make_unique<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH> >(
                     STRINGIFY(HP0_HIER_BASE));
             axi_hp0->reset(f_tick);
-            co_polls = new coroutine<void>::pull_type{std::bind(&bsg_zynq_pl_simulation::axils_poll, this, _1)};
-            (*co_polls)();
 #endif
-            // Start the main tick thread
-            co_next = new coroutine<void>::pull_type{std::bind(&bsg_zynq_pl_simulation::next, this, _1)};
-            (*co_next)();
+#endif
+#ifdef HP1_ENABLE
+            axi_hp1 = std::make_unique<axils<HP1_ADDR_WIDTH, HP1_DATA_WIDTH> >(
+                    STRINGIFY(HP1_HIER_BASE));
+            axi_hp1->reset(f_tick);
+#endif
+#ifdef HP2_ENABLE
+            axi_hp2 = std::make_unique<axils<HP2_ADDR_WIDTH, HP2_DATA_WIDTH> >(
+                    STRINGIFY(HP2_HIER_BASE));
+            axi_hp2->reset(f_tick);
+#endif
+        co_next  = new coroutine<void>::pull_type{std::bind(&bsg_zynq_pl_simulation::next, this, _1)};
+        co_polls = new coroutine<void>::pull_type{std::bind(&bsg_zynq_pl_simulation::axils_poll, this, _1)};
+        co_pollm = new coroutine<void>::pull_type{std::bind(&bsg_zynq_pl_simulation::axilm_poll, this, _1)};
+
+        // Start the main tick thread
+        (*co_next)();
         }
 
-#ifdef HP0_ENABLE
         void axils_poll(coroutine<void>::push_type &yield) {
             while (1) {
 #ifdef SIM_BACKPRESSURE_ENABLE
@@ -106,37 +118,38 @@ class bsg_zynq_pl_simulation {
                     }
                 }
 #endif
-                int araddr = axi_hp0->p_araddr;
-                if (!axi_hp0->p_arvalid) {
+#ifdef HP1_ENABLE
+                int araddr = axi_hp1->p_araddr;
+                if (!axi_hp1->p_arvalid) {
                     yield();
 #ifdef SCRATCHPAD_ENABLE
                 } else if (scratchpad->is_read(araddr)) {
-                    axi_hp0->axil_read_helper((s_axil_device *)scratchpad.get(), f_next_tick);
+                    axi_hp1->axil_read_helper((s_axil_device *)scratchpad.get(), f_next_tick);
 #endif
                 } else {
                     bsg_pr_err("  bsg_zynq_pl: Unsupported AXI device read at [%x]\n", araddr);
                 }
 
-                int awaddr = axi_hp0->p_awaddr;
-                if (!axi_hp0->p_awvalid) {
+                int awaddr = axi_hp1->p_awaddr;
+                if (!axi_hp1->p_awvalid) {
                     yield();
 #ifdef SCRATCHPAD_ENABLE
                 } else if (scratchpad->is_write(awaddr)) {
-                    axi_hp0->axil_write_helper((s_axil_device *)scratchpad.get(), f_next_tick);
+                    axi_hp1->axil_write_helper((s_axil_device *)scratchpad.get(), f_next_tick);
 #endif
                 } else {
                     bsg_pr_err("  bsg_zynq_pl: Unsupported AXI device write at [%x]\n", awaddr);
                 }
             }
-        }
 #endif
+        }
 
-#ifdef GP2_ENABLE
         void axilm_poll(coroutine<void>::push_type &yield) {
             uintptr_t address;
             int32_t data, ret;
             uint8_t wmask;
 
+#ifdef GP2_ENABLE
             while (1) {
                 if (0) {
 #ifdef WATCHDOG_ENABLE
@@ -151,8 +164,8 @@ class bsg_zynq_pl_simulation {
                     yield();
                 }
             }
-        }
 #endif
+        }
 
     public:
 
@@ -220,7 +233,6 @@ class bsg_zynq_pl_simulation {
             }
         }
 #endif
-
         virtual void tick(void) = 0;
         virtual void done(void) = 0;
 
@@ -230,8 +242,17 @@ class bsg_zynq_pl_simulation {
 
         virtual void poll_tick() {
 #ifdef HP0_ENABLE
+#ifndef AXI_MEM_ENABLE
             (*co_polls)();
 #endif
+#endif
+#ifdef HP1_ENABLE
+            (*co_polls)();
+#endif
+#ifdef HP2_ENABLE
+            (*co_polls)();
+#endif
+// GP0 and GP1 are always Zynq-Driven
 #ifdef GP2_ENABLE
             (*co_pollm)();
 #endif

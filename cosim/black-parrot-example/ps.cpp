@@ -18,7 +18,6 @@
 #include "bsg_tag_bitbang.h"
 #include "bsg_zynq_pl.h"
 #include "bsg_printing.h"
-#include "bsg_argparse.h"
 
 #ifndef FREE_DRAM
 #define FREE_DRAM 0
@@ -64,9 +63,9 @@ void *monitor(void *vargp) {
 inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr) {
   uint64_t val;
   do {
-    uint64_t val_hi = zpl->axil_read(addr + 4);
-    uint64_t val_lo = zpl->axil_read(addr + 0);
-    uint64_t val_hi2 = zpl->axil_read(addr + 4);
+    uint64_t val_hi = zpl->shell_read(addr + 4);
+    uint64_t val_lo = zpl->shell_read(addr + 0);
+    uint64_t val_hi2 = zpl->shell_read(addr + 4);
     if (val_hi == val_hi2) {
       val = val_hi << 32;
       val += val_lo;
@@ -76,20 +75,7 @@ inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr) {
   } while (1);
 }
 
-#ifdef VERILATOR
-int main(int argc, char **argv) {
-#elif FPGA
-int main(int argc, char **argv) {
-#else
-extern "C" int cosim_main(char *argstr) {
-  int argc = get_argc(argstr);
-  char *argv[argc];
-  get_argv(argstr, argc, argv);
-#endif
-  // this ensures that even with tee, the output is line buffered
-  // so that we can see what is happening in real time
-
-  setvbuf(stdout, NULL, _IOLBF, 0);
+int ps_main(int argc, char **argv) {
 
   bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
@@ -105,17 +91,17 @@ extern "C" int cosim_main(char *argstr) {
   int32_t val;
   bsg_pr_info("ps.cpp: reading four base registers\n");
   bsg_pr_info("ps.cpp: reset(lo)=%d, bitbang=%d, dram_init=%d, dram_base=%d\n",
-              zpl->axil_read(GP0_RD_CSR_SYS_RESETN),
-              zpl->axil_read(GP0_RD_CSR_TAG_BITBANG),
-              zpl->axil_read(GP0_RD_CSR_DRAM_INITED),
-              val = zpl->axil_read(GP0_RD_CSR_DRAM_BASE));
+              zpl->shell_read(GP0_RD_CSR_SYS_RESETN),
+              zpl->shell_read(GP0_RD_CSR_TAG_BITBANG),
+              zpl->shell_read(GP0_RD_CSR_DRAM_INITED),
+              val = zpl->shell_read(GP0_RD_CSR_DRAM_BASE));
 
   bsg_pr_info("ps.cpp: attempting to write and read register 0x8\n");
 
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, 0xDEADBEEF, mask1);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == (0xDEADBEEF)));
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, val, mask1);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == (val)));
+  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, 0xDEADBEEF, mask1);
+  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == (0xDEADBEEF)));
+  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, val, mask1);
+  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == (val)));
 
   bsg_pr_info("ps.cpp: successfully wrote and read registers in bsg_zynq_shell "
               "(verified ARM GP0 connection)\n");
@@ -140,12 +126,12 @@ extern "C" int cosim_main(char *argstr) {
   // We need some additional toggles for data to propagate through
   btb->idle(50);
   // Deassert the active-low system reset as we finish initializing the whole system
-  zpl->axil_write(GP0_RD_CSR_SYS_RESETN, 0x1, 0xF);
+  zpl->shell_write(GP0_RD_CSR_SYS_RESETN, 0x1, 0xF);
 
-#ifdef FPGA
+#ifdef ZYNQ
   unsigned long phys_ptr;
   volatile int32_t *buf;
-  data = zpl->axil_read(GP0_RD_CSR_DRAM_INITED);
+  data = zpl->shell_read(GP0_RD_CSR_DRAM_INITED);
   if (data == 0) {
     bsg_pr_info(
         "ps.cpp: CSRs do not contain a DRAM base pointer; calling allocate "
@@ -153,19 +139,19 @@ extern "C" int cosim_main(char *argstr) {
         allocated_dram);
     buf = (volatile int32_t *)zpl->allocate_dram(allocated_dram, &phys_ptr);
     bsg_pr_info("ps.cpp: received %p (phys = %lx)\n", buf, phys_ptr);
-    zpl->axil_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, mask1);
-    assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == (phys_ptr)));
+    zpl->shell_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, mask1);
+    assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == (phys_ptr)));
     bsg_pr_info("ps.cpp: wrote and verified base register\n");
-    zpl->axil_write(GP0_WR_CSR_DRAM_INITED, 0x1, mask2);
-    assert(zpl->axil_read(GP0_RD_CSR_DRAM_INITED) == 1);
+    zpl->shell_write(GP0_WR_CSR_DRAM_INITED, 0x1, mask2);
+    assert(zpl->shell_read(GP0_RD_CSR_DRAM_INITED) == 1);
   } else
     bsg_pr_info("ps.cpp: reusing dram base pointer %x\n",
-                zpl->axil_read(GP0_RD_CSR_DRAM_BASE));
+                zpl->shell_read(GP0_RD_CSR_DRAM_BASE));
 
   int outer = 1024 / 4;
 #else
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, val1, mask1);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == (val1)));
+  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, val1, mask1);
+  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == (val1)));
   bsg_pr_info("ps.cpp: wrote and verified base register\n");
 
   int outer = 8 / 4;
@@ -177,17 +163,16 @@ extern "C" int cosim_main(char *argstr) {
         "onto allocated DRAM)\n");
     sleep(1U << 31);
     delete zpl;
-    return -1;
   }
 
   bsg_pr_info("ps.cpp: attempting to read mtime reg in BP CFG space, should "
               "increase monotonically  (testing ARM GP1 connections)\n");
 
   for (int q = 0; q < 10; q++) {
-    int z = zpl->axil_read(GP1_CSR_BASE_ADDR + 0x30bff8);
+    int z = zpl->shell_read(GP1_CSR_BASE_ADDR + 0x30bff8);
     // bsg_pr_dbg_ps("ps.cpp: %d%c",z,(q % 8) == 7 ? '\n' : ' ');
     // read second 32-bits
-    int z2 = zpl->axil_read(GP1_CSR_BASE_ADDR + 0x30bff8 + 4);
+    int z2 = zpl->shell_read(GP1_CSR_BASE_ADDR + 0x30bff8 + 4);
     // bsg_pr_dbg_ps("ps.cpp: %d%c",z2,(q % 8) == 7 ? '\n' : ' ');
   }
 
@@ -195,13 +180,13 @@ extern "C" int cosim_main(char *argstr) {
               "(testing ARM GP1 connections)\n");
 
   bsg_pr_info("ps.cpp: reading mtimecmp\n");
-  int y = zpl->axil_read(GP1_CSR_BASE_ADDR + 0x304000);
+  int y = zpl->shell_read(GP1_CSR_BASE_ADDR + 0x304000);
 
   bsg_pr_info("ps.cpp: writing mtimecmp\n");
-  zpl->axil_write(GP1_CSR_BASE_ADDR + 0x304000, y + 1, mask1);
+  zpl->shell_write(GP1_CSR_BASE_ADDR + 0x304000, y + 1, mask1);
 
   bsg_pr_info("ps.cpp: reading mtimecmp\n");
-  assert(zpl->axil_read(GP1_CSR_BASE_ADDR + 0x304000) == y + 1);
+  assert(zpl->shell_read(GP1_CSR_BASE_ADDR + 0x304000) == y + 1);
 
 #ifdef DRAM_TEST
 
@@ -210,11 +195,11 @@ extern "C" int cosim_main(char *argstr) {
       "ps.cpp: attempting to write L2 %ld times over %ld MB (testing ARM GP1 "
       "and HP0 connections)\n",
       num_times * outer, (allocated_dram) >> 20);
-  zpl->axil_write(GP1_DRAM_BASE_ADDR, 0x12345678, mask1);
+  zpl->shell_write(GP1_DRAM_BASE_ADDR, 0x12345678, mask1);
 
   for (int s = 0; s < outer; s++)
     for (int t = 0; t < num_times; t++) {
-      zpl->axil_write(GP1_DRAM_BASE_ADDR + 32768 * t + s * 4, 0x1ADACACA + t + s,
+      zpl->shell_write(GP1_DRAM_BASE_ADDR + 32768 * t + s * 4, 0x1ADACACA + t + s,
                       mask1);
     }
   bsg_pr_info("ps.cpp: finished write L2 %ld times over %ld MB\n",
@@ -223,7 +208,7 @@ extern "C" int cosim_main(char *argstr) {
   int mismatches = 0;
   int matches = 0;
 
-#ifdef FPGA
+#ifdef ZYNQ
   for (int s = 0; s < outer; s++)
     for (int t = 0; t < num_times; t++)
       if (buf[(32768 * t + s * 4) / 4] == 0x1ADACACA + t + s)
@@ -243,7 +228,7 @@ extern "C" int cosim_main(char *argstr) {
       num_times * outer, (allocated_dram) >> 20);
   for (int s = 0; s < outer; s++)
     for (int t = 0; t < num_times; t++)
-      if (zpl->axil_read(GP1_DRAM_BASE_ADDR + 32768 * t + s * 4) == 0x1ADACACA + t + s)
+      if (zpl->shell_read(GP1_DRAM_BASE_ADDR + 32768 * t + s * 4) == 0x1ADACACA + t + s)
         matches++;
       else
         mismatches++;
@@ -255,14 +240,14 @@ extern "C" int cosim_main(char *argstr) {
 
 #endif // DRAM_TEST
 
-#ifdef FPGA
+#ifdef ZYNQ
   // Must zero DRAM for FPGA Linux boot, because opensbi payload mode
   //   obliterates the section names of the payload (Linux)
   if (ZERO_DRAM) {
     bsg_pr_info("ps.cpp: Zero-ing DRAM (%d bytes)\n", DRAM_ALLOCATE_SIZE);
     for (int i = 0; i < DRAM_ALLOCATE_SIZE; i+=4) {
       if (i % (1024*1024) == 0) bsg_pr_info("ps.cpp: zero-d %d MB\n", i/(1024*1024));
-      zpl->axil_write(gp1_addr_base + i, 0x0, mask1);
+      zpl->shell_write(gp1_addr_base + i, 0x0, mask1);
     }
   }
 #endif
@@ -288,8 +273,8 @@ extern "C" int cosim_main(char *argstr) {
   bsg_pr_info("ps.cpp: Starting i/o polling thread\n");
   while (1) {
     // keep reading as long as there is data
-    if (zpl->axil_read(GP0_RD_PL2PS_FIFO_CTRS) != 0) {
-      decode_bp_output(zpl, zpl->axil_read(GP0_RD_PL2PS_FIFO_DATA));
+    if (zpl->shell_read(GP0_RD_PL2PS_FIFO_CTRS) != 0) {
+      decode_bp_output(zpl, zpl->shell_read(GP0_RD_PL2PS_FIFO_DATA));
     }
     // break loop when all cores done
     if (done_vec.all()) {
@@ -343,11 +328,11 @@ extern "C" int cosim_main(char *argstr) {
 
   bsg_pr_info("ps.cpp: BP DRAM USAGE MASK (each bit is 8 MB): "
               "%-8.8d%-8.8d%-8.8d%-8.8d\n",
-              zpl->axil_read(GP0_RD_MEM_PROF_3),
-              zpl->axil_read(GP0_RD_MEM_PROF_2),
-              zpl->axil_read(GP0_RD_MEM_PROF_1),
-              zpl->axil_read(GP0_RD_MEM_PROF_0));
-#ifdef FPGA
+              zpl->shell_read(GP0_RD_MEM_PROF_3),
+              zpl->shell_read(GP0_RD_MEM_PROF_2),
+              zpl->shell_read(GP0_RD_MEM_PROF_1),
+              zpl->shell_read(GP0_RD_MEM_PROF_0));
+#ifdef ZYNQ
   // in general we do not want to free the dram; the Xilinx allocator has a
   // tendency to
   // fail after many allocate/fail cycle. instead we keep a pointer to the dram
@@ -358,7 +343,7 @@ extern "C" int cosim_main(char *argstr) {
   if (FREE_DRAM) {
     bsg_pr_info("ps.cpp: freeing DRAM buffer\n");
     zpl->free_dram((void *)buf);
-    zpl->axil_write(GP0_WR_CSR_DRAM_INITED, 0x0, mask2);
+    zpl->shell_write(GP0_WR_CSR_DRAM_INITED, 0x0, mask2);
   }
 #endif
 
@@ -404,7 +389,7 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
     if (nbf[0] == 0x3 || nbf[0] == 0x2 || nbf[0] == 0x1 || nbf[0] == 0x0) {
       // we map BP physical addresses for DRAM (0x8000_0000 - 0x9FFF_FFFF) (256MB)
       // to the same ARM physical addresses
-      // see top_fpga.v for more details
+      // see top_zynq.v for more details
 
       // we map BP physical address for CSRs etc (0x0000_0000 - 0x0FFF_FFFF)
       // to ARM address to 0xA0000_0000 - 0xAFFF_FFFF  (256MB)
@@ -414,25 +399,25 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
         base_addr = GP1_CSR_BASE_ADDR;
 
       if (nbf[0] == 0x3) {
-        zpl->axil_write(base_addr + nbf[1], nbf[2], 0xf);
-        zpl->axil_write(base_addr + nbf[1] + 4, nbf[2] >> 32, 0xf);
+        zpl->shell_write(base_addr + nbf[1], nbf[2], 0xf);
+        zpl->shell_write(base_addr + nbf[1] + 4, nbf[2] >> 32, 0xf);
       }
       else if (nbf[0] == 0x2) {
-        zpl->axil_write(base_addr + nbf[1], nbf[2], 0xf);
+        zpl->shell_write(base_addr + nbf[1], nbf[2], 0xf);
       }
       else if (nbf[0] == 0x1) {
         int offset = nbf[1] % 4;
         int shift = 2 * offset;
-        data = zpl->axil_read(base_addr + nbf[1] - offset);
+        data = zpl->shell_read(base_addr + nbf[1] - offset);
         data = data & rotl((uint32_t)0xffff0000,shift) + nbf[2] & ((uint32_t)0x0000ffff << shift);
-        zpl->axil_write(base_addr + nbf[1] - offset, data, 0xf);
+        zpl->shell_write(base_addr + nbf[1] - offset, data, 0xf);
       }
       else {
         int offset = nbf[1] % 4;
         int shift = 2 * offset;
-        data = zpl->axil_read(base_addr + nbf[1] - offset);
+        data = zpl->shell_read(base_addr + nbf[1] - offset);
         data = data & rotl((uint32_t)0xffffff00,shift) + nbf[2] & ((uint32_t)0x000000ff << shift);
-        zpl->axil_write(base_addr + nbf[1] - offset, data, 0xf);
+        zpl->shell_write(base_addr + nbf[1] - offset, data, 0xf);
       }
     }
     else if (nbf[0] == 0xfe) {
@@ -479,9 +464,9 @@ bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
     // getchar
     if (address == 0x100000) {
       if (getchar_queue.empty()) {
-        zpl->axil_write(GP0_WR_PS2PL_FIFO_DATA, -1, 0xf);
+        zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, -1, 0xf);
       } else {
-        zpl->axil_write(GP0_WR_PS2PL_FIFO_DATA, getchar_queue.front(), 0xf);
+        zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, getchar_queue.front(), 0xf);
         getchar_queue.pop();
       }
     }
@@ -491,11 +476,11 @@ bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
       int offset = address - 0x120000;
       // CC_X_DIM, return number of cores
       if (offset == 0x0) {
-        zpl->axil_write(GP0_WR_PS2PL_FIFO_DATA, BP_NCPUS, 0xf);
+        zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, BP_NCPUS, 0xf);
       }
       // CC_Y_DIM, just return 1 so X*Y == number of cores
       else if (offset == 0x4) {
-        zpl->axil_write(GP0_WR_PS2PL_FIFO_DATA, 1, 0xf);
+        zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, 1, 0xf);
       }
     }
     // if not implemented, print error

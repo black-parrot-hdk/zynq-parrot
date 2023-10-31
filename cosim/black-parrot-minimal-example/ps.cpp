@@ -54,8 +54,8 @@ inline void send_bp_fwd_packet(bsg_zynq_pl *zpl, bp_bedrock_packet *packet) {
   
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
   for (int i = 0; i < axil_len; i++) {
-    while (!zpl->axil_read(GP0_RD_PS2PL_FIFO_CTRS));
-    zpl->axil_write(GP0_WR_PS2PL_FIFO_DATA, pkt_data[i], 0xf);
+    while (!zpl->shell_read(GP0_RD_PS2PL_FIFO_CTRS));
+    zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, pkt_data[i], 0xf);
   }
 }
 
@@ -64,8 +64,8 @@ inline void recv_rev_packet(bsg_zynq_pl *zpl, bp_bedrock_packet *packet) {
 
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
   for (int i = 0; i < axil_len; i++) {
-    while (!zpl->axil_read(GP0_RD_PL2PS_FIFO_CTRS));
-    pkt_data[i] = zpl->axil_read(GP0_RD_PL2PS_FIFO_DATA);
+    while (!zpl->shell_read(GP0_RD_PL2PS_FIFO_CTRS));
+    pkt_data[i] = zpl->shell_read(GP0_RD_PL2PS_FIFO_DATA);
   }
 }
 
@@ -127,9 +127,9 @@ inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr, bool bp_not_shel
       val_lo = send_bp_read(zpl, addr + 0);
       val_hi2 = send_bp_read(zpl, addr + 4);
     } else {
-      val_hi = zpl->axil_read(addr + 4);
-      val_lo = zpl->axil_read(addr + 0);
-      val_hi2 = zpl->axil_read(addr + 4);
+      val_hi = zpl->shell_read(addr + 4);
+      val_lo = zpl->shell_read(addr + 0);
+      val_hi2 = zpl->shell_read(addr + 4);
     }
     if (val_hi == val_hi2) {
       val = val_hi << 32;
@@ -140,20 +140,7 @@ inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr, bool bp_not_shel
   } while (1);
 }
 
-#ifdef VERILATOR
-int main(int argc, char **argv) {
-#elif FPGA
-int main(int argc, char **argv) {
-#else
-extern "C" int cosim_main(char *argstr) {
-  int argc = get_argc(argstr);
-  char *argv[argc];
-  get_argv(argstr, argc, argv);
-#endif
-  // this ensures that even with tee, the output is line buffered
-  // so that we can see what is happening in real time
-
-  setvbuf(stdout, NULL, _IOLBF, 0);
+int ps_main(int argc, char **argv) {
 
   bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
@@ -169,27 +156,27 @@ extern "C" int cosim_main(char *argstr) {
   int32_t val;
   bsg_pr_info("ps.cpp: reading three base registers\n");
   bsg_pr_info("ps.cpp: reset(lo)=%d, dram_init=%d, dram_base=%d\n",
-              zpl->axil_read(GP0_RD_CSR_SYS_RESETN),
-              zpl->axil_read(GP0_RD_CSR_DRAM_INITED),
-              val = zpl->axil_read(GP0_RD_CSR_DRAM_BASE));
+              zpl->shell_read(GP0_RD_CSR_SYS_RESETN),
+              zpl->shell_read(GP0_RD_CSR_DRAM_INITED),
+              val = zpl->shell_read(GP0_RD_CSR_DRAM_BASE));
 
   bsg_pr_info("ps.cpp: attempting to write and read register 0x8\n");
 
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, 0xDEADBEEF, mask1);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == (0xDEADBEEF)));
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, val, mask1);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == (val)));
+  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, 0xDEADBEEF, mask1);
+  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == (0xDEADBEEF)));
+  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, val, mask1);
+  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == (val)));
 
   bsg_pr_info("ps.cpp: successfully wrote and read registers in bsg_zynq_shell "
               "(verified ARM GP0 connection)\n");
 
   // Deassert the active-low system reset as we finish initializing the whole system
-  zpl->axil_write(GP0_RD_CSR_SYS_RESETN, 0x1, 0xF);
+  zpl->shell_write(GP0_RD_CSR_SYS_RESETN, 0x1, 0xF);
 
-#ifdef FPGA
+#ifdef ZYNQ
   unsigned long phys_ptr;
   volatile int32_t *buf;
-  data = zpl->axil_read(GP0_RD_CSR_DRAM_INITED);
+  data = zpl->shell_read(GP0_RD_CSR_DRAM_INITED);
   if (data == 0) {
     bsg_pr_info(
         "ps.cpp: CSRs do not contain a DRAM base pointer; calling allocate "
@@ -197,19 +184,19 @@ extern "C" int cosim_main(char *argstr) {
         allocated_dram);
     buf = (volatile int32_t *)zpl->allocate_dram(allocated_dram, &phys_ptr);
     bsg_pr_info("ps.cpp: received %p (phys = %lx)\n", buf, phys_ptr);
-    zpl->axil_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, mask1);
-    assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == (phys_ptr)));
+    zpl->shell_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, mask1);
+    assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == (phys_ptr)));
     bsg_pr_info("ps.cpp: wrote and verified base register\n");
-    zpl->axil_write(GP0_RD_CSR_DRAM_INITED, 1, mask1);
-    assert(zpl->axil_read(GP0_RD_CSR_DRAM_INITED) == 1);
+    zpl->shell_write(GP0_RD_CSR_DRAM_INITED, 1, mask1);
+    assert(zpl->shell_read(GP0_RD_CSR_DRAM_INITED) == 1);
   } else
     bsg_pr_info("ps.cpp: reusing dram base pointer %x\n",
-                zpl->axil_read(GP0_RD_CSR_DRAM_BASE));
+                zpl->shell_read(GP0_RD_CSR_DRAM_BASE));
 
   int outer = 1024 / 4;
 #else
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, val1, mask1);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == (val1)));
+  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, val1, mask1);
+  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == (val1)));
   bsg_pr_info("ps.cpp: wrote and verified base register\n");
 
   int outer = 8 / 4;
@@ -246,7 +233,7 @@ extern "C" int cosim_main(char *argstr) {
   bsg_pr_info("ps.cpp: reading mtimecmp\n");
   assert(send_bp_read(zpl, BP_MTIMECMP) == y + 1);
 
-#ifdef FPGA
+#ifdef ZYNQ
   // Must zero DRAM for FPGA Linux boot, because opensbi payload mode
   //   obliterates the section names of the payload (Linux)
   if (ZERO_DRAM) {
@@ -278,7 +265,7 @@ extern "C" int cosim_main(char *argstr) {
   int mismatches = 0;
   int matches = 0;
 
-#ifdef FPGA
+#ifdef ZYNQ
   for (int s = 0; s < outer; s++)
     for (int t = 0; t < num_times; t++)
       if (buf[(32768 * t + s * 4) / 4] == 0x1ADACACA + t + s)
@@ -298,7 +285,7 @@ extern "C" int cosim_main(char *argstr) {
       num_times * outer, (allocated_dram) >> 20);
   for (int s = 0; s < outer; s++)
     for (int t = 0; t < num_times; t++)
-      if (zpl->axil_read(DRAM_BASE_ADDR + 32768 * t + s * 4) == 0x1ADACACA + t + s)
+      if (zpl->shell_read(DRAM_BASE_ADDR + 32768 * t + s * 4) == 0x1ADACACA + t + s)
         matches++;
       else
         mismatches++;
@@ -327,8 +314,8 @@ extern "C" int cosim_main(char *argstr) {
     uint32_t pkt_data[axil_len];
     // keep reading as long as there is data
     for (int i = 0; i < axil_len; i++) {
-      while (!zpl->axil_read(GP0_RD_PL2PS_FIFO_CTRS+4));
-      pkt_data[i] = zpl->axil_read(GP0_RD_PL2PS_FIFO_DATA+4);
+      while (!zpl->shell_read(GP0_RD_PL2PS_FIFO_CTRS+4));
+      pkt_data[i] = zpl->shell_read(GP0_RD_PL2PS_FIFO_DATA+4);
     }
 
     // Assume writes only
@@ -379,11 +366,11 @@ extern "C" int cosim_main(char *argstr) {
 
   bsg_pr_info("ps.cpp: BP DRAM USAGE MASK (each bit is 8 MB): "
               "%-8.8d%-8.8d%-8.8d%-8.8d\n",
-              zpl->axil_read(GP0_RD_MEM_PROF_3),
-              zpl->axil_read(GP0_RD_MEM_PROF_2),
-              zpl->axil_read(GP0_RD_MEM_PROF_1),
-              zpl->axil_read(GP0_RD_MEM_PROF_0));
-#ifdef FPGA
+              zpl->shell_read(GP0_RD_MEM_PROF_3),
+              zpl->shell_read(GP0_RD_MEM_PROF_2),
+              zpl->shell_read(GP0_RD_MEM_PROF_1),
+              zpl->shell_read(GP0_RD_MEM_PROF_0));
+#ifdef ZYNQ
   // in general we do not want to free the dram; the Xilinx allocator has a
   // tendency to
   // fail after many allocate/fail cycle. instead we keep a pointer to the dram
@@ -394,7 +381,7 @@ extern "C" int cosim_main(char *argstr) {
   if (FREE_DRAM) {
     bsg_pr_info("ps.cpp: freeing DRAM buffer\n");
     zpl->free_dram((void *)buf);
-    zpl->axil_write(GP0_WR_CSR_DRAM_INITED, 0x0, mask2);
+    zpl->shell_write(GP0_WR_CSR_DRAM_INITED, 0x0, mask2);
   }
 #endif
 
@@ -457,7 +444,7 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
     }
   }
   bsg_pr_dbg_ps("ps.cpp: waiting for credit returns.\n", credit_count);
-  while (zpl->axil_read(GP0_RD_CREDITS));
+  while (zpl->shell_read(GP0_RD_CREDITS));
 
   bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
 }

@@ -39,8 +39,8 @@ inline void send_mc_request_packet(bsg_zynq_pl *zpl, hb_mc_request_packet_t *pac
 
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
   for (int i = 0; i < axil_len; i++) {
-    while (!zpl->axil_read(GP0_RD_EP_REQ_FIFO_CTR));
-    zpl->axil_write(GP0_WR_EP_REQ_FIFO_DATA, pkt_data[i], 0xf);
+    while (!zpl->shell_read(GP0_RD_EP_REQ_FIFO_CTR));
+    zpl->shell_write(GP0_WR_EP_REQ_FIFO_DATA, pkt_data[i], 0xf);
   }
 }
 
@@ -49,8 +49,8 @@ inline void recv_mc_response_packet(bsg_zynq_pl *zpl, hb_mc_response_packet_t *p
 
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
   for (int i = 0; i < axil_len; i++) {
-    while (!zpl->axil_read(GP0_RD_MC_RSP_FIFO_CTR));
-    pkt_data[i] = zpl->axil_read(GP0_RD_MC_RSP_FIFO_DATA);
+    while (!zpl->shell_read(GP0_RD_MC_RSP_FIFO_CTR));
+    pkt_data[i] = zpl->shell_read(GP0_RD_MC_RSP_FIFO_DATA);
   }
 }
 
@@ -59,8 +59,8 @@ inline void recv_mc_request_packet(bsg_zynq_pl *zpl, hb_mc_request_packet_t *pac
 
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
   for (int i = 0; i < axil_len; i++) {
-    while (!zpl->axil_read(GP0_RD_MC_REQ_FIFO_CTR));
-    pkt_data[i] = zpl->axil_read(GP0_RD_MC_REQ_FIFO_DATA);
+    while (!zpl->shell_read(GP0_RD_MC_REQ_FIFO_CTR));
+    pkt_data[i] = zpl->shell_read(GP0_RD_MC_REQ_FIFO_DATA);
   }
 }
 
@@ -101,31 +101,17 @@ inline int32_t send_mc_read(bsg_zynq_pl *zpl, uint8_t x, uint8_t y, uint32_t epa
   return resp_pkt.data;
 }
 
-#ifdef VERILATOR
-int main(int argc, char **argv) {
-#elif FPGA
-int main(int argc, char **argv) {
-#else
-extern "C" int cosim_main(char *argstr) {
-  int argc = get_argc(argstr);
-  char *argv[argc];
-  get_argv(argstr, argc, argv);
-#endif
-  // this ensures that even with tee, the output is line buffered
-  // so that we can see what is happening in real time
-
-  setvbuf(stdout, NULL, _IOLBF, 0);
-
+int ps_main(int argc, char **argv) {
   bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
   bsg_pr_info("ps.cpp: reading three base registers\n");
-  bsg_pr_info("ps.cpp: dram_base=%lx\n", zpl->axil_read(0x00 + gp0_addr_base));
+  bsg_pr_info("ps.cpp: dram_base=%lx\n", zpl->shell_read(0x00 + gp0_addr_base));
 
-  long val;
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, 0xDEADBEEF, 0xf);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == (0xDEADBEEF)));
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, val, 0xf);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == val));
+  uint32_t val;
+  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, 0xDEADBEEF, 0xf);
+  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == (0xDEADBEEF)));
+  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, val, 0xf);
+  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == val));
 
   bsg_tag_bitbang *btb = new bsg_tag_bitbang(zpl, GP0_WR_CSR_TAG_BITBANG, TAG_NUM_CLIENTS, TAG_MAX_LEN);
   bsg_tag_client *mc_reset_client = new bsg_tag_client(TAG_CLIENT_MC_RESET_ID, TAG_CLIENT_MC_RESET_WIDTH);
@@ -142,21 +128,21 @@ extern "C" int cosim_main(char *argstr) {
   // We need some additional toggles for data to propagate through
   btb->idle(50);
   // Deassert the active-low system reset as we finish initializing the whole system
-  zpl->axil_write(GP0_WR_CSR_SYS_RESETN, 0x1, 0xF);
+  zpl->shell_write(GP0_WR_CSR_SYS_RESETN, 0x1, 0xF);
 
-#ifdef FPGA
+#ifdef ZYNQ
   unsigned long phys_ptr;
   volatile int32_t *buf;
   long allocated_dram = DRAM_ALLOCATE_SIZE;
   bsg_pr_info("ps.cpp: calling allocate dram with size %ld\n", allocated_dram);
   buf = (volatile int32_t *)zpl->allocate_dram(allocated_dram, &phys_ptr);
   bsg_pr_info("ps.cpp: received %p (phys = %lx)\n", buf, phys_ptr);
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, 0xf);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == phys_ptr));
+  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, 0xf);
+  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == phys_ptr));
   bsg_pr_info("ps.cpp: wrote and verified base register\n");
 #else
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, 0xdeadbeef, 0xf);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == 0xdeadbeef));
+  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, 0xdeadbeef, 0xf);
+  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == 0xdeadbeef));
   bsg_pr_info("ps.cpp: wrote and verified base register\n");
 #endif
 
@@ -238,7 +224,7 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
     } else if (fence) {
       bsg_pr_dbg_ps("ps.cpp: nbf fence command (ignoring), line %d\n", line_count);
       bsg_pr_info("Waiting for credit drain\n");
-      while(zpl->axil_read(GP0_RD_CREDIT_COUNT) > 0);
+      while(zpl->shell_read(GP0_RD_CREDIT_COUNT) > 0);
       bsg_pr_info("Credits drained\n");
       continue;
     } else {

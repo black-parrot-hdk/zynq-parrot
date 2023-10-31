@@ -1,22 +1,26 @@
 
+include $(COSIM_MK_DIR)/Makefile.env
+
 ifeq ($(shell /usr/bin/arch),armv7l)
 else ifeq ($(shell /usr/bin/arch),aarch64)
 else
-$(error FPGA code should be run on the PS, not x86)
+$(error ZYNQ code should be run on the PS, not x86)
 endif
 
-CFLAGS += -DFPGA
+CFLAGS += -DZYNQ
+CFLAGS += -DHOST_$(call upper,$(HOST))
+CFLAGS += $(addprefix -D,$(DEFINES))
 CFLAGS += -O2
 CFLAGS += -lcma -lpthread
 CFLAGS += -std=c++14
 
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
-CINCLUDES += -I$(COSIM_INCLUDE_DIR)/fpga
+CINCLUDES += -I$(COSIM_INCLUDE_DIR)/zynq
 CINCLUDES += -I$(CURR_DESIGN_DIR)
 
 all:
-	@echo "Rules for FPGA; see $(TOP)/cosim/mk/Makefile.fpga for more:"
-	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.fpga
+	@echo "Rules for ZYNQ; see $(TOP)/cosim/mk/Makefile.zynq for more:"
+	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.zynq
 
 EXE ?= control-program
 run: $(EXE) $(RUN_COLLATERAL)
@@ -29,7 +33,7 @@ reset_pl:
 	echo 'from pynq import PL; PL.reset();' | sudo -E $(PYTHON3)
 
 unpack_bitstream:
-	base64 -d ../$(BASENAME)_bd_1.$(BOARDNAME).tar.xz.b64 | tar xvJ
+	$(BASE64) -d ../$(BASENAME)_bd_1.$(HOST).$(BOARDNAME).tar.xz.b64 | $(TAR) xvJ
 
 # load the bitstream on the Zynq board (copy the .b64 file into this dir first)
 # make sure to unpack it first

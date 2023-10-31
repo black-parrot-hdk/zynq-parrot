@@ -1,46 +1,5 @@
 
-
-#############################
-# Project Settings
-#############################
-# TCL to pause between stages, batch to proceed straight through
-VIVADO_MODE ?= tcl
-
-# ultra96v2, pynqz2
-ifeq ($(BOARDNAME),ultra96v2)
-PART ?= xczu3eg-sbva484-1-e
-else ifeq ($(BOARDNAME),pynqz2)
-PART ?= xc7z020clg400-1
-else
-$(error Invalid BOARDNAME)
-endif
-
-ifeq (,$(TOP_MODULE))
-$(error TOP_MODULE should be set by makefile)
-endif
-ifeq (,$(BASENAME))
-$(error BASENAME should be set by makefile)
-endif
-
-#############################
-# Environment Settings
-#############################
-# These are set by bsg_cadenv but can be overridden
-VIVADO_PATH ?= /tools/Xilinx/Vivado
-# current supported 2019.1 and 2022.1
-VIVADO_VERSION ?= 2022.1
-# Path to specific Vivado install
-XILINX_VIVADO ?= $(VIVADO_PATH)/$(VIVADO_VERSION)
-# update this with a pointer to your vivado install
-XILINX_SETTINGS ?= $(XILINX_VIVADO)/settings64.sh
-
-#############################
-# Export to TCL
-#############################
-export BOARDNAME
-export PART
-export BASENAME
-export TOP_MODULE
+include $(COSIM_MK_DIR)/Makefile.env
 
 all:
 	@echo "Rules for Vivado; see $(TOP)/cosim/mk/Makefile.vivado for more:"
@@ -65,7 +24,7 @@ ip_repo: $(FLIST) $(BUILD_COLLATERAL)
 	-@tail -n5 vivado.log
 
 fpga_build: ip_repo
-	source $(XILINX_SETTINGS) && $(VIVADO) -source $(CURR)/vivado-create-block.$(BOARDNAME).$(VIVADO_VERSION).tcl -mode $(VIVADO_MODE)
+	source $(XILINX_SETTINGS) && $(VIVADO) -source $(CURR)/vivado-create-block.$(HOST).$(BOARDNAME).$(VIVADO_VERSION).tcl -mode $(VIVADO_MODE)
 	$(MAKE) fpga_report_build_block
 
 # we are looking for a *_bd_1.bit, *_bd_1_bd.tcl, *_bd_1.hwh
@@ -88,7 +47,13 @@ ifeq ($(VIVADO_VERSION),2022.1)
 	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.tcl $(BASENAME)_bd_1_bd.tcl
 	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.bit $(BASENAME)_bd_1.bit
 endif
-	tar -Jc $(BASENAME)_bd_1* | base64 > ../$(BASENAME)_bd_1.$(BOARDNAME).tar.xz.b64
+	tar -Jc $(BASENAME)_bd_1* | base64 > ../$(BASENAME)_bd_1.$(HOST).$(BOARDNAME).tar.xz.b64
+
+open:
+	$(VIVADO) $(BASENAME)_bd_proj.xpr &
+
+open_ip.%:
+	$(VIVADO) $*_ip_proj.xpr &
 
 clean:
 	rm -rf $(BUILD_COLLATERAL)

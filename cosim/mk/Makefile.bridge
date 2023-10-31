@@ -1,0 +1,34 @@
+
+include $(COSIM_MK_DIR)/Makefile.env
+
+CFLAGS += -DBRIDGE
+CFLAGS += -DHOST_$(call upper,$(HOST))
+CFLAGS += $(addprefix -D,$(DEFINES))
+CFLAGS += -O2
+CFLAGS += -std=c++14
+
+CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
+CINCLUDES += -I$(COSIM_INCLUDE_DIR)/bridge
+CINCLUDES += -I$(CURR_DESIGN_DIR)
+
+all:
+	@echo "Rules for BRIDGE; see $(TOP)/cosim/mk/Makefile.bridge for more:"
+	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.bridge
+
+EXE ?= control-program
+run: $(EXE) $(RUN_COLLATERAL)
+	sudo ./$< $(SIM_ARGS) | tee run.log
+
+$(EXE): $(HOST_PROGRAM) $(BUILD_COLLATERAL)
+	$(GCC) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $(CSOURCES) $< $(CFLAGS) $(LDFLAGS) -o $@
+
+unpack_bitstream:
+	$(BASE64) -d ../$(BASENAME)_bd_1.$(HOST).$(BOARDNAME).tar.xz.b64 | $(TAR) xvJ
+
+program_fpga:
+	source $(XILINX_SETTINGS) && $(VIVADO) -source $(COSIM_TCL_DIR)/program_fpga.tcl -mode $(VIVADO_MODE)
+
+clean:
+	rm -rf $(EXE) $(BUILD_COLLATERAL) $(SIM_COLLATERAL)
+	rm -rf *.log
+

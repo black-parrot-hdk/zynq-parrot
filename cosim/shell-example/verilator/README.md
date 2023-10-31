@@ -14,7 +14,7 @@ that can be easily re-implemented to run on the actual PS system
     -    int axil_read(int address);
     -    bool done(void);
 
-- cosim/common/v/bsg_zynq_pl_shell.v: BSG standardized shell for interfacing PS to PL
+- cosim/common/v/bsg_zynq_pl_shell.sv: BSG standardized shell for interfacing PS to PL
 
 - top.v:  example accelerator to live in PL, suitable for Xilinx IPI integration
           (see this [class lab](https://docs.google.com/document/d/1U9XIxLkjbI1vQR5hxjk8SzqqQ3sM2hCMUXfoK3tGwBU/edit#heading=h.4f0hegamev6v)

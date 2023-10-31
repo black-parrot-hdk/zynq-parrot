@@ -9,16 +9,7 @@
 #include <stdio.h>
 #include "bsg_zynq_pl.h"
 
-#ifdef VERILATOR
-int main(int argc, char **argv) {
-#elif FPGA
-int main(int argc, char **argv) {
-#else
-extern "C" int cosim_main(char *argstr) {
-  int argc = get_argc(argstr);
-  char *argv[argc];
-  get_argv(argstr, argc, argv);
-#endif
+int ps_main(int argc, char **argv) {
   bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
   // this program just communicates with a "loopback accelerator"
@@ -29,14 +20,15 @@ extern "C" int cosim_main(char *argstr) {
   int mask1 = 0xf;
   int mask2 = 0xf;
 
-  zpl->axil_write(0x0 + GP0_ADDR_BASE, val1, mask1);
-  zpl->axil_write(0x4 + GP0_ADDR_BASE, val2, mask2);
+  zpl->shell_write(0x0 + GP0_ADDR_BASE, val1, mask1);
+  zpl->shell_write(0x4 + GP0_ADDR_BASE, val2, mask2);
 
-  assert((zpl->axil_read(0x0 + GP0_ADDR_BASE) == (val1)));
-  assert((zpl->axil_read(0x4 + GP0_ADDR_BASE) == (val2)));
+  assert((zpl->shell_read(0x0 + GP0_ADDR_BASE) == (val1)));
+  assert((zpl->shell_read(0x4 + GP0_ADDR_BASE) == (val2)));
 
   zpl->done();
 
   delete zpl;
   return 0;
 }
+

@@ -34,21 +34,7 @@ inline uint32x4_t set4(uint32_t a, uint32_t b, uint32_t c, uint32_t d) {
 
 #endif
 
-#ifdef VERILATOR
-int main(int argc, char **argv) {
-#elif FPGA
-int main(int argc, char **argv) {
-#else
-extern "C" void cosim_main(char *argstr) {
-  int argc = get_argc(argstr);
-  char *argv[argc];
-  get_argv(argstr, argc, argv);
-#endif
-  // this ensures that even with tee, the output is line buffered
-  // so that we can see what is happening in real time
-
-  setvbuf(stdout, NULL, _IOLBF, 0);
-
+int ps_main(int argc, char **argv) {
   bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
   // the read memory map is essentially
@@ -76,7 +62,7 @@ extern "C" void cosim_main(char *argstr) {
 #define TEST_LOOP    \
   *p = val;          \
   /* this will show the last address written; a good test for whether NEON is working */ \
-  printf("received %lx\n",zpl->axil_read(0x30 + GP0_ADDR_BASE)); \
+  printf("received %lx\n",zpl->shell_read(0x30 + GP0_ADDR_BASE)); \
   uint64_t start=get_microseconds();                             \
   int limit = 100000;                                            \
   for (int i = 0; i < limit; i++)                                \
@@ -109,77 +95,78 @@ extern "C" void cosim_main(char *argstr) {
 
   // write to two registers, checking our address snoop to see
   // actual address that was received over the AXI bus
-  zpl->axil_write(0x0 + GP0_ADDR_BASE, val1, mask1);
-  assert(zpl->axil_read(0x30 + GP0_ADDR_BASE) == 0x0);
-  zpl->axil_write(0x4 + GP0_ADDR_BASE, val2, mask2);
-  assert(zpl->axil_read(0x30 + GP0_ADDR_BASE) == 0x4);
+  zpl->shell_write(0x0 + GP0_ADDR_BASE, val1, mask1);
+  assert(zpl->shell_read(0x30 + GP0_ADDR_BASE) == 0x0);
+  zpl->shell_write(0x4 + GP0_ADDR_BASE, val2, mask2);
+  assert(zpl->shell_read(0x30 + GP0_ADDR_BASE) == 0x4);
   // 8,12
   
   // check output fifo counters
-  assert((zpl->axil_read(0x18 + GP0_ADDR_BASE) == 0));
-  assert((zpl->axil_read(0x1C + GP0_ADDR_BASE) == 0));
+  assert((zpl->shell_read(0x18 + GP0_ADDR_BASE) == 0));
+  assert((zpl->shell_read(0x1C + GP0_ADDR_BASE) == 0));
 
   // check input fifo counters
-  bsg_pr_dbg_ps("%lx\n", zpl->axil_read(0x20 + GP0_ADDR_BASE));
-  assert((zpl->axil_read(0x20 + GP0_ADDR_BASE) == 4));
-  assert((zpl->axil_read(0x24 + GP0_ADDR_BASE) == 4));
-  assert((zpl->axil_read(0x28 + GP0_ADDR_BASE) == 4));
-  assert((zpl->axil_read(0x2C + GP0_ADDR_BASE) == 4));
+  bsg_pr_dbg_ps("%lx\n", zpl->shell_read(0x20 + GP0_ADDR_BASE));
+  assert((zpl->shell_read(0x20 + GP0_ADDR_BASE) == 4));
+  assert((zpl->shell_read(0x24 + GP0_ADDR_BASE) == 4));
+  assert((zpl->shell_read(0x28 + GP0_ADDR_BASE) == 4));
+  assert((zpl->shell_read(0x2C + GP0_ADDR_BASE) == 4));
 
   // write to fifos
-  zpl->axil_write(0x10 + GP0_ADDR_BASE, val3, mask1);
+  zpl->shell_write(0x10 + GP0_ADDR_BASE, val3, mask1);
 
   // checker counters
-  assert((zpl->axil_read(0x20 + GP0_ADDR_BASE) == (3)));
-  assert((zpl->axil_read(0x24 + GP0_ADDR_BASE) == (4)));
+  assert((zpl->shell_read(0x20 + GP0_ADDR_BASE) == (3)));
+  assert((zpl->shell_read(0x24 + GP0_ADDR_BASE) == (4)));
 
   // write to fifo
-  zpl->axil_write(0x10 + GP0_ADDR_BASE, val1, mask1);
+  zpl->shell_write(0x10 + GP0_ADDR_BASE, val1, mask1);
   // checker counters
-  assert((zpl->axil_read(0x20 + GP0_ADDR_BASE) == (2)));
-  assert((zpl->axil_read(0x24 + GP0_ADDR_BASE) == (4)));
+  assert((zpl->shell_read(0x20 + GP0_ADDR_BASE) == (2)));
+  assert((zpl->shell_read(0x24 + GP0_ADDR_BASE) == (4)));
 
-  zpl->axil_write(0x14 + GP0_ADDR_BASE, val4, mask2);
-  zpl->axil_write(0x14 + GP0_ADDR_BASE, val2, mask2);
+  zpl->shell_write(0x14 + GP0_ADDR_BASE, val4, mask2);
+  zpl->shell_write(0x14 + GP0_ADDR_BASE, val2, mask2);
 
   // checker counters
-  assert((zpl->axil_read(0x20 + GP0_ADDR_BASE) == (4)));
-  assert((zpl->axil_read(0x24 + GP0_ADDR_BASE) == (4)));
+  assert((zpl->shell_read(0x20 + GP0_ADDR_BASE) == (4)));
+  assert((zpl->shell_read(0x24 + GP0_ADDR_BASE) == (4)));
 
   // check register writes
-  assert((zpl->axil_read(0x0 + GP0_ADDR_BASE) == (val1)));
-  assert((zpl->axil_read(0x4 + GP0_ADDR_BASE) == (val2)));
+  assert((zpl->shell_read(0x0 + GP0_ADDR_BASE) == (val1)));
+  assert((zpl->shell_read(0x4 + GP0_ADDR_BASE) == (val2)));
 
   // checker output counters
-  assert((zpl->axil_read(0x18 + GP0_ADDR_BASE) == (2)));
-  assert((zpl->axil_read(0x1C + GP0_ADDR_BASE) == (0)));
+  assert((zpl->shell_read(0x18 + GP0_ADDR_BASE) == (2)));
+  assert((zpl->shell_read(0x1C + GP0_ADDR_BASE) == (0)));
 
   // check that the output fifo has the sum of the input fifos
-  assert((zpl->axil_read(0x10 + GP0_ADDR_BASE) == (val3 + val4)));
-  assert((zpl->axil_read(0x10 + GP0_ADDR_BASE) == (val1 + val2)));
+  assert((zpl->shell_read(0x10 + GP0_ADDR_BASE) == (val3 + val4)));
+  assert((zpl->shell_read(0x10 + GP0_ADDR_BASE) == (val1 + val2)));
 
   // checker output counters
-  assert((zpl->axil_read(0x18 + GP0_ADDR_BASE) == (0)));
-  assert((zpl->axil_read(0x1C + GP0_ADDR_BASE) == (0)));
+  assert((zpl->shell_read(0x18 + GP0_ADDR_BASE) == (0)));
+  assert((zpl->shell_read(0x1C + GP0_ADDR_BASE) == (0)));
 
   // try a different set of input and output fifos
-  zpl->axil_write(0x18 + GP0_ADDR_BASE, val1, mask1);
-  zpl->axil_write(0x1C + GP0_ADDR_BASE, val2, mask2);
+  zpl->shell_write(0x18 + GP0_ADDR_BASE, val1, mask1);
+  zpl->shell_write(0x1C + GP0_ADDR_BASE, val2, mask2);
 
   // checker output counters
-  assert((zpl->axil_read(0x18 + GP0_ADDR_BASE) == (0)));
-  assert((zpl->axil_read(0x1C + GP0_ADDR_BASE) == (1)));
+  assert((zpl->shell_read(0x18 + GP0_ADDR_BASE) == (0)));
+  assert((zpl->shell_read(0x1C + GP0_ADDR_BASE) == (1)));
 
   // read value out of fifo
-  assert((zpl->axil_read(0x14 + GP0_ADDR_BASE) == (val1 + val2)));
+  assert((zpl->shell_read(0x14 + GP0_ADDR_BASE) == (val1 + val2)));
 
   // checker output counters
-  assert((zpl->axil_read(0x18 + GP0_ADDR_BASE) == (0)));
-  assert((zpl->axil_read(0x1C + GP0_ADDR_BASE) == (0)));
+  assert((zpl->shell_read(0x18 + GP0_ADDR_BASE) == (0)));
+  assert((zpl->shell_read(0x1C + GP0_ADDR_BASE) == (0)));
 
 
   printf("## everything passed; at end of test\n");
   zpl->done();
 
   delete zpl;
+  return 0;
 }

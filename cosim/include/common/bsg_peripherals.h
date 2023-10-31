@@ -2,6 +2,9 @@
 #ifndef BSG_PERIPHERALS_H
 #define BSG_PERIPHERALS_H
 
+#include <vector>
+#include <queue>
+
 // Scratchpad
 #define SCRATCHPAD_BASE 0x1000000
 #define SCRATCHPAD_SIZE 0x100000

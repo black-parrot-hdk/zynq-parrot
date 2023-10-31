@@ -1,4 +1,6 @@
 
+include $(COSIM_MK_DIR)/Makefile.env
+
 VCS_OPTS += -full64
 VCS_OPTS += -notice
 VCS_OPTS += -V
@@ -8,13 +10,18 @@ VCS_OPTS += +noportcoerce
 VCS_OPTS += -timescale=1ps/1ps
 VCS_OPTS += -diag timescale
 VCS_OPTS += -f flist.vcs
-VCS_OPTS += -top $(TOP_MODULE)
+VCS_OPTS += -top $(TB_MODULE)
 VCS_OPTS += -debug_pp
 VCS_OPTS += +vcs+lic+wait
 VCS_OPTS += +incdir+$(COSIM_DIR)/include/vcs
+VCS_OPTS += $(addprefix +define+,$(DEFINES))
+VCS_OPTS += $(MAIN_PROGRAM)
 
 CFLAGS += -DVCS
+CFLAGS += -DHOST_$(call upper,$(HOST))
+CFLAGS += -DHAS_COSIM_MAIN
 CFLAGS += -std=c++14
+CFLAGS += $(addprefix -D,$(DEFINES))
 
 LDFLAGS += -L$(BOOST_ROOT)/lib
 LDFLAGS += -lboost_coroutine -lboost_context -lboost_system

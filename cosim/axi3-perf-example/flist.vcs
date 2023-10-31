@@ -1,7 +1,6 @@
 +incdir+$BASEJUMP_STL_DIR/bsg_misc
 +incdir+$BASEJUMP_STL_DIR/bsg_test
 
-$CURR_SRC_DIR/axi3speed_v1_0_S00_AXI.v
-$CURR_SRC_DIR/axi3speed_v1_0.v
-
+$CURR_VSRC_DIR/top_zynq.v
+$CURR_VSRC_DIR/top.v
 

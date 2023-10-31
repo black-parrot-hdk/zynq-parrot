@@ -2,6 +2,8 @@
 #ifndef BSG_ARGPARSE_H
 #define BSG_ARGPARSE_H
 
+#include <unistd.h>
+
 // Given a string, determine the number of space-separated arguments
 static int get_argc(char *args) {
   char *cur = args, prev = ' ';

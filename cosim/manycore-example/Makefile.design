@@ -5,16 +5,19 @@ include $(TOP)/Makefile.common
 #############################
 # Design Settings
 #############################
+TB_MODULE  ?= bsg_nonsynth_zynq_testbench
 BOARDNAME  ?= pynqz2
 TOP_MODULE ?= top
 BASENAME   ?= manycore
 
-# Override to zynq-parrot machine path
-export BSG_MACHINE_PATH ?= $(BSG_REPLICANT_DIR)/machines/pod_X1Y1_mesh_X2Y2_hbm_one_pseudo_channel
+MAIN_PROGRAM ?= $(COSIM_CSRC_DIR)/main.cpp
+HOST_PROGRAM ?= $(CURR_DESIGN_DIR)/ps.cpp
 
 #############################
 # Build Collateral
 #############################
+# Override to zynq-parrot machine path
+BSG_MACHINE_PATH ?= $(BSG_REPLICANT_DIR)/machines/pod_X1Y1_mesh_X2Y2_hbm_one_pseudo_channel
 include $(BSG_MACHINE_PATH)/Makefile.machine.include
 # Arbitrary, need to be set
 HARDWARE_PATH     := $(BSG_REPLICANT_DIR)/hardware
@@ -23,25 +26,27 @@ BSG_PLATFORM_PATH := $(LIBRARIES_PATH)/platforms/bigblade-vcs
 BSG_F1_DIR        := $(BSG_REPLICANT_DIR)
 include $(BSG_REPLICANT_DIR)/hardware/hardware.mk
 
-$(CURR_SRC_DIR)/bsg_bladerunner_pkg.v: $(BSG_MACHINE_PATH)/bsg_bladerunner_pkg.v
+$(CURR_VSRC_DIR)/bsg_bladerunner_pkg.v: $(BSG_MACHINE_PATH)/bsg_bladerunner_pkg.v
 	cp $< $@
 	$(SED) -i "/parameter int bsg_machine_hetero_type_vec_gp/d" $@
 
-$(CURR_SRC_DIR)/bsg_bladerunner_configuration.v: $(BSG_MACHINE_PATH)/bsg_bladerunner_configuration.rom
+$(CURR_VSRC_DIR)/bsg_bladerunner_configuration.v: $(BSG_MACHINE_PATH)/bsg_bladerunner_configuration.rom
 	$(PYTHON2) $(ASCII_TO_ROM_PY) $< bsg_bladerunner_configuration > $@
 
 $(CURR_DESIGN_DIR)/bsg_manycore_machine.h: $(BSG_MACHINE_PATH)/bsg_manycore_machine.h
 	cp $< $@
 
 .PHONY: $(BUILD_COLLATERAL)
-BUILD_COLLATERAL = $(CURR_SRC_DIR)/bsg_bladerunner_pkg.v $(CURR_SRC_DIR)/bsg_bladerunner_configuration.v $(CURR_DESIGN_DIR)/bsg_manycore_machine.h
+BUILD_COLLATERAL = $(CURR_VSRC_DIR)/bsg_bladerunner_pkg.v $(CURR_VSRC_DIR)/bsg_bladerunner_configuration.v $(CURR_DESIGN_DIR)/bsg_manycore_machine.h
 
 #############################
 # Run Collateral
 #############################
+NBF_FILE   ?= hello.nbf
 NBF_SCRIPT ?= $(BSG_MANYCORE_DIR)/software/py/nbf.py
 %.riscv32:
-	$(MAKE) -C $(BSG_MANYCORE_SOFTWARE_DIR)/spmd/$* clean main.riscv
+	$(MAKE) BSG_MACHINE_PATH=$(BSG_MACHINE_PATH) -C $(BSG_MANYCORE_SOFTWARE_DIR)/spmd/$* \
+		clean main.riscv
 	mv $(BSG_MANYCORE_SOFTWARE_DIR)/spmd/$*/main.riscv $@
 
 # Vary per program

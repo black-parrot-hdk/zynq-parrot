@@ -5,7 +5,11 @@ include $(TOP)/Makefile.common
 #############################
 # Design Settings
 #############################
+TB_MODULE  ?= bsg_nonsynth_zynq_testbench
 BOARDNAME  ?= pynqz2
 TOP_MODULE ?= top
 BASENAME   ?= double_shell
+
+MAIN_PROGRAM ?= $(COSIM_CSRC_DIR)/main.cpp
+HOST_PROGRAM ?= $(CURR_DESIGN_DIR)/ps.cpp
 
