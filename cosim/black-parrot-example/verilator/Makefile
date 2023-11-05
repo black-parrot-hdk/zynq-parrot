@@ -5,8 +5,11 @@ include ../Makefile.design
 #############################
 NBF_FILE     ?= $(abspath ../prog.nbf)
 ELF_FILE     ?= $(abspath ../prog.elf)
-HOST_PROGRAM ?= $(abspath ../ps.cpp)
 SIM_ARGS     += $(NBF_FILE)
+HOST_PROGRAM ?= $(abspath ../ps.cpp)
+ifdef PK
+HOST_PROGRAM += $(abspath $(shell find ../htif/ -name '*.cc'))
+endif
 
 DROMAJO_COSIM ?= 0
 
@@ -22,7 +25,6 @@ DRAM_LATENCY ?= 80
 CFLAGS += -DZYNQ_PS_DEBUG
 CFLAGS += -DGP0_ENABLE -DGP0_ADDR_BASE=0x400000000U -DGP0_ADDR_WIDTH=10 -DGP0_DATA_WIDTH=32 -DGP0_HIER_BASE=TOP.top.axil0
 CFLAGS += -DGP1_ENABLE -DGP1_ADDR_BASE=0x500000000U -DGP1_ADDR_WIDTH=30 -DGP1_DATA_WIDTH=32 -DGP1_HIER_BASE=TOP.top.axil1
-CFLAGS += -DHP0_ENABLE -DHP0_ADDR_BASE=0x1000000U -DHP0_ADDR_WIDTH=32 -DHP0_DATA_WIDTH=32 -DHP0_HIER_BASE=TOP.top.axil2
 CFLAGS += -DGP2_ENABLE -DGP2_ADDR_BASE=0x800000000U -DGP2_ADDR_WIDTH=28 -DGP2_DATA_WIDTH=32 -DGP2_HIER_BASE=TOP.top.axil3
 CFLAGS += -DSCRATCHPAD_ENABLE
 CFLAGS += -DWATCHDOG_ENABLE
@@ -33,6 +35,9 @@ CFLAGS += -DDRAM_LATENCY=$(DRAM_LATENCY)
 CFLAGS += $(INCLUDES)
 ifeq ($(DROMAJO_COSIM),1)
 CFLAGS += -I$(BP_TOOLS_DIR)/dromajo/include
+endif
+ifdef PK
+CFLAGS += -DPK -I$(abspath ../htif/)
 endif
 
 # Enable backpressure, emulating context switches

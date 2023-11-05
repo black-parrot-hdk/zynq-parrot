@@ -4,8 +4,11 @@ include ../Makefile.design
 # Accelerator Software Settings
 #############################
 NBF_FILE     ?= $(abspath ../prog.nbf)
-HOST_PROGRAM ?= $(abspath ../ps.cpp)
 SIM_ARGS     += $(NBF_FILE)
+HOST_PROGRAM ?= $(abspath ../ps.cpp)
+ifdef PK
+HOST_PROGRAM += $(abspath $(shell find ../htif/ -name '*.cc'))
+endif
 
 SAMPLE_INTERVAL ?= 1
 DRAM_LATENCY ?= 80
@@ -30,6 +33,9 @@ else ifeq ($(BOARDNAME),ultra96v2)
 CFLAGS += -DGP0_ENABLE -DGP0_ADDR_BASE=0x400000000
 CFLAGS += -DGP1_ENABLE -DGP1_ADDR_BASE=0x500000000
 CFLAGS += -DDRAM_ALLOCATE_SIZE_MB=241
+endif
+ifdef PK
+CFLAGS += -DPK -I$(abspath ../htif/)
 endif
 
 include $(TOP)/cosim/mk/Makefile.fpga

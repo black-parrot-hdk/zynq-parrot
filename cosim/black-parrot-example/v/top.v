@@ -264,7 +264,7 @@ module top
        ,.rready_o(s01_axi_rready)
        );
 
-    logic [C_M01_AXI_ADDR_WIDTH-1:0] m01_axi_awaddr;
+    logic [C_M01_AXI_ADDR_WIDTH-1:0] m01_axi_awaddr, m01_axi_awaddr_offset;
     logic [2:0] m01_axi_awprot;
     logic m01_axi_awvalid, m01_axi_awready;
     logic [C_M01_AXI_DATA_WIDTH-1:0] m01_axi_wdata;
@@ -272,39 +272,61 @@ module top
     logic m01_axi_wvalid, m01_axi_wready;
     logic [1:0] m01_axi_bresp;
     logic m01_axi_bvalid, m01_axi_bready;
-    logic [C_M01_AXI_ADDR_WIDTH-1:0] m01_axi_araddr;
+    logic [C_M01_AXI_ADDR_WIDTH-1:0] m01_axi_araddr, m01_axi_araddr_offset;
     logic [2:0] m01_axi_arprot;
     logic m01_axi_arvalid, m01_axi_arready;
     logic [C_M01_AXI_DATA_WIDTH-1:0] m01_axi_rdata;
     logic [1:0] m01_axi_rresp;
     logic m01_axi_rvalid, m01_axi_rready;
-    bsg_nonsynth_axil_to_dpi
-     #(.addr_width_p(C_M01_AXI_ADDR_WIDTH), .data_width_p(C_M01_AXI_DATA_WIDTH))
-     axil2
-      (.aclk_i(aclk)
-       ,.aresetn_i(aresetn)
 
-       ,.awaddr_i(m01_axi_awaddr)
-       ,.awprot_i(m01_axi_awprot)
-       ,.awvalid_i(m01_axi_awvalid)
-       ,.awready_o(m01_axi_awready)
-       ,.wdata_i(m01_axi_wdata)
-       ,.wstrb_i(m01_axi_wstrb)
-       ,.wvalid_i(m01_axi_wvalid)
-       ,.wready_o(m01_axi_wready)
-       ,.bresp_o(m01_axi_bresp)
-       ,.bvalid_o(m01_axi_bvalid)
-       ,.bready_i(m01_axi_bready)
 
-       ,.araddr_i(m01_axi_araddr)
-       ,.arprot_i(m01_axi_arprot)
-       ,.arvalid_i(m01_axi_arvalid)
-       ,.arready_o(m01_axi_arready)
-       ,.rdata_o(m01_axi_rdata)
-       ,.rresp_o(m01_axi_rresp)
-       ,.rvalid_o(m01_axi_rvalid)
-       ,.rready_i(m01_axi_rready)
-       );
+    assign m01_axi_awaddr_offset = m01_axi_awaddr - 32'h10000;
+    assign m01_axi_araddr_offset = m01_axi_araddr - 32'h10000;
+
+   bsg_nonsynth_axi_mem
+     #(.axi_id_width_p(6)
+       ,.axi_addr_width_p(C_M01_AXI_DATA_WIDTH)
+       ,.axi_data_width_p(C_M01_AXI_DATA_WIDTH)
+       ,.axi_len_width_p(1)
+       ,.mem_els_p(2**13) //8KB
+       ,.init_data_p('0)
+     )
+   axi_boot_mem
+     (.clk_i          (aclk)
+      ,.reset_i       (~aresetn)
+
+      ,.axi_awid_i    ('0)
+      ,.axi_awaddr_i  (m01_axi_awaddr_offset)
+      ,.axi_awlen_i   ('0)
+      ,.axi_awburst_i (e_axi_burst_wrap)
+      ,.axi_awvalid_i (m01_axi_awvalid)
+      ,.axi_awready_o (m01_axi_awready)
+
+      ,.axi_wdata_i   (m01_axi_wdata)
+      ,.axi_wstrb_i   (m01_axi_wstrb)
+      ,.axi_wlast_i   (m01_axi_wvalid)
+      ,.axi_wvalid_i  (m01_axi_wvalid)
+      ,.axi_wready_o  (m01_axi_wready)
+
+      ,.axi_bid_o     ()
+      ,.axi_bresp_o   (m01_axi_bresp)
+      ,.axi_bvalid_o  (m01_axi_bvalid)
+      ,.axi_bready_i  (m01_axi_bready)
+
+      ,.axi_arid_i    ('0)
+      ,.axi_araddr_i  (m01_axi_araddr_offset)
+      ,.axi_arlen_i   ('0)
+      ,.axi_arburst_i (e_axi_burst_wrap)
+      ,.axi_arvalid_i (m01_axi_arvalid)
+      ,.axi_arready_o (m01_axi_arready)
+
+      ,.axi_rid_o     ()
+      ,.axi_rdata_o   (m01_axi_rdata)
+      ,.axi_rresp_o   (m01_axi_rresp)
+      ,.axi_rlast_o   (m01_axi_rvalid)
+      ,.axi_rvalid_o  (m01_axi_rvalid)
+      ,.axi_rready_i  (m01_axi_rready)
+      );
 
     logic [C_S02_AXI_ADDR_WIDTH-1:0] s02_axi_awaddr;
     logic [2:0] s02_axi_awprot;

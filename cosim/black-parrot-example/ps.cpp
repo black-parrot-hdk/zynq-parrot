@@ -11,6 +11,7 @@
 #include <time.h>
 #include <queue>
 #include <unistd.h>
+#include <string.h>
 #include <bitset>
 #include <cstdint>
 #include <iostream>
@@ -22,6 +23,13 @@
 #include "bsg_zynq_pl.h"
 #include "bsg_printing.h"
 #include "bsg_argparse.h"
+
+#ifdef PK
+#include "htif.h"
+#ifndef HTIF_INTERVAL
+#define HTIF_INTERVAL 1
+#endif
+#endif
 
 #ifndef FREE_DRAM
 #define FREE_DRAM 0
@@ -136,6 +144,12 @@ void *device_poll(void *vargp) {
   bsg_zynq_pl *zpl = ((struct threadArgs*)vargp)->zpl;
   char* nbf_filename = ((struct threadArgs*)vargp)->nbf_filename;
 
+#ifdef PK
+  printf("Running with HTIF\n");
+  htif_t* htif = new htif_t(zpl);
+  int htif_cntr = 0;
+#endif
+
   //open binary file for dumping samples
   char filename[100];
   if(strrchr(nbf_filename, '/') != NULL)
@@ -150,6 +164,15 @@ void *device_poll(void *vargp) {
   uint8_t stall;
   while (1) {
     //zpl->axil_poll();
+
+#ifdef PK
+    htif_cntr++;
+    if(htif_cntr % HTIF_INTERVAL == 0) {
+      if(htif->step()) {
+        break;
+      }
+    }
+#endif
 
     // keep reading as long as there is data
     if (zpl->axil_read(GP0_RD_PL2PS_FIFO_0_CTRS) != 0) {
@@ -442,8 +465,10 @@ extern "C" int cosim_main(char *argstr) {
   bsg_pr_info("ps.cpp: Setting sampling interval\n");
   zpl->axil_write(GP0_WR_CSR_SAMPLE_INTRVL, (SAMPLE_INTERVAL - 1), 0xf);
 
+#ifndef PK
   bsg_pr_info("ps.cpp: Asserting clock gate enable\n");
   zpl->axil_write(GP0_WR_CSR_GATE_EN, 0x1, 0xf);
+#endif
 
   bsg_pr_info("ps.cpp: Unfreezing BlackParrot\n");
   zpl->axil_write(GP1_CSR_BASE_ADDR + 0x200008, 0x0, 0xf);

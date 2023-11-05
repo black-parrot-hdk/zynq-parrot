@@ -86,7 +86,7 @@ connect_bd_net [get_bd_pins top_0/rt_clk] [get_bd_pins processing_system7_0/FCLK
 connect_bd_net [get_bd_pins top_0/tag_clk] [get_bd_pins watchdog_0/tag_clk]
 connect_bd_net [get_bd_pins top_0/tag_data] [get_bd_pins watchdog_0/tag_data]
 
-create_bd_addr_seg -range 0x00002000 -offset 0x10000000 [get_bd_addr_spaces top_0/m01_axi] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] SEG_axi_bram_ctrl_0_Mem0
+create_bd_addr_seg -range 0x00002000 -offset 0x00010000 [get_bd_addr_spaces top_0/m01_axi] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] SEG_axi_bram_ctrl_0_Mem0
 assign_bd_address
 
 # with other versions of vivado, it may have different names for the slave segment
