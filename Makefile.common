@@ -45,8 +45,8 @@ endif
 
 export SOFTWARE_DIR          ?= $(TOP)/software
 export SOFTWARE_IMPORT_DIR   ?= $(SOFTWARE_DIR)/import
-export SOFTWARE_NBF_DIR      ?= $(SOFTWARE_DIR)/nbf
 export BLACKPARROT_SDK_DIR   ?= $(SOFTWARE_IMPORT_DIR)/black-parrot-sdk
+export BOOST_ROOT            ?= $(SOFTWARE_IMPORT_DIR)/boost
 # Override to zynq-parrot version
 export BP_SDK_DIR            ?= $(BLACKPARROT_SDK_DIR)
 export PLATFORM              ?= zynqparrot
@@ -79,6 +79,9 @@ export PYTHON          ?= $(PYTHON3)
 export SED      ?= sed
 export GREP     ?= grep
 export CAT      ?= cat
+export WGET     ?= wget
+export TAR      ?= tar
 
 export PATH := $(BP_TOOLS_DIR)/install/bin:$(BP_SDK_DIR)/install/bin:$(COSIM_PY_DIR):$(PATH)
+export LD_LIBRARY_PATH := $(BOOST_ROOT)/lib:$(LD_LIBRARY_PATH)
 

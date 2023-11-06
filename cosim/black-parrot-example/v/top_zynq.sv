@@ -427,12 +427,12 @@ module top_zynq
    // Zynq PA 0x8000_0000 .. 0x8FFF_FFFF -> AXI 0x0000_0000 .. 0x0FFF_FFFF -> BP 0x8000_0000 - 0x8FFF_FFFF
    // Zynq PA 0xA000_0000 .. 0xAFFF_FFFF -> AXI 0x2000_0000 .. 0x2FFF_FFFF -> BP 0x0000_0000 - 0x0FFF_FFFF
    
-   wire [bp_axil_addr_width_lp-1:0] s01_waddr_translated_lo = {~s01_axi_awaddr[29], 3'b0, s01_axi_awaddr[0+:28]};
+   wire [bp_axil_addr_width_lp-1:0] s01_awaddr_translated_lo = {~s01_axi_awaddr[29], 3'b0, s01_axi_awaddr[0+:28]};
    
    // Zynq PA 0x8000_0000 .. 0x8FFF_FFFF -> AXI 0x0000_0000 .. 0x0FFF_FFFF -> BP 0x8000_0000 - 0x8FFF_FFFF
    // Zynq PA 0xA000_0000 .. 0xAFFF_FFFF -> AXI 0x2000_0000 .. 0x2FFF_FFFF -> BP 0x0000_0000 - 0x0FFF_FFFF
    
-   wire [bp_axil_addr_width_lp-1:0] s01_raddr_translated_lo = {~s01_axi_araddr[29], 3'b0, s01_axi_araddr[0+:28]};
+   wire [bp_axil_addr_width_lp-1:0] s01_araddr_translated_lo = {~s01_axi_araddr[29], 3'b0, s01_axi_araddr[0+:28]};
 
    logic [C_S01_AXI_ADDR_WIDTH-1 : 0]           spack_axi_awaddr;
    logic [2 : 0]                                spack_axi_awprot;
@@ -567,6 +567,10 @@ module top_zynq
      ,.m01_axil_rready(m01_axi_rready)
      );
 
+  // TODO: Bug in zero-extension of Xcelium 21.09
+  wire [bp_axil_addr_width_lp-1:0] s02_awaddr_translated_lo = s02_axi_awaddr;
+  wire [bp_axil_addr_width_lp-1:0] s02_araddr_translated_lo = s02_axi_araddr;
+
   bsg_axil_mux
    #(.addr_width_p(bp_axil_addr_width_lp)
      ,.data_width_p(bp_axil_data_width_lp)
@@ -574,7 +578,7 @@ module top_zynq
    axil_mux
     (.clk_i(aclk)
      ,.reset_i(~aresetn)
-     ,.s00_axil_awaddr (s01_waddr_translated_lo)
+     ,.s00_axil_awaddr (s01_awaddr_translated_lo)
      ,.s00_axil_awprot (s01_axi_awprot)
      ,.s00_axil_awvalid(s01_axi_awvalid)
      ,.s00_axil_awready(s01_axi_awready)
@@ -585,7 +589,7 @@ module top_zynq
      ,.s00_axil_bresp  (s01_axi_bresp)
      ,.s00_axil_bvalid (s01_axi_bvalid)
      ,.s00_axil_bready (s01_axi_bready)
-     ,.s00_axil_araddr (s01_raddr_translated_lo)
+     ,.s00_axil_araddr (s01_araddr_translated_lo)
      ,.s00_axil_arprot (s01_axi_arprot)
      ,.s00_axil_arvalid(s01_axi_arvalid)
      ,.s00_axil_arready(s01_axi_arready)
@@ -594,7 +598,7 @@ module top_zynq
      ,.s00_axil_rvalid (s01_axi_rvalid)
      ,.s00_axil_rready (s01_axi_rready)
 
-     ,.s01_axil_awaddr (s02_axi_awaddr )
+     ,.s01_axil_awaddr (s02_awaddr_translated_lo)
      ,.s01_axil_awprot (s02_axi_awprot )
      ,.s01_axil_awvalid(s02_axi_awvalid)
      ,.s01_axil_awready(s02_axi_awready)
@@ -605,7 +609,7 @@ module top_zynq
      ,.s01_axil_bresp  (s02_axi_bresp  )
      ,.s01_axil_bvalid (s02_axi_bvalid )
      ,.s01_axil_bready (s02_axi_bready )
-     ,.s01_axil_araddr (s02_axi_araddr )
+     ,.s01_axil_araddr (s02_araddr_translated_lo)
      ,.s01_axil_arprot (s02_axi_arprot )
      ,.s01_axil_arvalid(s02_axi_arvalid)
      ,.s01_axil_arready(s02_axi_arready)
@@ -795,11 +799,11 @@ module top_zynq
 
    always @(negedge aclk)
      if (s01_axi_awvalid & s01_axi_awready)
-       if (debug_lp) $display("top_zynq: AXI Write Addr %x -> %x (BP)",s01_axi_awaddr,s01_waddr_translated_lo);
+       if (debug_lp) $display("top_zynq: AXI Write Addr %x -> %x (BP)",s01_axi_awaddr,s01_awaddr_translated_lo);
 
    always @(negedge aclk)
      if (s01_axi_arvalid & s01_axi_arready)
-       if (debug_lp) $display("top_zynq: AXI Read Addr %x -> %x (BP)",s01_axi_araddr,s01_raddr_translated_lo);
+       if (debug_lp) $display("top_zynq: AXI Read Addr %x -> %x (BP)",s01_axi_araddr,s01_araddr_translated_lo);
    // synopsys translate_on
 
 

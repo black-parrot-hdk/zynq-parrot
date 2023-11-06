@@ -61,25 +61,6 @@ void *monitor(void *vargp) {
   return NULL;
 }
 
-void *device_poll(void *vargp) {
-  bsg_zynq_pl *zpl = (bsg_zynq_pl *)vargp;
-  while (1) {
-    zpl->axil_poll();
-
-    // keep reading as long as there is data
-    if (zpl->axil_read(GP0_RD_PL2PS_FIFO_CTRS) != 0) {
-      decode_bp_output(zpl, zpl->axil_read(GP0_RD_PL2PS_FIFO_DATA));
-    }
-    // break loop when all cores done
-    if (done_vec.all()) {
-      break;
-    }
-  }
-  bsg_pr_info("Exiting from pthread\n");
-
-  return NULL;
-}
-
 inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr) {
   uint64_t val;
   do {
@@ -305,10 +286,17 @@ extern "C" int cosim_main(char *argstr) {
   pthread_create(&thread_id, NULL, monitor, NULL);
 
   bsg_pr_info("ps.cpp: Starting i/o polling thread\n");
-  pthread_create(&thread_id, NULL, device_poll, (void *)zpl);
-
-  bsg_pr_info("ps.cpp: waiting for i/o packet\n");
-  pthread_join(thread_id, NULL);
+  while (1) {
+    // keep reading as long as there is data
+    if (zpl->axil_read(GP0_RD_PL2PS_FIFO_CTRS) != 0) {
+      decode_bp_output(zpl, zpl->axil_read(GP0_RD_PL2PS_FIFO_DATA));
+    }
+    // break loop when all cores done
+    if (done_vec.all()) {
+      break;
+    }
+    zpl->poll_tick();
+  }
 
   // Set bsg client1 to 1 (assert WD reset)
   btb->set_client(wd_reset_client, 0x1);

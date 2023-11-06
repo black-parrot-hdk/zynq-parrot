@@ -10,8 +10,10 @@ VV_OPTS += +incdir+$(COSIM_DIR)/include/verilator
 CFLAGS += -DVERILATOR
 CFLAGS += -std=c++14
 
-LDFLAGS += -lpthread
+LDFLAGS += -L$(BOOST_ROOT)/lib
+LDFLAGS += -lboost_coroutine -lboost_context -lboost_system
 
+CINCLUDES += -I$(BOOST_ROOT)/include
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/verilator
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem

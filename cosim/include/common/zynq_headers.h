@@ -69,6 +69,14 @@ static uintptr_t gp1_addr_base = (uintptr_t) GP1_ADDR_BASE;
 #endif
 #endif
 
+#ifdef GP0_ENABLE
+#define AXI_ENABLE
+#endif
+
+#ifdef GP1_ENABLE
+#define AXI_ENABLE
+#endif
+
 #ifndef GP2_ENABLE
 #define GP2_ADDR_WIDTH 0
 #define GP2_DATA_WIDTH 0

@@ -46,10 +46,10 @@ public:
         *address = WATCHDOG_ADDRESS;
         *data = 'W'; // For 'woof'
         *wmask = 0xf;
+        bsg_pr_dbg_pl("  bsg_zynq_pl: watchdog send\n");
         return true;
     }
 
-    bsg_pr_dbg_pl("  bsg_zynq_pl: watchdog send\n");
     return false;
   }
 
