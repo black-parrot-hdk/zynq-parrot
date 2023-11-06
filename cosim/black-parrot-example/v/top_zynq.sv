@@ -176,7 +176,7 @@ module top_zynq
   localparam bp_axi_addr_width_lp  = 32;
   localparam bp_axi_data_width_lp  = 64;
 
-  localparam num_regs_ps_to_pl_lp  = 5;
+  localparam num_regs_ps_to_pl_lp  = 6;
   localparam profiler_els_lp       = 3 + $bits(bp_stall_reason_s);// + $bits(bp_event_reason_s);
   localparam num_regs_pl_to_ps_lp  = 4 + ((64/C_S00_AXI_DATA_WIDTH) * profiler_els_lp);
 
@@ -187,7 +187,7 @@ module top_zynq
   localparam async_fifo_size_lp = 5;
   localparam skid_buffer_els_lp = 64;
 
-  localparam clk_div_lp = 2;
+  localparam clk_div_lp = 4;
 
   `ifdef MULTICORE
      `define COREPATH blackparrot.processor.m.multicore.cc.y[0].x[0].tile_node.tile_node.tile.core.core_lite.core_minimal
@@ -316,14 +316,18 @@ module top_zynq
   logic bb_data_li, bb_v_li;
   logic dram_init_li;
   logic [C_M00_AXI_ADDR_WIDTH-1:0] dram_base_li;
+  logic gate_en_li;
+  logic [31:0] sample_interval_li;
   // use this as a way of figuring out how much memory a RISC-V program is using
   // each bit corresponds to a region of memory
   logic [127:0] mem_profiler_r;
 
-  assign sys_resetn   = csr_data_lo[0][0]; // active-low
-  assign bb_data_li   = csr_data_lo[1][0]; assign bb_v_li = csr_data_new_lo[1];
-  assign dram_init_li = csr_data_lo[2];
-  assign dram_base_li = csr_data_lo[3];
+  assign sys_resetn         = csr_data_lo[0][0]; // active-low
+  assign bb_data_li         = csr_data_lo[1][0]; assign bb_v_li = csr_data_new_lo[1];
+  assign dram_init_li       = csr_data_lo[2];
+  assign dram_base_li       = csr_data_lo[3];
+  assign gate_en_li         = csr_data_lo[4][0];
+  assign sample_interval_li = csr_data_lo[5];
 
   assign csr_data_li[0] = mem_profiler_r[31:0];
   assign csr_data_li[1] = mem_profiler_r[63:32];
@@ -390,7 +394,6 @@ module top_zynq
   logic gated_aresetn, gate_r;
   logic gated_bp_reset_li, gated_counter_en_li;
 
-  wire gate_en_li = csr_data_lo[4][0];
 
   (* dont_touch = "yes" *) wire ds_aclk;
   (* gated_clock = "yes" *) wire gated_aclk;
@@ -1053,6 +1056,16 @@ module top_zynq
     ,.pc_o(prof_pc_lo)
     );
 
+  logic [31:0] sample_cnt_lo;
+  bsg_counter_dynamic_limit
+   #(.width_p(32))
+   i_sample_counter
+    (.clk_i(gated_aclk)
+    ,.reset_i(gated_bp_reset_li)
+    ,.limit_i(sample_interval_li)
+    ,.counter_o(sample_cnt_lo)
+    );
+
   bsg_async_fifo
    #(.width_p(1+$bits(bp_stall_reason_e)+vaddr_width_p)
     ,.lg_size_p(async_fifo_size_lp)
@@ -1061,7 +1074,7 @@ module top_zynq
     (.w_clk_i(gated_aclk)
     ,.w_reset_i(~gated_aresetn)
 
-    ,.w_enq_i(prof_v_lo & ~prof_afifo_full_lo)
+    ,.w_enq_i(prof_v_lo & (sample_cnt_lo == '0) & ~prof_afifo_full_lo)
     ,.w_data_i({prof_instret_lo, prof_stall_lo, prof_pc_lo})
     ,.w_full_o(prof_afifo_full_lo)
 

@@ -44,6 +44,10 @@
 #define BP_NCPUS 1
 #endif
 
+#ifndef SAMPLE_INTERVAL
+#define SAMPLE_INTERVAL 1
+#endif
+
 // Helper functions
 void nbf_load(bsg_zynq_pl *zpl, char *filename);
 bool decode_bp_output(bsg_zynq_pl *zpl, long data);
@@ -429,6 +433,9 @@ extern "C" int cosim_main(char *argstr) {
   // We need some additional toggles for data to propagate through
   btb->idle(50);
 
+  bsg_pr_info("ps.cpp: Setting sampling interval\n");
+  zpl->axil_write(GP0_WR_CSR_SAMPLE_INTRVL, (SAMPLE_INTERVAL - 1), 0xf);
+
   bsg_pr_info("ps.cpp: Asserting clock gate enable\n");
   zpl->axil_write(GP0_WR_CSR_GATE_EN, 0x1, 0xf);
 
@@ -506,7 +513,7 @@ extern "C" int cosim_main(char *argstr) {
               zpl->axil_read(GP0_RD_MEM_PROF_0));
 
   report(zpl, argv[1]);
-  //btb->idle(500000);
+  btb->idle(500000);
 #ifdef FPGA
   // in general we do not want to free the dram; the Xilinx allocator has a
   // tendency to

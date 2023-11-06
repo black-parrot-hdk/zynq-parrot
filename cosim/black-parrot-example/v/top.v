@@ -157,6 +157,8 @@ module top
 `else
     );
 
+    logic sys_resetn, tag_clk, tag_data;
+
     localparam rt_clk_period_lp = 2500000;
     logic rt_clk;
     bsg_nonsynth_clock_gen
@@ -432,7 +434,6 @@ module top
       );
 `endif
 
-   logic sys_resetn, tag_clk, tag_data;
    top_zynq #
      (.C_S00_AXI_DATA_WIDTH (C_S00_AXI_DATA_WIDTH)
       ,.C_S00_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)

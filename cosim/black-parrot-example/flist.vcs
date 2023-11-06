@@ -1,6 +1,7 @@
 +incdir+$CURR_SRC_DIR
 +incdir+$BASEJUMP_STL_DIR/bsg_tag
 $BASEJUMP_STL_DIR/bsg_misc/bsg_mux2_gatestack.v
+$BASEJUMP_STL_DIR/bsg_misc/bsg_counter_dynamic_limit.v
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_pkg.v
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_master_decentralized.v
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_client.v
