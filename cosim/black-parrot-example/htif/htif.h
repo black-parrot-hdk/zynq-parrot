@@ -8,6 +8,7 @@
 #include "bsg_zynq_pl.h"
 #include "bsg_printing.h"
 #include "bsg_argparse.h"
+#include "bsg_mem_dma.hpp"
 #include "ps.hpp"
 #include <string.h>
 #include <map>
@@ -17,7 +18,7 @@
 class htif_t : public chunked_memif_t
 {
  public:
-  htif_t(bsg_zynq_pl* zpl);
+  htif_t(bsg_zynq_pl* zpl, bsg_mem_dma::Memory* dram);
   virtual ~htif_t();
 
   int step();
@@ -58,6 +59,7 @@ class htif_t : public chunked_memif_t
   addr_t tohost_addr;
   addr_t fromhost_addr;
   bsg_zynq_pl* zpl;
+  bsg_mem_dma::Memory* dram;
   int exitcode;
   bool stopped;
 

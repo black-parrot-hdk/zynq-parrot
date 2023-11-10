@@ -20,8 +20,8 @@
 #include <unistd.h>
 #include <getopt.h>
 
-htif_t::htif_t(bsg_zynq_pl* zpl)
-  : mem(this), zpl(zpl),
+htif_t::htif_t(bsg_zynq_pl* zpl, bsg_mem_dma::Memory* dram)
+  : mem(this), zpl(zpl), dram(dram),
     tohost_addr(0x10010), fromhost_addr(0x10020), exitcode(0), stopped(false),
     syscall_proxy(this)
 {
@@ -50,37 +50,57 @@ void htif_t::clear_chunk(addr_t taddr, size_t len)
 
 void htif_t::read_chunk(addr_t taddr, size_t len, void* dst)
 {
-  uint64_t addr;
-  if (taddr >= DRAM_BASE_ADDR)
-    addr = GP1_ADDR_BASE - DRAM_BASE_ADDR + taddr;
-  else
-    addr = GP1_CSR_BASE_ADDR + taddr;
-
-  uint64_t data = zpl->axil_read(addr) & 0xFFFFFFFF;
-  if(len == 8) {
-    uint64_t datah = zpl->axil_read(addr + 4) & 0xFFFFFFFF;
-    data = data | (datah << 32);
+  if(len != 8) {
+    printf("Invalid write_chunk len: %d\n", (int)len);
+    return;
   }
 
+  uint64_t addr;
+  uint64_t data = 0;
+  if(taddr >= DRAM_BASE_ADDR) {
+    // read directly from DRAM
+    addr = taddr - DRAM_BASE_ADDR;
+    for(int i = 0; i < 8; i++) {
+      data = data | ((uint64_t)dram->get(addr + i) << (8*i));
+    }
+    //printf("read_chunk: [%lx]->%lx\n", addr, data);
+  }
+  else {
+    // use shell AXIL
+    addr = GP1_CSR_BASE_ADDR + taddr;
+    data = zpl->axil_read(addr) & 0xFFFFFFFF;
+    uint64_t datah = zpl->axil_read(addr + 4) & 0xFFFFFFFF;
+    data = data | (datah << 32);
+    //if(data != 0)
+    //  printf("read_chunk: [%lx]->%lx\n", addr, data);
+  }
   memcpy(dst, (char*)&data, len);
 }
 
 void htif_t::write_chunk(addr_t taddr, size_t len, const void* src)
 {
   if(len != 8) {
-    printf("Invalid write_chunk len: %d\n", len);
+    printf("Invalid write_chunk len: %d\n", (int)len);
     return;
   }
 
   uint64_t addr;
-  if (taddr >= DRAM_BASE_ADDR)
-    addr = GP1_ADDR_BASE - DRAM_BASE_ADDR + taddr;
-  else
-    addr = GP1_CSR_BASE_ADDR + taddr;
-
   uint64_t data = *(uint64_t*)(src);
-  zpl->axil_write(addr, data, 0xf);
-  zpl->axil_write(addr + 4, (data >> 32), 0xf);
+
+  if(taddr >= DRAM_BASE_ADDR) {
+    // write directly into DRAM
+    addr = taddr - DRAM_BASE_ADDR;
+    for(int i = 0; i < 8; i++) {
+      dram->set(addr + i, (data >> (8*i)) & 0xFF);
+    }
+  }
+  else {
+    // use shell AXIL
+    addr = GP1_CSR_BASE_ADDR + taddr;
+    zpl->axil_write(addr, data, 0xf);
+    zpl->axil_write(addr + 4, (data >> 32), 0xf);
+  }
+  //printf("write_chunk: [%lx]<-%lx\n", addr, data);
 }
 
 int htif_t::step()

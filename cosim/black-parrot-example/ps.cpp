@@ -146,7 +146,8 @@ void *device_poll(void *vargp) {
 
 #ifdef PK
   printf("Running with HTIF\n");
-  htif_t* htif = new htif_t(zpl);
+  bsg_mem_dma::Memory* dram = bsg_mem_dma::bsg_mem_dma_get_memory(0);
+  htif_t* htif = new htif_t(zpl, dram);
   int htif_cntr = 0;
 #endif
 

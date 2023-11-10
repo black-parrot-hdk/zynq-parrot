@@ -62,6 +62,8 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_clock_gen.v" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_reset_gen.v" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_axi_mem.v" >> $@
+	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_axi_mem_dma.v" >> $@
+	echo "$(BASEJUMP_STL_DIR)/bsg_mem/bsg_mem_dma.cpp" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.v " >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.v " >> $@
