@@ -107,6 +107,9 @@ const char* samples[] = {
 std::queue<int> getchar_queue;
 std::bitset<BP_NCPUS> done_vec;
 bool run = true;
+#ifdef FPGA
+volatile int32_t *buf;
+#endif
 
 inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr) {
   uint64_t val;
@@ -146,7 +149,12 @@ void *device_poll(void *vargp) {
 
 #ifdef PK
   printf("Running with HTIF\n");
-  bsg_mem_dma::Memory* dram = bsg_mem_dma::bsg_mem_dma_get_memory(0);
+#ifdef FPGA
+  void* dram = (void*) buf;
+#else
+  bsg_mem_dma::Memory* mem = bsg_mem_dma::bsg_mem_dma_get_memory(0);
+  void* dram = (void*) mem;
+#endif
   htif_t* htif = new htif_t(zpl, dram);
   int htif_cntr = 0;
 #endif
@@ -319,7 +327,6 @@ extern "C" int cosim_main(char *argstr) {
 
 #ifdef FPGA
   unsigned long phys_ptr;
-  volatile int32_t *buf;
   if (zpl->axil_read(GP0_RD_CSR_DRAM_INITED) == 0) {
     bsg_pr_info(
         "ps.cpp: CSRs do not contain a DRAM base pointer; calling allocate "
@@ -466,10 +473,8 @@ extern "C" int cosim_main(char *argstr) {
   bsg_pr_info("ps.cpp: Setting sampling interval\n");
   zpl->axil_write(GP0_WR_CSR_SAMPLE_INTRVL, (SAMPLE_INTERVAL - 1), 0xf);
 
-#ifndef PK
   bsg_pr_info("ps.cpp: Asserting clock gate enable\n");
   zpl->axil_write(GP0_WR_CSR_GATE_EN, 0x1, 0xf);
-#endif
 
   bsg_pr_info("ps.cpp: Unfreezing BlackParrot\n");
   zpl->axil_write(GP1_CSR_BASE_ADDR + 0x200008, 0x0, 0xf);

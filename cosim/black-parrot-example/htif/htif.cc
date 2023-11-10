@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <getopt.h>
 
-htif_t::htif_t(bsg_zynq_pl* zpl, bsg_mem_dma::Memory* dram)
+htif_t::htif_t(bsg_zynq_pl* zpl, void* dram)
   : mem(this), zpl(zpl), dram(dram),
     tohost_addr(0x10010), fromhost_addr(0x10020), exitcode(0), stopped(false),
     syscall_proxy(this)
@@ -55,14 +55,26 @@ void htif_t::read_chunk(addr_t taddr, size_t len, void* dst)
     return;
   }
 
+#ifdef FPGA
+  volatile int32_t* buf = (volatile int32_t*) dram;
+#else
+  bsg_mem_dma::Memory* dma = (bsg_mem_dma::Memory*) dram;
+#endif
+
   uint64_t addr;
   uint64_t data = 0;
   if(taddr >= DRAM_BASE_ADDR) {
     // read directly from DRAM
     addr = taddr - DRAM_BASE_ADDR;
+#ifdef FPGA
+    uint32_t datal = (uint32_t)buf[addr/4];
+    uint32_t datah = (uint32_t)buf[(addr/4)+1];
+    data = (uint64_t)datal | (((uint64_t)datah) << 32);
+#else
     for(int i = 0; i < 8; i++) {
-      data = data | ((uint64_t)dram->get(addr + i) << (8*i));
+      data = data | ((uint64_t)dma->get(addr + i) << (8*i));
     }
+#endif
     //printf("read_chunk: [%lx]->%lx\n", addr, data);
   }
   else {
@@ -84,15 +96,26 @@ void htif_t::write_chunk(addr_t taddr, size_t len, const void* src)
     return;
   }
 
+#ifdef FPGA
+  volatile int32_t* buf = (volatile int32_t*) dram;
+#else
+  bsg_mem_dma::Memory* dma = (bsg_mem_dma::Memory*) dram;
+#endif
+
   uint64_t addr;
   uint64_t data = *(uint64_t*)(src);
 
   if(taddr >= DRAM_BASE_ADDR) {
     // write directly into DRAM
     addr = taddr - DRAM_BASE_ADDR;
+#ifdef FPGA
+    buf[addr/4] = data & 0xFFFFFFFF;
+    buf[(addr/4)+1] = (data >> 32) & 0xFFFFFFFF;
+#else
     for(int i = 0; i < 8; i++) {
-      dram->set(addr + i, (data >> (8*i)) & 0xFF);
+      dma->set(addr + i, (data >> (8*i)) & 0xFF);
     }
+#endif
   }
   else {
     // use shell AXIL
