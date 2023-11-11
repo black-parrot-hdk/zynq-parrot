@@ -5,6 +5,7 @@ include $(TOP)/Makefile.common
 #############################
 # Design Settings
 #############################
+HOST       ?= zynq
 TB_MODULE  ?= bsg_nonsynth_zynq_testbench
 TOP_MODULE ?= top
 BOARDNAME  ?= pynqz2

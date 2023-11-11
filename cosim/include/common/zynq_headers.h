@@ -216,5 +216,28 @@ static uintptr_t hp2_addr_base = (uintptr_t) HP2_ADDR_BASE;
 #endif
 #endif
 
+#ifndef UART_ENABLE
+#define UART_DEV /dev/null
+#define UART_DEV_STR ""
+#define UART_BAUD 0
+#endif
+
+#ifndef UART_BAUD
+#ifndef SIMULATION
+#error UART_BAUD must be defined
+#endif
+#endif
+
+#ifndef UART_DEV
+#ifndef SIMULATION
+#error UART_DEV must be defined
+#endif
+#else
+#define UART_DEV_STR STRINGIFY(UART_DEV)
+#define PPCAT_NX(A, B) A ## B
+#define PPCAT(A, B) PPCAT_NX(A, B)
+#define UART_BAUD_ENUM PPCAT(B, UART_BAUD)
+#endif
+
 #endif
 

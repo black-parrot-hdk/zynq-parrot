@@ -46,6 +46,7 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
             bsg_zynq_pl_simulation::poll_tick();
         }
 
+ #ifdef HOST_ZYNQ
          void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) {
              axil_write(addr, data, wmask);
          }
@@ -53,6 +54,15 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
          int32_t shell_read(uintptr_t addr) {
              return axil_read(addr);
          }
+ #else
+         void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) {
+             uart_write(addr, data, wmask);
+         }
+
+         int32_t shell_read(uintptr_t addr) {
+             return uart_read(addr);
+         }
+ #endif
 };
 
 #endif
