@@ -182,7 +182,7 @@ module top_zynq
   localparam num_regs_pl_to_ps_lp  = 8 + ((64/C_S00_AXI_DATA_WIDTH) * profiler_els_lp);
 
   localparam num_fifo_ps_to_pl_lp = 1;
-  localparam num_fifo_pl_to_ps_lp = 3;
+  localparam num_fifo_pl_to_ps_lp = 4;
 
   localparam axi_async_lp = 1;
   localparam async_fifo_size_lp = 5;
@@ -619,6 +619,26 @@ module top_zynq
   assign s01_waddr_translated_lo = (s01_axi_awaddr < 32'h20000000) ? (s01_axi_awaddr + 32'h80000000) : {4'b0, s01_axi_awaddr[0+:28]};
   assign s01_raddr_translated_lo = (s01_axi_araddr < 32'h20000000) ? (s01_axi_araddr + 32'h80000000) : {4'b0, s01_axi_araddr[0+:28]};
 
+  logic [C_S01_AXI_ADDR_WIDTH-1 : 0]           host_axi_awaddr;
+  logic [2 : 0]                                host_axi_awprot;
+  logic                                        host_axi_awvalid;
+  logic                                        host_axi_awready;
+  logic [C_S01_AXI_DATA_WIDTH-1 : 0]           host_axi_wdata;
+  logic [(C_S01_AXI_DATA_WIDTH/8)-1 : 0]       host_axi_wstrb;
+  logic                                        host_axi_wvalid;
+  logic                                        host_axi_wready;
+  logic  [1 : 0]                               host_axi_bresp;
+  logic                                        host_axi_bvalid;
+  logic                                        host_axi_bready;
+  logic [C_S01_AXI_ADDR_WIDTH-1 : 0]           host_axi_araddr;
+  logic [2 : 0]                                host_axi_arprot;
+  logic                                        host_axi_arvalid;
+  logic                                        host_axi_arready;
+  logic  [C_S01_AXI_DATA_WIDTH-1 : 0]          host_axi_rdata;
+  logic  [1 : 0]                               host_axi_rresp;
+  logic                                        host_axi_rvalid;
+  logic                                        host_axi_rready;
+
   logic [C_S01_AXI_ADDR_WIDTH-1 : 0]           spack_axi_awaddr;
   logic [2 : 0]                                spack_axi_awprot;
   logic                                        spack_axi_awvalid;
@@ -639,56 +659,35 @@ module top_zynq
   logic                                        spack_axi_rvalid;
   logic                                        spack_axi_rready;
 
-  bsg_axil_store_packer
-   #(.axil_addr_width_p(bp_axil_addr_width_lp)
-     ,.axil_data_width_p(bp_axil_data_width_lp)
-     ,.payload_data_width_p(8)
-     )
-   store_packer
-    (.clk_i   (aclk)
-     ,.reset_i(~aresetn)
+  logic [C_S01_AXI_ADDR_WIDTH-1 : 0]           systr_axi_awaddr;
+  logic [2 : 0]                                systr_axi_awprot;
+  logic                                        systr_axi_awvalid;
+  logic                                        systr_axi_awready;
+  logic [C_S01_AXI_DATA_WIDTH-1 : 0]           systr_axi_wdata;
+  logic [(C_S01_AXI_DATA_WIDTH/8)-1 : 0]       systr_axi_wstrb;
+  logic                                        systr_axi_wvalid;
+  logic                                        systr_axi_wready;
+  logic  [1 : 0]                               systr_axi_bresp;
+  logic                                        systr_axi_bvalid;
+  logic                                        systr_axi_bready;
+  logic [C_S01_AXI_ADDR_WIDTH-1 : 0]           systr_axi_araddr;
+  logic [2 : 0]                                systr_axi_arprot;
+  logic                                        systr_axi_arvalid;
+  logic                                        systr_axi_arready;
+  logic  [C_S01_AXI_DATA_WIDTH-1 : 0]          systr_axi_rdata;
+  logic  [1 : 0]                               systr_axi_rresp;
+  logic                                        systr_axi_rvalid;
+  logic                                        systr_axi_rready;
 
-     ,.s_axil_awaddr_i (spack_axi_awaddr)
-     ,.s_axil_awprot_i (spack_axi_awprot)
-     ,.s_axil_awvalid_i(spack_axi_awvalid)
-     ,.s_axil_awready_o(spack_axi_awready)
-
-     ,.s_axil_wdata_i  (spack_axi_wdata)
-     ,.s_axil_wstrb_i  (spack_axi_wstrb)
-     ,.s_axil_wvalid_i (spack_axi_wvalid)
-     ,.s_axil_wready_o (spack_axi_wready)
-
-     ,.s_axil_bresp_o  (spack_axi_bresp)
-     ,.s_axil_bvalid_o (spack_axi_bvalid)
-     ,.s_axil_bready_i (spack_axi_bready)
-
-     ,.s_axil_araddr_i (spack_axi_araddr)
-     ,.s_axil_arprot_i (spack_axi_arprot)
-     ,.s_axil_arvalid_i(spack_axi_arvalid)
-     ,.s_axil_arready_o(spack_axi_arready)
-
-     ,.s_axil_rdata_o  (spack_axi_rdata)
-     ,.s_axil_rresp_o  (spack_axi_rresp)
-     ,.s_axil_rvalid_o (spack_axi_rvalid)
-     ,.s_axil_rready_i (spack_axi_rready)
-
-     ,.data_o (pl_to_ps_fifo_data_li[0])
-     ,.v_o    (pl_to_ps_fifo_v_li[0])
-     ,.ready_i(pl_to_ps_fifo_ready_lo[0])
-
-     ,.data_i(ps_to_pl_fifo_data_lo)
-     ,.v_i(ps_to_pl_fifo_v_lo)
-     ,.ready_o(ps_to_pl_fifo_ready_li)
-     );
-
- bsg_axil_demux
-  #(.addr_width_p(bp_axil_addr_width_lp)
+  // Outgoing BP IO
+  bsg_axil_demux
+   #(.addr_width_p(bp_axil_addr_width_lp)
     ,.data_width_p(bp_axil_data_width_lp)
     // BP host address space is above this
     ,.split_addr_p(32'h0010_0000)
     )
-  axil_demux_m
-   (.clk_i(aclk)
+   axil_demux_m
+    (.clk_i(aclk)
     ,.reset_i(~aresetn)
 
     ,.s00_axil_awaddr (bp_m_axil_awaddr)
@@ -731,27 +730,163 @@ module top_zynq
     ,.m00_axil_rvalid (m02_axil_rvalid)
     ,.m00_axil_rready (m02_axil_rready)
 
-    ,.m01_axil_awaddr (spack_axi_awaddr)
-    ,.m01_axil_awprot (spack_axi_awprot)
-    ,.m01_axil_awvalid(spack_axi_awvalid)
-    ,.m01_axil_awready(spack_axi_awready)
-    ,.m01_axil_wdata  (spack_axi_wdata)
-    ,.m01_axil_wstrb  (spack_axi_wstrb)
-    ,.m01_axil_wvalid (spack_axi_wvalid)
-    ,.m01_axil_wready (spack_axi_wready)
-    ,.m01_axil_bresp  (spack_axi_bresp)
-    ,.m01_axil_bvalid (spack_axi_bvalid)
-    ,.m01_axil_bready (spack_axi_bready)
-    ,.m01_axil_araddr (spack_axi_araddr)
-    ,.m01_axil_arprot (spack_axi_arprot)
-    ,.m01_axil_arvalid(spack_axi_arvalid)
-    ,.m01_axil_arready(spack_axi_arready)
-    ,.m01_axil_rdata  (spack_axi_rdata)
-    ,.m01_axil_rresp  (spack_axi_rresp)
-    ,.m01_axil_rvalid (spack_axi_rvalid)
-    ,.m01_axil_rready (spack_axi_rready)
+    ,.m01_axil_awaddr (host_axi_awaddr)
+    ,.m01_axil_awprot (host_axi_awprot)
+    ,.m01_axil_awvalid(host_axi_awvalid)
+    ,.m01_axil_awready(host_axi_awready)
+    ,.m01_axil_wdata  (host_axi_wdata)
+    ,.m01_axil_wstrb  (host_axi_wstrb)
+    ,.m01_axil_wvalid (host_axi_wvalid)
+    ,.m01_axil_wready (host_axi_wready)
+    ,.m01_axil_bresp  (host_axi_bresp)
+    ,.m01_axil_bvalid (host_axi_bvalid)
+    ,.m01_axil_bready (host_axi_bready)
+    ,.m01_axil_araddr (host_axi_araddr)
+    ,.m01_axil_arprot (host_axi_arprot)
+    ,.m01_axil_arvalid(host_axi_arvalid)
+    ,.m01_axil_arready(host_axi_arready)
+    ,.m01_axil_rdata  (host_axi_rdata)
+    ,.m01_axil_rresp  (host_axi_rresp)
+    ,.m01_axil_rvalid (host_axi_rvalid)
+    ,.m01_axil_rready (host_axi_rready)
     );
 
+  bsg_axil_demux
+   #(.addr_width_p(bp_axil_addr_width_lp)
+    ,.data_width_p(bp_axil_data_width_lp)
+    // systrace address space is above this
+    ,.split_addr_p(32'h0010_5000)
+    )
+   axil_demux_host
+    (.clk_i(aclk)
+    ,.reset_i(~aresetn)
+
+    ,.s00_axil_awaddr (host_axi_awaddr)
+    ,.s00_axil_awprot (host_axi_awprot)
+    ,.s00_axil_awvalid(host_axi_awvalid)
+    ,.s00_axil_awready(host_axi_awready)
+    ,.s00_axil_wdata  (host_axi_wdata)
+    ,.s00_axil_wstrb  (host_axi_wstrb)
+    ,.s00_axil_wvalid (host_axi_wvalid)
+    ,.s00_axil_wready (host_axi_wready)
+    ,.s00_axil_bresp  (host_axi_bresp)
+    ,.s00_axil_bvalid (host_axi_bvalid)
+    ,.s00_axil_bready (host_axi_bready)
+    ,.s00_axil_araddr (host_axi_araddr)
+    ,.s00_axil_arprot (host_axi_arprot)
+    ,.s00_axil_arvalid(host_axi_arvalid)
+    ,.s00_axil_arready(host_axi_arready)
+    ,.s00_axil_rdata  (host_axi_rdata)
+    ,.s00_axil_rresp  (host_axi_rresp)
+    ,.s00_axil_rvalid (host_axi_rvalid)
+    ,.s00_axil_rready (host_axi_rready)
+
+    ,.m00_axil_awaddr (spack_axi_awaddr)
+    ,.m00_axil_awprot (spack_axi_awprot)
+    ,.m00_axil_awvalid(spack_axi_awvalid)
+    ,.m00_axil_awready(spack_axi_awready)
+    ,.m00_axil_wdata  (spack_axi_wdata)
+    ,.m00_axil_wstrb  (spack_axi_wstrb)
+    ,.m00_axil_wvalid (spack_axi_wvalid)
+    ,.m00_axil_wready (spack_axi_wready)
+    ,.m00_axil_bresp  (spack_axi_bresp)
+    ,.m00_axil_bvalid (spack_axi_bvalid)
+    ,.m00_axil_bready (spack_axi_bready)
+    ,.m00_axil_araddr (spack_axi_araddr)
+    ,.m00_axil_arprot (spack_axi_arprot)
+    ,.m00_axil_arvalid(spack_axi_arvalid)
+    ,.m00_axil_arready(spack_axi_arready)
+    ,.m00_axil_rdata  (spack_axi_rdata)
+    ,.m00_axil_rresp  (spack_axi_rresp)
+    ,.m00_axil_rvalid (spack_axi_rvalid)
+    ,.m00_axil_rready (spack_axi_rready)
+
+    ,.m01_axil_awaddr (systr_axi_awaddr)
+    ,.m01_axil_awprot (systr_axi_awprot)
+    ,.m01_axil_awvalid(systr_axi_awvalid)
+    ,.m01_axil_awready(systr_axi_awready)
+    ,.m01_axil_wdata  (systr_axi_wdata)
+    ,.m01_axil_wstrb  (systr_axi_wstrb)
+    ,.m01_axil_wvalid (systr_axi_wvalid)
+    ,.m01_axil_wready (systr_axi_wready)
+    ,.m01_axil_bresp  (systr_axi_bresp)
+    ,.m01_axil_bvalid (systr_axi_bvalid)
+    ,.m01_axil_bready (systr_axi_bready)
+    ,.m01_axil_araddr (systr_axi_araddr)
+    ,.m01_axil_arprot (systr_axi_arprot)
+    ,.m01_axil_arvalid(systr_axi_arvalid)
+    ,.m01_axil_arready(systr_axi_arready)
+    ,.m01_axil_rdata  (systr_axi_rdata)
+    ,.m01_axil_rresp  (systr_axi_rresp)
+    ,.m01_axil_rvalid (systr_axi_rvalid)
+    ,.m01_axil_rready (systr_axi_rready)
+    );
+
+  bsg_axil_store_packer
+   #(.axil_addr_width_p(bp_axil_addr_width_lp)
+    ,.axil_data_width_p(bp_axil_data_width_lp)
+    ,.payload_data_width_p(8)
+    )
+   store_packer
+    (.clk_i   (aclk)
+    ,.reset_i(~aresetn)
+
+    ,.s_axil_awaddr_i (spack_axi_awaddr)
+    ,.s_axil_awprot_i (spack_axi_awprot)
+    ,.s_axil_awvalid_i(spack_axi_awvalid)
+    ,.s_axil_awready_o(spack_axi_awready)
+
+    ,.s_axil_wdata_i  (spack_axi_wdata)
+    ,.s_axil_wstrb_i  (spack_axi_wstrb)
+    ,.s_axil_wvalid_i (spack_axi_wvalid)
+    ,.s_axil_wready_o (spack_axi_wready)
+
+    ,.s_axil_bresp_o  (spack_axi_bresp)
+    ,.s_axil_bvalid_o (spack_axi_bvalid)
+    ,.s_axil_bready_i (spack_axi_bready)
+
+    ,.s_axil_araddr_i (spack_axi_araddr)
+    ,.s_axil_arprot_i (spack_axi_arprot)
+    ,.s_axil_arvalid_i(spack_axi_arvalid)
+    ,.s_axil_arready_o(spack_axi_arready)
+
+    ,.s_axil_rdata_o  (spack_axi_rdata)
+    ,.s_axil_rresp_o  (spack_axi_rresp)
+    ,.s_axil_rvalid_o (spack_axi_rvalid)
+    ,.s_axil_rready_i (spack_axi_rready)
+
+    ,.data_o (pl_to_ps_fifo_data_li[0])
+    ,.v_o    (pl_to_ps_fifo_v_li[0])
+    ,.ready_i(pl_to_ps_fifo_ready_lo[0])
+
+    ,.data_i(ps_to_pl_fifo_data_lo)
+    ,.v_i(ps_to_pl_fifo_v_lo)
+    ,.ready_o(ps_to_pl_fifo_ready_li)
+    );
+
+  // systrace stitching
+  assign pl_to_ps_fifo_v_li[3] = systr_axi_awvalid & systr_axi_wvalid;
+  assign pl_to_ps_fifo_data_li[3] = systr_axi_wdata;
+  assign systr_axi_awready = pl_to_ps_fifo_ready_lo[3] & pl_to_ps_fifo_v_li[3];
+  assign systr_axi_wready = pl_to_ps_fifo_ready_lo[3] & pl_to_ps_fifo_v_li[3];
+  assign systr_axi_bresp = e_axi_resp_okay;
+
+  assign systr_axi_arready = 1'b0;
+  assign systr_axi_rvalid = 1'b0;
+  assign systr_axi_rdata = '0;
+  assign systr_axi_rresp = '0;
+
+  bsg_dff_reset_set_clear
+   #(.width_p(1))
+   systrace_write_resp_reg
+    (.clk_i(aclk)
+    ,.reset_i(~aresetn)
+    ,.set_i(systr_axi_awvalid & systr_axi_wvalid & systr_axi_awready & systr_axi_wready)
+    ,.clear_i(systr_axi_bvalid & systr_axi_bready)
+    ,.data_o(systr_axi_bvalid)
+    );
+
+ // Incoming BP IO
  bsg_axil_mux
   #(.addr_width_p(bp_axil_addr_width_lp)
     ,.data_width_p(bp_axil_data_width_lp)

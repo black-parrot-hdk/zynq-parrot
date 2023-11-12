@@ -166,8 +166,9 @@ void *device_poll(void *vargp) {
   else
     strcpy(filename, nbf_filename);
   *strrchr(filename, '.') = '\0';
-  strcat(filename, ".stall");
-  ofstream file(filename, ios::binary);
+  //strcat(filename, ".stall");
+  ofstream stall_file(string(filename) + ".stall", ios::out | ios::binary);
+  ofstream sys_file(string(filename) + ".sys", ios::out);
 
   uint32_t pc;
   uint8_t stall;
@@ -192,6 +193,15 @@ void *device_poll(void *vargp) {
       break;
     }
 
+    // read systrace
+    if (zpl->axil_read(GP0_RD_PL2PS_FIFO_3_CTRS) != 0) {
+      uint32_t data = zpl->axil_read(GP0_RD_PL2PS_FIFO_3_DATA);
+      int code = (data >> 21) & 0x7FF;
+      uint32_t mcycle = data & 0x1FFFFF;
+      //printf("syscall#%d %08x\n", code, mcycle);
+      sys_file << code << " 0x" << std::setfill('0') << std::setw(8) << hex << mcycle << std::endl;
+    }
+
     // drain sample data from FIFOs
     int cnt = zpl->axil_read(GP0_RD_PL2PS_FIFO_1_CTRS);
     if(cnt != 0) {
@@ -205,13 +215,14 @@ void *device_poll(void *vargp) {
         uint32_t data = zpl->axil_read(GP0_RD_PL2PS_FIFO_2_DATA);
         stall = ((data & 0x1) << 7) | (data >> 1);
 
-        file.write((char*)&pc, sizeof(pc));
-        file.write((char*)&stall, sizeof(stall));
+        stall_file.write((char*)&pc, sizeof(pc));
+        stall_file.write((char*)&stall, sizeof(stall));
       }
     }
   }
   run = false;
-  file.close();
+  stall_file.close();
+  sys_file.close();
   bsg_pr_info("Exiting from pthread\n");
 
   return NULL;
@@ -683,19 +694,6 @@ bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
       } else {
         zpl->axil_write(GP0_WR_PS2PL_FIFO_DATA, getchar_queue.front(), 0xf);
         getchar_queue.pop();
-      }
-    }
-    // parameter ROM, only partially implemented
-    else if (address >= 0x120000 && address <= 0x120128) {
-      bsg_pr_dbg_ps("ps.cpp: PARAM ROM read from (%lx)\n", address);
-      int offset = address - 0x120000;
-      // CC_X_DIM, return number of cores
-      if (offset == 0x0) {
-        zpl->axil_write(GP0_WR_PS2PL_FIFO_DATA, BP_NCPUS, 0xf);
-      }
-      // CC_Y_DIM, just return 1 so X*Y == number of cores
-      else if (offset == 0x4) {
-        zpl->axil_write(GP0_WR_PS2PL_FIFO_DATA, 1, 0xf);
       }
     }
     // if not implemented, print error
