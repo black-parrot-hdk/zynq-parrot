@@ -423,7 +423,6 @@ extern "C" int cosim_main(char *argstr) {
   nbf_load(zpl, argv[1]);
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
-  unsigned long long minstret_start = get_counter_64(zpl, GP0_RD_MINSTRET);
   unsigned long long mtime_start = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
   bsg_pr_dbg_ps("ps.cpp: finished nbf load\n");
 
@@ -456,6 +455,7 @@ extern "C" int cosim_main(char *argstr) {
 
   bsg_pr_info("ps.cpp: waiting for i/o packet\n");
   pthread_join(poll_id, NULL);
+  bsg_pr_info("ps.cpp: end polling i/o\n");
 
   bsg_pr_info("ps.cpp: Deasserting clock gate enable\n");
   zpl->axil_write(GP0_WR_CSR_GATE_EN, 0x0, 0xf);
@@ -468,32 +468,25 @@ extern "C" int cosim_main(char *argstr) {
   // We need some additional toggles for data to propagate through
   btb->idle(50);
 
-  unsigned long long mtime_stop = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
-
+  unsigned long long mcycle_stop = get_counter_64(zpl, GP0_RD_MCYCLE);
   unsigned long long minstret_stop = get_counter_64(zpl, GP0_RD_MINSTRET);
-  // test delay for reading counter
-  unsigned long long counter_data = get_counter_64(zpl, GP0_RD_MINSTRET);
+  unsigned long long mtime_stop = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
+  unsigned long long mtime_delta = mtime_stop - mtime_start;
+
   clock_gettime(CLOCK_MONOTONIC, &end);
   setlocale(LC_NUMERIC, "");
-  bsg_pr_info("ps.cpp: end polling i/o\n");
-  bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
-              minstret_start, minstret_start);
+  bsg_pr_info("ps.cpp: mcycle (instructions retired): %'16llu (%16llx)\n",
+              mcycle_stop, mcycle_stop);
   bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
               minstret_stop, minstret_stop);
-  unsigned long long minstret_delta = minstret_stop - minstret_start;
-  bsg_pr_info("ps.cpp: minstret delta:                  %'16llu (%16llx)\n",
-              minstret_delta, minstret_delta);
   bsg_pr_info("ps.cpp: MTIME start:                     %'16llu (%16llx)\n",
               mtime_start, mtime_start);
   bsg_pr_info("ps.cpp: MTIME stop:                      %'16llu (%16llx)\n",
               mtime_stop, mtime_stop);
-  unsigned long long mtime_delta = mtime_stop - mtime_start;
   bsg_pr_info("ps.cpp: MTIME delta (=1/8 BP cycles):    %'16llu (%16llx)\n",
               mtime_delta, mtime_delta);
   bsg_pr_info("ps.cpp: IPC        :                     %'16f\n",
-              ((double)minstret_delta) / ((double)(mtime_delta)) / 8.0);
-  bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
-              counter_data, counter_data);
+              ((double)minstret_stop) / ((double)(mcycle_stop)));
   unsigned long long diff_ns =
       1000LL * 1000LL * 1000LL *
           ((unsigned long long)(end.tv_sec - start.tv_sec)) +

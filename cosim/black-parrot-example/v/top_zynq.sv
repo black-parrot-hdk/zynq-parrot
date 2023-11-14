@@ -178,7 +178,7 @@ module top_zynq
 
   localparam num_regs_ps_to_pl_lp  = 6;
   localparam profiler_els_lp       = 3 + $bits(bp_stall_reason_s);// + $bits(bp_event_reason_s);
-  localparam num_regs_pl_to_ps_lp  = 4 + ((64/C_S00_AXI_DATA_WIDTH) * profiler_els_lp);
+  localparam num_regs_pl_to_ps_lp  = 8 + ((64/C_S00_AXI_DATA_WIDTH) * profiler_els_lp);
 
   localparam num_fifo_ps_to_pl_lp = 1;
   localparam num_fifo_pl_to_ps_lp = 3;
@@ -321,6 +321,7 @@ module top_zynq
   // use this as a way of figuring out how much memory a RISC-V program is using
   // each bit corresponds to a region of memory
   logic [127:0] mem_profiler_r;
+  logic [63:0] mcycle_lo, minstret_lo;
 
   assign sys_resetn         = csr_data_lo[0][0]; // active-low
   assign bb_data_li         = csr_data_lo[1][0]; assign bb_v_li = csr_data_new_lo[1];
@@ -329,11 +330,18 @@ module top_zynq
   assign gate_en_li         = csr_data_lo[4][0];
   assign sample_interval_li = csr_data_lo[5];
 
+  assign mcycle_lo = `COREPATH.be.calculator.pipe_sys.csr.mcycle_lo;
+  assign minstret_lo = `COREPATH.be.calculator.pipe_sys.csr.minstret_lo;
+
   assign csr_data_li[0] = mem_profiler_r[31:0];
   assign csr_data_li[1] = mem_profiler_r[63:32];
   assign csr_data_li[2] = mem_profiler_r[95:64];
   assign csr_data_li[3] = mem_profiler_r[127:96];
-  assign csr_data_li[num_regs_pl_to_ps_lp-1:4] = prof_data_lo[profiler_els_lp-1:0];
+  assign csr_data_li[4] = mcycle_lo[31:0];
+  assign csr_data_li[5] = mcycle_lo[63:32];
+  assign csr_data_li[6] = minstret_lo[31:0];
+  assign csr_data_li[7] = minstret_lo[63:32];
+  assign csr_data_li[num_regs_pl_to_ps_lp-1:8] = prof_data_lo[profiler_els_lp-1:0];
 
   // Tag bitbang
   logic tag_clk_r_lo, tag_data_r_lo;

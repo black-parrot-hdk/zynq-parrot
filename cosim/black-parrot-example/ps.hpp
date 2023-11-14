@@ -20,9 +20,9 @@
 #define GP0_RD_MEM_PROF_1        (GP0_RD_MEM_PROF_0        + 0x4)
 #define GP0_RD_MEM_PROF_2        (GP0_RD_MEM_PROF_1        + 0x4)
 #define GP0_RD_MEM_PROF_3        (GP0_RD_MEM_PROF_2        + 0x4)
-#define GP0_RD_COUNTERS          (GP0_RD_MEM_PROF_3        + 0x4)
-#define GP0_RD_MCYCLE            (GP0_RD_COUNTERS)
-#define GP0_RD_MINSTRET          (GP0_RD_COUNTERS          + 0x8)
+#define GP0_RD_MCYCLE            (GP0_RD_MEM_PROF_3        + 0x4)
+#define GP0_RD_MINSTRET          (GP0_RD_MCYCLE            + 0x8)
+#define GP0_RD_COUNTERS          (GP0_RD_MINSTRET          + 0x8)
 
 // GP0 Write Memory Map
 #define GP0_WR_CSR_SYS_RESETN    GP0_RD_CSR_SYS_RESETN
