@@ -45,7 +45,11 @@
 #endif
 
 #ifndef SAMPLE_INTERVAL
-#define SAMPLE_INTERVAL 1
+#error "SAMPLE_INTERVAL not defined!"
+#endif
+
+#ifndef DRAM_LATENCY
+#error "DRAM_LATENCY not defined!"
 #endif
 
 // Helper functions
@@ -431,6 +435,9 @@ extern "C" int cosim_main(char *argstr) {
   bsg_pr_info("ps.cpp: starting watchdog\n");
   // We need some additional toggles for data to propagate through
   btb->idle(50);
+
+  bsg_pr_info("ps.cpp: Setting DRAM latency\n");
+  zpl->axil_write(GP0_WR_CSR_DRAM_LATENCY, DRAM_LATENCY, 0xf);
 
   bsg_pr_info("ps.cpp: Setting sampling interval\n");
   zpl->axil_write(GP0_WR_CSR_SAMPLE_INTRVL, (SAMPLE_INTERVAL - 1), 0xf);

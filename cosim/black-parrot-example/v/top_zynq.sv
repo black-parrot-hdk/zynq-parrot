@@ -176,7 +176,7 @@ module top_zynq
   localparam bp_axi_addr_width_lp  = 32;
   localparam bp_axi_data_width_lp  = 64;
 
-  localparam num_regs_ps_to_pl_lp  = 6;
+  localparam num_regs_ps_to_pl_lp  = 7;
   localparam profiler_els_lp       = 3 + $bits(bp_stall_reason_s);// + $bits(bp_event_reason_s);
   localparam num_regs_pl_to_ps_lp  = 8 + ((64/C_S00_AXI_DATA_WIDTH) * profiler_els_lp);
 
@@ -318,6 +318,7 @@ module top_zynq
   logic [C_M00_AXI_ADDR_WIDTH-1:0] dram_base_li;
   logic gate_en_li;
   logic [31:0] sample_interval_li;
+  logic [31:0] dram_latency_li;
   // use this as a way of figuring out how much memory a RISC-V program is using
   // each bit corresponds to a region of memory
   logic [127:0] mem_profiler_r;
@@ -329,6 +330,7 @@ module top_zynq
   assign dram_base_li       = csr_data_lo[3];
   assign gate_en_li         = csr_data_lo[4][0];
   assign sample_interval_li = csr_data_lo[5];
+  assign dram_latency_li    = csr_data_lo[6];
 
   assign mcycle_lo = `COREPATH.be.calculator.pipe_sys.csr.mcycle_lo;
   assign minstret_lo = `COREPATH.be.calculator.pipe_sys.csr.minstret_lo;
@@ -399,7 +401,7 @@ module top_zynq
   wire counter_en_li = sys_resetn & tag_en_li;
 
   // Gating Logic
-  logic gated_aresetn, gate_r;
+  logic gated_aresetn, gate_r, gate_sync, cdl_gate_lo;
   logic gated_bp_reset_li, gated_counter_en_li;
 
 
@@ -427,11 +429,11 @@ module top_zynq
   )
   BUFGCE_inst (
      .I(ds_aclk),
-     .CE(gate_r),
+     .CE(gate_sync | cdl_gate_lo),
      .O(gated_aclk)
   );
 `else
-  assign gated_aclk = ds_aclk & ~gate_r;
+  assign gated_aclk = ds_aclk & ~(gate_sync | cdl_gate_lo);
 
   bsg_counter_clock_downsample #(.width_p(32))
    clk_ds
@@ -465,12 +467,20 @@ module top_zynq
 
   bsg_dff_reset_set_clear #(.width_p(1))
    gate_reg
-    (.clk_i(~ds_aclk)
+    (.clk_i(~aclk)
     ,.reset_i(~aresetn)
     ,.set_i(~gate_r & gate_en_li & ~prof_fifo_ready_lo)
     ,.clear_i(gate_r & (~gate_en_li | ~prof_fifo_v_lo))
     ,.data_o(gate_r)
     );
+
+  bsg_sync_sync
+   #(.width_p(1))
+   gate_cross
+   (.oclk_i(ds_aclk)
+   ,.iclk_data_i(gate_r)
+   ,.oclk_data_o(gate_sync)
+   );
 
   // (MBT)
   // note: this ability to probe into the core is not supported in ASIC toolflows but
@@ -798,11 +808,19 @@ module top_zynq
      ,.async_fifo_size_p(async_fifo_size_lp)
      )
   blackparrot
-    (.clk_i(gated_aclk)
-     ,.reset_i(gated_bp_reset_li)
-     ,.aclk_i(aclk)
+    (.aclk_i(aclk)
      ,.areset_i(bp_reset_li)
+
+     ,.clk_i(gated_aclk)
+     ,.reset_i(gated_bp_reset_li)
+
+     ,.ungated_clk_i(ds_aclk)
+
      ,.rt_clk_i(rt_clk)
+
+     ,.gate_en_i(gate_en_li)
+     ,.dram_lat_i(dram_latency_li)
+     ,.cdl_gate_o(cdl_gate_lo)
 
      // these are reads/write from BlackParrot
      ,.m_axil_awaddr_o (bp_m_axil_awaddr)
