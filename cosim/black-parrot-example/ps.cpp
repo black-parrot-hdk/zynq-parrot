@@ -199,7 +199,7 @@ void *device_poll(void *vargp) {
       int code = (data >> 21) & 0x7FF;
       uint32_t mcycle = data & 0x1FFFFF;
       //printf("syscall#%d %08x\n", code, mcycle);
-      sys_file << code << " 0x" << std::setfill('0') << std::setw(8) << hex << mcycle << std::endl;
+      sys_file << std::dec << code << " 0x" << std::setfill('0') << std::setw(8) << std::hex << mcycle << std::endl;
     }
 
     // drain sample data from FIFOs
