@@ -433,14 +433,20 @@ module top_zynq
      .O(gated_aclk)
   );
 `else
-  assign gated_aclk = ds_aclk & ~(gate_sync | cdl_gate_lo);
-
+  //assign gated_aclk = ds_aclk & ~(gate_sync | cdl_gate_lo);
   bsg_counter_clock_downsample #(.width_p(32))
    clk_ds
     (.clk_i(aclk)
     ,.reset_i(~aresetn)
     ,.val_i((clk_div_lp >> 1) - 1)
     ,.clk_r_o(ds_aclk)
+    );
+
+  bsg_icg_pos
+   clk_buf
+    (.clk_i(ds_aclk)
+    ,.en_i(~(gate_sync | cdl_gate_lo))
+    ,.clk_o(gated_aclk)
     );
 `endif
 
