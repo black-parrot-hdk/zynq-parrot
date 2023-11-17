@@ -110,14 +110,14 @@ save_bd_design
 
 if {1} {
   set_property STEPS.SYNTH_DESIGN.ARGS.GATED_CLOCK_CONVERSION auto [get_runs synth_1]
-  launch_runs synth_1 -jobs 4
+  launch_runs synth_1 -jobs 32
   wait_on_run synth_1
   open_run synth_1 -name synth_1
   source ${tcl_dir}/additional_constraints.tcl
 }
 
 if {1} {
-  launch_runs impl_1 -to_step write_bitstream -jobs 4
+  launch_runs impl_1 -to_step write_bitstream -jobs 32
   wait_on_run impl_1
 }
 
