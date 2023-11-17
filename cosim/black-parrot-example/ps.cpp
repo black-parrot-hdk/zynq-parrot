@@ -60,6 +60,8 @@
 #error "DRAM_LATENCY not defined!"
 #endif
 
+#define NSTALL 32
+
 // Helper functions
 void nbf_load(bsg_zynq_pl *zpl, char *filename);
 bool decode_bp_output(bsg_zynq_pl *zpl, long data);
@@ -107,6 +109,7 @@ const char* samples[] = {
 std::queue<int> getchar_queue;
 std::bitset<BP_NCPUS> done_vec;
 bool run = true;
+int NPC;
 #ifdef FPGA
 volatile int32_t *buf;
 #endif
@@ -167,11 +170,14 @@ void *device_poll(void *vargp) {
     strcpy(filename, nbf_filename);
   *strrchr(filename, '.') = '\0';
   //strcat(filename, ".stall");
-  ofstream stall_file(string(filename) + ".stall", ios::out | ios::binary);
+  ofstream stall_file(string(filename) + ".stall", ios::out);
   ofstream sys_file(string(filename) + ".sys", ios::out);
+
+  auto stalls = new uint32_t[NPC][NSTALL]();
 
   uint32_t pc;
   uint8_t stall;
+  int instret;
   while (1) {
     //zpl->axil_poll();
 
@@ -213,13 +219,26 @@ void *device_poll(void *vargp) {
 */
         pc = zpl->axil_read(GP0_RD_PL2PS_FIFO_1_DATA);
         uint32_t data = zpl->axil_read(GP0_RD_PL2PS_FIFO_2_DATA);
-        stall = ((data & 0x1) << 7) | (data >> 1);
-
-        stall_file.write((char*)&pc, sizeof(pc));
-        stall_file.write((char*)&stall, sizeof(stall));
+        stall = (data >> 1);
+        instret = (data & 0x1);
+        if(pc >= DRAM_BASE_ADDR) {
+          if(instret)
+            stalls[(pc - DRAM_BASE_ADDR)/4][0]++;
+          else
+            stalls[(pc - DRAM_BASE_ADDR)/4][1 + stall]++;
+        }
       }
     }
   }
+
+  stall_file << std::dec << NPC << " " << NSTALL << "\n";
+  for(int i=0; i<NPC; i++) {
+    for(int j=0; j<NSTALL; j++) {
+      stall_file << stalls[i][j] << " ";
+    }
+    stall_file << "\n";
+  }
+
   run = false;
   stall_file.close();
   sys_file.close();
@@ -592,6 +611,8 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
   int data;
   ifstream nbf_file(nbf_filename);
 
+  int maxPC = 0x0;
+
   if (!nbf_file.is_open()) {
     bsg_pr_err("ps.cpp: error opening nbf file.\n");
     delete zpl;
@@ -617,6 +638,10 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
 
       // we map BP physical address for CSRs etc (0x0000_0000 - 0x0FFF_FFFF)
       // to ARM address to 0xA0000_0000 - 0xAFFF_FFFF  (256MB)
+
+      if((nbf[1] > maxPC) && (nbf[1] >= DRAM_BASE_ADDR))
+        maxPC = nbf[1];
+
       if (nbf[1] >= DRAM_BASE_ADDR)
         base_addr = gp1_addr_base - DRAM_BASE_ADDR;
       else
@@ -657,6 +682,10 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
   }
 
   bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
+
+  NPC = 1 + ((maxPC - DRAM_BASE_ADDR)/4);
+  bsg_pr_dbg_ps("ps.cpp: maxPC = %08x\n", maxPC);
+  bsg_pr_dbg_ps("ps.cpp: NPC = %d\n", NPC);
 }
 
 bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
