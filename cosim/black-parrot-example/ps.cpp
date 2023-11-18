@@ -231,7 +231,7 @@ void *device_poll(void *vargp) {
     }
   }
 
-  stall_file << std::dec << NPC << " " << NSTALL << "\n";
+  stall_file << std::dec << NPC << " " << NSTALL << " " << SAMPLE_INTERVAL << "\n";
   for(int i=0; i<NPC; i++) {
     for(int j=0; j<NSTALL; j++) {
       stall_file << stalls[i][j] << " ";
