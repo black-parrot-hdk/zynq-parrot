@@ -497,14 +497,17 @@ extern "C" int cosim_main(char *argstr) {
   // We need some additional toggles for data to propagate through
   btb->idle(50);
 
-  bsg_pr_info("ps.cpp: Setting DRAM latency\n");
+  bsg_pr_info("ps.cpp: Setting DRAM latency: %d\n", DRAM_LATENCY);
   zpl->axil_write(GP0_WR_CSR_DRAM_LATENCY, DRAM_LATENCY, 0xf);
 
-  bsg_pr_info("ps.cpp: Setting sampling interval\n");
+  bsg_pr_info("ps.cpp: Setting sampling interval: %d\n", SAMPLE_INTERVAL);
   zpl->axil_write(GP0_WR_CSR_SAMPLE_INTRVL, (SAMPLE_INTERVAL - 1), 0xf);
 
-  bsg_pr_info("ps.cpp: Asserting clock gate enable\n");
-  zpl->axil_write(GP0_WR_CSR_GATE_EN, 0x1, 0xf);
+  bsg_pr_info("ps.cpp: Asserting DRAM clock gate enable\n");
+  zpl->axil_write(GP0_WR_CSR_DRAM_GATE_EN, 0x1, 0xf);
+
+  bsg_pr_info("ps.cpp: Asserting sampling clock gate enable\n");
+  zpl->axil_write(GP0_WR_CSR_SAMPLE_GATE_EN, 0x1, 0xf);
 
   bsg_pr_info("ps.cpp: Unfreezing BlackParrot\n");
   zpl->axil_write(GP1_CSR_BASE_ADDR + 0x200008, 0x0, 0xf);
@@ -525,8 +528,11 @@ extern "C" int cosim_main(char *argstr) {
   pthread_join(poll_id, NULL);
   bsg_pr_info("ps.cpp: end polling i/o\n");
 
-  bsg_pr_info("ps.cpp: Deasserting clock gate enable\n");
-  zpl->axil_write(GP0_WR_CSR_GATE_EN, 0x0, 0xf);
+  bsg_pr_info("ps.cpp: Deasserting DRAM clock gate enable\n");
+  zpl->axil_write(GP0_WR_CSR_DRAM_GATE_EN, 0x0, 0xf);
+
+  bsg_pr_info("ps.cpp: Deasserting sampling clock gate enable\n");
+  zpl->axil_write(GP0_WR_CSR_SAMPLE_GATE_EN, 0x0, 0xf);
 
   // Set bsg client1 to 0 (deassert BP counter en)
   btb->set_client(pl_cnten_client, 0x0);

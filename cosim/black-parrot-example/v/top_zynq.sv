@@ -177,7 +177,7 @@ module top_zynq
   localparam bp_axi_addr_width_lp  = 32;
   localparam bp_axi_data_width_lp  = 64;
 
-  localparam num_regs_ps_to_pl_lp  = 7;
+  localparam num_regs_ps_to_pl_lp  = 8;
   localparam profiler_els_lp       = 3 + $bits(bp_stall_reason_s);// + $bits(bp_event_reason_s);
   localparam num_regs_pl_to_ps_lp  = 8 + ((64/C_S00_AXI_DATA_WIDTH) * profiler_els_lp);
 
@@ -377,7 +377,7 @@ module top_zynq
   logic bb_data_li, bb_v_li;
   logic dram_init_li;
   logic [C_M00_AXI_ADDR_WIDTH-1:0] dram_base_li;
-  logic gate_en_li;
+  logic sample_gate_en_li, dram_gate_en_li;
   logic [31:0] sample_interval_li;
   logic [31:0] dram_latency_li;
   // use this as a way of figuring out how much memory a RISC-V program is using
@@ -389,9 +389,10 @@ module top_zynq
   assign bb_data_li         = csr_data_lo[1][0]; assign bb_v_li = csr_data_new_lo[1];
   assign dram_init_li       = csr_data_lo[2][0];
   assign dram_base_li       = csr_data_lo[3];
-  assign gate_en_li         = csr_data_lo[4][0];
-  assign sample_interval_li = csr_data_lo[5];
-  assign dram_latency_li    = csr_data_lo[6];
+  assign sample_gate_en_li  = csr_data_lo[4][0];
+  assign dram_gate_en_li    = csr_data_lo[5][0];
+  assign sample_interval_li = csr_data_lo[6];
+  assign dram_latency_li    = csr_data_lo[7];
 
   assign mcycle_lo = `COREPATH.be.calculator.pipe_sys.csr.mcycle_lo;
   assign minstret_lo = `COREPATH.be.calculator.pipe_sys.csr.minstret_lo;
@@ -536,8 +537,8 @@ module top_zynq
    gate_reg
     (.clk_i(~aclk)
     ,.reset_i(~aresetn)
-    ,.set_i(~gate_r & gate_en_li & ~prof_fifo_ready_lo)
-    ,.clear_i(gate_r & (~gate_en_li | ~prof_fifo_v_lo))
+    ,.set_i(~gate_r & sample_gate_en_li & ~prof_fifo_ready_lo)
+    ,.clear_i(gate_r & (~sample_gate_en_li | ~prof_fifo_v_lo))
     ,.data_o(gate_r)
     );
 
@@ -1159,7 +1160,7 @@ module top_zynq
 
      ,.rt_clk_i(rt_clk)
 
-     ,.gate_en_i(gate_en_li)
+     ,.gate_en_i(dram_gate_en_li)
      ,.dram_lat_i(dram_latency_li)
      ,.cdl_gate_o(cdl_gate_lo)
 
