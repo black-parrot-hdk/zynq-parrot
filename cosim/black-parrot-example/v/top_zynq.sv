@@ -177,7 +177,7 @@ module top_zynq
   localparam bp_axi_addr_width_lp  = 32;
   localparam bp_axi_data_width_lp  = 64;
 
-  localparam num_regs_ps_to_pl_lp  = 8;
+  localparam num_regs_ps_to_pl_lp  = 9;
   localparam profiler_els_lp       = 3 + $bits(bp_stall_reason_s);// + $bits(bp_event_reason_s);
   localparam num_regs_pl_to_ps_lp  = 8 + ((64/C_S00_AXI_DATA_WIDTH) * profiler_els_lp);
 
@@ -380,6 +380,7 @@ module top_zynq
   logic sample_gate_en_li, dram_gate_en_li;
   logic [31:0] sample_interval_li;
   logic [31:0] dram_latency_li;
+  logic prof_en_li;
   // use this as a way of figuring out how much memory a RISC-V program is using
   // each bit corresponds to a region of memory
   logic [127:0] mem_profiler_r;
@@ -393,6 +394,7 @@ module top_zynq
   assign dram_gate_en_li    = csr_data_lo[5][0];
   assign sample_interval_li = csr_data_lo[6];
   assign dram_latency_li    = csr_data_lo[7];
+  assign prof_en_li         = csr_data_lo[8][0];
 
   assign mcycle_lo = `COREPATH.be.calculator.pipe_sys.csr.mcycle_lo;
   assign minstret_lo = `COREPATH.be.calculator.pipe_sys.csr.minstret_lo;
@@ -448,24 +450,13 @@ module top_zynq
      ,.recv_data_r_o(tag_reset_li)
      );
 
-  logic tag_en_li;
-  bsg_tag_client
-   #(.width_p(1))
-   en_client
-    (.bsg_tag_i(tag_lines_lo.counter_en)
-     ,.recv_clk_i(aclk)
-     ,.recv_new_r_o() // UNUSED
-     ,.recv_data_r_o(tag_en_li)
-     );
-
   // Reset BP during system reset or if bsg_tag says to
   wire bp_reset_li = ~sys_resetn | tag_reset_li;
-  wire counter_en_li = sys_resetn & tag_en_li;
 
   // Gating Logic
   logic gated_aresetn, gate_r, gate_sync, cdl_gate_lo;
-  logic gated_bp_reset_li, gated_counter_en_li;
-
+  logic gated_bp_reset_li, gated_prof_en_li;
+  logic [31:0] gated_sample_interval_li;
 
   (* dont_touch = "yes" *) wire ds_aclk;
   (* gated_clock = "yes" *) wire gated_aclk;
@@ -527,10 +518,17 @@ module top_zynq
     );
 
   bsg_sync_sync #(.width_p(1))
-   gated_counter_en
+   gated_prof_en
     (.oclk_i(gated_aclk)
-    ,.iclk_data_i(counter_en_li)
-    ,.oclk_data_o(gated_counter_en_li)
+    ,.iclk_data_i(prof_en_li)
+    ,.oclk_data_o(gated_prof_en_li)
+    );
+
+  bsg_sync_sync #(.width_p(32))
+   gated_sample_interval
+    (.oclk_i(gated_aclk)
+    ,.iclk_data_i(sample_interval_li)
+    ,.oclk_data_o(gated_sample_interval_li)
     );
 
   bsg_dff_reset_set_clear #(.width_p(1))
@@ -1297,11 +1295,12 @@ module top_zynq
    i_profiler
     (.aclk_i(aclk)
     ,.areset_i(~aresetn)
+    ,.aen_i(prof_en_li)
 
     ,.clk_i(gated_aclk)
     ,.reset_i(gated_bp_reset_li)
     ,.freeze_i(`COREPATH.be.calculator.pipe_sys.csr.cfg_bus_cast_i.freeze)
-    ,.en_i(counter_en_li)
+    ,.en_i(gated_prof_en_li)
 
     ,.fe_queue_ready_i(`COREPATH.fe.fe_queue_ready_and_i)
     ,.fe_queue_empty_i(`COREPATH.be.scheduler.issue_queue.empty)
@@ -1430,7 +1429,7 @@ module top_zynq
    i_sample_counter
     (.clk_i(gated_aclk)
     ,.reset_i(gated_bp_reset_li)
-    ,.limit_i(sample_interval_li)
+    ,.limit_i(gated_sample_interval_li)
     ,.counter_o(sample_cnt_lo)
     );
 

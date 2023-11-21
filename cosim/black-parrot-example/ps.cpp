@@ -312,6 +312,9 @@ extern "C" int cosim_main(char *argstr) {
 
   long allocated_dram = DRAM_ALLOCATE_SIZE;
 
+  bsg_pr_info("ps.cpp: asserting system reset\n");
+  zpl->axil_write(GP0_RD_CSR_SYS_RESETN, 0x0, 0xF);
+
   int32_t val;
   bsg_pr_info("ps.cpp: reading four base registers\n");
   bsg_pr_info("ps.cpp: reset(lo)=%d, bitbang=%d, dram_init=%d, dram_base=%d\n",
@@ -332,7 +335,6 @@ extern "C" int cosim_main(char *argstr) {
 
   bsg_tag_bitbang *btb = new bsg_tag_bitbang(zpl, GP0_WR_CSR_TAG_BITBANG, TAG_NUM_CLIENTS, TAG_MAX_LEN);
   bsg_tag_client *pl_reset_client = new bsg_tag_client(TAG_CLIENT_PL_RESET_ID, TAG_CLIENT_PL_RESET_WIDTH);
-  bsg_tag_client *pl_cnten_client = new bsg_tag_client(TAG_CLIENT_PL_CNTEN_ID, TAG_CLIENT_PL_CNTEN_WIDTH);
   bsg_tag_client *wd_reset_client = new bsg_tag_client(TAG_CLIENT_WD_RESET_ID, TAG_CLIENT_WD_RESET_WIDTH);
 
   // Reset the bsg tag master
@@ -343,9 +345,7 @@ extern "C" int cosim_main(char *argstr) {
   btb->reset_client(wd_reset_client);
   // Set bsg client0 to 1 (assert BP reset)
   btb->set_client(pl_reset_client, 0x1);
-  // Set bsg client1 to 1 (assert BP counter en)
-  btb->set_client(pl_cnten_client, 0x1);
-  // Set bsg client2 to 1 (assert WD reset)
+  // Set bsg client1 to 1 (assert WD reset)
   btb->set_client(wd_reset_client, 0x1);
   // Set bsg client0 to 0 (deassert BP reset)
   btb->set_client(pl_reset_client, 0x0);
@@ -353,6 +353,7 @@ extern "C" int cosim_main(char *argstr) {
   // We need some additional toggles for data to propagate through
   btb->idle(50);
   // Deassert the active-low system reset as we finish initializing the whole system
+  bsg_pr_info("ps.cpp: deasserting system reset\n");
   zpl->axil_write(GP0_RD_CSR_SYS_RESETN, 0x1, 0xF);
 
 #ifdef FPGA
@@ -491,7 +492,7 @@ extern "C" int cosim_main(char *argstr) {
   unsigned long long mtime_start = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
   bsg_pr_dbg_ps("ps.cpp: finished nbf load\n");
 
-  // Set bsg client2 to 0 (deassert WD reset)
+  // Set bsg client1 to 0 (deassert WD reset)
   btb->set_client(wd_reset_client, 0x0);
   bsg_pr_info("ps.cpp: starting watchdog\n");
   // We need some additional toggles for data to propagate through
@@ -502,6 +503,9 @@ extern "C" int cosim_main(char *argstr) {
 
   bsg_pr_info("ps.cpp: Setting sampling interval: %d\n", SAMPLE_INTERVAL);
   zpl->axil_write(GP0_WR_CSR_SAMPLE_INTRVL, (SAMPLE_INTERVAL - 1), 0xf);
+
+  bsg_pr_info("ps.cpp: Asserting profiler counter enable\n");
+  zpl->axil_write(GP0_WR_CSR_PROF_EN, 0x1, 0xf);
 
   bsg_pr_info("ps.cpp: Asserting DRAM clock gate enable\n");
   zpl->axil_write(GP0_WR_CSR_DRAM_GATE_EN, 0x1, 0xf);
@@ -528,15 +532,16 @@ extern "C" int cosim_main(char *argstr) {
   pthread_join(poll_id, NULL);
   bsg_pr_info("ps.cpp: end polling i/o\n");
 
+  bsg_pr_info("ps.cpp: Deasserting profiler counter enable\n");
+  zpl->axil_write(GP0_WR_CSR_PROF_EN, 0x0, 0xf);
+
   bsg_pr_info("ps.cpp: Deasserting DRAM clock gate enable\n");
   zpl->axil_write(GP0_WR_CSR_DRAM_GATE_EN, 0x0, 0xf);
 
   bsg_pr_info("ps.cpp: Deasserting sampling clock gate enable\n");
   zpl->axil_write(GP0_WR_CSR_SAMPLE_GATE_EN, 0x0, 0xf);
 
-  // Set bsg client1 to 0 (deassert BP counter en)
-  btb->set_client(pl_cnten_client, 0x0);
-  // Set bsg client2 to 1 (assert WD reset)
+  // Set bsg client1 to 1 (assert WD reset)
   btb->set_client(wd_reset_client, 0x1);
   bsg_pr_info("ps.cpp: stopping watchdog\n");
   // We need some additional toggles for data to propagate through
