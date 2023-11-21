@@ -1294,7 +1294,7 @@ module top_zynq
     )
    i_profiler
     (.aclk_i(aclk)
-    ,.areset_i(~aresetn)
+    ,.areset_i(bp_reset_li)
     ,.aen_i(prof_en_li)
 
     ,.clk_i(gated_aclk)
