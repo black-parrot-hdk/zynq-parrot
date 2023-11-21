@@ -117,9 +117,9 @@ volatile int32_t *buf;
 inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr) {
   uint64_t val;
   do {
-    uint64_t val_hi = zpl->axil_read(addr + 4);
-    uint64_t val_lo = zpl->axil_read(addr + 0);
-    uint64_t val_hi2 = zpl->axil_read(addr + 4);
+    uint64_t val_hi = zpl->axil_read(addr + 4) & 0xffffffff;
+    uint64_t val_lo = zpl->axil_read(addr + 0) & 0xffffffff;
+    uint64_t val_hi2 = zpl->axil_read(addr + 4) & 0xffffffff;
     if (val_hi == val_hi2) {
       val = val_hi << 32;
       val += val_lo;
