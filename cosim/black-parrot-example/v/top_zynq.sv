@@ -454,12 +454,15 @@ module top_zynq
   wire bp_reset_li = ~sys_resetn | tag_reset_li;
 
   // Gating Logic
-  logic gated_aresetn, gate_r, gate_sync, cdl_gate_lo;
+  logic fifo_gate_r, fifo_gate_lo, cdl_gate_lo, gate_lo;
+  logic ds_bp_reset_li;
   logic gated_bp_reset_li, gated_prof_en_li;
   logic [31:0] gated_sample_interval_li;
 
   (* dont_touch = "yes" *) wire ds_aclk;
   (* gated_clock = "yes" *) wire gated_aclk;
+
+  assign gate_lo = (fifo_gate_lo | cdl_gate_lo);
 
 `ifdef VIVADO
   BUFGCE_DIV #(
@@ -482,11 +485,10 @@ module top_zynq
   )
   BUFGCE_inst (
      .I(ds_aclk),
-     .CE(gate_sync | cdl_gate_lo),
+     .CE(gate_lo),
      .O(gated_aclk)
   );
 `else
-  //assign gated_aclk = ds_aclk & ~(gate_sync | cdl_gate_lo);
   bsg_counter_clock_downsample #(.width_p(32))
    clk_ds
     (.clk_i(aclk)
@@ -498,16 +500,16 @@ module top_zynq
   bsg_icg_pos
    clk_buf
     (.clk_i(ds_aclk)
-    ,.en_i(~(gate_sync | cdl_gate_lo))
+    ,.en_i(~gate_lo)
     ,.clk_o(gated_aclk)
     );
 `endif
 
   bsg_sync_sync #(.width_p(1))
-   gated_reset
-    (.oclk_i(gated_aclk)
-    ,.iclk_data_i(aresetn)
-    ,.oclk_data_o(gated_aresetn)
+   ds_bp_reset
+    (.oclk_i(ds_aclk)
+    ,.iclk_data_i(bp_reset_li)
+    ,.oclk_data_o(ds_bp_reset_li)
     );
 
   bsg_sync_sync #(.width_p(1))
@@ -532,20 +534,20 @@ module top_zynq
     );
 
   bsg_dff_reset_set_clear #(.width_p(1))
-   gate_reg
+   fifi_gate_reg
     (.clk_i(~aclk)
     ,.reset_i(~aresetn)
-    ,.set_i(~gate_r & sample_gate_en_li & ~prof_fifo_ready_lo)
-    ,.clear_i(gate_r & (~sample_gate_en_li | ~prof_fifo_v_lo))
-    ,.data_o(gate_r)
+    ,.set_i(~fifo_gate_r & sample_gate_en_li & ~prof_fifo_ready_lo)
+    ,.clear_i(fifo_gate_r & (~sample_gate_en_li | ~prof_fifo_v_lo))
+    ,.data_o(fifo_gate_r)
     );
 
   bsg_sync_sync
    #(.width_p(1))
    gate_cross
    (.oclk_i(ds_aclk)
-   ,.iclk_data_i(gate_r)
-   ,.oclk_data_o(gate_sync)
+   ,.iclk_data_i(fifo_gate_r)
+   ,.oclk_data_o(fifo_gate_lo)
    );
 
   // (MBT)
@@ -1155,9 +1157,11 @@ module top_zynq
      ,.reset_i(gated_bp_reset_li)
 
      ,.ungated_clk_i(ds_aclk)
+     ,.ungated_reset_i(ds_bp_reset_li)
 
      ,.rt_clk_i(rt_clk)
 
+     ,.gate_i(gate_lo)
      ,.gate_en_i(dram_gate_en_li)
      ,.dram_lat_i(dram_latency_li)
      ,.cdl_gate_o(cdl_gate_lo)
@@ -1439,7 +1443,7 @@ module top_zynq
     )
    i_afifo_prof
     (.w_clk_i(gated_aclk)
-    ,.w_reset_i(~gated_aresetn)
+    ,.w_reset_i(gated_bp_reset_li)
 
     ,.w_enq_i(prof_v_lo & (sample_cnt_lo == '0) & ~prof_afifo_full_lo)
     ,.w_data_i({prof_instret_lo, prof_stall_lo, prof_pc_lo})
