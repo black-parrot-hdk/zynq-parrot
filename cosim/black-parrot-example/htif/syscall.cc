@@ -341,9 +341,13 @@ reg_t syscall_t::sys_openat(reg_t dirfd, reg_t pname, reg_t len, reg_t flags, re
 {
   std::vector<char> name(len);
   memif->read(pname, len, name.data());
-  int fd = sysret_errno(AT_SYSCALL(openat, dirfd, name.data(), flags, mode));
-  if (fd == -ENOENT)
-    fd = sysret_errno(AT_SYSCALL(openat, dirfd, name.data(), flags | O_CREAT, mode));
+  int fd;
+  if(access(name.data(), F_OK) != -1) {
+    fd = sysret_errno(AT_SYSCALL(openat, dirfd, name.data(), flags & ~(O_CREAT | O_EXCL | O_TRUNC) , mode));
+  }
+  else {
+    fd = sysret_errno(AT_SYSCALL(openat, dirfd, name.data(), flags | O_CREAT | O_EXCL | O_TRUNC, mode));
+  }
   if (fd < 0)
     return sysret_errno(-1);
   return fds.alloc(fd);
