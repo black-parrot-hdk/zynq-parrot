@@ -184,9 +184,7 @@ void *device_poll(void *vargp) {
 #ifdef PK
     htif_cntr++;
     if(htif_cntr % HTIF_INTERVAL == 0) {
-      if(htif->step()) {
-        break;
-      }
+      htif->step();
     }
 #endif
 
