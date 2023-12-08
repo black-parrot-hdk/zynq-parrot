@@ -10,7 +10,7 @@ FLIST      ?= $(WD_FLIST) $(TOP_FLIST)
 
 $(WD_FLIST):
 	echo "+incdir+$(BASEJUMP_STL_DIR)/bsg_misc" >> $@
-	echo "+incdir+$BASEJUMP_STL_DIR/bsg_tag" >> $@
+	echo "+incdir+$(BASEJUMP_STL_DIR)/bsg_tag" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_misc/bsg_mux2_gatestack.v" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_async/bsg_launch_sync_sync.v" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_tag/bsg_tag_pkg.v" >> $@

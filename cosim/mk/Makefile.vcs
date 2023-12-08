@@ -16,8 +16,10 @@ VCS_OPTS += +incdir+$(COSIM_DIR)/include/vcs
 CFLAGS += -DVCS
 CFLAGS += -std=c++14
 
-LDFLAGS += -lpthread
+LDFLAGS += -L$(BOOST_ROOT)/lib
+LDFLAGS += -lboost_coroutine -lboost_context -lboost_system
 
+CINCLUDES += -I$(BOOST_ROOT)/include
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/vcs
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
@@ -37,7 +39,7 @@ simv: $(HOST_PROGRAM) $(FLIST) $(BUILD_COLLATERAL)
 
 RUN_LOG ?= run.log
 run: simv $(RUN_COLLATERAL)
-	./$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
+	./$< $(SIM_ARGS) $(SIM_LIBS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
 
 clean:
 	rm -rf csrc/

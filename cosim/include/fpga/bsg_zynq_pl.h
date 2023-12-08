@@ -54,44 +54,6 @@ public:
   uintptr_t gp0_base_offset = 0;
   uintptr_t gp1_base_offset = 0;
 
-  bsg_zynq_pl(int argc, char *argv[]) {
-    printf("// bsg_zynq_pl: be sure to run as root\n");
-#ifdef SIM_BACKPRESSURE_ENABLE
-    printf("// bsg_zynq_pl: warning does not support SIM_BACKPRESSURE_ENABLE\n");
-#endif
-
-    // open memory device
-    int fd = open("/dev/mem", O_RDWR | O_SYNC);
-    assert(fd != 0);
-
-#ifdef GP0_ENABLE
-    // map in first PLAXI region of physical addresses to virtual addresses
-    volatile uintptr_t ptr0 =
-        (uintptr_t)mmap((void *)gp0_addr_base, gp0_addr_size_bytes, PROT_READ | PROT_WRITE,
-                    MAP_SHARED, fd, gp0_addr_base);
-    assert(ptr0 == (uintptr_t)gp0_addr_base);
-
-    printf("// bsg_zynq_pl: mmap returned %" PRIxPTR " (offset %" PRIxPTR ") errno=%x\n", ptr0,
-           gp0_base_offset, errno);
-#endif
-    
-#ifdef GP1_ENABLE
-    // map in second PLAXI region of physical addresses to virtual addresses
-    volatile uintptr_t ptr1 =
-        (uintptr_t)mmap((void *)gp1_addr_base, gp1_addr_size_bytes, PROT_READ | PROT_WRITE,
-                    MAP_SHARED, fd, gp1_addr_base);
-    assert(ptr1 == (uintptr_t)gp1_addr_base);
-
-    printf("// bsg_zynq_pl: mmap returned %" PRIxPTR " (offset %" PRIxPTR ") errno=%x\n", ptr1,
-           gp1_base_offset, errno);
-
-#endif
-    
-    close(fd);
-  }
-
-  ~bsg_zynq_pl(void) {}
-
   // returns virtual pointer, writes physical parameter into arguments
   void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) {
 
@@ -117,10 +79,6 @@ public:
     cma_free(virtual_ptr);
   }
 
-  static void tick(void) { /* Does nothing on PS */ }
-
-  static bool done(void) { printf("bsg_zynq_pl: done() called, exiting\n"); return true; }
-
   inline volatile void *axil_get_ptr(uintptr_t address) {
     if (address >= gp1_addr_base)
       return (void *)(address + gp1_base_offset);
@@ -128,8 +86,6 @@ public:
       return (void *)(address + gp0_base_offset);
   }
 
-  static void axil_poll() { /* Does nothing on PS */ }
-  
   inline volatile int64_t *axil_get_ptr64(uintptr_t address) {
     return (int64_t *)axil_get_ptr(address);
   }
@@ -144,6 +100,56 @@ public:
 
   inline volatile int8_t *axil_get_ptr8(uintptr_t address) {
     return (int8_t *)axil_get_ptr(address);
+  }
+
+public:
+  bsg_zynq_pl(int argc, char *argv[]) {
+    printf("// bsg_zynq_pl: be sure to run as root\n");
+#ifdef SIM_BACKPRESSURE_ENABLE
+    printf("// bsg_zynq_pl: warning does not support SIM_BACKPRESSURE_ENABLE\n");
+#endif
+    // open memory device
+    int fd = open("/dev/mem", O_RDWR | O_SYNC);
+    assert(fd != 0);
+#ifdef GP0_ENABLE
+    // map in first PLAXI region of physical addresses to virtual addresses
+    volatile uintptr_t ptr0 =
+        (uintptr_t)mmap((void *)gp0_addr_base, gp0_addr_size_bytes, PROT_READ | PROT_WRITE,
+                    MAP_SHARED, fd, gp0_addr_base);
+    assert(ptr0 == (uintptr_t)gp0_addr_base);
+
+    printf("// bsg_zynq_pl: mmap returned %" PRIxPTR " (offset %" PRIxPTR ") errno=%x\n", ptr0,
+           gp0_base_offset, errno);
+#endif
+
+#ifdef GP1_ENABLE
+    // map in second PLAXI region of physical addresses to virtual addresses
+    volatile uintptr_t ptr1 =
+        (uintptr_t)mmap((void *)gp1_addr_base, gp1_addr_size_bytes, PROT_READ | PROT_WRITE,
+                    MAP_SHARED, fd, gp1_addr_base);
+    assert(ptr1 == (uintptr_t)gp1_addr_base);
+
+    printf("// bsg_zynq_pl: mmap returned %" PRIxPTR " (offset %" PRIxPTR ") errno=%x\n", ptr1,
+           gp1_base_offset, errno);
+#endif
+    close(fd);
+  }
+
+  ~bsg_zynq_pl(void) {}
+
+#ifdef AXI_ENABLE
+  inline int32_t axil_read(uintptr_t address) {
+    // Only aligned 32B reads are currently supported
+    assert (alignof(address) >= 4);
+
+    // We use unsigned here because the data is sign extended from the AXI bus
+    volatile int32_t *ptr32 = axil_get_ptr32(address);
+    int32_t data = *ptr32;
+
+    if (debug)
+      printf("  bsg_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n", address, data);
+
+    return data;
   }
 
   inline void axil_write(uintptr_t address, int32_t data, uint8_t wstrb) {
@@ -168,18 +174,18 @@ public:
     }
   }
 
-  inline int32_t axil_read(uintptr_t address) {
-    // Only aligned 32B reads are currently supported
-    assert (alignof(address) >= 4);
+#endif
 
-    // We use unsigned here because the data is sign extended from the AXI bus
-    volatile int32_t *ptr32 = axil_get_ptr32(address);
-    int32_t data = *ptr32;
+  void done(void) {
+      printf("bsg_zynq_pl: done() called, exiting\n");
+  }
 
-    if (debug)
-      printf("  bsg_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n", address, data);
+  void next_tick(void) override {
+      /* Does nothing on PS */
+  }
 
-    return data;
+  void poll_tick(void) override {
+      /* Does nothing on PS */
   }
 };
 

@@ -119,30 +119,6 @@ void *monitor(void *vargp) {
   return NULL;
 }
 
-void *device_poll(void *vargp) {
-  bsg_zynq_pl *zpl = (bsg_zynq_pl *)vargp;
-  int axil_len = sizeof(bp_bedrock_packet) / 4;
-  while (1) {
-    uint32_t pkt_data[axil_len];
-    // keep reading as long as there is data
-    for (int i = 0; i < axil_len; i++) {
-      while (!zpl->axil_read(GP0_RD_PL2PS_FIFO_CTRS+4));
-      pkt_data[i] = zpl->axil_read(GP0_RD_PL2PS_FIFO_DATA+4);
-    }
-
-    // Assume writes only
-    bp_bedrock_packet *packet = reinterpret_cast<bp_bedrock_packet *>(pkt_data);
-    decode_bp_output(zpl, packet->addr0, packet->data);
-    // break loop when all cores done
-    if (done_vec.all()) {
-      break;
-    }
-  }
-  bsg_pr_info("Exiting from pthread\n");
-
-  return NULL;
-}
-
 inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr, bool bp_not_shell) {
   uint64_t val, val_hi, val_lo, val_hi2;
   do {
@@ -346,10 +322,23 @@ extern "C" int cosim_main(char *argstr) {
   pthread_create(&thread_id, NULL, monitor, NULL);
 
   bsg_pr_info("ps.cpp: Starting i/o polling thread\n");
-  pthread_create(&thread_id, NULL, device_poll, (void *)zpl);
+  int axil_len = sizeof(bp_bedrock_packet) / 4;
+  while (1) {
+    uint32_t pkt_data[axil_len];
+    // keep reading as long as there is data
+    for (int i = 0; i < axil_len; i++) {
+      while (!zpl->axil_read(GP0_RD_PL2PS_FIFO_CTRS+4));
+      pkt_data[i] = zpl->axil_read(GP0_RD_PL2PS_FIFO_DATA+4);
+    }
 
-  bsg_pr_info("ps.cpp: waiting for i/o packet\n");
-  pthread_join(thread_id, NULL);
+    // Assume writes only
+    bp_bedrock_packet *packet = reinterpret_cast<bp_bedrock_packet *>(pkt_data);
+    decode_bp_output(zpl, packet->addr0, packet->data);
+    // break loop when all cores done
+    if (done_vec.all()) {
+      break;
+    }
+  }
 
   unsigned long long mtime_stop = get_counter_64(zpl, BP_MTIME, 1);
 

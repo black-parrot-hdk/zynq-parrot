@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
+#include <functional>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -129,7 +130,7 @@ public:
   }
 
   // Wait for (low true) reset to be asserted by the testbench
-  void reset(void (*tick)()) {
+  void reset(std::function<void()> tick) {
     printf("bsg_zynq_pl: Entering reset\n");
     while (this->p_aresetn == 0) {
       tick();
@@ -137,7 +138,7 @@ public:
     printf("bsg_zynq_pl: Exiting reset\n");
   }
 
-  int axil_read_helper(uintptr_t address, void (*tick)()) {
+  int axil_read_helper(uintptr_t address, std::function<void()> tick) {
     int data;
     int timeout_counter = 0;
 
@@ -183,7 +184,7 @@ public:
   }
 
   void axil_write_helper(uintptr_t address, int32_t data, uint8_t wstrb,
-                         void (*tick)()) {
+                         std::function<void()> tick) {
     int timeout_counter = 0;
 
     assert(wstrb == 0xf); // we only support full int writes right now
@@ -198,6 +199,7 @@ public:
     bool aw_done = false;
     bool w_done = false;
 
+    int i = 0;
     // loop until both address and data consumed
     // subordinate is allowed to consume one before the other, or both at once
     // this loop will run at least once (and tick the clock)
@@ -301,7 +303,7 @@ public:
   }
 
   // Wait for (low true) reset to be asserted by the testbench
-  void reset(void (*tick)()) {
+  void reset(std::function<void()> tick) {
     printf("bsg_zynq_pl: Entering reset\n");
     while (this->p_aresetn == 0) {
       tick();
@@ -309,9 +311,8 @@ public:
     printf("bsg_zynq_pl: Exiting reset\n");
   }
 
-  void axil_read_helper(s_axil_device *p, void (*tick)()) {
+  void axil_read_helper(s_axil_device *p, std::function<void()> tick) {
     int timeout_counter = 0;
-    int data;
 
     this->p_arready = 1;
     while (this->p_arvalid == 0) {
@@ -346,7 +347,7 @@ public:
     return;
   }
 
-  int axil_write_helper(s_axil_device *p, void (*tick)()) {
+  int axil_write_helper(s_axil_device *p, std::function<void ()> tick) {
     int timeout_counter = 0;
 
     assert(this->p_wstrb == 0xf); // we only support full int writes right now
