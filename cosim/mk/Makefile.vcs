@@ -25,6 +25,8 @@ CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_test
 CINCLUDES += -I$(CURR_DESIGN_DIR)
 
+HOST_PROGRAM += $(COSIM_INCLUDE_DIR)/vcs/bsg_zynq_pl.cc
+
 TRACE ?= +bsg_trace +vpdfilesize+512
 
 all:
@@ -33,7 +35,7 @@ all:
 BUILD_LOG ?= build.log
 simv: $(HOST_PROGRAM) $(FLIST) $(BUILD_COLLATERAL)
 	$(VCS) $(VCS_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" \
-		-LDFLAGS "$(LDFLAGS)" -o $@ $< \
+		-LDFLAGS "$(LDFLAGS)" -o $@ $(HOST_PROGRAM) \
 		2>&1 | tee -i $(BUILD_LOG)
 
 RUN_LOG ?= run.log

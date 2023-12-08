@@ -91,7 +91,7 @@ apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps
 apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/zynq_ultra_ps_e_0/pl_clk0 (${clk_freq} MHz)" }  [get_bd_pins proc_sys_reset_0/slowest_sync_clk]
 apply_bd_automation -rule xilinx.com:bd_rule:board -config {Manual_Source {Auto}}  [get_bd_pins proc_sys_reset_0/ext_reset_in]
 
-create_bd_addr_seg -range 0x00002000 -offset 0x10000000 [get_bd_addr_spaces top_0/m01_axi] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] SEG_axi_bram_ctrl_0_Mem0
+create_bd_addr_seg -range 0x00002000 -offset 0x00010000 [get_bd_addr_spaces top_0/m01_axi] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] SEG_axi_bram_ctrl_0_Mem0
 
 assign_bd_address
 set_property offset 0x400000000 [get_bd_addr_segs {zynq_ultra_ps_e_0/Data/SEG_top_0_reg0}]
@@ -110,14 +110,14 @@ save_bd_design
 
 if {1} {
   set_property STEPS.SYNTH_DESIGN.ARGS.GATED_CLOCK_CONVERSION auto [get_runs synth_1]
-  launch_runs synth_1 -jobs 4
+  launch_runs synth_1 -jobs 32
   wait_on_run synth_1
   open_run synth_1 -name synth_1
   source ${tcl_dir}/additional_constraints.tcl
 }
 
 if {1} {
-  launch_runs impl_1 -to_step write_bitstream -jobs 4
+  launch_runs impl_1 -to_step write_bitstream -jobs 32
   wait_on_run impl_1
 }
 

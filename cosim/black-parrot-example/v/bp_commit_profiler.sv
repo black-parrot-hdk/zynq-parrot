@@ -23,6 +23,7 @@ module bp_commit_profiler
     )
    (input aclk_i
     , input areset_i
+    , input aen_i
 
     , input clk_i
     , input reset_i
@@ -304,7 +305,7 @@ module bp_commit_profiler
   // Output generation
   `define declare_counter(name,up,i)                                \
   bsg_counter_clear_up                                              \
-   #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p(0))        \
+   #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p((width_p+1)'(0))) \
    ``name``_cnt                                                     \
    (.clk_i(clk_i)                                                   \
    ,.reset_i(reset_i)                                               \
@@ -315,7 +316,7 @@ module bp_commit_profiler
 
   `define declare_event_counter(name,up)                            \
   bsg_counter_clear_up                                              \
-   #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p(0))        \
+   #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p((width_p+1)'(0))) \
    ``name``_cnt                                                     \
    (.clk_i(clk_i)                                                   \
    ,.reset_i(reset_i)                                               \
@@ -326,7 +327,7 @@ module bp_commit_profiler
 
   `define declare_stall_counter(name)                                                \
   bsg_counter_clear_up                                                               \
-   #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p(0))                         \
+   #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p((width_p+1)'(0)))           \
    ``name``_cnt                                                                      \
    (.clk_i(clk_i)                                                                    \
    ,.reset_i(reset_i)                                                                \
@@ -337,12 +338,12 @@ module bp_commit_profiler
 
   // cycle, mcycle, and instret
   bsg_counter_clear_up
-   #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p(0))
+   #(.max_val_p((width_p+1)'(2**width_p-1)), .init_val_p((width_p+1)'(0)))
    cycle_cnt
     (.clk_i(aclk_i)
     ,.reset_i(areset_i)
-    ,.clear_i(freeze_i)
-    ,.up_i(en_i)
+    ,.clear_i(1'b0)
+    ,.up_i(aen_i)
     ,.count_o(data_o[0])
     );
 

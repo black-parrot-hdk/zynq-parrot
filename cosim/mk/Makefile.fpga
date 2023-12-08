@@ -15,16 +15,19 @@ CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/fpga
 CINCLUDES += -I$(CURR_DESIGN_DIR)
 
+HOST_PROGRAM += $(COSIM_INCLUDE_DIR)/fpga/bsg_zynq_pl.cc
+
 all:
 	@echo "Rules for FPGA; see $(TOP)/cosim/mk/Makefile.fpga for more:"
 	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.fpga
 
-EXE ?= control-program
+EXE ?= work/control-program
 run: $(EXE) $(RUN_COLLATERAL)
-	sudo ./$< $(SIM_ARGS) | tee run.log
+	cd $(dir $<); sudo ./$(notdir $<) $(SIM_ARGS) | tee run.log
 
 $(EXE): $(HOST_PROGRAM) $(BUILD_COLLATERAL)
-	$(GCC) $(CFLAGS) $(CINCLUDES) $(CSOURCES) $< $(LFLAGS) -o $@
+	mkdir -p $(dir $@)
+	$(GCC) $(CFLAGS) $(CINCLUDES) $(CSOURCES) $(HOST_PROGRAM) $(LFLAGS) -o $@
 
 reset_pl:
 	echo 'from pynq import PL; PL.reset();' | sudo -E $(PYTHON3)

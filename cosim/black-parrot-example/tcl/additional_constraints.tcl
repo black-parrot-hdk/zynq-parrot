@@ -53,7 +53,6 @@ proc bsg_blss_constraints { blss_inst cdc_delay } {
 }
 
 ##### MAIN #####
-
 set top_inst [join [get_cells -hier top_fpga_inst]]
 set bp_inst [join [get_cells -hier blackparrot]]
 
@@ -76,3 +75,14 @@ foreach clint $all_clint {
   bsg_clint_constraints $top_inst $clint $bp_min_period $clk_div
 }
 
+set_clock_groups -asynchronous \
+    -group {clk_pl_0} \
+    -group {clk_pl_1 clint_ds_by_16_clk} \
+    -group {ds_aclk gated_aclk}
+
+set axi_period [get_property PERIOD [get_clocks clk_pl_0]]
+set rtc_period [get_property PERIOD [get_clocks clk_pl_1]]
+set bp_period  [get_property PERIOD [get_clocks ds_aclk ]]
+
+set_max_delay -datapath_only -from [get_clocks clk_pl_0] -to [get_clocks ds_aclk] $bp_period
+set_max_delay -datapath_only -from [get_clocks clk_pl_0] -to [get_clocks gated_aclk] $bp_period

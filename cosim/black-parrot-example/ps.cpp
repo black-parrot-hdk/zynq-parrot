@@ -11,6 +11,7 @@
 #include <time.h>
 #include <queue>
 #include <unistd.h>
+#include <string.h>
 #include <bitset>
 #include <cstdint>
 #include <iostream>
@@ -22,6 +23,13 @@
 #include "bsg_zynq_pl.h"
 #include "bsg_printing.h"
 #include "bsg_argparse.h"
+
+#ifdef PK
+#include "htif.h"
+#ifndef HTIF_INTERVAL
+#define HTIF_INTERVAL 1
+#endif
+#endif
 
 #ifndef FREE_DRAM
 #define FREE_DRAM 0
@@ -51,6 +59,8 @@
 #ifndef DRAM_LATENCY
 #error "DRAM_LATENCY not defined!"
 #endif
+
+#define NSTALL 32
 
 // Helper functions
 void nbf_load(bsg_zynq_pl *zpl, char *filename);
@@ -99,13 +109,17 @@ const char* samples[] = {
 std::queue<int> getchar_queue;
 std::bitset<BP_NCPUS> done_vec;
 bool run = true;
+int NPC;
+#ifdef FPGA
+volatile int32_t *buf;
+#endif
 
 inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr) {
   uint64_t val;
   do {
-    uint64_t val_hi = zpl->axil_read(addr + 4);
-    uint64_t val_lo = zpl->axil_read(addr + 0);
-    uint64_t val_hi2 = zpl->axil_read(addr + 4);
+    uint64_t val_hi = zpl->axil_read(addr + 4) & 0xffffffff;
+    uint64_t val_lo = zpl->axil_read(addr + 0) & 0xffffffff;
+    uint64_t val_hi2 = zpl->axil_read(addr + 4) & 0xffffffff;
     if (val_hi == val_hi2) {
       val = val_hi << 32;
       val += val_lo;
@@ -136,6 +150,18 @@ void *device_poll(void *vargp) {
   bsg_zynq_pl *zpl = ((struct threadArgs*)vargp)->zpl;
   char* nbf_filename = ((struct threadArgs*)vargp)->nbf_filename;
 
+#ifdef PK
+  printf("Running with HTIF\n");
+#ifdef FPGA
+  void* dram = (void*) buf;
+#else
+  bsg_mem_dma::Memory* mem = bsg_mem_dma::bsg_mem_dma_get_memory(0);
+  void* dram = (void*) mem;
+#endif
+  htif_t* htif = new htif_t(zpl, dram);
+  int htif_cntr = 0;
+#endif
+
   //open binary file for dumping samples
   char filename[100];
   if(strrchr(nbf_filename, '/') != NULL)
@@ -143,13 +169,24 @@ void *device_poll(void *vargp) {
   else
     strcpy(filename, nbf_filename);
   *strrchr(filename, '.') = '\0';
-  strcat(filename, ".stall");
-  ofstream file(filename, ios::binary);
+  //strcat(filename, ".stall");
+  ofstream stall_file(string(filename) + ".stall", ios::out);
+  ofstream sys_file(string(filename) + ".sys", ios::out);
+
+  auto stalls = new uint32_t[NPC][NSTALL]();
 
   uint32_t pc;
   uint8_t stall;
+  int instret;
   while (1) {
     //zpl->axil_poll();
+
+#ifdef PK
+    htif_cntr++;
+    if(htif_cntr % HTIF_INTERVAL == 0) {
+      htif->step();
+    }
+#endif
 
     // keep reading as long as there is data
     if (zpl->axil_read(GP0_RD_PL2PS_FIFO_0_CTRS) != 0) {
@@ -158,6 +195,15 @@ void *device_poll(void *vargp) {
     // break loop when all cores done
     if (done_vec.all()) {
       break;
+    }
+
+    // read systrace
+    if (zpl->axil_read(GP0_RD_PL2PS_FIFO_3_CTRS) != 0) {
+      uint32_t data = zpl->axil_read(GP0_RD_PL2PS_FIFO_3_DATA);
+      int code = (data >> 21) & 0x7FF;
+      uint32_t mcycle = data & 0x1FFFFF;
+      //printf("syscall#%d %08x\n", code, mcycle);
+      sys_file << std::dec << code << " 0x" << std::setfill('0') << std::setw(8) << std::hex << mcycle << std::endl;
     }
 
     // drain sample data from FIFOs
@@ -171,15 +217,29 @@ void *device_poll(void *vargp) {
 */
         pc = zpl->axil_read(GP0_RD_PL2PS_FIFO_1_DATA);
         uint32_t data = zpl->axil_read(GP0_RD_PL2PS_FIFO_2_DATA);
-        stall = ((data & 0x1) << 7) | (data >> 1);
-
-        file.write((char*)&pc, sizeof(pc));
-        file.write((char*)&stall, sizeof(stall));
+        stall = (data >> 1);
+        instret = (data & 0x1);
+        if(pc >= DRAM_BASE_ADDR) {
+          if(instret)
+            stalls[(pc - DRAM_BASE_ADDR)/4][0]++;
+          else
+            stalls[(pc - DRAM_BASE_ADDR)/4][1 + stall]++;
+        }
       }
     }
   }
+
+  stall_file << std::dec << NPC << " " << NSTALL << " " << SAMPLE_INTERVAL << "\n";
+  for(int i=0; i<NPC; i++) {
+    for(int j=0; j<NSTALL; j++) {
+      stall_file << stalls[i][j] << " ";
+    }
+    stall_file << "\n";
+  }
+
   run = false;
-  file.close();
+  stall_file.close();
+  sys_file.close();
   bsg_pr_info("Exiting from pthread\n");
 
   return NULL;
@@ -250,6 +310,9 @@ extern "C" int cosim_main(char *argstr) {
 
   long allocated_dram = DRAM_ALLOCATE_SIZE;
 
+  bsg_pr_info("ps.cpp: asserting system reset\n");
+  zpl->axil_write(GP0_RD_CSR_SYS_RESETN, 0x0, 0xF);
+
   int32_t val;
   bsg_pr_info("ps.cpp: reading four base registers\n");
   bsg_pr_info("ps.cpp: reset(lo)=%d, bitbang=%d, dram_init=%d, dram_base=%d\n",
@@ -270,7 +333,6 @@ extern "C" int cosim_main(char *argstr) {
 
   bsg_tag_bitbang *btb = new bsg_tag_bitbang(zpl, GP0_WR_CSR_TAG_BITBANG, TAG_NUM_CLIENTS, TAG_MAX_LEN);
   bsg_tag_client *pl_reset_client = new bsg_tag_client(TAG_CLIENT_PL_RESET_ID, TAG_CLIENT_PL_RESET_WIDTH);
-  bsg_tag_client *pl_cnten_client = new bsg_tag_client(TAG_CLIENT_PL_CNTEN_ID, TAG_CLIENT_PL_CNTEN_WIDTH);
   bsg_tag_client *wd_reset_client = new bsg_tag_client(TAG_CLIENT_WD_RESET_ID, TAG_CLIENT_WD_RESET_WIDTH);
 
   // Reset the bsg tag master
@@ -281,9 +343,7 @@ extern "C" int cosim_main(char *argstr) {
   btb->reset_client(wd_reset_client);
   // Set bsg client0 to 1 (assert BP reset)
   btb->set_client(pl_reset_client, 0x1);
-  // Set bsg client1 to 1 (assert BP counter en)
-  btb->set_client(pl_cnten_client, 0x1);
-  // Set bsg client2 to 1 (assert WD reset)
+  // Set bsg client1 to 1 (assert WD reset)
   btb->set_client(wd_reset_client, 0x1);
   // Set bsg client0 to 0 (deassert BP reset)
   btb->set_client(pl_reset_client, 0x0);
@@ -291,11 +351,11 @@ extern "C" int cosim_main(char *argstr) {
   // We need some additional toggles for data to propagate through
   btb->idle(50);
   // Deassert the active-low system reset as we finish initializing the whole system
+  bsg_pr_info("ps.cpp: deasserting system reset\n");
   zpl->axil_write(GP0_RD_CSR_SYS_RESETN, 0x1, 0xF);
 
 #ifdef FPGA
   unsigned long phys_ptr;
-  volatile int32_t *buf;
   if (zpl->axil_read(GP0_RD_CSR_DRAM_INITED) == 0) {
     bsg_pr_info(
         "ps.cpp: CSRs do not contain a DRAM base pointer; calling allocate "
@@ -430,20 +490,26 @@ extern "C" int cosim_main(char *argstr) {
   unsigned long long mtime_start = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
   bsg_pr_dbg_ps("ps.cpp: finished nbf load\n");
 
-  // Set bsg client2 to 0 (deassert WD reset)
+  // Set bsg client1 to 0 (deassert WD reset)
   btb->set_client(wd_reset_client, 0x0);
   bsg_pr_info("ps.cpp: starting watchdog\n");
   // We need some additional toggles for data to propagate through
   btb->idle(50);
 
-  bsg_pr_info("ps.cpp: Setting DRAM latency\n");
+  bsg_pr_info("ps.cpp: Setting DRAM latency: %d\n", DRAM_LATENCY);
   zpl->axil_write(GP0_WR_CSR_DRAM_LATENCY, DRAM_LATENCY, 0xf);
 
-  bsg_pr_info("ps.cpp: Setting sampling interval\n");
+  bsg_pr_info("ps.cpp: Setting sampling interval: %d\n", SAMPLE_INTERVAL);
   zpl->axil_write(GP0_WR_CSR_SAMPLE_INTRVL, (SAMPLE_INTERVAL - 1), 0xf);
 
-  bsg_pr_info("ps.cpp: Asserting clock gate enable\n");
-  zpl->axil_write(GP0_WR_CSR_GATE_EN, 0x1, 0xf);
+  bsg_pr_info("ps.cpp: Asserting profiler counter enable\n");
+  zpl->axil_write(GP0_WR_CSR_PROF_EN, 0x1, 0xf);
+
+  bsg_pr_info("ps.cpp: Asserting DRAM clock gate enable\n");
+  zpl->axil_write(GP0_WR_CSR_DRAM_GATE_EN, 0x1, 0xf);
+
+  bsg_pr_info("ps.cpp: Asserting sampling clock gate enable\n");
+  zpl->axil_write(GP0_WR_CSR_SAMPLE_GATE_EN, 0x1, 0xf);
 
   bsg_pr_info("ps.cpp: Unfreezing BlackParrot\n");
   zpl->axil_write(GP1_CSR_BASE_ADDR + 0x200008, 0x0, 0xf);
@@ -464,12 +530,16 @@ extern "C" int cosim_main(char *argstr) {
   pthread_join(poll_id, NULL);
   bsg_pr_info("ps.cpp: end polling i/o\n");
 
-  bsg_pr_info("ps.cpp: Deasserting clock gate enable\n");
-  zpl->axil_write(GP0_WR_CSR_GATE_EN, 0x0, 0xf);
+  bsg_pr_info("ps.cpp: Deasserting profiler counter enable\n");
+  zpl->axil_write(GP0_WR_CSR_PROF_EN, 0x0, 0xf);
 
-  // Set bsg client1 to 0 (deassert BP counter en)
-  btb->set_client(pl_cnten_client, 0x0);
-  // Set bsg client2 to 1 (assert WD reset)
+  bsg_pr_info("ps.cpp: Deasserting DRAM clock gate enable\n");
+  zpl->axil_write(GP0_WR_CSR_DRAM_GATE_EN, 0x0, 0xf);
+
+  bsg_pr_info("ps.cpp: Deasserting sampling clock gate enable\n");
+  zpl->axil_write(GP0_WR_CSR_SAMPLE_GATE_EN, 0x0, 0xf);
+
+  // Set bsg client1 to 1 (assert WD reset)
   btb->set_client(wd_reset_client, 0x1);
   bsg_pr_info("ps.cpp: stopping watchdog\n");
   // We need some additional toggles for data to propagate through
@@ -550,6 +620,8 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
   int data;
   ifstream nbf_file(nbf_filename);
 
+  int maxPC = 0x0;
+
   if (!nbf_file.is_open()) {
     bsg_pr_err("ps.cpp: error opening nbf file.\n");
     delete zpl;
@@ -575,6 +647,10 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
 
       // we map BP physical address for CSRs etc (0x0000_0000 - 0x0FFF_FFFF)
       // to ARM address to 0xA0000_0000 - 0xAFFF_FFFF  (256MB)
+
+      if((nbf[1] > maxPC) && (nbf[1] >= DRAM_BASE_ADDR))
+        maxPC = nbf[1];
+
       if (nbf[1] >= DRAM_BASE_ADDR)
         base_addr = gp1_addr_base - DRAM_BASE_ADDR;
       else
@@ -615,6 +691,10 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
   }
 
   bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
+
+  NPC = 1 + ((maxPC - DRAM_BASE_ADDR)/4);
+  bsg_pr_dbg_ps("ps.cpp: maxPC = %08x\n", maxPC);
+  bsg_pr_dbg_ps("ps.cpp: NPC = %d\n", NPC);
 }
 
 bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
@@ -652,19 +732,6 @@ bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
       } else {
         zpl->axil_write(GP0_WR_PS2PL_FIFO_DATA, getchar_queue.front(), 0xf);
         getchar_queue.pop();
-      }
-    }
-    // parameter ROM, only partially implemented
-    else if (address >= 0x120000 && address <= 0x120128) {
-      bsg_pr_dbg_ps("ps.cpp: PARAM ROM read from (%lx)\n", address);
-      int offset = address - 0x120000;
-      // CC_X_DIM, return number of cores
-      if (offset == 0x0) {
-        zpl->axil_write(GP0_WR_PS2PL_FIFO_DATA, BP_NCPUS, 0xf);
-      }
-      // CC_Y_DIM, just return 1 so X*Y == number of cores
-      else if (offset == 0x4) {
-        zpl->axil_write(GP0_WR_PS2PL_FIFO_DATA, 1, 0xf);
       }
     }
     // if not implemented, print error
