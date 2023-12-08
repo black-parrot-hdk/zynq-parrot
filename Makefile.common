@@ -10,6 +10,7 @@ export CURR_VSRC_DIR         ?= $(CURR_DESIGN_DIR)/v
 export CURR_CSRC_DIR         ?= $(CURR_DESIGN_DIR)/src
 export CURR_INCLUDE_DIR      ?= $(CURR_DESIGN_DIR)/include
 export CURR_TCL_DIR          ?= $(CURR_DESIGN_DIR)/tcl
+export CURR_XDC_DIR          ?= $(CURR_DESIGN_DIR)/xdc
 
 export COSIM_DIR             ?= $(TOP)/cosim
 export COSIM_MK_DIR          ?= $(COSIM_DIR)/mk
@@ -18,6 +19,7 @@ export COSIM_CSRC_DIR        ?= $(COSIM_DIR)/src
 export COSIM_INCLUDE_DIR     ?= $(COSIM_DIR)/include
 export COSIM_PY_DIR          ?= $(COSIM_DIR)/py
 export COSIM_TCL_DIR         ?= $(COSIM_DIR)/tcl
+export COSIM_XDC_DIR         ?= $(COSIM_DIR)/xdc
 export COSIM_IMPORT_DIR      ?= $(COSIM_DIR)/import
 
 export BASEJUMP_STL_DIR      ?= $(COSIM_IMPORT_DIR)/basejump_stl

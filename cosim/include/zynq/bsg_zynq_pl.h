@@ -85,6 +85,9 @@ class bsg_zynq_pl : public bsg_zynq_pl_hardware {
         }
 
         ~bsg_zynq_pl(void) {
+#ifdef UART_ENABLE
+            close(serial_port);
+#endif
         }
 
         void done(void) {

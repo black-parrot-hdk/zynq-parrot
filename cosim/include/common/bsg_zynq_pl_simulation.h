@@ -41,6 +41,7 @@ class bsg_zynq_pl_simulation {
         std::unique_ptr<axils<HP1_ADDR_WIDTH, HP1_DATA_WIDTH> > axi_hp1;
         std::unique_ptr<axils<HP2_ADDR_WIDTH, HP2_DATA_WIDTH> > axi_hp2;
 
+        std::unique_ptr<zynq_uart> uart;
         std::unique_ptr<zynq_scratchpad> scratchpad;
         std::unique_ptr<zynq_watchdog> watchdog;
 
@@ -68,6 +69,9 @@ class bsg_zynq_pl_simulation {
 #endif
 #ifdef WATCHDOG_ENABLE
             watchdog = std::make_unique<zynq_watchdog>();
+#endif
+#ifdef UART_ENABLE
+            uart = std::make_unique<zynq_uart>();
 #endif
 #ifdef GP0_ENABLE
             axi_gp0 = std::make_unique<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH> >(
@@ -126,6 +130,10 @@ class bsg_zynq_pl_simulation {
                 } else if (scratchpad->is_read(araddr)) {
                     axi_hp1->axil_read_helper((s_axil_device *)scratchpad.get(), f_next_tick);
 #endif
+#ifdef UART_ENABLE
+                } else if (uart->is_read(araddr)) {
+                    axi_hp1->axil_read_helper((s_axil_device *)uart.get(), f_next_tick);
+#endif
                 } else {
                     bsg_pr_err("  bsg_zynq_pl: Unsupported AXI device read at [%x]\n", araddr);
                 }
@@ -136,6 +144,10 @@ class bsg_zynq_pl_simulation {
 #ifdef SCRATCHPAD_ENABLE
                 } else if (scratchpad->is_write(awaddr)) {
                     axi_hp1->axil_write_helper((s_axil_device *)scratchpad.get(), f_next_tick);
+#endif
+#ifdef UART_ENABLE
+                } else if (uart->is_write(awaddr)) {
+                    axi_hp1->axil_write_helper((s_axil_device *)uart.get(), f_next_tick);
 #endif
                 } else {
                     bsg_pr_err("  bsg_zynq_pl: Unsupported AXI device write at [%x]\n", awaddr);
@@ -231,6 +243,51 @@ class bsg_zynq_pl_simulation {
             } else if (index == 1) {
                 axi_gp1->axil_write_helper(address, data, wstrb, f_tick);
             }
+        }
+#endif
+#ifdef UART_ENABLE
+        // Must sync to verilog
+        //     typedef struct packed
+        //     {
+        //       logic [31:0] data;
+        //       logic [6:0]  addr8to2;
+        //       logic        wr_not_rd;
+        //     } bsg_uart_pkt_s;
+        virtual void uart_write(uintptr_t addr, int32_t data, uint8_t wmask) {
+             uint64_t uart_pkt = 0;
+             uintptr_t word = addr >> 2;
+
+             uart_pkt |= (data & 0xffffffff) << 8;
+             uart_pkt |= (word & 0x0000007f) << 1;
+             uart_pkt |= (1    & 0x00000001) << 0;
+
+            for (int i = 0; i < 40; i+=8) {
+                uint8_t b = (uart_pkt >> i) & 0xff;
+                uart->tx_helper(b, f_poll_tick);
+            }
+        }
+
+        virtual int32_t uart_read(uintptr_t addr) {
+             uint64_t uart_pkt = 0;
+             uintptr_t word = addr >> 2;
+             int32_t data = 0;
+
+             uart_pkt |= (data & 0xffffffff) << 8;
+             uart_pkt |= (word & 0x0000007f) << 1;
+             uart_pkt |= (0    & 0x00000001) << 0;
+
+            for (int i = 0; i < 40; i+=8) {
+                uint8_t b = (uart_pkt >> i) & 0xff;
+                uart->tx_helper(b, f_poll_tick);
+            }
+
+            uint8_t d;
+            for (int i = 0; i < 32; i+=8) {
+                d = uart->rx_helper(f_poll_tick);
+                data |= (d << i);
+            }
+
+            return data;
         }
 #endif
         virtual void tick(void) = 0;
