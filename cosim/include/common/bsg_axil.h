@@ -139,48 +139,51 @@ public:
   }
 
   int axil_read_helper(uintptr_t address, std::function<void()> tick) {
-    int data;
     int timeout_counter = 0;
 
+    bool ar_done = false;
+    bool r_done = false;
+
+    int rdata;
+
     // assert these signals "late in the cycle"
+    // stall while ready is not asserted
     this->p_arvalid = 1;
     this->p_araddr = address;
-
-    // stall while ready is not asserted
-    while (this->p_arready == 0) {
+    while (!ar_done) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         bsg_pr_err("bsg_zynq_pl: AXI M read arready timeout\n");
       }
 
+      if (this->p_arready == 1) {
+        ar_done = true;
+      }
+
       tick();
     }
-
-    // ready was asserted, transaction will be accepted!
-    tick();
-
-    // arvalid must drop the request
     this->p_arvalid = 0;
 
     // setup to receive the reply
-    this->p_rready = 1;
-
     // stall while valid is not asserted
-    while (this->p_rvalid == 0) {
+    while (!r_done) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         bsg_pr_err("bsg_zynq_pl: AXI M read rvalid timeout\n");
+      }
+
+      if (this->p_rvalid == 1) {
+        rdata = this->p_rdata;
+        r_done = true;
       }
 
       tick();
     }
 
-    // if valid was asserted, latch the incoming data
-    data = this->p_rdata;
+    // Do the read
+    this->p_rready = 1;
     tick();
-
-    // drop the ready signal on the following cycle
     this->p_rready = 0;
 
-    return data;
+    return rdata;
   }
 
   void axil_write_helper(uintptr_t address, int32_t data, uint8_t wstrb,
@@ -189,6 +192,10 @@ public:
 
     assert(wstrb == 0xf); // we only support full int writes right now
 
+    bool aw_done = false;
+    bool w_done = false;
+    bool b_done = false;
+
     // send data and address in same cycle
     this->p_awvalid = 1;
     this->p_wvalid = 1;
@@ -196,29 +203,19 @@ public:
     this->p_wdata = data;
     this->p_wstrb = wstrb;
 
-    bool aw_done = false;
-    bool w_done = false;
-
-    int i = 0;
     // loop until both address and data consumed
     // subordinate is allowed to consume one before the other, or both at once
     // this loop will run at least once (and tick the clock)
-    while (!(aw_done && w_done)) {
+    while (!aw_done || !w_done) {
       // check timeout
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
-        bsg_pr_err("bsg_zynq_pl: AXI M write timeout\n");
+        bsg_pr_err("bsg_zynq_pl: AXI S write timeout\n");
       }
 
-      // check for handshake, lower valid signals independently
-      if (aw_done) {
-        this->p_awvalid = 0;
-      }
       if (this->p_awready == 1) {
         aw_done = true;
       }
-      if (w_done) {
-        this->p_wvalid = 0;
-      }
+
       if (this->p_wready == 1) {
         w_done = true;
       }
@@ -226,26 +223,24 @@ public:
       // tick the clock one cycle
       tick();
     }
-
-    // ensure valids are lowered
     this->p_awvalid = 0;
     this->p_wvalid = 0;
-    // raise bready for response
-    this->p_bready = 1;
 
-    // wait for bvalid to go high
-    while (this->p_bvalid == 0) {
+    // wait for response valid
+    while (!b_done) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
-        bsg_pr_err("bsg_zynq_pl: AXI M bvalid timeout\n");
+        bsg_pr_err("bsg_zynq_pl: AXI S bvalid timeout\n");
+      }
+
+      if (this->p_bvalid == 1) {
+        this->p_bready = 1;
+        b_done = true;
       }
 
       tick();
     }
-
-    // now, we will drop bready low with ready on the next cycle
-    tick();
+    // Drop bready
     this->p_bready = 0;
-    return;
   }
 };
 
@@ -313,111 +308,102 @@ public:
 
   void axil_read_helper(s_axil_device *p, std::function<void()> tick) {
     int timeout_counter = 0;
+    int araddr;
 
-    this->p_arready = 1;
-    while (this->p_arvalid == 0) {
+    bool ar_done = false;
+    bool r_done = false;
+
+    while (!ar_done) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         bsg_pr_err("bsg_zynq_pl: AXI S read request timeout\n");
       }
 
-      tick();
-    }
-
-    int raddr = this->p_araddr;
-    tick();
-
-    this->p_arready = 0;
-
-    int rdata = p->read(raddr);
-
-    this->p_rdata = rdata;
-    this->p_rvalid = 1;
-
-    while (this->p_rready == 0) {
-      if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
-        bsg_pr_err("bsg_zynq_pl: AXI S read data timeout\n");
+      if (this->p_arvalid == 1) {
+        araddr = this->p_araddr;
+        this->p_arready = 1;
+        ar_done = true;
       }
 
       tick();
     }
+    this->p_arready = 0;
 
-    tick();
+    // Return read data
+    this->p_rdata = p->read(araddr);
+    this->p_rresp = 0;
+    this->p_rvalid = 1;
+    while (!r_done) {
+      if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
+        bsg_pr_err("bsg_zynq_pl: AXI S read data timeout\n");
+      }
+
+      if (this->p_rready == 1) {
+        r_done = true;
+      }
+
+      tick();
+    }
     this->p_rvalid = 0;
-
-    return;
   }
 
   int axil_write_helper(s_axil_device *p, std::function<void ()> tick) {
     int timeout_counter = 0;
 
-    assert(this->p_wstrb == 0xf); // we only support full int writes right now
-
-    this->p_awready = 1;
-    this->p_wready = 1;
-
     bool aw_done = false;
     bool w_done = false;
+    bool b_done = false;
 
-    int awaddr = 0;
-    int wdata = 0;
+    assert(this->p_wstrb == 0xf); // we only support full int writes right now
+
+    int awaddr;
+    int wdata;
 
     // loop until both address and data consumed
     // subordinate is allowed to consume one before the other, or both at once
     // this loop will run at least once (and tick the clock)
-    while (!(aw_done && w_done)) {
-      // check timeout
+    while (!aw_done || !w_done) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         bsg_pr_err("bsg_zynq_pl: AXI S write timeout\n");
       }
 
-      // check for handshake, lower ready signals independently
-      if (aw_done) {
-        this->p_awready = 0;
-      }
-      if (this->p_awvalid == 1) {
-        aw_done = true;
+      if (this->p_awvalid) {
         awaddr = this->p_awaddr;
+        this->p_awready = 1;
+        aw_done = true;
       }
-      if (w_done) {
-        this->p_wready = 0;
-      }
-      if (this->p_wvalid == 1) {
-        w_done = true;
+
+      if (this->p_wvalid) {
         wdata = this->p_wdata;
+        this->p_wready = 1;
+        w_done = true;
       }
 
-      // do the write
-      if (aw_done && w_done) {
-        p->write(awaddr, wdata);
-      }
-
-      // tick the clock one cycle
       tick();
     }
 
-    // ensure write ready signals are lowered
+    // Do the write
+    p->write(awaddr, wdata);
     this->p_awready = 0;
     this->p_wready = 0;
+
     // raise bvalid for response
+    // wait for response ready
     this->p_bvalid = 1;
     this->p_bresp  = 0;
-
-    // wait for response ready
-    while (this->p_bready == 0) {
+    while (!b_done) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
         bsg_pr_err("bsg_zynq_pl: AXI S bvalid timeout\n");
       }
 
+      if (this->p_bready == 1) {
+        b_done = true;
+      }
+
       tick();
     }
-
-    tick();
-
-    // Drop bvalid
     this->p_bvalid = 0;
-
-    return wdata;
   }
 };
 
 #endif
+
