@@ -19,6 +19,8 @@ CFLAGS += -std=c++14
 LDFLAGS += -L$(BOOST_ROOT)/lib
 LDFLAGS += -lboost_coroutine -lboost_context -lboost_system
 
+$(error $(BOOST_ROOT))
+
 CINCLUDES += -I$(BOOST_ROOT)/include
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/verilator

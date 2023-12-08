@@ -220,7 +220,7 @@ static uintptr_t hp2_addr_base = (uintptr_t) HP2_ADDR_BASE;
 #define UART_DEV /dev/null
 #define UART_DEV_STR ""
 #define UART_BAUD 0
-#endif
+#else
 
 #ifndef UART_BAUD
 #ifndef SIMULATION
@@ -237,6 +237,7 @@ static uintptr_t hp2_addr_base = (uintptr_t) HP2_ADDR_BASE;
 #define PPCAT_NX(A, B) A ## B
 #define PPCAT(A, B) PPCAT_NX(A, B)
 #define UART_BAUD_ENUM PPCAT(B, UART_BAUD)
+#endif
 #endif
 
 #endif

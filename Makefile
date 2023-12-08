@@ -5,24 +5,7 @@ checkout:
 	cd $(TOP); git submodule update --init --recursive --checkout $(COSIM_IMPORT_DIR)
 	cd $(TOP); git submodule update --init --recursive --checkout $(SOFTWARE_IMPORT_DIR)
 
-BOOST_URL ?= https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.gz
-BOOST_BUILD_DIR ?= boost_1_82_0
-$(BOOST_BUILD_DIR): checkout
-	$(WGET) -c $(BOOST_URL) -O - | $(TAR) -xz
-
-boost: $(BOOST_BUILD_DIR)
-	rm -rf $(BOOST_ROOT)
-	cd $<; \
-		./bootstrap.sh --prefix=$(BOOST_ROOT)
-	cd $<; \
-		./b2 --prefix=$(BOOST_ROOT) \
-			toolset=gcc \
-			cxxflags="-std=c++14" \
-			linkflags="-std=c++14" \
-			install
-	rm -rf $<
-
-prep: boost
+prep: checkout
 	# BlackParrot
 	$(MAKE) -C $(BLACKPARROT_DIR) libs
 	$(MAKE) -C $(BLACKPARROT_TOOLS_DIR) tools
