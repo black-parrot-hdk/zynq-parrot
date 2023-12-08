@@ -18,7 +18,7 @@
 
 #define DRAM_ALLOC_SIZE_BYTES 16384
 
-int main(int argc, char **argv) {
+int ps_main(int argc, char **argv) {
   bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
   int mask1 = 0xf;
@@ -37,9 +37,9 @@ int main(int argc, char **argv) {
   for (int i = 0; i < DRAM_ALLOC_SIZE_BYTES / 4; i++)
     assert(buf[i] == i);
 
-  zpl->axil_write(0x0 + GP0_ADDR_BASE, phys_ptr, mask1);
+  zpl->shell_write(0x0 + GP0_ADDR_BASE, phys_ptr, mask1);
 
-  assert((zpl->axil_read(0x0 + GP0_ADDR_BASE) == (phys_ptr)));
+  assert((zpl->shell_read(0x0 + GP0_ADDR_BASE) == (phys_ptr)));
 
   if (argc == 1)
     zpl->free_dram((void *)buf);

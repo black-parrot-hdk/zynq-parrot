@@ -1,13 +1,19 @@
 
+include $(COSIM_MK_DIR)/Makefile.env
+
 VV_OPTS += --cc --sv
 VV_OPTS += --build --exe
 VV_OPTS += --trace-fst --trace-structs
+VV_OPTS += --no-timing
 VV_OPTS += -Wno-fatal -Wall -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTEMPTY -Wno-UNUSED
 VV_OPTS += -f flist.vcs
-VV_OPTS += -top-module $(TOP_MODULE)
+VV_OPTS += -top-module $(TB_MODULE)
 VV_OPTS += +incdir+$(COSIM_DIR)/include/verilator
+VV_OPTS += $(addprefix +define+,$(DEFINES))
 
 CFLAGS += -DVERILATOR
+CFLAGS += -DHOST_$(call upper,$(HOST))
+CFLAGS += $(addprefix -D,$(DEFINES))
 CFLAGS += -std=c++14
 
 LDFLAGS += -L$(BOOST_ROOT)/lib
@@ -26,13 +32,13 @@ all:
 	@echo "## See the makefile for the fun things you can do in this directory"
 
 RUN_LOG ?= run.log
-run: obj_dir/V$(TOP_MODULE) $(RUN_COLLATERAL)
+run: obj_dir/V$(TB_MODULE) $(RUN_COLLATERAL)
 	$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
 
 BUILD_LOG ?= build.log
-obj_dir/V$(TOP_MODULE): $(HOST_PROGRAM) $(FLIST) $(BUILD_COLLATERAL)
+obj_dir/V$(TB_MODULE): $(FLIST) $(BUILD_COLLATERAL)
 	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" \
-		-LDFLAGS "$(LDFLAGS)" $< \
+		-LDFLAGS "$(LDFLAGS)" $(MAIN_PROGRAM) $(HOST_PROGRAM) \
 		2>&1 | tee -i $(BUILD_LOG)
 
 clean:

@@ -1,7 +1,7 @@
 
 `timescale 1 ns / 1 ps
 
-	module axi3speed_v1_0_S00_AXI #
+	module top_zynq #
 	(
 		// Users to add parameters here
 

@@ -20,69 +20,67 @@
 #include "verilated_cov.h"
 
 #include "bsg_zynq_pl_simulation.h"
-#include "Vtop.h"
+#include "Vbsg_nonsynth_zynq_testbench.h"
 #include "verilated.h"
 
 class bsg_zynq_pl : public bsg_zynq_pl_simulation {
-    Vtop *tb;
+    Vbsg_nonsynth_zynq_testbench *tb;
     VerilatedFstC *wf;
 
     public:
-        bsg_zynq_pl(int argc, char *argv[]) {
-            // Initialize Verilators variables
-            Verilated::commandArgs(argc, argv);
+    bsg_zynq_pl(int argc, char *argv[]) {
+        // Initialize Verilators variables
+        Verilated::commandArgs(argc, argv);
 
-            // turn on tracing
-            Verilated::traceEverOn(true);
+        // turn on tracing
+        Verilated::traceEverOn(true);
 
-            tb = new Vtop();
+        tb = new Vbsg_nonsynth_zynq_testbench();
 
-            wf = new VerilatedFstC;
-            tb->trace(wf, 10);
-            wf->open("trace.fst");
+        wf = new VerilatedFstC;
+        tb->trace(wf, 10);
+        wf->open("trace.fst");
 
-            tick();
-            init();
-        }
+        tick();
+        init();
+    }
 
-        ~bsg_zynq_pl(void) { }
+    ~bsg_zynq_pl(void) { }
 
-#ifdef AXI_ENABLE
-        int32_t axil_read(uintptr_t address) override {
-            return bsg_zynq_pl_simulation::axil_read(address);
-        }
+    // Each bsg_timekeeper::next() moves to the next clock edge
+    //   so we need 2 to perform one full clock cycle.
+    // If your design does not evaluate things on negedge, you could omit
+    //   the first eval, but BSG designs tend to do assertions on negedge
+    //   at the least.
+    void tick(void) override {
+        tb->eval();
+        wf->dump(sc_time_stamp());
+        bsg_timekeeper::next();
+        tb->eval();
+        wf->dump(sc_time_stamp());
+        bsg_timekeeper::next();
+    }
 
-        void axil_write(uintptr_t address, int32_t data, uint8_t wstrb) override {
-            bsg_zynq_pl_simulation::axil_write(address, data, wstrb);
-        }
-#endif
+    void done(void) override {
+        printf("bsg_zynq_pl: done() called, exiting\n");
+        wf->close();
+    }
 
-        // Each bsg_timekeeper::next() moves to the next clock edge
-        //   so we need 2 to perform one full clock cycle.
-        // If your design does not evaluate things on negedge, you could omit
-        //   the first eval, but BSG designs tend to do assertions on negedge
-        //   at the least.
-        void tick(void) override {
-            tb->eval();
-            wf->dump(sc_time_stamp());
-            bsg_timekeeper::next();
-            tb->eval();
-            wf->dump(sc_time_stamp());
-            bsg_timekeeper::next();
-        }
+    void next_tick() override {
+        bsg_zynq_pl_simulation::next_tick();
+    }
 
-        void done(void) override {
-            printf("bsg_zynq_pl: done() called, exiting\n");
-            wf->close();
-        }
+    void poll_tick() override {
+        bsg_zynq_pl_simulation::poll_tick();
+    }
 
-        void next_tick() override {
-            bsg_zynq_pl_simulation::next_tick();
-        }
+    void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) {
+        axil_write(addr, data, wmask);
+    }
 
-        void poll_tick() override {
-            bsg_zynq_pl_simulation::poll_tick();
-        }
+    int32_t shell_read(uintptr_t addr) {
+        return axil_read(addr);
+    }
 };
 
 #endif

@@ -7,6 +7,9 @@ Checkout these examples in this directory:
 - **axi3-perf-example**: tests the speedup achieved by using AXI3 directly instead of converting to AXI4.
 - **blackparrot-minimal-example**: working example of BlackParrot using a non-blocking FIFO interface for I/O.
 - **blackparrot-example**: working example of BlackParrot using blocking interfaces on I/O.
+- **manycore-example**: example of a small manycore driven by the zynq shell
+- **hammerblade-example**: example of a BlackParrot+Manycore system driven by the Zynq Shell
+- **bridge-example**: an EXPERIMENTAL example of tunneling GP0 accesses through a UART (for non-Zynq FPGA)
 
 See [Tynqer with PYNQ](https://docs.google.com/document/d/1U9XIxLkjbI1vQR5hxjk8SzqqQ3sM2hCMUXfoK3tGwBU/edit#heading=h.souq55b38m0y) for an introduction to using Zynq and Vivado. We highly suggest that you use the ethernet connection to the board.
 

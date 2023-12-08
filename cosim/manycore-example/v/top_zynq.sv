@@ -20,7 +20,7 @@ import bsg_tag_pkg::*;
   // by bsg_zynq_pl_shell read_locs_lp (update in top.v as well)
     parameter integer C_S00_AXI_DATA_WIDTH   = 32
   , parameter integer C_S00_AXI_ADDR_WIDTH   = 10
-  , parameter integer C_M00_AXI_DATA_WIDTH   = 64
+  , parameter integer C_M00_AXI_DATA_WIDTH   = 32
   , parameter integer C_M00_AXI_ADDR_WIDTH   = 32
   )
  (  input wire                                  aclk
@@ -213,10 +213,6 @@ import bsg_tag_pkg::*;
   wh_link_sif_s [E:W][S:N][bsg_machine_pod_llcache_rows_gp-1:0][bsg_machine_wh_ruche_factor_gp-1:0] wh_link_sif_li, wh_link_sif_lo;
   bsg_manycore_link_sif_s [E:W][bsg_machine_pod_tiles_y_gp-1:0] hor_link_sif_li, hor_link_sif_lo;
 
-  // BSG TAG MASTER
-  logic tag_done_lo;
-  bsg_tag_s pod_tags_lo;
- 
   // Tag bitbang
   logic tag_clk_r_lo, tag_data_r_lo;
   logic bb_ready_and_lo;

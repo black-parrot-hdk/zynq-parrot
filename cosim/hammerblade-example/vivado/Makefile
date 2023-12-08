@@ -12,7 +12,7 @@ $(BP_FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs
 	cp $^ $@
 	sed -i "s/BASEJUMP_STL_DIR/BP_BASEJUMP_STL_DIR/g" $@
 	sed -i "/bp_common_pkg.sv/d" $@
-	sed -i "1i $(CURR_SRC_DIR)/bp_common_pkg.sv" $@
+	sed -i "1i $(CURR_VSRC_DIR)/bp_common_pkg.sv" $@
 
 $(MC_FLIST): $(BSG_MANYCORE_DIR)/machines/arch_filelist.mk
 	cp $^ $@
@@ -24,7 +24,7 @@ $(MC_FLIST): $(BSG_MANYCORE_DIR)/machines/arch_filelist.mk
 
 $(FLIST): $(BP_FLIST) $(MC_FLIST) $(BASE_FLIST)
 	cat $^ | envsubst > $@
-	echo "+incdir+$(CURR_SRC_DIR)" >> $@
+	echo "+incdir+$(CURR_VSRC_DIR)" >> $@
 	echo "+incdir+$(COSIM_DIR)/include/vivado" >> $@
 	# Replace hardened memory which is incorrectly inferred on some Xilinx FPGAs
 	sed -i "/bsg_mem_1rw_sync_mask_write_bit.v/d" $@
@@ -32,7 +32,4 @@ $(FLIST): $(BP_FLIST) $(MC_FLIST) $(BASE_FLIST)
 	echo "$(BASEJUMP_STL_DIR)/hard/ultrascale_plus/bsg_mem/bsg_mem_1rw_sync_mask_write_bit.v" >> $@
 
 include $(TOP)/cosim/mk/Makefile.vivado
-
-open:
-	$(VIVADO) &
 

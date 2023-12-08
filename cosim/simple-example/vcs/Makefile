@@ -3,10 +3,12 @@ include ../Makefile.design
 #############################
 # Accelerator Software Settings
 #############################
-HOST_PROGRAM ?= $(abspath ../ps.cpp)
 CFLAGS += -DZYNQ_PS_DEBUG
 CFLAGS += -DZYNQ_PL_DEBUG
-CFLAGS += -DGP0_ENABLE -DGP0_ADDR_BASE=0x43C00000 -DGP0_ADDR_WIDTH=4 -DGP0_DATA_WIDTH=32 -DGP0_HIER_BASE=top.axil0
+
+DEFINES += GP0_ENABLE
+DEFINES += GP0_ADDR_BASE=0x43C00000 GP0_ADDR_WIDTH=4 GP0_DATA_WIDTH=32
+DEFINES += GP0_HIER_BASE=bsg_nonsynth_zynq_testbench.axil0
 
 # Enable backpressure, emulating context switches
 #CFLAGS += -DSIM_BACKPRESSURE_ENABLE
@@ -25,7 +27,8 @@ $(FLIST): $(BASE_FLIST)
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.v" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.v" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_reset_gen.v" >> $@
-	echo "$(COSIM_SRC_DIR)/bsg_nonsynth_dpi_to_axil.v" >> $@
+	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axil.sv" >> $@
+	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv" >> $@
 
 include $(TOP)/cosim/mk/Makefile.vcs
 

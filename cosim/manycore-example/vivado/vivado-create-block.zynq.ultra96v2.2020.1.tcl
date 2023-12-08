@@ -15,7 +15,7 @@ set_property -dict [list CONFIG.PSU__FPGA_PL0_ENABLE {1}  CONFIG.PSU__CRL_APB__P
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP0 {1} CONFIG.PSU__MAXIGP0__DATA_WIDTH {32}] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP1 {0}] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP2 {0}] [get_bd_cells zynq_ultra_ps_e_0]
-set_property -dict [list CONFIG.PSU__USE__S_AXI_GP3 {1} CONFIG.PSU__SAXIGP3__DATA_WIDTH {64}] [get_bd_cells zynq_ultra_ps_e_0]
+set_property -dict [list CONFIG.PSU__USE__S_AXI_GP3 {1} CONFIG.PSU__SAXIGP3__DATA_WIDTH {32}] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__DDRC__BUS_WIDTH {32 Bit} CONFIG.PSU__DDRC__DEVICE_CAPACITY {16384 MBits} CONFIG.PSU__DDRC__MEMORY_TYPE {LPDDR 4} CONFIG.PSU__DDRC__ROW_ADDR_COUNT {16}] [get_bd_cells zynq_ultra_ps_e_0]
 endgroup
 

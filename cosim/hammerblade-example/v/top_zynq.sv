@@ -316,7 +316,7 @@ module top_zynq
      ,.reset_depth_p(reset_depth_gp)
 
      ,.rev_use_credits_p(rev_use_credits_gp)
-     ,.rev_fifo_els_p(rev_fifo_els_gp)
+     ,.rev_fifo_els_p('{2,2,2,2,3})
      )
    hammerblade
     (.clk_i(aclk)

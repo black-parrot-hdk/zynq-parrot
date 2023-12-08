@@ -3,28 +3,35 @@ include ../Makefile.design
 #############################
 # Accelerator Software Settings
 #############################
-NBF_FILE     ?= $(abspath ../prog.nbf)
-ELF_FILE     ?= $(abspath ../prog.elf)
-HOST_PROGRAM ?= $(abspath ../ps.cpp)
-SIM_ARGS     += +c_args=$(NBF_FILE)
-
 DROMAJO_COSIM ?= 0
 SKIP_DRAM ?= -DSKIP_DRAM_TESTING
 BP_NCPUS ?= 1
 
 #CFLAGS += -DZYNQ_PL_DEBUG
 CFLAGS += -DZYNQ_PS_DEBUG
-CFLAGS += -DGP0_ENABLE -DGP0_ADDR_BASE=0x40000000U -DGP0_ADDR_WIDTH=10 -DGP0_DATA_WIDTH=32 -DGP0_HIER_BASE=top.axil0
-CFLAGS += -DGP1_ENABLE -DGP1_ADDR_BASE=0x80000000U -DGP1_ADDR_WIDTH=30 -DGP1_DATA_WIDTH=32 -DGP1_HIER_BASE=top.axil1
-CFLAGS += -DHP0_ENABLE -DHP0_ADDR_BASE=0x1000000U -DHP0_ADDR_WIDTH=32 -DHP0_DATA_WIDTH=32 -DHP0_HIER_BASE=top.axil2
-CFLAGS += -DGP2_ENABLE -DGP2_ADDR_BASE=0x80000000U -DGP2_ADDR_WIDTH=28 -DGP2_DATA_WIDTH=32 -DGP2_HIER_BASE=top.axil3
-CFLAGS += -DSCRATCHPAD_ENABLE
-CFLAGS += -DWATCHDOG_ENABLE
-CFLAGS += -DBP_NCPUS=$(BP_NCPUS)
-CFLAGS += $(INCLUDES) $(SKIP_DRAM)
-ifeq ($(DROMAJO_COSIM),1)
 CFLAGS += -I$(BP_TOOLS_DIR)/dromajo/include
-endif
+CFLAGS += -DBP_NCPUS=$(BP_NCPUS)
+CFLAGS += $(SKIP_DRAM)
+
+DEFINES += GP0_ENABLE
+DEFINES += GP0_ADDR_BASE=0x40000000U GP0_ADDR_WIDTH=10 GP0_DATA_WIDTH=32
+DEFINES += GP0_HIER_BASE=bsg_nonsynth_zynq_testbench.axil0
+DEFINES += GP1_ENABLE
+DEFINES += GP1_ADDR_BASE=0x80000000U GP1_ADDR_WIDTH=30 GP1_DATA_WIDTH=32
+DEFINES += GP1_HIER_BASE=bsg_nonsynth_zynq_testbench.axil1
+DEFINES += GP2_ENABLE
+DEFINES += GP2_ADDR_BASE=0x80000000U GP2_ADDR_WIDTH=28 GP2_DATA_WIDTH=32
+DEFINES += GP2_HIER_BASE=bsg_nonsynth_zynq_testbench.axil2
+DEFINES += WATCHDOG_ENABLE
+DEFINES += HP0_ENABLE
+DEFINES += HP0_ADDR_BASE=0x0000000U HP0_ADDR_WIDTH=32 HP0_DATA_WIDTH=64
+DEFINES += AXI_MEM_ENABLE
+DEFINES += HP1_ENABLE
+DEFINES += HP1_ADDR_BASE=0x1000000U HP1_ADDR_WIDTH=32 HP1_DATA_WIDTH=32
+DEFINES += HP1_HIER_BASE=bsg_nonsynth_zynq_testbench.axil4
+DEFINES += SCRATCHPAD_ENABLE
+
+SIM_ARGS += +c_args=$(NBF_FILE)
 
 # Enable backpressure, emulating context switches
 #CFLAGS += -DSIM_BACKPRESSURE_ENABLE
@@ -43,11 +50,11 @@ $(BP_FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs
 	cp $^ $@
 	sed -i "s/BASEJUMP_STL_DIR/BP_BASEJUMP_STL_DIR/g" $@
 	sed -i "/bp_common_pkg.sv/d" $@
-	sed -i "1i $(CURR_SRC_DIR)/bp_common_pkg.sv" $@
+	sed -i "1i $(CURR_VSRC_DIR)/bp_common_pkg.sv" $@
 
 $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	cat $^ | envsubst > $@
-	echo "+incdir+$(CURR_SRC_DIR)" >> $@
+	echo "+incdir+$(CURR_VSRC_DIR)" >> $@
 	echo "+incdir+$(COSIM_DIR)/include/vcs" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_clock_gen.v" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_reset_gen.v" >> $@
@@ -55,8 +62,9 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.v " >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.v " >> $@
-	echo "$(COSIM_SRC_DIR)/bsg_nonsynth_dpi_to_axil.v" >> $@
-	echo "$(COSIM_SRC_DIR)/bsg_nonsynth_axil_to_dpi.v" >> $@
+	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axil.sv" >> $@
+	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_axil_to_dpi.sv" >> $@
+	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv" >> $@
 	if [ "$(DROMAJO_COSIM)" = "1" ]; then \
 		echo "$(BLACKPARROT_DIR)/bp_top/test/common/bp_nonsynth_cosim.sv" >> $@; \
 		echo "$(BLACKPARROT_DIR)/bp_top/test/common/dromajo_cosim.cpp" >> $@; \

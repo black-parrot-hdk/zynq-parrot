@@ -1,6 +1,6 @@
 include ../Makefile.design
 
-open:
+all:
 	$(VIVADO) &
 
 include ../../mk/Makefile.vivado

@@ -1,17 +1,23 @@
 
+include $(COSIM_MK_DIR)/Makefile.env
+
 XRUN_OPTS += -64bit
 XRUN_OPTS += -sv
 XRUN_OPTS += -assert
 XRUN_OPTS += -timescale 1ps/1ps
 XRUN_OPTS += -elaborate -notimingchecks
 XRUN_OPTS += -f flist.vcs
-XRUN_OPTS += -top $(TOP_MODULE)
+XRUN_OPTS += -top $(TB_MODULE)
 XRUN_OPTS += +incdir+$(COSIM_DIR)/include/xcelium
 XRUN_OPTS += -access +rc
 XRUN_OPTS += -dpi -dynamic
 XRUN_OPTS += -disable_sem2009
+XRUN_OPTS += $(MAIN_PROGRAM)
+CFLAGS += $(addprefix +define+,$(DEFINES))
 
 CFLAGS += -DXCELIUM
+CFLAGS += -DHOST_$(call upper,$(HOST))
+CFLAGS += $(addprefix -D,$(DEFINES))
 
 LDFLAGS += -L$(BOOST_ROOT)/lib
 LDFLAGS += -lboost_coroutine -lboost_context -lboost_system
@@ -38,7 +44,7 @@ xcelium.d: $(HOST_PROGRAM) $(FLIST) $(BUILD_COLLATERAL)
 
 RUN_LOG ?= run.log
 run: xcelium.d $(RUN_COLLATERAL)
-	$(XMSIM) $(XMSIM_FLAGS) top $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
+	$(XMSIM) $(XMSIM_FLAGS) $(TB_MODULE) $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
 
 clean:
 	rm -rf csrc/

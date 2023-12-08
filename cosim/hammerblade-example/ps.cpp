@@ -42,8 +42,8 @@ inline void send_mc_request_packet(bsg_zynq_pl *zpl, hb_mc_request_packet_t *pac
 
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
   for (int i = 0; i < axil_len; i++) {
-    while (!zpl->axil_read(GP0_RD_EP_REQ_FIFO_CTR));
-    zpl->axil_write(GP0_WR_EP_REQ_FIFO_DATA, pkt_data[i], 0xf);
+    while (!zpl->shell_read(GP0_RD_EP_REQ_FIFO_CTR));
+    zpl->shell_write(GP0_WR_EP_REQ_FIFO_DATA, pkt_data[i], 0xf);
   }
 }
 
@@ -52,8 +52,8 @@ inline void recv_mc_response_packet(bsg_zynq_pl *zpl, hb_mc_response_packet_t *p
 
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
   for (int i = 0; i < axil_len; i++) {
-    while (!zpl->axil_read(GP0_RD_MC_RSP_FIFO_CTR));
-    pkt_data[i] = zpl->axil_read(GP0_RD_MC_RSP_FIFO_DATA);
+    while (!zpl->shell_read(GP0_RD_MC_RSP_FIFO_CTR));
+    pkt_data[i] = zpl->shell_read(GP0_RD_MC_RSP_FIFO_DATA);
   }
 }
 
@@ -62,8 +62,8 @@ inline void recv_mc_request_packet(bsg_zynq_pl *zpl, hb_mc_request_packet_t *pac
 
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
   for (int i = 0; i < axil_len; i++) {
-    while (!zpl->axil_read(GP0_RD_MC_REQ_FIFO_CTR));
-    pkt_data[i] = zpl->axil_read(GP0_RD_MC_REQ_FIFO_DATA);
+    while (!zpl->shell_read(GP0_RD_MC_REQ_FIFO_CTR));
+    pkt_data[i] = zpl->shell_read(GP0_RD_MC_REQ_FIFO_DATA);
   }
 }
 
@@ -72,8 +72,8 @@ inline void send_mc_response_packet(bsg_zynq_pl *zpl, hb_mc_response_packet_t *p
 
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
   for (int i = 0; i < axil_len; i++) {
-    while (!zpl->axil_read(GP0_RD_EP_RSP_FIFO_CTR));
-    zpl->axil_write(GP0_WR_EP_RSP_FIFO_DATA, pkt_data[i], 0xf);
+    while (!zpl->shell_read(GP0_RD_EP_RSP_FIFO_CTR));
+    zpl->shell_write(GP0_WR_EP_RSP_FIFO_DATA, pkt_data[i], 0xf);
   }
 }
 
@@ -126,9 +126,69 @@ void *monitor(void *vargp) {
   return NULL;
 }
 
-void *device_manycore_poll(void *vargp) {
-  bsg_zynq_pl *zpl = (bsg_zynq_pl *)vargp;
+int ps_main(int argc, char **argv) {
+  bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
+  pthread_t thread_id;
+
+  bsg_pr_info("ps.cpp: reading three base registers\n");
+  bsg_pr_info("ps.cpp: dram_base=%lx\n", zpl->shell_read(0x00 + gp0_addr_base));
+
+  long val;
+  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, 0xDEADBEEF, 0xf);
+  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == (0xDEADBEEF)));
+  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, val, 0xf);
+  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == val));
+
+  bsg_tag_bitbang *btb = new bsg_tag_bitbang(zpl, GP0_WR_CSR_TAG_BITBANG, TAG_NUM_CLIENTS, TAG_MAX_LEN);
+  bsg_tag_client *mc_reset_client = new bsg_tag_client(TAG_CLIENT_MC_RESET_ID, TAG_CLIENT_MC_RESET_WIDTH);
+
+  // Reset the bsg tag master
+  btb->reset_master();
+  // Reset bsg client0
+  btb->reset_client(mc_reset_client);
+  // Set bsg client0 to 1 (assert BP reset)
+  btb->set_client(mc_reset_client, 0x1);
+  // Set bsg client0 to 0 (deassert BP reset)
+  btb->set_client(mc_reset_client, 0x0);
+
+  // We need some additional toggles for data to propagate through
+  btb->idle(50);
+  // Deassert the active-low system reset as we finish initializing the whole system
+  zpl->shell_write(GP0_WR_CSR_SYS_RESETN, 0x1, 0xF);
+
+#ifdef ZYNQ
+  unsigned long phys_ptr;
+  volatile int32_t *buf;
+  long allocated_dram = DRAM_ALLOCATE_SIZE;
+  bsg_pr_info("ps.cpp: calling allocate dram with size %ld\n", allocated_dram);
+  buf = (volatile int32_t *)zpl->allocate_dram(allocated_dram, &phys_ptr);
+  bsg_pr_info("ps.cpp: received %p (phys = %lx)\n", buf, phys_ptr);
+  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, 0xf);
+  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == phys_ptr));
+  bsg_pr_info("ps.cpp: wrote and verified base register\n");
+
+#else
+  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, 0x123400, 0xf);
+  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == 0x123400));
+  bsg_pr_info("ps.cpp: wrote and verified base register\n");
+#endif
+
+  if (argc == 1) {
+    bsg_pr_warn(
+        "No nbf file specified, sleeping for 2^31 seconds (this will hold "
+        "onto allocated DRAM)\n");
+    sleep(1U << 31);
+    delete zpl;
+    return -1;
+  }
+
+  nbf_load(zpl, argv[1]);
+
+  bsg_pr_info("ps.cpp: Starting scan thread\n");
+  pthread_create(&thread_id, NULL, monitor, NULL);
+
+  bsg_pr_info("ps.cpp: Starting MC i/o polling thread\n");
   int mc_finished = 0;
   while (mc_finished != NUM_MC_FINISH) {
     bsg_pr_dbg_ps("Waiting for incoming request packet\n");
@@ -148,13 +208,9 @@ void *device_manycore_poll(void *vargp) {
     }
   }
 
-  bsg_pr_info("Exiting from pthread\n");
-  return NULL;
-}
+  configure_blackparrot(zpl);
 
-void *device_blackparrot_poll(void *vargp) {
-  bsg_zynq_pl *zpl = (bsg_zynq_pl *)vargp;
-
+  bsg_pr_info("ps.cpp: Starting BP i/o polling thread\n");
   int bp_finished = 0;
   while (bp_finished != NUM_BP_FINISH) {
     bsg_pr_dbg_ps("Waiting for incoming request packet\n");
@@ -181,105 +237,14 @@ void *device_blackparrot_poll(void *vargp) {
       bsg_pr_info("BP finish packet received %d\n", ++bp_finished);
     } else if (mc_epa >= 0x3000 && mc_epa < 0x4000) {
       int rom_idx = (mc_epa & 0xff) >> 2;
-      zpl->axil_write(GP0_WR_CSR_ROM_ADDR, rom_idx, 0xf);
+      zpl->shell_write(GP0_WR_CSR_ROM_ADDR, rom_idx, 0xf);
       hb_mc_response_packet_fill(&ep_rsp, &mc_pkt);
-      ep_rsp.data = zpl->axil_read(GP0_RD_ROM_DATA);
+      ep_rsp.data = zpl->shell_read(GP0_RD_ROM_DATA);
       send_mc_response_packet(zpl, &ep_rsp);
     } else {
       bsg_pr_info("Errant request packet: %x %x\n", mc_epa, mc_data);
     }
   }
-
-  bsg_pr_info("Exiting from pthread\n");
-  return NULL;
-}
-
-#ifdef VERILATOR
-int main(int argc, char **argv) {
-#elif FPGA
-int main(int argc, char **argv) {
-#else
-extern "C" int cosim_main(char *argstr) {
-  int argc = get_argc(argstr);
-  char *argv[argc];
-  get_argv(argstr, argc, argv);
-#endif
-  // this ensures that even with tee, the output is line buffered
-  // so that we can see what is happening in real time
-
-  setvbuf(stdout, NULL, _IOLBF, 0);
-
-  bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
-
-  pthread_t thread_id;
-
-  bsg_pr_info("ps.cpp: reading three base registers\n");
-  bsg_pr_info("ps.cpp: dram_base=%lx\n", zpl->axil_read(0x00 + gp0_addr_base));
-
-  long val;
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, 0xDEADBEEF, 0xf);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == (0xDEADBEEF)));
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, val, 0xf);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == val));
-
-  bsg_tag_bitbang *btb = new bsg_tag_bitbang(zpl, GP0_WR_CSR_TAG_BITBANG, TAG_NUM_CLIENTS, TAG_MAX_LEN);
-  bsg_tag_client *mc_reset_client = new bsg_tag_client(TAG_CLIENT_MC_RESET_ID, TAG_CLIENT_MC_RESET_WIDTH);
-
-  // Reset the bsg tag master
-  btb->reset_master();
-  // Reset bsg client0
-  btb->reset_client(mc_reset_client);
-  // Set bsg client0 to 1 (assert BP reset)
-  btb->set_client(mc_reset_client, 0x1);
-  // Set bsg client0 to 0 (deassert BP reset)
-  btb->set_client(mc_reset_client, 0x0);
-
-  // We need some additional toggles for data to propagate through
-  btb->idle(50);
-  // Deassert the active-low system reset as we finish initializing the whole system
-  zpl->axil_write(GP0_WR_CSR_SYS_RESETN, 0x1, 0xF);
-
-#ifdef FPGA
-  unsigned long phys_ptr;
-  volatile int32_t *buf;
-  long allocated_dram = DRAM_ALLOCATE_SIZE;
-  bsg_pr_info("ps.cpp: calling allocate dram with size %ld\n", allocated_dram);
-  buf = (volatile int32_t *)zpl->allocate_dram(allocated_dram, &phys_ptr);
-  bsg_pr_info("ps.cpp: received %p (phys = %lx)\n", buf, phys_ptr);
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, 0xf);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == phys_ptr));
-  bsg_pr_info("ps.cpp: wrote and verified base register\n");
-
-#else
-  zpl->axil_write(GP0_WR_CSR_DRAM_BASE, 0x1234, 0xf);
-  assert((zpl->axil_read(GP0_RD_CSR_DRAM_BASE) == 0x1234));
-  bsg_pr_info("ps.cpp: wrote and verified base register\n");
-#endif
-
-  if (argc == 1) {
-    bsg_pr_warn(
-        "No nbf file specified, sleeping for 2^31 seconds (this will hold "
-        "onto allocated DRAM)\n");
-    sleep(1U << 31);
-    delete zpl;
-    return -1;
-  }
-
-  nbf_load(zpl, argv[1]);
-
-  bsg_pr_info("ps.cpp: Starting scan thread\n");
-  pthread_create(&thread_id, NULL, monitor, NULL);
-  bsg_pr_info("ps.cpp: Starting MC i/o polling thread\n");
-  pthread_create(&thread_id, NULL, device_manycore_poll, (void *)zpl);
-  bsg_pr_info("ps.cpp: waiting for manycore to finish\n");
-  pthread_join(thread_id, NULL);
-
-  configure_blackparrot(zpl);
-
-  bsg_pr_info("ps.cpp: Starting BP i/o polling thread\n");
-  pthread_create(&thread_id, NULL, device_blackparrot_poll, (void *)zpl);
-  bsg_pr_info("ps.cpp: waiting for BlackParrot to finish\n");
-  pthread_join(thread_id, NULL);
 
   zpl->done();
   delete zpl;
@@ -374,7 +339,7 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
     } else if (fence) {
       bsg_pr_dbg_ps("ps.cpp: nbf fence command (ignoring), line %d\n", line_count);
       bsg_pr_info("Waiting for credit drain\n");
-      while(zpl->axil_read(GP0_RD_CREDIT_COUNT) > 0);
+      while(zpl->shell_read(GP0_RD_CREDIT_COUNT) > 0);
       bsg_pr_info("Credits drained\n");
       continue;
     } else {

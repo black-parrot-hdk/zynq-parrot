@@ -2,11 +2,28 @@
 #ifndef ZYNQ_HEADERS_H
 #define ZYNQ_HEADERS_H
 
+#include <cstdint>
+
 #define _STRINGIFY(x) #x
 #define STRINGIFY(x) _STRINGIFY(x)
 
 #ifndef ZYNQ_PL_DEBUG
 #define ZYNQ_PL_DEBUG 0
+#endif
+
+#ifndef ZYNQ
+#ifndef BRIDGE
+#ifndef VIVADO
+#define SIMULATION
+#endif
+#endif
+#endif
+
+#ifdef VCS
+#define HAS_COSIM_MAIN
+#endif
+#ifdef XCELIUM
+#define HAS_COSIM_MAIN
 #endif
 
 #ifndef GP0_ENABLE
@@ -34,7 +51,7 @@ static uintptr_t gp0_addr_base = (uintptr_t) GP0_ADDR_BASE;
 #endif
 
 #ifndef GP0_HIER_BASE
-#ifndef FPGA
+#ifdef SIMULATION
 #error GP0_HIER_BASE must be defined
 #endif
 #endif
@@ -64,7 +81,7 @@ static uintptr_t gp1_addr_base = (uintptr_t) GP1_ADDR_BASE;
 #endif
 
 #ifndef GP1_HIER_BASE
-#ifndef FPGA
+#ifdef SIMULATION
 #error GP1_HIER_BASE must be defined
 #endif
 #endif
@@ -102,7 +119,7 @@ static uintptr_t gp2_addr_base = (uintptr_t) GP2_ADDR_BASE;
 #endif
 
 #ifndef GP2_HIER_BASE
-#ifndef FPGA
+#ifdef SIMULATION
 #error GP2_HIER_BASE must be defined
 #endif
 #endif
@@ -132,8 +149,70 @@ static uintptr_t hp0_addr_base = (uintptr_t) HP0_ADDR_BASE;
 #endif
 
 #ifndef HP0_HIER_BASE
-#ifndef FPGA
+#ifdef SIMULATION
+#ifndef AXI_MEM_ENABLE
 #error HP0_HIER_BASE must be defined
+#endif
+#endif
+#endif
+
+#ifndef HP1_ENABLE
+#define HP1_ADDR_WIDTH 0
+#define HP1_DATA_WIDTH 0
+#define HP1_ADDR_BASE 0
+#define HP1_HIER_BASE ""
+#endif
+
+#ifndef HP1_ADDR_WIDTH
+#error HP1_ADDR_WIDTH must be defined
+#endif
+#ifndef HP1_ADDR_SIZE_BYTES
+#define HP1_ADDR_SIZE_BYTES (1 << HP1_ADDR_WIDTH)
+#endif
+static uintptr_t hp1_addr_size_bytes = (uintptr_t) HP1_ADDR_SIZE_BYTES;
+
+#ifndef HP1_ADDR_BASE
+#error HP1_ADDR_BASE must be defined
+#endif
+static uintptr_t hp1_addr_base = (uintptr_t) HP1_ADDR_BASE;
+
+#ifndef HP1_DATA_WIDTH
+#error HP1_DATA_WIDTH must be defined
+#endif
+
+#ifndef HP1_HIER_BASE
+#ifdef SIMULATION
+#error HP1_HIER_BASE must be defined
+#endif
+#endif
+
+#ifndef HP2_ENABLE
+#define HP2_ADDR_WIDTH 0
+#define HP2_DATA_WIDTH 0
+#define HP2_ADDR_BASE 0
+#define HP2_HIER_BASE ""
+#endif
+
+#ifndef HP2_ADDR_WIDTH
+#error HP2_ADDR_WIDTH must be defined
+#endif
+#ifndef HP2_ADDR_SIZE_BYTES
+#define HP2_ADDR_SIZE_BYTES (1 << HP2_ADDR_WIDTH)
+#endif
+static uintptr_t hp2_addr_size_bytes = (uintptr_t) HP2_ADDR_SIZE_BYTES;
+
+#ifndef HP2_ADDR_BASE
+#error HP2_ADDR_BASE must be defined
+#endif
+static uintptr_t hp2_addr_base = (uintptr_t) HP2_ADDR_BASE;
+
+#ifndef HP2_DATA_WIDTH
+#error HP2_DATA_WIDTH must be defined
+#endif
+
+#ifndef HP2_HIER_BASE
+#ifdef SIMULATION
+#error HP2_HIER_BASE must be defined
 #endif
 #endif
 

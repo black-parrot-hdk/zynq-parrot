@@ -30,16 +30,6 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
 
         ~bsg_zynq_pl(void) { }
 
-#ifdef AXI_ENABLE
-        int32_t axil_read(uintptr_t address) override {
-            return bsg_zynq_pl_simulation::axil_read(address);
-        }
-
-        void axil_write(uintptr_t address, int32_t data, uint8_t wstrb) override {
-            bsg_zynq_pl_simulation::axil_write(address, data, wstrb);
-        }
-#endif
-
         void tick(void) override {
             bsg_dpi_next();
         }
@@ -55,6 +45,15 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
         void poll_tick() override {
             bsg_zynq_pl_simulation::poll_tick();
         }
+
+        void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) {
+            axil_write(addr, data, wmask);
+        }
+
+        int32_t shell_read(uintptr_t addr) {
+            return axil_read(addr);
+        }
+
 };
 
 #endif

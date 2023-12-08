@@ -5,16 +5,19 @@ include $(TOP)/Makefile.common
 #############################
 # Design Settings
 #############################
+TB_MODULE  ?= bsg_nonsynth_zynq_testbench
 BOARDNAME  ?= pynqz2
 TOP_MODULE ?= top
 BASENAME   ?= blackparrot
 
-export CFG ?= e_bp_unicore_zynqparrot_cfg
+MAIN_PROGRAM ?= $(COSIM_CSRC_DIR)/main.cpp
+HOST_PROGRAM ?= $(CURR_DESIGN_DIR)/ps.cpp
 
 #############################
 # Build Collateral
 #############################
-$(CURR_SRC_DIR)/bsg_blackparrot_pkg.sv:
+CFG ?= e_bp_unicore_zynqparrot_cfg
+$(CURR_VSRC_DIR)/bsg_blackparrot_pkg.sv:
 	echo "package bsg_blackparrot_pkg;" >> $@
 	echo >> $@
 	echo "import bp_common_pkg::*;" >> $@
@@ -24,7 +27,7 @@ $(CURR_SRC_DIR)/bsg_blackparrot_pkg.sv:
 	echo "endpackage" >> $@
 	echo >> $@
 
-BUILD_COLLATERAL = $(CURR_SRC_DIR)/bsg_blackparrot_pkg.sv
+BUILD_COLLATERAL = $(CURR_VSRC_DIR)/bsg_blackparrot_pkg.sv
 
 #############################
 # Run Collateral
@@ -41,6 +44,7 @@ VPATH := $(wildcard $(BLACKPARROT_SDK_DIR)/prog/*)
 		--skip_zeros --config --boot_pc 0x80000000 --mem $*.mem --ncpus $(NBF_NCPUS) > $@
 	rm $*.mem
 
-NBF_FILE ?= hello
+NBF_FILE ?= hello_world.nbf
+ELF_FILE ?= hello_world.riscv
 RUN_COLLATERAL = $(NBF_FILE)
 

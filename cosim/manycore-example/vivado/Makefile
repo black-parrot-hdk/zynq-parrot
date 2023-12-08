@@ -17,7 +17,7 @@ $(MC_FLIST): $(BSG_MANYCORE_DIR)/machines/arch_filelist.mk
 
 $(FLIST): $(MC_FLIST) $(BASE_FLIST)
 	cat $^ | envsubst > $@
-	echo "+incdir+$(CURR_SRC_DIR)" >> $@
+	echo "+incdir+$(CURR_VSRC_DIR)" >> $@
 	echo "+incdir+$(COSIM_DIR)/include/vivado" >> $@
 	# Replace hardened memory which is incorrectly inferred on some Xilinx FPGAs
 	sed -i "/bsg_mem_1rw_sync_mask_write_bit.v/d" $@
@@ -26,5 +26,3 @@ $(FLIST): $(MC_FLIST) $(BASE_FLIST)
 
 include $(TOP)/cosim/mk/Makefile.vivado
 
-open:
-	$(VIVADO) &
