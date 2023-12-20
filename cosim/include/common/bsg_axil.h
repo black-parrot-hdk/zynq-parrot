@@ -346,7 +346,7 @@ public:
     this->p_rvalid = 0;
   }
 
-  int axil_write_helper(s_axil_device *p, std::function<void ()> tick) {
+  void axil_write_helper(s_axil_device *p, std::function<void ()> tick) {
     int timeout_counter = 0;
 
     bool aw_done = false;

@@ -32,9 +32,9 @@ flist.*vcs
 *.rv32o
 *.riscv
 *.swp
-bsg_bladerunner_pkg.v
+bsg_bladerunner_pkg.sv
 bsg_blackparrot_pkg.sv
-bsg_bladerunner_configuration.v
+bsg_bladerunner_configuration.sv
 bsg_manycore_machine.h
 *_bd_proj*
 *_ip_proj*

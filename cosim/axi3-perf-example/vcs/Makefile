@@ -1,2 +1,2 @@
-$(error "DRAM example is not yet implemented in simulation")
+$(error "AXI example is not yet implemented in simulation")
 

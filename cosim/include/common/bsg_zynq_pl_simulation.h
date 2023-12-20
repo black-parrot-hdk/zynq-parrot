@@ -105,15 +105,16 @@ class bsg_zynq_pl_simulation {
                     STRINGIFY(HP2_HIER_BASE));
             axi_hp2->reset(f_tick);
 #endif
-        co_next  = new coroutine<void>::pull_type{std::bind(&bsg_zynq_pl_simulation::next, this, _1)};
-        co_polls = new coroutine<void>::pull_type{std::bind(&bsg_zynq_pl_simulation::axils_poll, this, _1)};
-        co_pollm = new coroutine<void>::pull_type{std::bind(&bsg_zynq_pl_simulation::axilm_poll, this, _1)};
+            co_next  = new coroutine<void>::pull_type{std::bind(&bsg_zynq_pl_simulation::next, this, _1)};
+            co_polls = new coroutine<void>::pull_type{std::bind(&bsg_zynq_pl_simulation::axils_poll, this, _1)};
+            co_pollm = new coroutine<void>::pull_type{std::bind(&bsg_zynq_pl_simulation::axilm_poll, this, _1)};
 
-        // Start the main tick thread
-        (*co_next)();
+            // Start the main tick thread
+            (*co_next)();
         }
 
         void axils_poll(coroutine<void>::push_type &yield) {
+#ifdef HP1_ENABLE
             while (1) {
 #ifdef SIM_BACKPRESSURE_ENABLE
                 if ((rand() % 100) < SIM_BACKPRESSURE_CHANCE) {
@@ -122,7 +123,6 @@ class bsg_zynq_pl_simulation {
                     }
                 }
 #endif
-#ifdef HP1_ENABLE
                 int araddr = axi_hp1->p_araddr;
                 if (!axi_hp1->p_arvalid) {
                     yield();
@@ -139,6 +139,7 @@ class bsg_zynq_pl_simulation {
                 }
 
                 int awaddr = axi_hp1->p_awaddr;
+                bool test = axi_hp1->p_awvalid;
                 if (!axi_hp1->p_awvalid) {
                     yield();
 #ifdef SCRATCHPAD_ENABLE
@@ -147,7 +148,7 @@ class bsg_zynq_pl_simulation {
 #endif
 #ifdef UART_ENABLE
                 } else if (uart->is_write(awaddr)) {
-                    axi_hp1->axil_write_helper((s_axil_device *)uart.get(), f_next_tick);
+                axi_hp1->axil_write_helper((s_axil_device *)uart.get(), f_next_tick);
 #endif
                 } else {
                     bsg_pr_err("  bsg_zynq_pl: Unsupported AXI device write at [%x]\n", awaddr);

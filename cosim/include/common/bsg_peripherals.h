@@ -56,6 +56,7 @@ public:
   }
 
   bool is_write(uintptr_t address) override {
+
     return (address >= UART_BASE) && (address < UART_BASE+UART_SIZE);
   }
 

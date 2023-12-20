@@ -1,5 +1,5 @@
 
-`include "bsg_defines.v"
+`include "bsg_defines.sv"
 
 `timescale 1 ns / 1 ps
 
@@ -301,7 +301,7 @@ module bsg_zynq_pl_shell #
           (.clk_i(S_AXI_ACLK)
            ,.reset_i(~S_AXI_ARESETN)
            ,.v_i(ps_to_pl_fifo_valid_li[k])
-           ,.ready_o(ps_to_pl_fifo_ready_lo[k])
+           ,.ready_param_o(ps_to_pl_fifo_ready_lo[k])
            ,.data_i(S_AXI_WDATA)
 
            ,.v_o(ps_to_pl_fifo_valid_lo[k])
@@ -321,7 +321,7 @@ module bsg_zynq_pl_shell #
           (.clk_i(S_AXI_ACLK)
            ,.reset_i(~S_AXI_ARESETN)
            ,.v_i    (ps_to_pl_fifo_valid_li[k])
-           ,.ready_i(ps_to_pl_fifo_ready_lo[k])
+           ,.ready_param_i(ps_to_pl_fifo_ready_lo[k])
            ,.yumi_i (ps_to_pl_fifo_yumi_li [k])
            ,.count_o(ps_to_pl_fifo_ctrs    [k])
            );
@@ -382,7 +382,7 @@ module bsg_zynq_pl_shell #
           (.clk_i(S_AXI_ACLK)
            ,.reset_i(~S_AXI_ARESETN)
            ,.v_i(    pl_to_ps_fifo_valid_li[k])
-           ,.ready_o(pl_to_ps_fifo_ready_lo[k])
+           ,.ready_param_o(pl_to_ps_fifo_ready_lo[k])
 
            ,.data_i( pl_to_ps_fifo_data_li [k])
 
@@ -398,7 +398,7 @@ module bsg_zynq_pl_shell #
          (.clk_i   (S_AXI_ACLK)
           ,.reset_i(~S_AXI_ARESETN)
           ,.v_i    (pl_to_ps_fifo_valid_li[k])
-          ,.ready_i(pl_to_ps_fifo_ready_lo[k])
+          ,.ready_param_i(pl_to_ps_fifo_ready_lo[k])
           ,.yumi_i (pl_to_ps_fifo_yumi_li [k])
           ,.count_o(pl_to_ps_fifo_ctrs    [k])
           );

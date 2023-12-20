@@ -1,7 +1,8 @@
 
+`include "bsg_defines.sv"
+
 package zynq_pkg;
 
-  `include "bsg_defines.v"
   import bsg_tag_pkg::*;
 
   // Total number of tag clients in the whole system

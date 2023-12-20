@@ -1,8 +1,8 @@
 
 `timescale 1 ps / 1 ps
 
-`include "bsg_manycore_defines.vh"
-`include "bsg_cache.vh"
+`include "bsg_manycore_defines.svh"
+`include "bsg_cache.svh"
 
 module top_zynq
 import zynq_pkg::*;
@@ -272,7 +272,6 @@ import bsg_tag_pkg::*;
      ,.icache_tag_width_p(bsg_machine_core_icache_tag_width_gp)
      ,.icache_block_size_in_words_p(bsg_machine_core_icache_line_words_gp)
 
-     ,.num_vcache_rows_p(bsg_machine_pod_llcache_rows_gp)
      ,.vcache_addr_width_p(bsg_machine_llcache_addr_width_lp)
      ,.vcache_data_width_p(bsg_machine_llcache_data_width_lp)
      ,.vcache_ways_p(bsg_machine_llcache_ways_gp)
@@ -281,6 +280,7 @@ import bsg_tag_pkg::*;
      ,.vcache_size_p(bsg_machine_llcache_words_gp)
      ,.vcache_dma_data_width_p(bsg_machine_llcache_channel_width_gp)
      ,.vcache_word_tracking_p(bsg_machine_llcache_word_tracking_gp)
+     ,.ipoly_hashing_p(0)
 
      ,.wh_ruche_factor_p(bsg_machine_wh_ruche_factor_gp)
      ,.wh_cid_width_p(bsg_machine_wh_cid_width_lp)
@@ -525,7 +525,7 @@ import bsg_tag_pkg::*;
 
      ,.dma_data_o(dma_data_li)
      ,.dma_data_v_o(dma_data_v_li)
-     ,.dma_data_ready_i(dma_data_ready_lo)
+     ,.dma_data_ready_and_i(dma_data_ready_lo)
 
      ,.dma_data_i(dma_data_lo)
      ,.dma_data_v_i(dma_data_v_lo)

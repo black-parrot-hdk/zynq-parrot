@@ -96,7 +96,7 @@ module bp_me_endpoint_to_fifos
 
      ,.data_i(fwd_fifo_i)
      ,.v_i(fwd_fifo_v_i)
-     ,.ready_o(fwd_fifo_ready_and_o)
+     ,.ready_and_o(fwd_fifo_ready_and_o)
 
      ,.data_o(aligned_fwd_lo)
      ,.v_o(aligned_fwd_v_lo)
@@ -209,7 +209,7 @@ module bp_me_endpoint_to_fifos
 
      ,.data_i(mem_fwd_header_cast_i)
      ,.v_i(mem_fwd_ready_and_o & mem_fwd_v_i)
-     ,.ready_o(rev_fifo_ready_lo)
+     ,.ready_param_o(rev_fifo_ready_lo)
 
      ,.data_o(mem_rev_header_cast_o)
      ,.v_o(mem_rev_v_o)
@@ -223,7 +223,7 @@ module bp_me_endpoint_to_fifos
      ,.reset_i(reset_i)
 
      ,.v_i(mem_fwd_v_o)
-     ,.ready_i(mem_fwd_ready_and_i)
+     ,.ready_param_i(mem_fwd_ready_and_i)
      ,.yumi_i(mem_rev_ready_and_o & mem_rev_v_i)
 
      ,.count_o(credits_used_o)

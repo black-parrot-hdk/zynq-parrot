@@ -27,18 +27,18 @@ BSG_PLATFORM_PATH := $(LIBRARIES_PATH)/platforms/bigblade-vcs
 BSG_F1_DIR        := $(BSG_REPLICANT_DIR)
 include $(BSG_REPLICANT_DIR)/hardware/hardware.mk
 
-$(CURR_VSRC_DIR)/bsg_bladerunner_pkg.v: $(BSG_MACHINE_PATH)/bsg_bladerunner_pkg.v
+$(CURR_VSRC_DIR)/bsg_bladerunner_pkg.sv: $(BSG_MACHINE_PATH)/bsg_bladerunner_pkg.v
 	cp $< $@
 	$(SED) -i "/parameter int bsg_machine_hetero_type_vec_gp/d" $@
 
-$(CURR_VSRC_DIR)/bsg_bladerunner_configuration.v: $(BSG_MACHINE_PATH)/bsg_bladerunner_configuration.rom
+$(CURR_VSRC_DIR)/bsg_bladerunner_configuration.sv: $(BSG_MACHINE_PATH)/bsg_bladerunner_configuration.rom
 	$(PYTHON2) $(ASCII_TO_ROM_PY) $< bsg_bladerunner_configuration > $@
 
 $(CURR_DESIGN_DIR)/bsg_manycore_machine.h: $(BSG_MACHINE_PATH)/bsg_manycore_machine.h
 	cp $< $@
 
 .PHONY: $(BUILD_COLLATERAL)
-BUILD_COLLATERAL = $(CURR_VSRC_DIR)/bsg_bladerunner_pkg.v $(CURR_VSRC_DIR)/bsg_bladerunner_configuration.v $(CURR_DESIGN_DIR)/bsg_manycore_machine.h
+BUILD_COLLATERAL = $(CURR_VSRC_DIR)/bsg_bladerunner_pkg.sv $(CURR_VSRC_DIR)/bsg_bladerunner_configuration.sv $(CURR_DESIGN_DIR)/bsg_manycore_machine.h
 
 #############################
 # Run Collateral
@@ -60,6 +60,7 @@ bsg_pods_Y                 ?= 1
 bsg_elf_off_chip_mem       ?= 1
 skip_dram_instruction_load ?= 0
 skip_zeros                 ?= 1
+ipoly_hashing              ?= 0
 
 %.nbf: %.riscv32
 	python $(NBF_SCRIPT) \
@@ -73,9 +74,9 @@ skip_zeros                 ?= 1
 		$(BSG_MACHINE_ORIGIN_COORD_X) $(BSG_MACHINE_ORIGIN_COORD_Y) \
 		$(BSG_MACHINE_PODS_X) $(BSG_MACHINE_PODS_Y) \
 		$(bsg_pods_X) $(bsg_pods_Y) \
-		$(BSG_MACHINE_NUM_VCACHE_ROWS) \
 		$(skip_dram_instruction_load) \
 		$(skip_zeros) \
+		$(ipoly_hashing) \
 		  > $*.nbf
 	rm main_dram.mem main_dmem.mem
 

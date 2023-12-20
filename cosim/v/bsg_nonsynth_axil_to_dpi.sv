@@ -1,5 +1,5 @@
 
-`include "bsg_defines.v"
+`include "bsg_defines.sv"
 
 module bsg_nonsynth_axil_to_dpi
  #(parameter `BSG_INV_PARAM(addr_width_p)

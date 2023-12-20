@@ -1,5 +1,5 @@
 
-`include "bsg_defines.v"
+`include "bsg_defines.sv"
 
 module bsg_zynq_uart_bridge
  #(parameter `BSG_INV_PARAM(m_axil_data_width_p)
@@ -178,7 +178,7 @@ module bsg_zynq_uart_bridge
 
      ,.data_i(recv_data_li)
      ,.v_i(recv_v_li)
-     ,.ready_o(recv_ready_and_lo)
+     ,.ready_and_o(recv_ready_and_lo)
 
      ,.data_o(uart_pkt_lo)
      ,.v_o(uart_pkt_v_lo)

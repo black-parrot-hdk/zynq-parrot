@@ -25,7 +25,7 @@ DEFINES += HP0_ADDR_BASE=0x00000000U HP0_DATA_WIDTH=32 HP0_ADDR_WIDTH=32
 DEFINES += AXI_MEM_ENABLE
 DEFINES += HP1_ENABLE
 DEFINES += HP1_ADDR_BASE=0x1000000U HP1_ADDR_WIDTH=32 HP1_DATA_WIDTH=32
-DEFINES += HP1_HIER_BASE=bsg_nonsynth_zynq_testbench.axil5
+DEFINES += HP1_HIER_BASE=bsg_nonsynth_zynq_testbench.axil4
 DEFINES += SCRATCHPAD_ENABLE
 DEFINES += BSG_MANYCORE_MACHINE_LOADER_COORD_X=2 BSG_MANYCORE_MACHINE_LOADER_COORD_Y=0
 
@@ -56,18 +56,19 @@ $(MC_FLIST): $(BSG_MANYCORE_DIR)/machines/arch_filelist.mk
 $(FLIST): $(BP_FLIST) $(MC_FLIST) $(BASE_FLIST)
 	cat $^ | envsubst > $@
 	echo "+incdir+$(CURR_VSRC_DIR)" >> $@
-	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_clock_gen.v" >> $@
-	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_reset_gen.v" >> $@
-	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_axi_mem.v" >> $@
+	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_clock_gen.sv" >> $@
+	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_reset_gen.sv" >> $@
+	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_axi_mem.sv" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp" >> $@
-	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.v " >> $@
-	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.v " >> $@
+	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.sv" >> $@
+	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axil.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_axil_to_dpi.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv" >> $@
 	# Remove duplicates, TODO: detect automatically
-	sed -i "/import\/basejump_stl.*bsg_cache_pkg.v/d" $@
-	sed -i "/import\/basejump_stl.*bsg_wormhole_router_pkg.v/d" $@
+	sed -i "/import\/basejump_stl.*bsg_cache_pkg.sv/d" $@
+	sed -i "/import\/basejump_stl.*bsg_noc_pkg.sv/d" $@
+	sed -i "/import\/basejump_stl.*bsg_wormhole_router_pkg.sv/d" $@
 
 include $(TOP)/cosim/mk/Makefile.vcs
 
