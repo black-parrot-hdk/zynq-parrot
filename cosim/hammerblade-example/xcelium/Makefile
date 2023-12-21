@@ -66,8 +66,8 @@ $(FLIST): $(BP_FLIST) $(MC_FLIST) $(BASE_FLIST)
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_axil_to_dpi.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv" >> $@
 	# Remove duplicates, TODO: detect automatically
-	sed -i "/import\/basejump_stl.*bsg_cache_pkg.v/d" $@
-	sed -i "/import\/basejump_stl.*bsg_wormhole_router_pkg.v/d" $@
+	sed -i "/import\/basejump_stl.*bsg_cache_pkg.sv/d" $@
+	sed -i "/import\/basejump_stl.*bsg_wormhole_router_pkg.sv/d" $@
 
 include $(TOP)/cosim/mk/Makefile.vcs
 

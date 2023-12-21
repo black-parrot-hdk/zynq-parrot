@@ -11,6 +11,8 @@ CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/bridge
 CINCLUDES += -I$(CURR_DESIGN_DIR)
 
+CSOURCES += $(MAIN_PROGRAM)
+
 all:
 	@echo "Rules for BRIDGE; see $(TOP)/cosim/mk/Makefile.bridge for more:"
 	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.bridge

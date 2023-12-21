@@ -43,7 +43,6 @@ extern "C" {
 #include <cstdint>
 #include <inttypes.h>
 #include <memory>
-#include <termios.h>
 #include "bsg_argparse.h"
 #include "bsg_printing.h"
 #include "zynq_headers.h"
@@ -94,16 +93,16 @@ class bsg_zynq_pl : public bsg_zynq_pl_hardware {
             printf("bsg_zynq_pl: done() called, exiting\n");
         }
 
-        void next_tick(void) override {
+        void next_tick(void) {
             /* Does nothing on PS */
         }
 
-        void poll_tick(void) override {
+        void poll_tick(void) {
             /* Does nothing on PS */
         }
 
         void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) {
-            axil_write(uintptr_t addr, int32_t data, uint8_t wmask);
+            axil_write(addr, data, wmask);
         }
 
         int32_t shell_read(uintptr_t addr) {

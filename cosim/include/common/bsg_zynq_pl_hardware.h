@@ -16,11 +16,13 @@
 #include <cstdint>
 #include <inttypes.h>
 #include <memory>
+#ifdef UART_ENABLE
 #define termios asmtermios
 #include <asm/termios.h>
 #undef termios
 #undef winsize
 #include <termios.h>
+#endif
 #include "bsg_argparse.h"
 #include "bsg_printing.h"
 #include "zynq_headers.h"
