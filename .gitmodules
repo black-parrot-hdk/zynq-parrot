@@ -6,7 +6,8 @@
 	url = https://github.com/black-parrot/black-parrot-tools
 [submodule "cosim/import/black-parrot-subsystems"]
 	path = cosim/import/black-parrot-subsystems
-	url = https://github.com/black-parrot-hdk/black-parrot-subsystems
+    url = https://github.com/black-parrot-hdk/black-parrot-subsystems
+    branch = main
 [submodule "software/import/black-parrot-sdk"]
 	path = software/import/black-parrot-sdk
 	url = https://github.com/black-parrot-sdk/black-parrot-sdk
@@ -22,3 +23,4 @@
 [submodule "software/import/bsg_replicant"]
 	path = software/import/bsg_replicant
 	url = https://github.com/bespoke-silicon-group/bsg_replicant
+    branch = main

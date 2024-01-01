@@ -19,7 +19,6 @@ VCS_OPTS += $(MAIN_PROGRAM)
 
 CFLAGS += -DVCS
 CFLAGS += -DHOST_$(call upper,$(HOST))
-CFLAGS += -DHAS_COSIM_MAIN
 CFLAGS += -std=c++14
 CFLAGS += $(addprefix -D,$(DEFINES))
 
