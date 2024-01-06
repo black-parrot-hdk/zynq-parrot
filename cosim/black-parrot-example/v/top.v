@@ -18,11 +18,11 @@ module top
     // Ports of Axi Slave Bus Interface S00_AXI
     input wire                                   aclk
     ,input wire                                  aresetn
+    ,input wire                                  rt_clk
     // In order to prevent X from propagating to any of the initialized AXI buses,
     //   we use sys_resetn to put modules that have resets generated from bsg tags
     //   into reset while the tags are still reseting. Unused in this example.
     ,output wire                                 sys_resetn
-    ,input wire                                  rt_clk
 
     ,output wire                                 tag_clk
     ,output wire                                 tag_data

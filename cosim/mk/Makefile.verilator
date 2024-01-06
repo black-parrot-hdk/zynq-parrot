@@ -15,6 +15,7 @@ CFLAGS += -DVERILATOR
 CFLAGS += -DHOST_$(call upper,$(HOST))
 CFLAGS += $(addprefix -D,$(DEFINES))
 CFLAGS += -std=c++14
+CFLAGS += -Wl,-rpath=$(BOOST_ROOT)/lib
 
 LDFLAGS += -L$(BOOST_ROOT)/lib
 LDFLAGS += -lboost_coroutine -lboost_context -lboost_system
