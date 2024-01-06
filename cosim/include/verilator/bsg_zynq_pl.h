@@ -47,6 +47,15 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
 
     ~bsg_zynq_pl(void) { }
 
+    void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) {
+        bsg_pr_info("  bsg_zynq_pl: Allocated dummy DRAM\n");
+        return (void *)(physical_ptr = (unsigned long *)0xdeadbeef);
+    }
+
+    void free_dram(void *virtual_ptr) {
+        printf("bsg_zynq_pl: Freeing dummy DRAM\n");
+    }
+
     // Each bsg_timekeeper::next() moves to the next clock edge
     //   so we need 2 to perform one full clock cycle.
     // If your design does not evaluate things on negedge, you could omit

@@ -52,20 +52,36 @@ proc bsg_blss_constraints { blss_inst cdc_delay } {
   }
 }
 
+proc bsg_bss_constraints { bss_inst cdc_delay } {
+  puts "constraining bss_inst: $bss_inst"
+  foreach launch_reg [get_cells $bss_inst/*/bsg_SYNC_1_r[*]] {
+    regexp {([\w/.\[\]]+)/[\w]+\[([0-9]+)\]} $launch_reg -> path index
+    set dest_cell  [get_cells $path/bsg_SYNC_1_r[$index]]
+    set_max_delay -from $src_clk -to $dest_cell -datapath_only $cdc_delay
+  }
+}
+
 ##### MAIN #####
 
 set bp_inst [join [get_cells -hier blackparrot]]
+set top_inst [join [get_cells -hier top_fpga_inst]]
 
+set axi_period [get_property PERIOD [get_clocks -of_object [get_pins $top_inst/aclk]]
 set bp_core_period [get_property PERIOD [get_clocks -of_object [get_pins $bp_inst/aclk]]]
 set bp_rt_period [get_property PERIOD [get_clocks -of_object [get_pins $bp_inst/rt_clk]]]
 set bp_min_period [expr $bp_rt_period < $bp_core_period ? $bp_rt_period : $bp_core_period]
 
-set all_blss [get_cells -hier -filter {(ORIG_REF_NAME == bsg_launch_sync_sync || REF_NAME == bsg_launch_sync_sync)}]
+set all_bss [get_cells -quiet -hier -filter {(ORIG_REF_NAME == bsg_sync_sync || REF_NAME == bsg_sync_sync)}]
+foreach bss $all_bss {
+  bsg_bss_constraints $bss $bp_period
+}
+
+set all_blss [get_cells -quiet -hier -filter {(ORIG_REF_NAME == bsg_launch_sync_sync || REF_NAME == bsg_launch_sync_sync)}]
 foreach blss $all_blss {
   bsg_blss_constraints $blss $bp_min_period
 }
 
-set all_clint [get_cells -hier -filter {(ORIG_REF_NAME == bp_me_clint_slice || REF_NAME == bp_me_clint_slice)}]
+set all_clint [get_cells -quiet -hier -filter {(ORIG_REF_NAME == bp_me_clint_slice || REF_NAME == bp_me_clint_slice)}]
 foreach clint $all_clint {
   bsg_clint_constraints $clint $bp_min_period
 }

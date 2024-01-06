@@ -37,6 +37,15 @@ class bsg_zynq_pl : public bsg_zynq_pl_hardware {
 #endif
         }
 
+        void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) {
+            bsg_pr_info("  bsg_zynq_pl: Allocated dummy DRAM\n");
+            return (void *)(physical_ptr = (unsigned long *)0xdeadbeef);
+        }
+
+        void free_dram(void *virtual_ptr) {
+            printf("bsg_zynq_pl: Freeing dummy DRAM\n");
+        }
+
         void done(void) {
             printf("bsg_zynq_pl: done() called, exiting\n");
         }

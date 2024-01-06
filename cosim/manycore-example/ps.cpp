@@ -130,7 +130,6 @@ int ps_main(int argc, char **argv) {
   // Deassert the active-low system reset as we finish initializing the whole system
   zpl->shell_write(GP0_WR_CSR_SYS_RESETN, 0x1, 0xF);
 
-#ifdef ZYNQ
   unsigned long phys_ptr;
   volatile int32_t *buf;
   long allocated_dram = DRAM_ALLOCATE_SIZE;
@@ -140,11 +139,6 @@ int ps_main(int argc, char **argv) {
   zpl->shell_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, 0xf);
   assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == phys_ptr));
   bsg_pr_info("ps.cpp: wrote and verified base register\n");
-#else
-  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, 0xdeadbeef, 0xf);
-  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == 0xdeadbeef));
-  bsg_pr_info("ps.cpp: wrote and verified base register\n");
-#endif
 
   if (argc == 1) {
     bsg_pr_warn(

@@ -128,7 +128,6 @@ int ps_main(int argc, char **argv) {
   // Deassert the active-low system reset as we finish initializing the whole system
   zpl->shell_write(GP0_RD_CSR_SYS_RESETN, 0x1, 0xF);
 
-#ifdef ZYNQ
   unsigned long phys_ptr;
   volatile int32_t *buf;
   data = zpl->shell_read(GP0_RD_CSR_DRAM_INITED);
@@ -149,13 +148,6 @@ int ps_main(int argc, char **argv) {
                 zpl->shell_read(GP0_RD_CSR_DRAM_BASE));
 
   int outer = 1024 / 4;
-#else
-  zpl->shell_write(GP0_WR_CSR_DRAM_BASE, val1, mask1);
-  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == (val1)));
-  bsg_pr_info("ps.cpp: wrote and verified base register\n");
-
-  int outer = 8 / 4;
-#endif
 
   if (argc == 1) {
     bsg_pr_warn(
@@ -252,7 +244,6 @@ int ps_main(int argc, char **argv) {
   }
 #endif
 
-
   bsg_pr_info("ps.cpp: beginning nbf load\n");
   nbf_load(zpl, argv[1]);
   struct timespec start, end;
@@ -332,7 +323,6 @@ int ps_main(int argc, char **argv) {
               zpl->shell_read(GP0_RD_MEM_PROF_2),
               zpl->shell_read(GP0_RD_MEM_PROF_1),
               zpl->shell_read(GP0_RD_MEM_PROF_0));
-#ifdef ZYNQ
   // in general we do not want to free the dram; the Xilinx allocator has a
   // tendency to
   // fail after many allocate/fail cycle. instead we keep a pointer to the dram
@@ -345,7 +335,6 @@ int ps_main(int argc, char **argv) {
     zpl->free_dram((void *)buf);
     zpl->shell_write(GP0_WR_CSR_DRAM_INITED, 0x0, mask2);
   }
-#endif
 
   zpl->done();
   delete zpl;
