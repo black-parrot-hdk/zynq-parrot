@@ -229,7 +229,7 @@ public:
     // wait for response valid
     while (!b_done) {
       if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
-        bsg_pr_err("bsg_zynq_pl: AXI S bvalid timeout\n");
+        bsg_pr_err("bsg_zynq_pl: AXI M bvalid timeout\n");
       }
 
       if (this->p_bvalid == 1) {

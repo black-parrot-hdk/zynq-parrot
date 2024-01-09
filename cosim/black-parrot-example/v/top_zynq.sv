@@ -38,8 +38,8 @@ module top_zynq
    )
   (input wire                                    aclk
    , input wire                                  aresetn
-   , output logic                                sys_resetn
    , input wire                                  rt_clk
+   , output logic                                sys_resetn
 
    , output logic                                tag_clk
    , output logic                                tag_data
@@ -690,11 +690,13 @@ module top_zynq
       ,.axi_id_width_p(6)
       ,.axi_size_width_p(3)
       ,.axi_len_width_p(4)
+      ,.axi_core_clk_async_p(1)
       )
    blackparrot
-     (.clk_i(aclk)
-      ,.reset_i(bp_reset_li)
+     (.axi_clk_i(aclk)
+      ,.core_clk_i(aclk)
       ,.rt_clk_i(rt_clk)
+      ,.async_reset_i(bp_reset_li)
 
       // these are reads/write from BlackParrot
       ,.m_axil_awaddr_o (bp_m_axil_awaddr)

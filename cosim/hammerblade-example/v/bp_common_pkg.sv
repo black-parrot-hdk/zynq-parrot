@@ -40,6 +40,13 @@ package bp_common_pkg;
 
       ,l2_features          : 0
 
+      ,itlb_els_4k 			: 16
+      ,itlb_els_2m 			: 0
+      ,itlb_els_1g 			: 0
+      ,dtlb_els_4k 			: 16
+      ,dtlb_els_2m 			: 4
+      ,dtlb_els_1g 			: 0
+
       // Used for carrying payload of return packets
       ,mem_noc_did_width    : 19
       ,default : "inv"

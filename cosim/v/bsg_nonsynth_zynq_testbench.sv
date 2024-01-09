@@ -36,6 +36,17 @@ module bsg_nonsynth_zynq_testbench;
    aclk_gen
     (.o(aclk));
 
+  logic core_clk;
+`ifdef ASYNC_ACLK_CORE_CLK
+  localparam aclk_period_lp = 40000;
+  bsg_nonsynth_clock_gen
+   #(.cycle_time_p(core_clk_period_lp))
+   core_clk_gen
+    (.o(core_clk));
+`elsif
+  assign core_clk = aclk;
+`endif
+
   logic areset;
   bsg_nonsynth_reset_gen
    #(.reset_cycles_lo_p(0), .reset_cycles_hi_p(10))
