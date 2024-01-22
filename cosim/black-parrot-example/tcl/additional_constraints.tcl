@@ -63,18 +63,20 @@ proc bsg_bss_constraints { bss_inst cdc_delay } {
 
 ##### MAIN #####
 
-set bp_inst [join [get_cells -hier blackparrot]]
-set top_inst [join [get_cells -hier top_fpga_inst]]
+set bp_inst [get_cells -hier blackparrot]
 
-set axi_period [get_property PERIOD [get_clocks -of_object [get_pins $top_inst/aclk]]]
-set bp_rt_period [get_property PERIOD [get_clocks -of_object [get_pins $bp_inst/rt_clk]]]
-set bp_core_period [get_property PERIOD [get_clocks -of_object [get_pins $bp_inst/core_clk]]]
-set bp_min_period [expr $bp_rt_period < $bp_core_period ? $bp_rt_period : $bp_core_period]
-set global_min_period [expr $bp_min_period < $axi_period ? $bp_min_period : $axi_period]
+set clock_pins [get_pins -of_object $bp_inst -filter {name=~"*clk*"}]
+set bp_periods [get_property PERIOD [get_clocks -of_object $clock_pins]]
+set global_min_period [lindex $bp_periods 0]
+foreach p $bp_periods {
+    if {$p < $global_min_period} {
+        set global_min_period $p
+    }
+}
 
 set all_bss [get_cells -quiet -hier -filter {(ORIG_REF_NAME == bsg_sync_sync || REF_NAME == bsg_sync_sync)}]
 foreach bss $all_bss {
-  bsg_bss_constraints $bss $bp_period
+  bsg_bss_constraints $bss $global_min_period
 }
 
 set all_blss [get_cells -quiet -hier -filter {(ORIG_REF_NAME == bsg_launch_sync_sync || REF_NAME == bsg_launch_sync_sync)}]

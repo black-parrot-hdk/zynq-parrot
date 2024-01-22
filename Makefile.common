@@ -89,7 +89,6 @@ export TAR      ?= tar
 export BASE64   ?= base64
 
 export PATH := $(BP_TOOLS_DIR)/install/bin:$(BP_SDK_DIR)/install/bin:$(COSIM_PY_DIR):$(PATH)
-export LD_LIBRARY_PATH := $(BP_SDK_DIR)/install/lib:$(LD_LIBRARY_PATH)
 
 # Makefile functions
 define upper
