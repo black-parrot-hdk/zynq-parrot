@@ -51,9 +51,9 @@ endif
 export SOFTWARE_DIR          ?= $(TOP)/software
 export SOFTWARE_IMPORT_DIR   ?= $(SOFTWARE_DIR)/import
 export BLACKPARROT_SDK_DIR   ?= $(SOFTWARE_IMPORT_DIR)/black-parrot-sdk
-export BOOST_ROOT            ?= $(SOFTWARE_IMPORT_DIR)/black-parrot-sdk/install
 # Override to zynq-parrot version
 export BP_SDK_DIR            ?= $(BLACKPARROT_SDK_DIR)
+export BP_SDK_INSTALL_DIR    ?= $(BLACKPARROT_SDK_DIR)/install
 export PLATFORM              ?= zynqparrot
 
 # TODO: Check verilator version

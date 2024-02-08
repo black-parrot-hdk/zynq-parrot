@@ -19,10 +19,10 @@ CFLAGS += -DXCELIUM
 CFLAGS += -DHOST_$(call upper,$(HOST))
 CFLAGS += $(addprefix -D,$(DEFINES))
 
-LDFLAGS += -L$(BOOST_ROOT)/lib
+LDFLAGS += -L$(BP_SDK_INSTALL_DIR)/lib
 LDFLAGS += -lboost_coroutine -lboost_context -lboost_system
 
-CINCLUDES += -I$(BOOST_ROOT)/include
+CINCLUDES += -I$(BP_SDK_INSTALL_DIR)/include
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/xcelium
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem

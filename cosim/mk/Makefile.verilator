@@ -15,12 +15,11 @@ CFLAGS += -DVERILATOR
 CFLAGS += -DHOST_$(call upper,$(HOST))
 CFLAGS += $(addprefix -D,$(DEFINES))
 CFLAGS += -std=c++14
-CFLAGS += -Wl,-rpath=$(BOOST_ROOT)/lib
 
-LDFLAGS += -L$(BOOST_ROOT)/lib
+LDFLAGS += -L$(BP_SDK_INSTALL_DIR)/lib
 LDFLAGS += -lboost_coroutine -lboost_context -lboost_system
 
-CINCLUDES += -I$(BOOST_ROOT)/include
+CINCLUDES += -I$(BP_SDK_INSTALL_DIR)/include
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/verilator
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
@@ -34,6 +33,7 @@ all:
 
 RUN_LOG ?= run.log
 run: obj_dir/V$(TB_MODULE) $(RUN_COLLATERAL)
+	LD_LIBRARY_PATH=$(BP_SDK_INSTALL_DIR)/lib \
 	$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
 
 BUILD_LOG ?= build.log
