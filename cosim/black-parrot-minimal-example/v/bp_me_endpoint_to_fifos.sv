@@ -159,7 +159,7 @@ module bp_me_endpoint_to_fifos
   assign aligned_rev_li.padding  = '0;
   // Suppress reverse acks, instead just maintain with credits
   // This prevents the AXIL from dequeueing packets just for credit returns
-  assign aligned_rev_v_li        = mem_rev_v_i & mem_rev_header_cast_i.msg_type inside {e_bedrock_mem_uc_rd, e_bedrock_mem_rd, e_bedrock_mem_amo};
+  assign aligned_rev_v_li        = mem_rev_v_i & mem_rev_header_cast_i.msg_type inside {e_bedrock_mem_rd, e_bedrock_mem_amo};
   assign mem_rev_ready_and_o     = aligned_rev_ready_and_lo;
 
   bp_bedrock_msg_aligned_s aligned_fwd_li;
