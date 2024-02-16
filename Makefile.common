@@ -88,6 +88,9 @@ export CAT      ?= cat
 export WGET     ?= wget
 export TAR      ?= tar
 export BASE64   ?= base64
+export XXD      ?= xxd
+export AWK      ?= awk
+export ECHO     ?= echo
 
 export PATH := $(BP_TOOLS_DIR)/install/bin:$(BP_SDK_DIR)/install/bin:$(COSIM_PY_DIR):$(PATH)
 

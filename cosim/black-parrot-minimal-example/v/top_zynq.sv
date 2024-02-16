@@ -98,8 +98,8 @@ module top_zynq
    );
 
    localparam bp_credits_lp         = 32;
-   localparam num_regs_ps_to_pl_lp  = 3;
-   localparam num_regs_pl_to_ps_lp  = 7;
+   localparam num_regs_ps_to_pl_lp  = 4;
+   localparam num_regs_pl_to_ps_lp  = 8;
    localparam num_fifos_ps_to_pl_lp = 2;
    localparam num_fifos_pl_to_ps_lp = 2;
 
@@ -110,6 +110,7 @@ module top_zynq
    //    finished with all AXI transactions (fixme: potential improvement to detect this)
    // 4: = 1 if the DRAM has been allocated for the device in the ARM PS Linux subsystem
    // 8: The base register for the allocated dram
+   // c: bootrom addr
    //
    logic [num_regs_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_lo;
    logic [num_regs_ps_to_pl_lp-1:0]                           csr_data_new_lo;
@@ -117,9 +118,10 @@ module top_zynq
    ///////////////////////////////////////////////////////////////////////////////////////
    // csr_data_li:
    //
-   // 0: bp i/o credits
-   // 4: minstret (64b)
-   // c: mem_profiler (128b)
+   // 0 : bp i/o credits
+   // 4 : minstret (64b)
+   // c : mem_profiler (128b)
+   // 1c: bootrom data
    //
    logic [num_regs_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_li;
 
@@ -127,7 +129,7 @@ module top_zynq
    // pl_to_ps_fifo_data_li:
    //
    // 0: BlackParrot memory fwd fifo
-   // 4: BlackParrot store packer response
+   // 4: BlackParrot memory rev fifo
    logic [num_fifos_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] pl_to_ps_fifo_data_li;
    logic [num_fifos_pl_to_ps_lp-1:0]                           pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
 
@@ -136,7 +138,7 @@ module top_zynq
    // ps_to_pl_fifo_data_li:
    //
    // 0: BlackParrot memory rev fifo
-   // 4: BlackParrot store packer request
+   // 4: BlackParrot memory fwd fifo
    logic [num_fifos_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] ps_to_pl_fifo_data_lo;
    logic [num_fifos_ps_to_pl_lp-1:0]                           ps_to_pl_fifo_v_lo, ps_to_pl_fifo_ready_li;
 
@@ -200,10 +202,13 @@ module top_zynq
    // use this as a way of figuring out how much memory a RISC-V program is using
    // each bit corresponds to a region of memory
    logic [127:0] mem_profiler_r;
+   logic [31:0] bootrom_data_li;
+   logic [6:0] bootrom_addr_lo;
 
    assign sys_resetn   = csr_data_lo[0][0]; // active-low
    assign dram_init_li = csr_data_lo[1];
    assign dram_base_li = csr_data_lo[2];
+   assign bootrom_addr_lo = csr_data_lo[3];
 
    assign csr_data_li[0] = |bp_credits_used;
    assign csr_data_li[1] = minstret_lo[31:0];
@@ -212,6 +217,7 @@ module top_zynq
    assign csr_data_li[4] = mem_profiler_r[63:32];
    assign csr_data_li[5] = mem_profiler_r[95:64];
    assign csr_data_li[6] = mem_profiler_r[127:96];
+   assign csr_data_li[7] = bootrom_data_li;
 
    // (MBT)
    // note: this ability to probe into the core is not supported in ASIC toolflows but
