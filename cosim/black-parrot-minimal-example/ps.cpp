@@ -75,7 +75,7 @@ inline void send_bp_write(bsg_zynq_pl *zpl, uint64_t addr, int32_t data, int8_t 
 
   payload.lce_id = 2; // I/O in unicore
 
-  fwd_packet.msg_type = BEDROCK_MEM_UC_WR;
+  fwd_packet.msg_type = BEDROCK_MEM_WR;
   fwd_packet.subop    = BEDROCK_STORE;
   fwd_packet.addr0    = (addr >> 0 ) & 0xffffffff;
   fwd_packet.addr1    = (addr >> 32) & 0xffffffff;
@@ -92,7 +92,7 @@ inline int32_t send_bp_read(bsg_zynq_pl *zpl, uint64_t addr) {
 
   payload.lce_id = 2; // I/O in unicore
 
-  fwd_packet.msg_type = BEDROCK_MEM_UC_RD;
+  fwd_packet.msg_type = BEDROCK_MEM_RD;
   fwd_packet.subop    = BEDROCK_STORE;
   fwd_packet.addr0    = (addr >> 0 ) & 0xffffffff;
   fwd_packet.addr1    = (addr >> 32) & 0xffffffff;

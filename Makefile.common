@@ -53,7 +53,8 @@ export SOFTWARE_IMPORT_DIR   ?= $(SOFTWARE_DIR)/import
 export BLACKPARROT_SDK_DIR   ?= $(SOFTWARE_IMPORT_DIR)/black-parrot-sdk
 # Override to zynq-parrot version
 export BP_SDK_DIR            ?= $(BLACKPARROT_SDK_DIR)
-export BP_SDK_INSTALL_DIR    ?= $(BLACKPARROT_SDK_DIR)/install
+export BP_SDK_INSTALL_DIR    ?= $(BP_SDK_DIR)/install
+export BP_SDK_LIB_DIR        ?= $(BP_SDK_INSTALL_DIR)/lib
 export PLATFORM              ?= zynqparrot
 
 # TODO: Check verilator version
