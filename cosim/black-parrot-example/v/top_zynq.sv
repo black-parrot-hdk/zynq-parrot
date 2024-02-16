@@ -173,8 +173,8 @@ module top_zynq
    localparam bp_axil_data_width_lp = 32;
    localparam bp_axi_addr_width_lp  = 32;
    localparam bp_axi_data_width_lp  = 64;
-   localparam num_regs_ps_to_pl_lp  = 4;
-   localparam num_regs_pl_to_ps_lp  = 6;
+   localparam num_regs_ps_to_pl_lp  = 5;
+   localparam num_regs_pl_to_ps_lp  = 7;
 
    ///////////////////////////////////////////////////////////////////////////////////////
    // csr_data_lo:
@@ -300,11 +300,14 @@ module top_zynq
    // use this as a way of figuring out how much memory a RISC-V program is using
    // each bit corresponds to a region of memory
    logic [127:0] mem_profiler_r;
+   logic [31:0] bootrom_data_li;
+   logic [8:0] bootrom_addr_lo;
 
    assign sys_resetn   = csr_data_lo[0][0]; // active-low
    assign bb_data_li   = csr_data_lo[1][0]; assign bb_v_li = csr_data_new_lo[1];
    assign dram_init_li = csr_data_lo[2];
    assign dram_base_li = csr_data_lo[3];
+   assign bootrom_addr_lo = csr_data_lo[4];
 
    assign csr_data_li[0] = minstret_lo[31:0];
    assign csr_data_li[1] = minstret_lo[63:32];
@@ -312,6 +315,7 @@ module top_zynq
    assign csr_data_li[3] = mem_profiler_r[63:32];
    assign csr_data_li[4] = mem_profiler_r[95:64];
    assign csr_data_li[5] = mem_profiler_r[127:96];
+   assign csr_data_li[6] = bootrom_data_li;
 
    // Tag bitbang
    logic tag_clk_r_lo, tag_data_r_lo;
@@ -373,6 +377,11 @@ module top_zynq
      assign minstret_lo = blackparrot.processor.m.multicore.cc.y[0].x[0].tile_node.tile_node.tile.core.core_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
    else
      assign minstret_lo = blackparrot.processor.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
+
+  bsg_bootrom
+   #(.width_p(32), .addr_width_p(9))
+   bootrom
+    (.addr_i(bootrom_addr_lo), .data_o(bootrom_data_li));
 
    // Address Translation (MBT):
    //

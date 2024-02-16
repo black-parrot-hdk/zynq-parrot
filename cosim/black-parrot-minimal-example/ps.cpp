@@ -43,7 +43,7 @@
 
 // Helper functions
 void nbf_load(bsg_zynq_pl *zpl, char *filename);
-bool decode_bp_output(bsg_zynq_pl *zpl, uint32_t addr, int32_t data);
+bool decode_bp_output(bsg_zynq_pl *zpl);
 
 // Globals
 std::queue<int> getchar_queue;
@@ -59,13 +59,33 @@ inline void send_bp_fwd_packet(bsg_zynq_pl *zpl, bp_bedrock_packet *packet) {
   }
 }
 
-inline void recv_rev_packet(bsg_zynq_pl *zpl, bp_bedrock_packet *packet) {
+inline void recv_bp_rev_packet(bsg_zynq_pl *zpl, bp_bedrock_packet *packet) {
   int axil_len = sizeof(bp_bedrock_packet) / 4;
 
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
   for (int i = 0; i < axil_len; i++) {
     while (!zpl->shell_read(GP0_RD_PL2PS_FIFO_CTRS));
     pkt_data[i] = zpl->shell_read(GP0_RD_PL2PS_FIFO_DATA);
+  }
+}
+
+inline void recv_bp_fwd_packet(bsg_zynq_pl *zpl, bp_bedrock_packet *packet) {
+  int axil_len = sizeof(bp_bedrock_packet) / 4;
+
+  uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
+  for (int i = 0; i < axil_len; i++) {
+    while (!zpl->shell_read(GP0_RD_PL2PS_FIFO_CTRS+4));
+    pkt_data[i] = zpl->shell_read(GP0_RD_PL2PS_FIFO_DATA+4);
+  }
+}
+
+inline void send_bp_rev_packet(bsg_zynq_pl *zpl, bp_bedrock_packet *packet) {
+  int axil_len = sizeof(bp_bedrock_packet) / 4;
+
+  uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
+  for (int i = 0; i < axil_len; i++) {
+    while (!zpl->shell_read(GP0_RD_PS2PL_FIFO_CTRS+4));
+    zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA+4, pkt_data[i], 0xf);
   }
 }
 
@@ -102,7 +122,7 @@ inline int32_t send_bp_read(bsg_zynq_pl *zpl, uint64_t addr) {
   send_bp_fwd_packet(zpl, &fwd_packet);
 
   bp_bedrock_packet rev_packet;
-  recv_rev_packet(zpl, &rev_packet);
+  recv_bp_rev_packet(zpl, &rev_packet);
 
   return rev_packet.data;
 }
@@ -303,16 +323,7 @@ int ps_main(int argc, char **argv) {
   bsg_pr_info("ps.cpp: Starting i/o polling thread\n");
   int axil_len = sizeof(bp_bedrock_packet) / 4;
   while (1) {
-    uint32_t pkt_data[axil_len];
-    // keep reading as long as there is data
-    for (int i = 0; i < axil_len; i++) {
-      while (!zpl->shell_read(GP0_RD_PL2PS_FIFO_CTRS+4));
-      pkt_data[i] = zpl->shell_read(GP0_RD_PL2PS_FIFO_DATA+4);
-    }
-
-    // Assume writes only
-    bp_bedrock_packet *packet = reinterpret_cast<bp_bedrock_packet *>(pkt_data);
-    decode_bp_output(zpl, packet->addr0, packet->data);
+    decode_bp_output(zpl);
     // break loop when all cores done
     if (done_vec.all()) {
       break;
@@ -441,9 +452,15 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
   bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
 }
 
-bool decode_bp_output(bsg_zynq_pl *zpl, uint32_t address, int32_t data) {
+bool decode_bp_output(bsg_zynq_pl *zpl) {
+  bp_bedrock_packet fwd_packet;
+  recv_bp_fwd_packet(zpl, &fwd_packet);
+
+  uint32_t address = fwd_packet.addr0;
+  uint32_t data = fwd_packet.data;
   char print_data = data & 0xFF;
   char core = (address-0x102000) >> 3;
+  int bootrom_addr = (address >> 2) & 0x1ff;
   // write from BP
   if (address == 0x101000) {
     printf("%c", print_data);
@@ -457,6 +474,11 @@ bool decode_bp_output(bsg_zynq_pl *zpl, uint32_t address, int32_t data) {
     }
   } else if (address == 0x103000) {
     bsg_pr_dbg_ps("ps.cpp: Watchdog tick\n");
+  } else if (address >= 0x110000 && address < 0x111000) {
+    zpl->shell_write(GP0_WR_CSR_BOOTROM_ADDR, bootrom_addr, 0xf);
+    bp_bedrock_packet rev_packet = fwd_packet;
+    rev_packet.data = zpl->shell_read(GP0_RD_BOOTROM_DATA);
+    send_bp_rev_packet(zpl, &rev_packet);
   } else {
     bsg_pr_err("ps.cpp: Errant write to %lx\n", address);
     return false;

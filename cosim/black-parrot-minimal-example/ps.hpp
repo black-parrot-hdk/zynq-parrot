@@ -2,7 +2,7 @@
 #define PS_HPP
 
 // GP0 Read Memory Map
-#define GP0_RD_CSR_SYS_RESETN    (GP0_ADDR_BASE                 )
+#define GP0_RD_CSR_SYS_RESETN    (GP0_ADDR_BASE                  )
 #define GP0_RD_CSR_DRAM_INITED   (GP0_RD_CSR_SYS_RESETN   + 0x4  )
 #define GP0_RD_CSR_DRAM_BASE     (GP0_RD_CSR_DRAM_INITED  + 0x4  )
 #define GP0_RD_CSR_BOOTROM_ADDR  (GP0_RD_CSR_DRAM_BASE    + 0x4  )

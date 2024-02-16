@@ -203,7 +203,7 @@ module top_zynq
    // each bit corresponds to a region of memory
    logic [127:0] mem_profiler_r;
    logic [31:0] bootrom_data_li;
-   logic [6:0] bootrom_addr_lo;
+   logic [8:0] bootrom_addr_lo;
 
    assign sys_resetn   = csr_data_lo[0][0]; // active-low
    assign dram_init_li = csr_data_lo[1];
@@ -232,6 +232,11 @@ module top_zynq
    // to increment the counters.
    //
    assign minstret_lo = blackparrot.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
+
+  bsg_bootrom
+   #(.width_p(32), .addr_width_p(9))
+   bootrom
+    (.addr_i(bootrom_addr_lo), .data_o(bootrom_data_li));
 
    `declare_bp_bedrock_if(paddr_width_p, lce_id_width_p, cce_id_width_p, did_width_p, lce_assoc_p);
    bp_bedrock_mem_fwd_header_s mem_fwd_header_li;

@@ -17,6 +17,9 @@ HOST_PROGRAM ?= $(CURR_DESIGN_DIR)/ps.cpp
 #############################
 # Build Collateral
 #############################
+RISCV_OBJCOPY ?= riscv64-unknown-elf-dramfs-objcopy
+ASCII_TO_ROM ?= $(BASEJUMP_STL_DIR)/bsg_mem/bsg_ascii_to_rom.py
+
 CFG ?= e_bp_unicore_zynqparrot_cfg
 $(CURR_VSRC_DIR)/bsg_blackparrot_pkg.sv:
 	echo "package bsg_blackparrot_pkg;" >> $@
@@ -28,13 +31,21 @@ $(CURR_VSRC_DIR)/bsg_blackparrot_pkg.sv:
 	echo "endpackage" >> $@
 	echo >> $@
 
-BUILD_COLLATERAL = $(CURR_VSRC_DIR)/bsg_blackparrot_pkg.sv
+$(CURR_VSRC_DIR)/bsg_bootrom.bin: $(BP_SDK_DIR)/prog/bootrom/bootrom.riscv
+	$(RISCV_OBJCOPY) -O binary $< $@
+
+$(CURR_VSRC_DIR)/bsg_bootrom.rom: $(CURR_VSRC_DIR)/bsg_bootrom.bin
+	$(XXD) -b -g4 -c4 $< | $(AWK) '{print $$2}' > $@
+
+$(CURR_VSRC_DIR)/bsg_bootrom.v: $(CURR_VSRC_DIR)/bsg_bootrom.rom
+	$(PYTHON) $(ASCII_TO_ROM) $< bsg_bootrom > $@
+
+BUILD_COLLATERAL  = $(CURR_VSRC_DIR)/bsg_blackparrot_pkg.sv
+BUILD_COLLATERAL += $(CURR_VSRC_DIR)/bsg_bootrom.v
 
 #############################
 # Run Collateral
 #############################
-RISCV_OBJCOPY ?= riscv64-unknown-elf-dramfs-objcopy
-
 NBF_NCPUS ?= 1
 
 VPATH := $(wildcard $(BLACKPARROT_SDK_DIR)/prog/*)
@@ -42,7 +53,7 @@ VPATH := $(wildcard $(BLACKPARROT_SDK_DIR)/prog/*)
 	$(RISCV_OBJCOPY) -O verilog $< $*.mem
 	$(SED) -i "s/@8/@0/g" $*.mem
 	$(PYTHON) $(BP_COMMON_DIR)/software/py/nbf.py \
-		--skip_zeros --config --boot_pc 0x80000000 --mem $*.mem --ncpus $(NBF_NCPUS) > $@
+		--debug --skip_zeros --config --mem $*.mem --ncpus $(NBF_NCPUS) > $@
 	rm $*.mem
 
 NBF_FILE ?= hello_world.nbf

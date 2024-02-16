@@ -165,7 +165,14 @@ module bp_me_endpoint_to_fifos
   bp_bedrock_msg_aligned_s aligned_fwd_li;
   bp_bedrock_payload_aligned_s aligned_fwd_payload_li;
   logic aligned_fwd_v_li, aligned_fwd_ready_and_lo;
-  logic rev_fifo_ready_lo;
+  bp_bedrock_msg_aligned_s aligned_rev_lo;
+  bp_bedrock_payload_aligned_s aligned_rev_payload_lo;
+  logic aligned_rev_v_lo, aligned_rev_ready_and_li;
+
+  logic rev_fifo_ready_lo, rev_fifo_v_li;
+  bp_bedrock_mem_rev_header_s rev_fifo_header_li;
+  logic [bedrock_fill_width_p-1:0] rev_fifo_data_li;
+
   bsg_parallel_in_serial_out
    #(.width_p(fifo_width_p), .els_p($bits(bp_bedrock_msg_aligned_s)/fifo_width_p))
    fwd_piso
@@ -198,20 +205,62 @@ module bp_me_endpoint_to_fifos
   assign aligned_fwd_li.data     = mem_fwd_data_i;
   assign aligned_fwd_li.padding  = '0;
   assign aligned_fwd_v_li        = mem_fwd_v_i;
-  // We're autoacking stores, so we require the reverse fifo to be ready
-  assign mem_fwd_ready_and_o     = aligned_fwd_ready_and_lo & rev_fifo_ready_lo;
+  // We're autoacking stores, so we require the reverse fifo to be ready and not
+  //   currently handling a return
+  assign mem_fwd_ready_and_o     = aligned_fwd_ready_and_lo & rev_fifo_ready_lo & ~mem_rev_v_i;
+  wire autoack = mem_fwd_ready_and_o & mem_fwd_header_cast_i.msg_type inside {e_bedrock_mem_wr};
 
+  bsg_serial_in_parallel_out_full
+   #(.width_p(fifo_width_p), .els_p($bits(bp_bedrock_msg_aligned_s)/fifo_width_p))
+   rev_sipo
+    (.clk_i(clk_i)
+     ,.reset_i(reset_i)
+
+     ,.data_i(rev_fifo_i)
+     ,.v_i(rev_fifo_v_i)
+     ,.ready_and_o(rev_fifo_ready_and_o)
+
+     ,.data_o(aligned_rev_lo)
+     ,.v_o(aligned_rev_v_lo)
+     ,.yumi_i(aligned_rev_ready_and_li & aligned_rev_v_lo)
+     );
+  assign aligned_rev_payload_lo = aligned_rev_lo.payload;
+
+  bp_bedrock_mem_rev_header_s rev_header_li;
+  logic [bedrock_fill_width_p-1:0] rev_data_li;
+  logic rev_v_li, rev_ready_and_lo;
+
+  assign rev_header_li.msg_type = aligned_rev_lo.msg_type;
+  assign rev_header_li.subop = bp_bedrock_wr_subop_e'(aligned_rev_lo.subop);
+  assign rev_header_li.addr = aligned_rev_lo.addr;
+  assign rev_header_li.size = bp_bedrock_msg_size_e'(aligned_rev_lo.size);
+  assign rev_header_li.payload = '{state        : bp_coh_states_e'(aligned_rev_payload_lo.state)
+                                   ,way_id      : aligned_rev_payload_lo.way_id
+                                   ,lce_id      : aligned_rev_payload_lo.lce_id
+                                   ,src_did     : aligned_rev_payload_lo.src_did
+                                   ,prefetch    : aligned_rev_payload_lo.prefetch
+                                   ,uncached    : aligned_rev_payload_lo.uncached
+                                   ,speculative : aligned_rev_payload_lo.speculative
+                                   };
+  assign rev_data_li = {bedrock_fill_width_p/32{aligned_rev_lo.data}};
+  assign rev_v_li = aligned_rev_v_lo;
+  assign aligned_rev_ready_and_li = rev_ready_and_lo;
+
+  assign rev_fifo_header_li = autoack ? mem_fwd_header_cast_i : rev_header_li;
+  assign rev_fifo_data_li   = autoack ? '0                    : rev_data_li;
+  assign rev_fifo_v_li      = autoack ? mem_fwd_v_i           : rev_v_li;
+  assign rev_ready_and_lo   = autoack ? '0                    : rev_fifo_ready_lo;
   bsg_two_fifo
-   #(.width_p($bits(bp_bedrock_mem_fwd_header_s)))
+   #(.width_p(bedrock_fill_width_p+$bits(bp_bedrock_mem_fwd_header_s)))
    rev_fifo
     (.clk_i(clk_i)
      ,.reset_i(reset_i)
 
-     ,.data_i(mem_fwd_header_cast_i)
-     ,.v_i(mem_fwd_ready_and_o & mem_fwd_v_i)
+     ,.data_i({rev_fifo_data_li, rev_fifo_header_li})
+     ,.v_i(rev_fifo_v_li)
      ,.ready_param_o(rev_fifo_ready_lo)
 
-     ,.data_o(mem_rev_header_cast_o)
+     ,.data_o({mem_rev_data_o, mem_rev_header_cast_o})
      ,.v_o(mem_rev_v_o)
      ,.yumi_i(mem_rev_ready_and_i & mem_rev_v_o)
      );
