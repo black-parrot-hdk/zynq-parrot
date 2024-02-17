@@ -15,10 +15,8 @@
   // 4b message type
   #define BEDROCK_MEM_RD       0x0
   #define BEDROCK_MEM_WR       0x1
-  #define BEDROCK_MEM_UC_RD    0x2
-  #define BEDROCK_MEM_UC_WR    0x3
-  #define BEDROCK_MEM_PRE      0x4
-  #define BEDROCK_MEM_AMO      0x5
+  #define BEDROCK_MEM_AMO      0x2
+  #define BEDROCK_MEM_PRE      0x8
 
   // 4b write type
   #define BEDROCK_STORE        0x0

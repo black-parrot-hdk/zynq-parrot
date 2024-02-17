@@ -43,7 +43,7 @@
 
 // Helper functions
 void nbf_load(bsg_zynq_pl *zpl, char *filename);
-bool decode_bp_output(bsg_zynq_pl *zpl, uint32_t addr, int32_t data);
+bool decode_bp_output(bsg_zynq_pl *zpl);
 
 // Globals
 std::queue<int> getchar_queue;
@@ -59,7 +59,7 @@ inline void send_bp_fwd_packet(bsg_zynq_pl *zpl, bp_bedrock_packet *packet) {
   }
 }
 
-inline void recv_rev_packet(bsg_zynq_pl *zpl, bp_bedrock_packet *packet) {
+inline void recv_bp_rev_packet(bsg_zynq_pl *zpl, bp_bedrock_packet *packet) {
   int axil_len = sizeof(bp_bedrock_packet) / 4;
 
   uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
@@ -69,13 +69,33 @@ inline void recv_rev_packet(bsg_zynq_pl *zpl, bp_bedrock_packet *packet) {
   }
 }
 
+inline void recv_bp_fwd_packet(bsg_zynq_pl *zpl, bp_bedrock_packet *packet) {
+  int axil_len = sizeof(bp_bedrock_packet) / 4;
+
+  uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
+  for (int i = 0; i < axil_len; i++) {
+    while (!zpl->shell_read(GP0_RD_PL2PS_FIFO_CTRS+4));
+    pkt_data[i] = zpl->shell_read(GP0_RD_PL2PS_FIFO_DATA+4);
+  }
+}
+
+inline void send_bp_rev_packet(bsg_zynq_pl *zpl, bp_bedrock_packet *packet) {
+  int axil_len = sizeof(bp_bedrock_packet) / 4;
+
+  uint32_t *pkt_data = reinterpret_cast<uint32_t *>(packet);
+  for (int i = 0; i < axil_len; i++) {
+    while (!zpl->shell_read(GP0_RD_PS2PL_FIFO_CTRS+4));
+    zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA+4, pkt_data[i], 0xf);
+  }
+}
+
 inline void send_bp_write(bsg_zynq_pl *zpl, uint64_t addr, int32_t data, int8_t wmask) {
   bp_bedrock_packet fwd_packet;
   bp_bedrock_mem_payload payload;
 
   payload.lce_id = 2; // I/O in unicore
 
-  fwd_packet.msg_type = BEDROCK_MEM_UC_WR;
+  fwd_packet.msg_type = BEDROCK_MEM_WR;
   fwd_packet.subop    = BEDROCK_STORE;
   fwd_packet.addr0    = (addr >> 0 ) & 0xffffffff;
   fwd_packet.addr1    = (addr >> 32) & 0xffffffff;
@@ -92,7 +112,7 @@ inline int32_t send_bp_read(bsg_zynq_pl *zpl, uint64_t addr) {
 
   payload.lce_id = 2; // I/O in unicore
 
-  fwd_packet.msg_type = BEDROCK_MEM_UC_RD;
+  fwd_packet.msg_type = BEDROCK_MEM_RD;
   fwd_packet.subop    = BEDROCK_STORE;
   fwd_packet.addr0    = (addr >> 0 ) & 0xffffffff;
   fwd_packet.addr1    = (addr >> 32) & 0xffffffff;
@@ -102,7 +122,7 @@ inline int32_t send_bp_read(bsg_zynq_pl *zpl, uint64_t addr) {
   send_bp_fwd_packet(zpl, &fwd_packet);
 
   bp_bedrock_packet rev_packet;
-  recv_rev_packet(zpl, &rev_packet);
+  recv_bp_rev_packet(zpl, &rev_packet);
 
   return rev_packet.data;
 }
@@ -170,8 +190,16 @@ int ps_main(int argc, char **argv) {
   bsg_pr_info("ps.cpp: successfully wrote and read registers in bsg_zynq_shell "
               "(verified ARM GP0 connection)\n");
 
+  // Freeze processor
+  zpl->shell_write(GP0_WR_CSR_FREEZEN, 0x1, 0xF);
+
   // Deassert the active-low system reset as we finish initializing the whole system
   zpl->shell_write(GP0_RD_CSR_SYS_RESETN, 0x1, 0xF);
+
+  // Put processor into debug mode
+  zpl->shell_write(GP0_WR_CSR_DEBUG_IRQ, 0x1, 0xF);
+  for (int i = 0; i < 10; i++) zpl->tick();
+  zpl->shell_write(GP0_WR_CSR_DEBUG_IRQ, 0x0, 0xF);
 
   unsigned long phys_ptr;
   volatile int32_t *buf;
@@ -202,28 +230,6 @@ int ps_main(int argc, char **argv) {
     delete zpl;
     return -1;
   }
-
-  bsg_pr_info("ps.cpp: attempting to read mtime reg in BP CFG space, should "
-              "increase monotonically\n");
-
-  for (int q = 0; q < 10; q++) {
-    int z = send_bp_read(zpl, BP_MTIME);
-    // bsg_pr_dbg_ps("ps.cpp: %d%c",z,(q % 8) == 7 ? '\n' : ' ');
-    // read second 32-bits
-    int z2 = send_bp_read(zpl, BP_MTIME + 4);
-    // bsg_pr_dbg_ps("ps.cpp: %d%c",z2,(q % 8) == 7 ? '\n' : ' ');
-  }
-
-  bsg_pr_info("ps.cpp: attempting to read and write mtimecmp reg in BP CFG space\n");
-
-  bsg_pr_info("ps.cpp: reading mtimecmp\n");
-  int y = send_bp_read(zpl, BP_MTIMECMP);
-
-  bsg_pr_info("ps.cpp: writing mtimecmp\n");
-  send_bp_write(zpl, BP_MTIMECMP, y + 1, mask1);
-
-  bsg_pr_info("ps.cpp: reading mtimecmp\n");
-  assert(send_bp_read(zpl, BP_MTIMECMP) == y + 1);
 
 #ifdef ZYNQ
   // Must zero DRAM for FPGA Linux boot, because opensbi payload mode
@@ -294,32 +300,23 @@ int ps_main(int argc, char **argv) {
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
   unsigned long long minstret_start = get_counter_64(zpl, GP0_RD_MINSTRET, 0);
-  unsigned long long mtime_start = get_counter_64(zpl, BP_MTIME, 1);
   bsg_pr_dbg_ps("ps.cpp: finished nbf load\n");
 
   bsg_pr_info("ps.cpp: Starting scan thread\n");
   pthread_create(&thread_id, NULL, monitor, NULL);
 
+  // Freeze processor
+  zpl->shell_write(GP0_WR_CSR_FREEZEN, 0x0, 0xF);
+
   bsg_pr_info("ps.cpp: Starting i/o polling thread\n");
   int axil_len = sizeof(bp_bedrock_packet) / 4;
   while (1) {
-    uint32_t pkt_data[axil_len];
-    // keep reading as long as there is data
-    for (int i = 0; i < axil_len; i++) {
-      while (!zpl->shell_read(GP0_RD_PL2PS_FIFO_CTRS+4));
-      pkt_data[i] = zpl->shell_read(GP0_RD_PL2PS_FIFO_DATA+4);
-    }
-
-    // Assume writes only
-    bp_bedrock_packet *packet = reinterpret_cast<bp_bedrock_packet *>(pkt_data);
-    decode_bp_output(zpl, packet->addr0, packet->data);
+    decode_bp_output(zpl);
     // break loop when all cores done
     if (done_vec.all()) {
       break;
     }
   }
-
-  unsigned long long mtime_stop = get_counter_64(zpl, BP_MTIME, 1);
 
   unsigned long long minstret_stop = get_counter_64(zpl, GP0_RD_MINSTRET, 0);
   // test delay for reading counter
@@ -334,34 +331,13 @@ int ps_main(int argc, char **argv) {
   unsigned long long minstret_delta = minstret_stop - minstret_start;
   bsg_pr_info("ps.cpp: minstret delta:                  %'16llu (%16llx)\n",
               minstret_delta, minstret_delta);
-  bsg_pr_info("ps.cpp: MTIME start:                     %'16llu (%16llx)\n",
-              mtime_start, mtime_start);
-  bsg_pr_info("ps.cpp: MTIME stop:                      %'16llu (%16llx)\n",
-              mtime_stop, mtime_stop);
-  unsigned long long mtime_delta = mtime_stop - mtime_start;
-  bsg_pr_info("ps.cpp: MTIME delta (=1/8 BP cycles):    %'16llu (%16llx)\n",
-              mtime_delta, mtime_delta);
-  bsg_pr_info("ps.cpp: IPC        :                     %'16f\n",
-              ((double)minstret_delta) / ((double)(mtime_delta)) / 8.0);
-  bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
-              counter_data, counter_data);
   unsigned long long diff_ns =
       1000LL * 1000LL * 1000LL *
           ((unsigned long long)(end.tv_sec - start.tv_sec)) +
       (end.tv_nsec - start.tv_nsec);
   bsg_pr_info("ps.cpp: wall clock time                : %'16llu (%16llx) ns\n",
               diff_ns, diff_ns);
-  bsg_pr_info(
-      "ps.cpp: sim/emul speed                 : %'16.2f BP cycles per minute\n",
-      mtime_delta * 8 /
-          ((double)(diff_ns) / (60.0 * 1000.0 * 1000.0 * 1000.0)));
 
-  bsg_pr_info("ps.cpp: BP DRAM USAGE MASK (each bit is 8 MB): "
-              "%-8.8d%-8.8d%-8.8d%-8.8d\n",
-              zpl->shell_read(GP0_RD_MEM_PROF_3),
-              zpl->shell_read(GP0_RD_MEM_PROF_2),
-              zpl->shell_read(GP0_RD_MEM_PROF_1),
-              zpl->shell_read(GP0_RD_MEM_PROF_0));
 #ifdef ZYNQ
   // in general we do not want to free the dram; the Xilinx allocator has a
   // tendency to
@@ -441,9 +417,15 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
   bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
 }
 
-bool decode_bp_output(bsg_zynq_pl *zpl, uint32_t address, int32_t data) {
+bool decode_bp_output(bsg_zynq_pl *zpl) {
+  bp_bedrock_packet fwd_packet;
+  recv_bp_fwd_packet(zpl, &fwd_packet);
+
+  uint32_t address = fwd_packet.addr0;
+  uint32_t data = fwd_packet.data;
   char print_data = data & 0xFF;
   char core = (address-0x102000) >> 3;
+  int bootrom_addr = (address >> 2) & 0x1ff;
   // write from BP
   if (address == 0x101000) {
     printf("%c", print_data);
@@ -457,6 +439,11 @@ bool decode_bp_output(bsg_zynq_pl *zpl, uint32_t address, int32_t data) {
     }
   } else if (address == 0x103000) {
     bsg_pr_dbg_ps("ps.cpp: Watchdog tick\n");
+  } else if (address >= 0x110000 && address < 0x111000) {
+    zpl->shell_write(GP0_WR_CSR_BOOTROM_ADDR, bootrom_addr, 0xf);
+    bp_bedrock_packet rev_packet = fwd_packet;
+    rev_packet.data = zpl->shell_read(GP0_RD_BOOTROM_DATA);
+    send_bp_rev_packet(zpl, &rev_packet);
   } else {
     bsg_pr_err("ps.cpp: Errant write to %lx\n", address);
     return false;

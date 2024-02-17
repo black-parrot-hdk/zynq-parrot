@@ -5,7 +5,7 @@ XRUN_OPTS += -64bit
 XRUN_OPTS += -sv
 XRUN_OPTS += -assert
 XRUN_OPTS += -timescale 1ps/1ps
-XRUN_OPTS += -elaborate -notimingchecks
+XRUN_OPTS += -notimingchecks
 XRUN_OPTS += -f flist.vcs
 XRUN_OPTS += -top $(TB_MODULE)
 XRUN_OPTS += +incdir+$(COSIM_DIR)/include/xcelium
@@ -19,7 +19,7 @@ CFLAGS += -DXCELIUM
 CFLAGS += -DHOST_$(call upper,$(HOST))
 CFLAGS += $(addprefix -D,$(DEFINES))
 
-LDFLAGS += -L$(BP_SDK_INSTALL_DIR)/lib
+LDFLAGS += -L$(BP_SDK_LIB_DIR)
 LDFLAGS += -lboost_coroutine -lboost_context -lboost_system
 
 CINCLUDES += -I$(BP_SDK_INSTALL_DIR)/include
@@ -29,22 +29,15 @@ CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_test
 CINCLUDES += -I$(CURR_DESIGN_DIR)
 
-XMSIM_FLAGS += -64BIT
-XMSIM_FLAGS += -SV_ROOT . -SV_LIB libdpi.so
-
 TRACE ?= +bsg_trace
 
 all:
 	@echo "## See the makefile for the fun things you can do in this directory"
 
-BUILD_LOG ?= build.log
-xcelium.d: $(HOST_PROGRAM) $(FLIST) $(BUILD_COLLATERAL)
-	$(XRUN) $(XRUN_OPTS) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $< \
-		2>&1 | tee -i $(BUILD_LOG)
-
 RUN_LOG ?= run.log
-run: xcelium.d $(RUN_COLLATERAL)
-	$(XMSIM) $(XMSIM_FLAGS) $(TB_MODULE) $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
+run: $(HOST_PROGRAM) $(FLIST) $(BUILD_COLLATERAL)
+	$(XRUN) $(XRUN_OPTS) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $< \
+		2>&1 | tee -i $(RUN_LOG)
 
 clean:
 	rm -rf csrc/

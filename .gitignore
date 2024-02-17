@@ -41,3 +41,4 @@ bsg_manycore_machine.h
 *_bd_1_bd.tcl
 boost/
 .Xil/
+bsg_bootrom.*
