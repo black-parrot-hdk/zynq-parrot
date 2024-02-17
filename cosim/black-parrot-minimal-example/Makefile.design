@@ -55,7 +55,7 @@ VPATH := $(wildcard $(BLACKPARROT_SDK_DIR)/prog/*)
 	$(RISCV_OBJCOPY) -O verilog $< $*.mem
 	$(SED) -i "s/@8/@0/g" $*.mem
 	$(PYTHON) $(BP_COMMON_DIR)/software/py/nbf.py \
-		--debug --skip_zeros --config --mem $*.mem --ncpus $(NBF_NCPUS) > $@
+		--skip_zeros --mem $*.mem --ncpus $(NBF_NCPUS) > $@
 	rm $*.mem
 
 RUN_COLLATERAL = $(NBF_FILE)

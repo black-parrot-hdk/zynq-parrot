@@ -8,7 +8,7 @@ module top
     // Parameters of Axi Slave Bus Interface S00_AXI
     parameter integer C_S00_AXI_DATA_WIDTH = 32
     , parameter integer C_S00_AXI_ADDR_WIDTH = 10
-    , parameter integer C_M00_AXI_DATA_WIDTH = 64
+    , parameter integer C_M00_AXI_DATA_WIDTH = 32
     , parameter integer C_M00_AXI_ADDR_WIDTH = 32
     , parameter integer __DUMMY = 0
     )
