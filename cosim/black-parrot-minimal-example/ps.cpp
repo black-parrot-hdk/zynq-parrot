@@ -93,7 +93,7 @@ inline void send_bp_write(bsg_zynq_pl *zpl, uint64_t addr, int32_t data, int8_t 
   bp_bedrock_packet fwd_packet;
   bp_bedrock_mem_payload payload;
 
-  payload.lce_id = 2; // I/O in unicore
+  payload.did = 0xfff;
 
   fwd_packet.msg_type = BEDROCK_MEM_WR;
   fwd_packet.subop    = BEDROCK_STORE;
@@ -110,7 +110,7 @@ inline int32_t send_bp_read(bsg_zynq_pl *zpl, uint64_t addr) {
   bp_bedrock_packet fwd_packet;
   bp_bedrock_mem_payload payload;
 
-  payload.lce_id = 2; // I/O in unicore
+  payload.did = 0xfff;
 
   fwd_packet.msg_type = BEDROCK_MEM_RD;
   fwd_packet.subop    = BEDROCK_STORE;
@@ -425,7 +425,6 @@ bool decode_bp_output(bsg_zynq_pl *zpl) {
   uint32_t data = fwd_packet.data;
   char print_data = data & 0xFF;
   char core = (address-0x102000) >> 3;
-  int bootrom_addr = (address >> 2) & 0x1ff;
   // write from BP
   if (address == 0x101000) {
     printf("%c", print_data);
@@ -440,9 +439,11 @@ bool decode_bp_output(bsg_zynq_pl *zpl) {
   } else if (address == 0x103000) {
     bsg_pr_dbg_ps("ps.cpp: Watchdog tick\n");
   } else if (address >= 0x110000 && address < 0x111000) {
+    int bootrom_addr = (address >> 2) & 0x1ff;
     zpl->shell_write(GP0_WR_CSR_BOOTROM_ADDR, bootrom_addr, 0xf);
+    int bootrom_data = zpl->shell_read(GP0_RD_BOOTROM_DATA);
     bp_bedrock_packet rev_packet = fwd_packet;
-    rev_packet.data = zpl->shell_read(GP0_RD_BOOTROM_DATA);
+    rev_packet.data = bootrom_data;
     send_bp_rev_packet(zpl, &rev_packet);
   } else {
     bsg_pr_err("ps.cpp: Errant write to %lx\n", address);

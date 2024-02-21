@@ -32,13 +32,13 @@ $(CURR_VSRC_DIR)/bsg_blackparrot_pkg.sv:
 	echo >> $@
 
 $(CURR_VSRC_DIR)/bsg_bootrom.bin: $(BP_SDK_DIR)/prog/bootrom/bootrom.riscv
-	$(RISCV_OBJCOPY) -O binary $< $@
+	$(RISCV_OBJCOPY) -O binary --reverse-bytes=4 $< $@
 
 $(CURR_VSRC_DIR)/bsg_bootrom.rom: $(CURR_VSRC_DIR)/bsg_bootrom.bin
-	$(XXD) -b -g4 -c4 $< | $(AWK) '{print $$2}' > $@
+	$(XXD) -e -b -g4 -c4 $< | $(AWK) '{print $$2}' > $@
 
 $(CURR_VSRC_DIR)/bsg_bootrom.v: $(CURR_VSRC_DIR)/bsg_bootrom.rom
-	$(PYTHON) $(ASCII_TO_ROM) $< bsg_bootrom > $@
+	$(PYTHON) $(ASCII_TO_ROM) $< bsg_bootrom zero > $@
 
 BUILD_COLLATERAL  = $(CURR_VSRC_DIR)/bsg_blackparrot_pkg.sv
 BUILD_COLLATERAL += $(CURR_VSRC_DIR)/bsg_bootrom.v

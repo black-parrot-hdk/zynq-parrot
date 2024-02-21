@@ -174,7 +174,9 @@ module top_zynq
    localparam bp_axi_addr_width_lp  = 32;
    localparam bp_axi_data_width_lp  = 64;
    localparam num_regs_ps_to_pl_lp  = 5;
-   localparam num_regs_pl_to_ps_lp  = 7;
+   localparam num_regs_pl_to_ps_lp  = 8;
+   localparam num_fifos_ps_to_pl_lp = 1;
+   localparam num_fifos_pl_to_ps_lp = 1;
 
    ///////////////////////////////////////////////////////////////////////////////////////
    // csr_data_lo:
@@ -247,8 +249,8 @@ module top_zynq
    bsg_zynq_pl_shell #
      (
       // need to update C_S00_AXI_ADDR_WIDTH accordingly
-      .num_fifo_ps_to_pl_p(1)
-      ,.num_fifo_pl_to_ps_p(1)
+      .num_fifo_ps_to_pl_p(num_fifos_ps_to_pl_lp)
+      ,.num_fifo_pl_to_ps_p(num_fifos_pl_to_ps_lp)
       ,.num_regs_ps_to_pl_p (num_regs_ps_to_pl_lp)
       ,.num_regs_pl_to_ps_p(num_regs_pl_to_ps_lp)
       ,.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH)
@@ -293,6 +295,8 @@ module top_zynq
    ///////////////////////////////////////////////////////////////////////////////////////
    // TODO: User code goes here
    ///////////////////////////////////////////////////////////////////////////////////////
+   localparam bootrom_data_lp = 32;
+   localparam bootrom_addr_lp = 9;
    logic bb_data_li, bb_v_li;
    logic dram_init_li;
    logic [C_M00_AXI_ADDR_WIDTH-1:0] dram_base_li;
@@ -300,8 +304,8 @@ module top_zynq
    // use this as a way of figuring out how much memory a RISC-V program is using
    // each bit corresponds to a region of memory
    logic [127:0] mem_profiler_r;
-   logic [31:0] bootrom_data_li;
-   logic [8:0] bootrom_addr_lo;
+   logic [bootrom_data_lp-1:0] bootrom_data_li;
+   logic [bootrom_addr_lp-1:0] bootrom_addr_lo;
 
    assign sys_resetn   = csr_data_lo[0][0]; // active-low
    assign bb_data_li   = csr_data_lo[1][0]; assign bb_v_li = csr_data_new_lo[1];
@@ -309,13 +313,9 @@ module top_zynq
    assign dram_base_li = csr_data_lo[3];
    assign bootrom_addr_lo = csr_data_lo[4];
 
-   assign csr_data_li[0] = minstret_lo[31:0];
-   assign csr_data_li[1] = minstret_lo[63:32];
-   assign csr_data_li[2] = mem_profiler_r[31:0];
-   assign csr_data_li[3] = mem_profiler_r[63:32];
-   assign csr_data_li[4] = mem_profiler_r[95:64];
-   assign csr_data_li[5] = mem_profiler_r[127:96];
-   assign csr_data_li[6] = bootrom_data_li;
+   assign csr_data_li[0+:2] = minstret_lo;
+   assign csr_data_li[2+:4] = mem_profiler_r;
+   assign csr_data_li[6+:1] = bootrom_data_li;
 
    // Tag bitbang
    logic tag_clk_r_lo, tag_data_r_lo;
@@ -379,7 +379,7 @@ module top_zynq
      assign minstret_lo = blackparrot.processor.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
 
   bsg_bootrom
-   #(.width_p(32), .addr_width_p(9))
+   #(.width_p(bootrom_data_lp), .addr_width_p(bootrom_addr_lp))
    bootrom
     (.addr_i(bootrom_addr_lo), .data_o(bootrom_data_li));
 
@@ -699,7 +699,7 @@ module top_zynq
       ,.axi_id_width_p(6)
       ,.axi_size_width_p(3)
       ,.axi_len_width_p(4)
-      ,.axi_core_clk_async_p(1)
+      ,.axi_core_clk_async_p(0)
       )
    blackparrot
      (.axi_clk_i(aclk)

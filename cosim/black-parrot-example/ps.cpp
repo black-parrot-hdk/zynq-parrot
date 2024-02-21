@@ -429,7 +429,6 @@ bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
   long address = (data >> 8) & 0x7FFFFF;
   char print_data = data & 0xFF;
   char core = (address-0x102000) >> 3;
-  int bootrom_addr = (address >> 2) & 0x1ff;
   // write from BP
   if (rd_wr) {
     if (address == 0x101000) {
@@ -473,9 +472,10 @@ bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
         zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, 1, 0xf);
       }
     } else if (address >= 0x110000 && address < 0x111000) {
+      int bootrom_addr = (address >> 2) & 0xfff;
       zpl->shell_write(GP0_WR_CSR_BOOTROM_ADDR, bootrom_addr, 0xf);
-      int data = zpl->shell_read(GP0_RD_BOOTROM_DATA);
-      zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, 1, 0xf);
+      int bootrom_data = zpl->shell_read(GP0_RD_BOOTROM_DATA);
+      zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, bootrom_data, 0xf);
     // if not implemented, print error
     } else {
       bsg_pr_err("ps.cpp: Errant read from (%lx)\n", address);

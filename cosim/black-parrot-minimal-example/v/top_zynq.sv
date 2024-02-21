@@ -194,12 +194,16 @@ module top_zynq
    ///////////////////////////////////////////////////////////////////////////////////////
    // TODO: User code goes here
    ///////////////////////////////////////////////////////////////////////////////////////
-   logic dram_init_li;
+   localparam bootrom_data_lp = 32;
+   localparam bootrom_addr_lp = 9;
+   logic sys_resetn, dram_init_li;
    logic [C_M00_AXI_ADDR_WIDTH-1:0] dram_base_li;
-   logic [`BSG_WIDTH(bp_credits_lp)-1:0] bp_credits_used;
+   logic debug_irq_li, timer_irq_li, software_irq_li, m_external_irq_li, s_external_irq_li;
+   logic freeze_li;
    logic [63:0] minstret_lo;
-   logic [31:0] bootrom_data_li;
-   logic [8:0] bootrom_addr_lo;
+   logic [bootrom_data_lp-1:0] bootrom_data_li;
+   logic [bootrom_addr_lp-1:0] bootrom_addr_lo;
+   logic [`BSG_WIDTH(bp_credits_lp)-1:0] bp_credits_used;
 
    assign sys_resetn   = csr_data_lo[0][0]; // active-low
    assign dram_init_li = csr_data_lo[1];
@@ -232,7 +236,7 @@ module top_zynq
    assign minstret_lo = blackparrot.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
 
   bsg_bootrom
-   #(.width_p(32), .addr_width_p(9))
+   #(.width_p(bootrom_data_lp), .addr_width_p(bootrom_addr_lp))
    bootrom
     (.addr_i(bootrom_addr_lo), .data_o(bootrom_data_li));
 
@@ -370,7 +374,7 @@ module top_zynq
 
   // May want to make a config register
   `declare_bp_cfg_bus_s(vaddr_width_p, hio_width_p, core_id_width_p, cce_id_width_p, lce_id_width_p, did_width_p);
-  wire [did_width_p-1:0] my_did_li = '1;
+  wire [did_width_p-1:0] my_did_li = '0;
   bp_cfg_bus_s cfg_bus_li;
   assign cfg_bus_li =
     '{freeze      : freeze_li

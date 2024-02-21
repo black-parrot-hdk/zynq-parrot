@@ -2,9 +2,8 @@
 include $(COSIM_MK_DIR)/Makefile.env
 
 VV_OPTS += --cc --sv
-VV_OPTS += --build --exe
 VV_OPTS += --trace-fst --trace-structs
-VV_OPTS += --no-timing
+VV_OPTS += --no-timing --build --exe
 VV_OPTS += -Wno-fatal -Wall -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTEMPTY -Wno-UNUSED
 VV_OPTS += -f flist.vcs
 VV_OPTS += -top-module $(TB_MODULE)
