@@ -426,7 +426,7 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
 
 bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
   long rd_wr = data >> 31;
-  long address = (data >> 8) & 0x7FFFFF;
+  long address = (data >> 8) & 0x7FFFF0;
   char print_data = data & 0xFF;
   char core = (address-0x102000) >> 3;
   // write from BP

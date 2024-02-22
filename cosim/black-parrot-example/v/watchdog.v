@@ -1,7 +1,7 @@
 
 module watchdog
- #(// The period of the watchdog (default to 1s @25MHz)
-     parameter integer WATCHDOG_PERIOD      = 25000000
+ #(// The period of the watchdog (default to 1s @2.5MHz)
+     parameter integer WATCHDOG_PERIOD      = 250000000
    , parameter integer C_S02_AXI_DATA_WIDTH = 32
    , parameter integer C_S02_AXI_ADDR_WIDTH = 28
    )
