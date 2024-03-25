@@ -29,7 +29,7 @@ run: $(EXE) $(RUN_COLLATERAL)
 	sudo ./$< $(SIM_ARGS) | tee run.log
 
 $(EXE): $(HOST_PROGRAM) $(BUILD_COLLATERAL)
-	$(GCC) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $(CSOURCES) $< $(CFLAGS) $(LDFLAGS) -o $@
+	$(GCC) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $(CSOURCES) $< $(CFLAGS) $(LDFLAGS) -o $@ | tee build.log
 
 reset_pl:
 	echo 'from pynq import PL; PL.reset();' | sudo -E $(PYTHON3)
