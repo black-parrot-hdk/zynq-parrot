@@ -17,14 +17,14 @@ VCS_OPTS += +vcs+lic+wait
 VCS_OPTS += +incdir+$(COSIM_DIR)/include/vcs
 VCS_OPTS += $(addprefix +define+,$(DEFINES))
 VCS_OPTS += $(MAIN_PROGRAM)
+VCS_OPTS += $(BP_SDK_LIB_DIR)/libboost_coroutine.a
+VCS_OPTS += $(BP_SDK_LIB_DIR)/libboost_context.a
+VCS_OPTS += $(BP_SDK_LIB_DIR)/libboost_system.a
 
 CFLAGS += -DVCS
 CFLAGS += -DHOST_$(call upper,$(HOST))
 CFLAGS += -std=c++14
 CFLAGS += $(addprefix -D,$(DEFINES))
-
-LDFLAGS += -L$(BP_SDK_LIB_DIR) -Wl,-rpath=$(BP_SDK_LIB_DIR)
-LDFLAGS += -lboost_coroutine -lboost_context -lboost_system
 
 CINCLUDES += -I$(BP_SDK_INSTALL_DIR)/include
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
@@ -38,15 +38,15 @@ TRACE ?= +bsg_trace +vpdfilesize+512
 all:
 	@echo "## See the makefile for the fun things you can do in this directory"
 
+RUN_LOG ?= run.log
+run: simv $(RUN_COLLATERAL)
+	./$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
+
 BUILD_LOG ?= build.log
 simv: $(HOST_PROGRAM) $(FLIST) $(BUILD_COLLATERAL)
 	$(VCS) $(VCS_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" \
 		-LDFLAGS "$(LDFLAGS)" -o $@ $< \
 		2>&1 | tee -i $(BUILD_LOG)
-
-RUN_LOG ?= run.log
-run: simv $(RUN_COLLATERAL)
-	./$< $(SIM_ARGS) $(SIM_LIBS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
 
 clean:
 	rm -rf csrc/

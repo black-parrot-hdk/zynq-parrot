@@ -32,8 +32,8 @@ all:
 
 RUN_LOG ?= run.log
 run: obj_dir/V$(TB_MODULE) $(RUN_COLLATERAL)
-	LD_LIBRARY_PATH=$(BP_SDK_INSTALL_DIR)/lib \
-	$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
+	LD_LIBRARY_PATH=$(BP_SDK_LIB_DIR) \
+		$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
 
 BUILD_LOG ?= build.log
 obj_dir/V$(TB_MODULE): $(FLIST) $(BUILD_COLLATERAL)
