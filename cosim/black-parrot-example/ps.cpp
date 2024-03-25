@@ -43,14 +43,6 @@
 #define BP_NCPUS 1
 #endif
 
-#ifndef SAMPLE_GATE_EN
-#error "SAMPLE_GATE_EN not defined!"
-#endif
-
-#ifndef SAMPLE_INTRVL
-#error "SAMPLE_INTRVL not defined!"
-#endif
-
 #ifndef DRAM_GATE_EN
 #error "DRAM_GATE_EN not defined!"
 #endif
@@ -66,15 +58,6 @@ void report(bsg_zynq_pl *zpl, char *);
 
 const char* metrics[] = {
   "cycle", "mcycle", "minstret",
-  "ic_miss",
-  "br_ovr", "ret_ovr", "jal_ovr", "fe_cmd", "fe_cmd_fence",
-  "mispredict", "control_haz", "long_haz", "data_haz",
-  "catchup_dep", "aux_dep", "load_dep", "mul_dep", "fma_dep", "sb_iraw_dep",
-  "sb_fraw_dep", "sb_iwaw_dep", "sb_fwaw_dep",
-  "struct_haz", "idiv_haz", "fdiv_haz",
-  "ptw_busy", "special", "exception", "_interrupt",
-  "itlb_miss", "dtlb_miss",
-  "dc_miss", "dc_fail", "unknown",
 };
 
 // Globals
@@ -108,36 +91,48 @@ inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr) {
   } while (1);
 }
 
+#ifdef COV_EN
+void cov_poll(bsg_zynq_pl *zpl) {
+  uint32_t cov;
+  int idx = zpl->shell_read(GP0_RD_COV_IDX);
+  while(idx != 0) {
+    int cnt = zpl->shell_read(GP0_RD_PL2PS_FIFO_0_CTRS + (0x4 * idx));
+    while(cnt != 0) {
+      for(int i = 0; i < cnt; i++) {
+        //TODO: use NEON
+        cov = zpl->shell_read(GP0_RD_PL2PS_FIFO_0_DATA + (0x4 * idx));
+        printf("cov: %x\n", cov);
+      }
+      cnt = zpl->shell_read(GP0_RD_PL2PS_FIFO_0_CTRS + (0x4 * idx));
+    }
+    idx = zpl->shell_read(GP0_RD_COV_IDX);
+  }
+}
+#endif
+
 void device_poll(bsg_zynq_pl *zpl) {
-  uint32_t pc;
-  uint8_t stall;
-  int instret;
   while (1) {
+    zpl->poll_tick();
+
     // keep reading as long as there is data
     if (zpl->shell_read(GP0_RD_PL2PS_FIFO_0_CTRS) != 0) {
       decode_bp_output(zpl, zpl->shell_read(GP0_RD_PL2PS_FIFO_0_DATA));
     }
     // break loop when all cores done
     if (done_vec.all()) {
+#ifdef COV_EN
+      // deassert coverage collection and drain leftover samples
+      bsg_pr_info("ps.cpp: Desserting coverage collection enable\n");
+      zpl->shell_write(GP0_WR_CSR_COV_EN, 0x0, 0xf);
+      cov_poll(zpl);
+#endif
       break;
     }
 
-    // drain sample data from FIFOs
-    int cnt = zpl->shell_read(GP0_RD_PL2PS_FIFO_1_CTRS);
-    if(cnt != 0) {
-      for(int i = 0; i < cnt; i++) {
-/*
-        uint32x2_t data = zpl->axil_2read(GP0_RD_PL2PS_FIFO_1_DATA);
-        pc = data[0];
-        stall = ((data[1] & 0x1) << 7) | (data[1] >> 1);
-*/
-        pc = zpl->shell_read(GP0_RD_PL2PS_FIFO_1_DATA);
-        uint32_t data = zpl->shell_read(GP0_RD_PL2PS_FIFO_2_DATA);
-        instret = (data & 0x1);
-        stall = (data >> 1);
-      }
-    }
-    zpl->poll_tick();
+#ifdef COV_EN
+    // sample coverage data
+    cov_poll(zpl);
+#endif
   }
 }
 
@@ -167,7 +162,6 @@ int ps_main(int argc, char **argv) {
 
   bsg_tag_bitbang *btb = new bsg_tag_bitbang(zpl, GP0_WR_CSR_TAG_BITBANG, TAG_NUM_CLIENTS, TAG_MAX_LEN);
   bsg_tag_client *pl_reset_client = new bsg_tag_client(TAG_CLIENT_PL_RESET_ID, TAG_CLIENT_PL_RESET_WIDTH);
-  bsg_tag_client *pl_cnten_client = new bsg_tag_client(TAG_CLIENT_PL_CNTEN_ID, TAG_CLIENT_PL_CNTEN_WIDTH);
   bsg_tag_client *wd_reset_client = new bsg_tag_client(TAG_CLIENT_WD_RESET_ID, TAG_CLIENT_WD_RESET_WIDTH);
 
   // Reset the bsg tag master
@@ -178,9 +172,7 @@ int ps_main(int argc, char **argv) {
   btb->reset_client(wd_reset_client);
   // Set bsg client0 to 1 (assert BP reset)
   btb->set_client(pl_reset_client, 0x1);
-  // Set bsg client1 to 1 (assert BP counter en)
-  btb->set_client(pl_cnten_client, 0x1);
-  // Set bsg client2 to 1 (assert WD reset)
+  // Set bsg client1 to 1 (assert WD reset)
   btb->set_client(wd_reset_client, 0x1);
   // Set bsg client0 to 0 (deassert BP reset)
   btb->set_client(pl_reset_client, 0x0);
@@ -324,7 +316,7 @@ int ps_main(int argc, char **argv) {
   unsigned long long mtime_start = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
   bsg_pr_dbg_ps("ps.cpp: finished nbf load\n");
 
-  // Set bsg client2 to 0 (deassert WD reset)
+  // Set bsg client1 to 0 (deassert WD reset)
   btb->set_client(wd_reset_client, 0x0);
   bsg_pr_info("ps.cpp: starting watchdog\n");
   // We need some additional toggles for data to propagate through
@@ -333,14 +325,13 @@ int ps_main(int argc, char **argv) {
   bsg_pr_info("ps.cpp: Setting DRAM latency\n");
   zpl->shell_write(GP0_WR_CSR_DRAM_LATENCY, DRAM_LATENCY, 0xf);
 
-  bsg_pr_info("ps.cpp: Setting sampling interval\n");
-  zpl->shell_write(GP0_WR_CSR_SAMPLE_INTRVL, (SAMPLE_INTRVL - 1), 0xf);
-
-  bsg_pr_info("ps.cpp: Asserting sampling clock gate enable\n");
-  zpl->shell_write(GP0_WR_CSR_SAMPLE_GATE_EN, SAMPLE_GATE_EN, 0xf);
-
   bsg_pr_info("ps.cpp: Asserting DRAM clock gate enable\n");
   zpl->shell_write(GP0_WR_CSR_DRAM_GATE_EN, DRAM_GATE_EN, 0xf);
+
+#ifdef COV_EN
+  bsg_pr_info("ps.cpp: Asserting coverage collection enable\n");
+  zpl->shell_write(GP0_WR_CSR_COV_EN, 0x1, 0xf);
+#endif
 
   bsg_pr_info("ps.cpp: Unfreezing BlackParrot\n");
   zpl->shell_write(GP1_CSR_BASE_ADDR + 0x200008, 0x0, 0xf);
@@ -352,15 +343,10 @@ int ps_main(int argc, char **argv) {
   bsg_pr_info("ps.cpp: Starting i/o polling thread\n");
   device_poll(zpl);
 
-  bsg_pr_info("ps.cpp: Deasserting sampling clock gate enable\n");
-  zpl->shell_write(GP0_WR_CSR_SAMPLE_GATE_EN, 0x0, 0xf);
-
   bsg_pr_info("ps.cpp: Deasserting DRAM clock gate enable\n");
   zpl->shell_write(GP0_WR_CSR_DRAM_GATE_EN, 0x0, 0xf);
 
-  // Set bsg client1 to 0 (deassert BP counter en)
-  btb->set_client(pl_cnten_client, 0x0);
-  // Set bsg client2 to 1 (assert WD reset)
+  // Set bsg client1 to 1 (assert WD reset)
   btb->set_client(wd_reset_client, 0x1);
   bsg_pr_info("ps.cpp: stopping watchdog\n");
   // We need some additional toggles for data to propagate through

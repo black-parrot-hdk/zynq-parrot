@@ -9,22 +9,20 @@ DROMAJO_COSIM ?= 0
 BP_NCPUS ?= 1
 
 # AXI to core clock downsampling factor
-CLK_DIV ?= 2
+CLK_DIV ?= 4
 
-# Sampling gate enable and interval
-SAMPLE_GATE_EN ?= 1
-SAMPLE_INTRVL ?= 1
+# Coverage
+COV_EN ?= 1
+COV_NUM ?= 4
 
-# DRAM constant delay enable and latency
-DRAM_GATE_EN ?= 1
+# DRAM constant delay model
+DRAM_GATE_EN ?= 0
 DRAM_LATENCY ?= 80
 
 #CFLAGS += -DDRAM_TEST
 #CFLAGS += -DZYNQ_PL_DEBUG
 CFLAGS += -DZYNQ_PS_DEBUG
 CFLAGS += -DBP_NCPUS=$(BP_NCPUS)
-CFLAGS += -DSAMPLE_GATE_EN=$(SAMPLE_GATE_EN)
-CFLAGS += -DSAMPLE_INTRVL=$(SAMPLE_INTRVL)
 CFLAGS += -DDRAM_GATE_EN=$(DRAM_GATE_EN)
 CFLAGS += -DDRAM_LATENCY=$(DRAM_LATENCY)
 ifeq ($(DROMAJO_COSIM),1)
@@ -32,6 +30,10 @@ CFLAGS += -I$(BP_TOOLS_DIR)/dromajo/include
 endif
 
 DEFINES += CLK_DIV=$(CLK_DIV)
+ifneq ($(COV_EN),0)
+DEFINES += COV_EN=$(COV_EN)
+DEFINES += COV_NUM=$(COV_NUM)
+endif
 DEFINES += GP0_ENABLE
 DEFINES += GP0_ADDR_BASE=0x400000000U GP0_ADDR_WIDTH=10 GP0_DATA_WIDTH=32
 DEFINES += GP0_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil0
@@ -42,11 +44,7 @@ DEFINES += GP2_ENABLE
 DEFINES += GP2_ADDR_BASE=0x800000000U GP2_ADDR_WIDTH=28 GP2_DATA_WIDTH=32
 DEFINES += GP2_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil2
 # watchdog cannot function if clock gating is enabled
-ifndef SAMPLE_GATE_EN
-ifndef DRAM_GATE_EN
-DEFINES += WATCHDOG_ENABLE
-endif
-endif
+#DEFINES += WATCHDOG_ENABLE
 DEFINES += HP0_ENABLE
 DEFINES += HP0_ADDR_BASE=0x0000000U HP0_ADDR_WIDTH=32 HP0_DATA_WIDTH=64
 DEFINES += AXI_MEM_ENABLE
@@ -82,6 +80,7 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.sv" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.sv" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_axi_mem.sv" >> $@
+	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_random_gen.sv" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_misc/bsg_icg_pos.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axil.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_axil_to_dpi.sv" >> $@

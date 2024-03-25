@@ -14,12 +14,14 @@ module top_zynq
  import bp_be_pkg::*;
  import bp_me_pkg::*;
  import bsg_tag_pkg::*;
- import bp_profiler_pkg::*;
  #(parameter bp_params_e bp_params_p = bp_cfg_gp
    `declare_bp_proc_params(bp_params_p)
    `declare_bp_bedrock_if_widths(paddr_width_p, lce_id_width_p, cce_id_width_p, did_width_p, lce_assoc_p)
 
    , parameter clk_div_p = `CLK_DIV
+`ifdef COV_EN
+   , parameter num_cov_p = `COV_NUM
+`endif
 
    // NOTE these parameters are usually overridden by the parent module (top.v)
    // but we set them to make expectations consistent
@@ -171,7 +173,6 @@ module top_zynq
    );
 
   `define COREPATH blackparrot.processor.u.unicore.unicore_lite.core_minimal
-  `define L2PATH blackparrot.processor.u.unicore.l2s
 
    localparam debug_lp = 0;
  
@@ -180,30 +181,34 @@ module top_zynq
    localparam bp_axi_addr_width_lp  = 32;
    localparam bp_axi_data_width_lp  = 64;
  
-   localparam num_regs_ps_to_pl_lp  = 9;
-   localparam prof_els_lp           = $bits(bp_stall_reason_s);// + $bits(bp_event_reason_s);
-   localparam num_regs_pl_to_ps_lp  = 11 + ((64/C_S00_AXI_DATA_WIDTH) * prof_els_lp);
- 
+`ifdef COV_EN
+   localparam num_regs_ps_to_pl_lp  = 8;
+   localparam num_regs_pl_to_ps_lp  = 12;
+
    localparam num_fifo_ps_to_pl_lp = 1;
-   localparam num_fifo_pl_to_ps_lp = 3;
- 
+   localparam num_fifo_pl_to_ps_lp = 1 + num_cov_p;
+`else
+   localparam num_regs_ps_to_pl_lp  = 7;
+   localparam num_regs_pl_to_ps_lp  = 11;
+
+   localparam num_fifo_ps_to_pl_lp = 1;
+   localparam num_fifo_pl_to_ps_lp = 1;
+`endif
+
    localparam axi_core_clk_async_lp = 1;
    localparam async_fifo_size_lp = 5;
-   localparam skid_buffer_els_lp = 64;
 
    ///////////////////////////////////////////////////////////////////////////////////////
    // csr_data_lo:
-   //
-   // 0: System-wide reset (low true); note: it is only legal to assert reset if you are
+
    //    finished with all AXI transactions (fixme: potential improvement to detect this)
    // 1: Bit banging interface
    // 2: = 1 if the DRAM has been allocated for the device in the ARM PS Linux subsystem
    // 3: The base register for the allocated dram
    // 4: The bootrom access address
-   // 5: The sampling clock gating enable
-   // 6: The sampling interval from PL2PS FIFOs
-   // 7: The DRAM clock gating enable
-   // 8: The DRAM latency used for the constant DRAM timing model
+   // 5: The DRAM clock gating enable
+   // 6: The DRAM latency used for the constant DRAM timing model
+   // 7: The coverage sampling enable
    //
    logic [num_regs_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_lo;
    logic [num_regs_ps_to_pl_lp-1:0]                           csr_data_new_lo;
@@ -216,17 +221,15 @@ module top_zynq
    // 5-6: cycle
    // 7-8: mcycle
    // 9-10: minstret
-   // 11-end: performance profiler counters
+   // 11: covergroup FIFO index
    //
    logic [num_regs_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_li;
-   logic [prof_els_lp-1:0][64-1:0]     prof_data_lo;
 
    ///////////////////////////////////////////////////////////////////////////////////////
    // pl_to_ps_fifo:
    //
    // 0: BP host IO access request
-   // 1: BP performance profiler cycle-attributed PC
-   // 2: BP performance profiler cycle-attributed stall cause
+   // 1-end: covergroups
    //
    logic [num_fifo_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] pl_to_ps_fifo_data_li;
    logic [num_fifo_pl_to_ps_lp-1:0]                           pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
@@ -279,23 +282,6 @@ module top_zynq
    logic [1:0]                           bp_s_axil_rresp;
    logic                                 bp_s_axil_rvalid;
    logic                                 bp_s_axil_rready;
-
-   // BP performance profiler output sample
-   logic prof_v_lo, prof_instret_lo;
-   logic [vaddr_width_p-1:0] prof_pc_lo;
-   logic [$bits(bp_stall_reason_e)-1:0] prof_stall_lo;
-
-   // BP profiler sampling async FIFO
-   // CDC from gated and downsampled BP clock to AXI clock
-   logic prof_afifo_v_lo, prof_afifo_full_lo, prof_afifo_instret_lo;
-   logic [vaddr_width_p-1:0] prof_afifo_pc_lo;
-   logic [$bits(bp_stall_reason_e)-1:0] prof_afifo_stall_lo;
-
-   // BP profiler sampling skid buffer
-   // Drained in AXI region and gates BP clock when buffers are full
-   logic prof_fifo_v_lo, prof_fifo_ready_lo, prof_fifo_instret_lo;
-   logic [vaddr_width_p-1:0] prof_fifo_pc_lo;
-   logic [$bits(bp_stall_reason_e)-1:0] prof_fifo_stall_lo;
 
    // Connect Shell to AXI Bus Interface S00_AXI
    bsg_zynq_pl_shell #
@@ -352,8 +338,7 @@ module top_zynq
    logic bb_data_li, bb_v_li;
    logic dram_init_li;
    logic [C_M00_AXI_ADDR_WIDTH-1:0] dram_base_li;
-   logic sample_gate_en_li, dram_gate_en_li;
-   logic [31:0] sample_intrvl_li;
+   logic dram_gate_en_li;
    logic [31:0] dram_latency_li;
 
    // use this as a way of figuring out how much memory a RISC-V program is using
@@ -369,10 +354,12 @@ module top_zynq
    assign dram_init_li       = csr_data_lo[2];
    assign dram_base_li       = csr_data_lo[3];
    assign bootrom_addr_lo    = csr_data_lo[4];
-   assign sample_gate_en_li  = csr_data_lo[5][0];
-   assign sample_intrvl_li   = csr_data_lo[6];
-   assign dram_gate_en_li    = csr_data_lo[7][0];
-   assign dram_latency_li    = csr_data_lo[8];
+   assign dram_gate_en_li    = csr_data_lo[5][0];
+   assign dram_latency_li    = csr_data_lo[6];
+`ifdef COV_EN
+   logic cov_en_li;
+   assign cov_en_li          = csr_data_lo[7];
+`endif
 
    bsg_counter_clear_up
     #(.max_val_p((65)'(2**64-1)), .init_val_p(0))
@@ -392,7 +379,11 @@ module top_zynq
    assign csr_data_li[5+:2] = cycle_lo;
    assign csr_data_li[7+:2] = mcycle_lo;
    assign csr_data_li[9+:2] = minstret_lo;
-   assign csr_data_li[num_regs_pl_to_ps_lp-1:11] = prof_data_lo[prof_els_lp-1:0];
+`ifdef COV_EN
+   logic cov_idx_v_lo;
+   logic [`BSG_SAFE_CLOG2(num_cov_p)-1:0] cov_idx_lo;
+   assign csr_data_li[11] = cov_idx_v_lo ? (cov_idx_lo + 1'b1) : '0;
+`endif
 
    bsg_bootrom
     #(.width_p(bootrom_data_lp), .addr_width_p(bootrom_addr_lp))
@@ -440,43 +431,20 @@ module top_zynq
       ,.recv_data_r_o(tag_reset_li)
       );
 
-   logic tag_en_li;
-   bsg_tag_client
-    #(.width_p(1))
-    en_client
-     (.bsg_tag_i(tag_lines_lo.counter_en)
-      ,.recv_clk_i(aclk)
-      ,.recv_new_r_o() // UNUSED
-      ,.recv_data_r_o(tag_en_li)
-      );
-
    // Reset BP during system reset or if bsg_tag says to
    wire bp_async_reset_li = ~sys_resetn | tag_reset_li;
-   wire prof_async_en_li = sys_resetn & tag_en_li;
 
    // Gating Logic
    (* dont_touch = "yes" *) wire ds_clk;
    (* gated_clock = "yes" *) wire bp_clk;
 
-   logic ps2pl_gate_lo, fifo_gate_lo, cdl_gate_lo;
-   wire gate_lo = fifo_gate_lo | cdl_gate_lo;
-
-   bsg_dff_reset_set_clear #(.width_p(1))
-    gate_reg
-     (.clk_i(aclk)
-     ,.reset_i(~aresetn)
-     ,.set_i(~pl2ps_gate_lo & sample_gate_en_li & ~prof_fifo_ready_lo)
-     ,.clear_i(pl2ps_gate_lo & (~sample_gate_en_li | ~prof_fifo_v_lo))
-     ,.data_o(pl2ps_gate_lo)
-     );
-
-   bsg_sync_sync
-    #(.width_p(1))
-    gate_cross
-    (.oclk_i(~ds_clk)
-    ,.iclk_data_i(pl2ps_gate_lo)
-    ,.oclk_data_o(fifo_gate_lo)
-    );
+   logic cdl_gate_lo;
+`ifdef COV_EN
+   logic [num_cov_p-1:0] cov_gate_lo;
+   wire gate_lo = (|cov_gate_lo) | cdl_gate_lo;
+`else
+   wire gate_lo = cdl_gate_lo;
+`endif
 
    // Clock Generation
 `ifdef VIVADO
@@ -933,183 +901,103 @@ module top_zynq
       ,.m_axi_rresp_i    (m00_axi_rresp)
       );
 
-   // Performance Profiler
-   logic bp_reset_li;
+`ifdef COV_EN
+   // Coverage
+   logic bp_reset_li, ds_reset_li;
    bsg_sync_sync
     #(.width_p(1))
-    reset_bss
-    (.oclk_i(bp_clk)
-    ,.iclk_data_i(bp_async_reset_li)
-    ,.oclk_data_o(bp_reset_li)
-    );
+    bp_reset_bss
+     (.oclk_i(bp_clk)
+     ,.iclk_data_i(bp_async_reset_li)
+     ,.oclk_data_o(bp_reset_li)
+     );
 
-   logic prof_en_li;
    bsg_sync_sync
     #(.width_p(1))
-    en_bss
-    (.oclk_i(bp_clk)
-    ,.iclk_data_i(prof_async_en_li)
-    ,.oclk_data_o(prof_en_li)
-    );
-
-   logic [31:0] sample_cnt_lo;
-   bsg_counter_dynamic_limit
-    #(.width_p(32))
-    i_sample_counter
-     (.clk_i(bp_clk)
-     ,.reset_i(bp_reset_li)
-     ,.limit_i(sample_intrvl_li)
-     ,.counter_o(sample_cnt_lo)
+    ds_reset_bss
+     (.oclk_i(ds_clk)
+     ,.iclk_data_i(bp_async_reset_li)
+     ,.oclk_data_o(ds_reset_li)
      );
 
-   bp_commit_profiler
-    #(.bp_params_p(bp_params_p)
-     ,.els_p(prof_els_lp)
-     ,.width_p(64)
-     )
-    i_profiler
-     (.clk_i(bp_clk)
-     ,.reset_i(bp_reset_li)
-     ,.en_i(prof_en_li)
-     ,.freeze_i(`COREPATH.be.calculator.pipe_sys.csr.cfg_bus_cast_i.freeze)
- 
-     ,.fe_queue_ready_i(`COREPATH.fe.fe_queue_ready_and_i)
-     ,.fe_queue_empty_i(`COREPATH.be.scheduler.issue_queue.empty)
- 
-     ,.icache_yumi_i(`COREPATH.fe.icache_yumi_lo)
-     ,.icache_miss_i(~`COREPATH.fe.icache.is_ready
-                    | (`COREPATH.fe.icache.v_tv 
-                      & ~`COREPATH.fe.icache.decode_tv_r.inval_op
-                      & ~`COREPATH.fe.icache.hit_v_tv))
-     ,.icache_tl_we_i(`COREPATH.fe.icache.tl_we)
-     ,.icache_tv_we_i(`COREPATH.fe.icache.tv_we)
- 
-     ,.br_ovr_i(`COREPATH.fe.pc_gen.ovr_btaken)
-     ,.ret_ovr_i(`COREPATH.fe.pc_gen.ovr_ret)
-     ,.jal_ovr_i(`COREPATH.fe.pc_gen.ovr_jmp)
- 
-     ,.fe_cmd_yumi_i(`COREPATH.fe.fe_cmd_yumi_o)
-     ,.fe_cmd_i(`COREPATH.fe.fe_cmd_cast_i)
-     ,.issue_v_i(`COREPATH.be.director.issue_pkt_cast_i.v)
-     ,.suppress_iss_i(`COREPATH.be.director.suppress_iss_o)
-     ,.clear_iss_i(`COREPATH.be.director.clear_iss_o)
-     ,.mispredict_i(`COREPATH.be.director.npc_mismatch_v)
-     ,.dispatch_v_i(~`COREPATH.be.scheduler.hazard_v_i)
-     ,.isd_expected_npc_i(`COREPATH.be.director.expected_npc_o)
- 
-     ,.data_haz_i(`COREPATH.be.detector.data_haz_v)
-     ,.catchup_dep_i(`COREPATH.be.detector.dep_status_r[0].fint_iwb_v
-                    & `COREPATH.be.detector.data_haz_v
-                   )
-     ,.aux_dep_i((`COREPATH.be.detector.dep_status_r[0].aux_iwb_v
-                | `COREPATH.be.detector.dep_status_r[0].aux_fwb_v
-                ) & `COREPATH.be.detector.data_haz_v
-               )
-     ,.load_dep_i((`COREPATH.be.detector.dep_status_r[0].emem_iwb_v
-                   | `COREPATH.be.detector.dep_status_r[0].emem_fwb_v
-                   | `COREPATH.be.detector.dep_status_r[0].fmem_iwb_v
-                   | `COREPATH.be.detector.dep_status_r[1].fmem_iwb_v
-                   | `COREPATH.be.detector.dep_status_r[0].fmem_fwb_v
-                   | `COREPATH.be.detector.dep_status_r[1].fmem_fwb_v
-                   ) & `COREPATH.be.detector.data_haz_v
-                  )
-     ,.mul_dep_i((`COREPATH.be.detector.dep_status_r[0].mul_iwb_v
-                  | `COREPATH.be.detector.dep_status_r[1].mul_iwb_v
-                  ) & `COREPATH.be.detector.data_haz_v
-                 )
-     ,.fma_dep_i((`COREPATH.be.detector.dep_status_r[0].fma_fwb_v
-                | `COREPATH.be.detector.dep_status_r[1].fma_fwb_v
-                | `COREPATH.be.detector.dep_status_r[2].fma_fwb_v
-                ) & `COREPATH.be.detector.data_haz_v
-               )
- 
-     ,.sb_iraw_dep_i((`COREPATH.be.detector.irs1_sb_raw_haz_v
-                    | `COREPATH.be.detector.irs2_sb_raw_haz_v
-                    ) & `COREPATH.be.detector.data_haz_v
-                   )
-     ,.sb_fraw_dep_i((`COREPATH.be.detector.frs1_sb_raw_haz_v
-                    | `COREPATH.be.detector.frs2_sb_raw_haz_v
-                    | `COREPATH.be.detector.frs3_sb_raw_haz_v
-                    ) & `COREPATH.be.detector.data_haz_v
-                   )
-     ,.sb_iwaw_dep_i(`COREPATH.be.detector.ird_sb_waw_haz_v & `COREPATH.be.detector.data_haz_v)
-     ,.sb_fwaw_dep_i(`COREPATH.be.detector.frd_sb_waw_haz_v & `COREPATH.be.detector.data_haz_v)
- 
-     ,.sb_int_v_i(`COREPATH.be.detector.score_int_v_li)
-     ,.sb_int_clr_i(`COREPATH.be.detector.clear_int_v_li)
-     ,.sb_fp_v_i(`COREPATH.be.detector.score_fp_v_li)
-     ,.sb_fp_clr_i(`COREPATH.be.detector.clear_fp_v_li)
-     ,.sb_irs_match_i(`COREPATH.be.detector.irs_match_lo)
-     ,.sb_frs_match_i(`COREPATH.be.detector.frs_match_lo)
-     ,.rs1_match_vector_i(`COREPATH.be.detector.rs1_match_vector)
-     ,.rs2_match_vector_i(`COREPATH.be.detector.rs2_match_vector)
-     ,.rs3_match_vector_i(`COREPATH.be.detector.rs3_match_vector)
- 
-     ,.control_haz_i(`COREPATH.be.detector.control_haz_v)
-     ,.long_haz_i(1'b0)
- 
-     ,.struct_haz_i(`COREPATH.be.detector.struct_haz_v)
-     ,.mem_haz_i(`COREPATH.be.detector.mem_busy_i
-                 & (`COREPATH.be.detector.issue_pkt_cast_i.decode.pipe_mem_early_v
-                  | `COREPATH.be.detector.issue_pkt_cast_i.decode.pipe_mem_final_v))
-     ,.idiv_haz_i(`COREPATH.be.detector.idiv_busy_i & `COREPATH.be.detector.issue_pkt_cast_i.decode.pipe_long_v)
-     ,.fdiv_haz_i(`COREPATH.be.detector.fdiv_busy_i & `COREPATH.be.detector.issue_pkt_cast_i.decode.pipe_long_v)
-     ,.ptw_busy_i(1'b0)
- 
-     ,.dispatch_pkt_i(`COREPATH.be.detector.dispatch_pkt_i)
-     ,.retire_pkt_i(`COREPATH.be.calculator.pipe_sys.retire_pkt)
-     ,.commit_pkt_i(`COREPATH.be.calculator.pipe_sys.commit_pkt_cast_o)
-     ,.iwb_pkt_i(`COREPATH.be.calculator.pipe_sys.iwb_pkt_cast_i)
-     ,.fwb_pkt_i(`COREPATH.be.calculator.pipe_sys.fwb_pkt_cast_i)
- 
-     ,.data_o(prof_data_lo[prof_els_lp-1:0])
-     ,.v_o(prof_v_lo)
-     ,.instret_o(prof_instret_lo)
-     ,.stall_o(prof_stall_lo)
-     ,.pc_o(prof_pc_lo)
+   logic cov_v_lo;
+   logic [num_cov_p-1:0][32-1:0] cov_lo;
+   bsg_sync_sync
+    #(.width_p(1))
+    cov_en_bp_bss
+     (.oclk_i(bp_clk)
+     ,.iclk_data_i(cov_en_li)
+     ,.oclk_data_o(cov_v_lo)
      );
 
-   bsg_async_fifo
-    #(.width_p(1+$bits(bp_stall_reason_e)+vaddr_width_p)
-     ,.lg_size_p(async_fifo_size_lp)
-     )
-    i_afifo_prof
-     (.w_clk_i(bp_clk)
-     ,.w_reset_i(bp_reset_li)
- 
-     ,.w_enq_i(prof_v_lo & (sample_cnt_lo == '0) & ~prof_afifo_full_lo)
-     ,.w_data_i({prof_instret_lo, prof_stall_lo, prof_pc_lo})
-     ,.w_full_o(prof_afifo_full_lo)
- 
-     ,.r_clk_i(aclk)
-     ,.r_reset_i(~aresetn)
- 
-     ,.r_valid_o(prof_afifo_v_lo)
-     ,.r_data_o({prof_afifo_instret_lo, prof_afifo_stall_lo, prof_afifo_pc_lo})
-     ,.r_deq_i(prof_afifo_v_lo & prof_fifo_ready_lo)
+   logic cov_drain_li, cov_en_ds_sync_li;
+   bsg_sync_sync
+    #(.width_p(1))
+    cov_en_ds_bss
+     (.oclk_i(ds_clk)
+     ,.iclk_data_i(cov_en_li)
+     ,.oclk_data_o(cov_en_ds_sync_li)
      );
- 
-   bsg_fifo_1r1w_small
-    #(.width_p(1+$bits(bp_stall_reason_e)+vaddr_width_p)
-     ,.els_p(skid_buffer_els_lp)
+
+   bsg_edge_detect
+    #(.falling_not_rising_p(1))
+    drain_reg
+     (.clk_i(ds_clk)
+      ,.reset_i(ds_reset_li)
+      ,.sig_i(cov_en_ds_sync_li)
+      ,.detect_o(cov_drain_li)
+      );
+
+   bsg_priority_encode
+    #(.width_p(num_cov_p)
+     ,.lo_to_hi_p(1)
      )
-    i_fifo_prof
-     (.clk_i(aclk)
-     ,.reset_i(~aresetn)
- 
-     ,.v_i(prof_afifo_v_lo)
-     ,.data_i({prof_afifo_instret_lo, prof_afifo_stall_lo, prof_afifo_pc_lo})
-     ,.ready_param_o(prof_fifo_ready_lo)
- 
-     ,.v_o(prof_fifo_v_lo)
-     ,.data_o({prof_fifo_instret_lo, prof_fifo_stall_lo, prof_fifo_pc_lo})
-     ,.yumi_i(pl_to_ps_fifo_v_li[1])
+    enc
+     (.i(cov_gate_lo)
+     ,.addr_o(cov_idx_lo)
+     ,.v_o(cov_idx_v_lo)
      );
- 
-   assign pl_to_ps_fifo_v_li[1] = prof_fifo_v_lo & pl_to_ps_fifo_ready_lo[1] & pl_to_ps_fifo_ready_lo[2];
-   assign pl_to_ps_fifo_v_li[2] = pl_to_ps_fifo_v_li[1];
-   assign pl_to_ps_fifo_data_li[1] = prof_fifo_pc_lo[0+:32];
-   assign pl_to_ps_fifo_data_li[2] = {prof_fifo_stall_lo, prof_fifo_instret_lo};
+
+   for(genvar i = 0; i < num_cov_p; i++) begin: rof
+     bsg_nonsynth_random_gen
+      #(.width_p(32)
+       ,.seed_p(100 + i)
+       )
+      i_rand
+       (.clk_i(bp_clk)
+       ,.reset_i(bp_reset_li)
+       ,.yumi_i(1'b1)
+       ,.data_o(cov_lo[i])
+       );
+
+     bsg_cover
+      #(.width_p(32)
+       ,.els_p(16)
+       ,.lg_afifo_size_p(3)
+       )
+      i_cov
+       (.core_clk_i(bp_clk)
+       ,.core_reset_i(bp_reset_li)
+
+       ,.ds_clk_i(ds_clk)
+       ,.ds_reset_i(ds_reset_li)
+
+       ,.axi_clk_i(aclk)
+       ,.axi_reset_i(bp_async_reset_li)
+
+       ,.v_i(cov_v_lo)
+       ,.data_i(cov_lo[i])
+       ,.ready_o()
+
+       ,.drain_i(cov_drain_li)
+       ,.gate_o(cov_gate_lo[i])
+
+       ,.v_o(pl_to_ps_fifo_v_li[1+i])
+       ,.data_o(pl_to_ps_fifo_data_li[1+i])
+       ,.yumi_i(pl_to_ps_fifo_ready_lo[1+i] & pl_to_ps_fifo_v_li[1+i])
+       );
+   end
+`endif
 
    // synopsys translate_off
    always @(negedge aclk)
