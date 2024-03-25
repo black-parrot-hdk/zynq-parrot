@@ -73,5 +73,7 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 		cp $(ELF_FILE) prog.elf; \
 	fi
 
+test: $(CURR_VSRC_DIR)/bsg_bootrom.rom
+
 include $(TOP)/cosim/mk/Makefile.vcs
 

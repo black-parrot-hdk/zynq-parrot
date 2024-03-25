@@ -421,7 +421,7 @@ bool decode_bp_output(bsg_zynq_pl *zpl) {
   bp_bedrock_packet fwd_packet;
   recv_bp_fwd_packet(zpl, &fwd_packet);
 
-  uint32_t address = fwd_packet.addr0 & 0xFFFFFFF0;
+  uint32_t address = fwd_packet.addr0 & 0xFFFFFFFC;
   uint32_t data = fwd_packet.data;
   char print_data = data & 0xFF;
   char core = (address-0x102000) >> 3;
