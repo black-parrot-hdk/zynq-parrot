@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <iostream>
 #include <iomanip>
+#include <unordered_set>
 
 #include "ps.hpp"
 
@@ -49,6 +50,10 @@
 
 #ifndef DRAM_LATENCY
 #error "DRAM_LATENCY not defined!"
+#endif
+
+#ifdef COV_EN
+std::unordered_set<uint32_t> covs[COV_NUM];
 #endif
 
 // Helper functions
@@ -101,11 +106,28 @@ void cov_poll(bsg_zynq_pl *zpl) {
       for(int i = 0; i < cnt; i++) {
         //TODO: use NEON
         cov = zpl->shell_read(GP0_RD_PL2PS_FIFO_0_DATA + (0x4 * idx));
-        printf("cov: %x\n", cov);
+        covs[idx - 1].insert(cov);
       }
       cnt = zpl->shell_read(GP0_RD_PL2PS_FIFO_0_CTRS + (0x4 * idx));
     }
     idx = zpl->shell_read(GP0_RD_COV_IDX);
+  }
+}
+
+void cov_start(bsg_zynq_pl *zpl) {
+  bsg_pr_info("ps.cpp: Asserting coverage collection enable\n");
+  zpl->shell_write(GP0_WR_CSR_COV_EN, 0x1, 0xf);
+}
+
+void cov_done(bsg_zynq_pl *zpl) {
+  // deassert coverage collection and drain leftover samples
+  bsg_pr_info("ps.cpp: Desserting coverage collection enable\n");
+  zpl->shell_write(GP0_WR_CSR_COV_EN, 0x0, 0xf);
+  cov_poll(zpl);
+
+  // report covergroup utilization
+  for(int i = 0; i < COV_NUM; i++) {
+    printf("cover-group[%d] size: %ld\n", i, covs[i].size());
   }
 }
 #endif
@@ -121,10 +143,7 @@ void device_poll(bsg_zynq_pl *zpl) {
     // break loop when all cores done
     if (done_vec.all()) {
 #ifdef COV_EN
-      // deassert coverage collection and drain leftover samples
-      bsg_pr_info("ps.cpp: Desserting coverage collection enable\n");
-      zpl->shell_write(GP0_WR_CSR_COV_EN, 0x0, 0xf);
-      cov_poll(zpl);
+      cov_done(zpl);
 #endif
       break;
     }
@@ -329,8 +348,7 @@ int ps_main(int argc, char **argv) {
   zpl->shell_write(GP0_WR_CSR_DRAM_GATE_EN, DRAM_GATE_EN, 0xf);
 
 #ifdef COV_EN
-  bsg_pr_info("ps.cpp: Asserting coverage collection enable\n");
-  zpl->shell_write(GP0_WR_CSR_COV_EN, 0x1, 0xf);
+  cov_start(zpl);
 #endif
 
   bsg_pr_info("ps.cpp: Unfreezing BlackParrot\n");
