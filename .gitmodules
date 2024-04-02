@@ -18,11 +18,6 @@
 	url = https://github.com/black-parrot-sdk/black-parrot-sdk
     branch = master
     ignore = dirty
-[submodule "cosim/import/basejump_stl"]
-	path = cosim/import/basejump_stl
-	url = https://github.com/bespoke-silicon-group/basejump_stl
-    branch = master
-    ignore = dirty
 [submodule "cosim/import/bsg_manycore"]
 	path = cosim/import/bsg_manycore
 	url = https://github.com/bespoke-silicon-group/bsg_manycore
