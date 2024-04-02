@@ -1,6 +1,4 @@
 
-`include "bp_zynq_pl.vh"
-
 module top_zynq
  #(
    parameter integer C_S00_AXI_DATA_WIDTH   = 32

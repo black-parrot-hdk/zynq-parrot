@@ -1,4 +1,6 @@
 
+`include "bsg_zynq_pl.vh"
+
 module top
   #(
     // Parameters of Axi Slave Bus Interface S00_AXI

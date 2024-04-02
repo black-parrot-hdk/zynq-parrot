@@ -76,7 +76,7 @@ int ps_main(int argc, char **argv) {
   assert((zpl->shell_read(0x8 + GP0_ADDR_BASE) == (val6)));
   assert((zpl->shell_read(0x8 + GP1_ADDR_BASE) == (val5)));
 
-  bsg_pr_info("bp_zynq: data communicated between two AXI slave regions.\n");
+  bsg_pr_info("bsg_zynq: data communicated between two AXI slave regions.\n");
 
   zpl->shell_write(0x8 + GP0_ADDR_BASE, val1, mask1);
   zpl->shell_write(0x8 + GP0_ADDR_BASE, val2, mask1);
@@ -87,7 +87,7 @@ int ps_main(int argc, char **argv) {
   assert((zpl->shell_read(0x10 + GP1_ADDR_BASE) == (4)));
   assert((zpl->shell_read(0x10 + GP0_ADDR_BASE) == (4)));
 
-  bsg_pr_info("bp_zynq filled up fifo to GP1.\n");
+  bsg_pr_info("bsg_zynq filled up fifo to GP1.\n");
 
   zpl->shell_write(0x8 + GP1_ADDR_BASE, val4, mask1);
   zpl->shell_write(0x8 + GP1_ADDR_BASE, val3, mask1);
@@ -99,7 +99,7 @@ int ps_main(int argc, char **argv) {
   assert((zpl->shell_read(0x10 + GP1_ADDR_BASE) == (4)));
   assert((zpl->shell_read(0x10 + GP0_ADDR_BASE) == (4)));
 
-  bsg_pr_info("bp_zynq filled up fifo to GP0.\n");
+  bsg_pr_info("bsg_zynq filled up fifo to GP0.\n");
 
   zpl->shell_write(0x8 + GP1_ADDR_BASE, val5, mask1);
   zpl->shell_write(0x8 + GP1_ADDR_BASE, val6, mask1);
@@ -111,7 +111,7 @@ int ps_main(int argc, char **argv) {
   assert((zpl->shell_read(0x10 + GP1_ADDR_BASE) == (0)));
   assert((zpl->shell_read(0x10 + GP0_ADDR_BASE) == (4)));
 
-  bsg_pr_info("bp_zynq filled up sequential fifo pair successfully.\n");
+  bsg_pr_info("bsg_zynq filled up sequential fifo pair successfully.\n");
 
   zpl->shell_write(0x8 + GP0_ADDR_BASE, val5, mask1);
   zpl->shell_write(0x8 + GP0_ADDR_BASE, val6, mask1);
@@ -123,7 +123,7 @@ int ps_main(int argc, char **argv) {
   assert((zpl->shell_read(0x10 + GP1_ADDR_BASE) == (0))); // no free space
   assert((zpl->shell_read(0x10 + GP0_ADDR_BASE) == (0))); // no free space
 
-  bsg_pr_info("bp_zynq filled up all fifos successfully.\n");
+  bsg_pr_info("bsg_zynq filled up all fifos successfully.\n");
 
   assert((zpl->shell_read(0x8 + GP0_ADDR_BASE) == (val4)));
   assert((zpl->shell_read(0x8 + GP0_ADDR_BASE) == (val3)));
@@ -134,7 +134,7 @@ int ps_main(int argc, char **argv) {
   assert((zpl->shell_read(0x8 + GP0_ADDR_BASE) == (val6)));
   assert((zpl->shell_read(0x8 + GP0_ADDR_BASE) == (val1)));
 
-  bsg_pr_info("bp_zynq read out suquential fifo pair successfully.\n");
+  bsg_pr_info("bsg_zynq read out sequential fifo pair successfully.\n");
 
   assert((zpl->shell_read(0x8 + GP1_ADDR_BASE) == (val1)));
   assert((zpl->shell_read(0x8 + GP1_ADDR_BASE) == (val2)));
@@ -145,7 +145,7 @@ int ps_main(int argc, char **argv) {
   assert((zpl->shell_read(0x8 + GP1_ADDR_BASE) == (val6)));
   assert((zpl->shell_read(0x8 + GP1_ADDR_BASE) == (val5)));
 
-  bsg_pr_info("bp_zynq read out second sequential fifo pair successfully.\n");
+  bsg_pr_info("bsg_zynq read out second sequential fifo pair successfully.\n");
 
   // check pl_to_ps fifo counters are zero (no data)
   assert((zpl->shell_read(0xC + GP0_ADDR_BASE) == 0));
