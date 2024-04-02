@@ -106,7 +106,7 @@ shell-example-verilator:
 
 shell-example-vcs:
   <<: *job_definition
-  stage: verilator
+  stage: vcs
   tags:
     - vcs
   before_script:
