@@ -60,10 +60,10 @@ simple-example-vivado-pynqz2:
     - export BASENAME="simple"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="simple-example"
     - echo "Simple example does not have a vivado script, copying from local copy"
-    - cp $CI_MISC_DIR/simple_bd_1.pynqz2.tar.xz.b64 cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_MISC_DIR/simple_bd_1.zynq.pynqz2.tar.xz.b64 cosim/simple-example/simple_bd_1.zynq.pynqz2.tar.xz.b64
   artifacts:
     paths:
-      - cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
+      - cosim/simple-example/simple_bd_1.zynq.pynqz2.tar.xz.b64
 
 simple-example-zynq-pynqz2:
   <<: *job_definition
@@ -76,7 +76,7 @@ simple-example-zynq-pynqz2:
     - export EXAMPLE_NAME="simple-example"
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/simple-example/simple_bd_1.zynq.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/simple-example/simple_bd_1.zynq.pynqz2.tar.xz.b64
     - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/simple-example/zynq/run.log $CI_PROJECT_DIR/cosim/simple-example/zynq/run.log
     - grep "bsg_zynq_pl:.*done() called, exiting" cosim/simple-example/zynq/run.log
@@ -143,7 +143,7 @@ shell-example-vivado-pynqz2:
   artifacts:
     paths:
       - cosim/shell-example/vivado/vivado.log
-      - cosim/shell-example/shell_bd_1.pynqz2.tar.xz.b64
+      - cosim/shell-example/shell_bd_1.zynq.pynqz2.tar.xz.b64
 
 shell-example-zynq-pynqz2:
   <<: *job_definition
@@ -156,7 +156,7 @@ shell-example-zynq-pynqz2:
     - export EXAMPLE_NAME="shell-example"
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/shell-example/shell_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/shell-example/shell_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/shell-example/shell_bd_1.zynq.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/shell-example/shell_bd_1.zynq.pynqz2.tar.xz.b64
     - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/shell-example/zynq/run.log $CI_PROJECT_DIR/cosim/shell-example/zynq/run.log
     - grep "bsg_zynq_pl:.*done() called, exiting" cosim/shell-example/zynq/run.log
@@ -209,7 +209,7 @@ double-shell-example-vivado-pynqz2:
   artifacts:
     paths:
       - cosim/double-shell-example/vivado/vivado.log
-      - cosim/double-shell-example/double_shell_bd_1.pynqz2.tar.xz.b64
+      - cosim/double-shell-example/double_shell_bd_1.zynq.pynqz2.tar.xz.b64
 
 double-shell-example-zynq-pynqz2:
   <<: *job_definition
@@ -222,7 +222,7 @@ double-shell-example-zynq-pynqz2:
     - export EXAMPLE_NAME="double-shell-example"
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/double-shell-example/double_shell_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/double-shell-example/double_shell_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/double-shell-example/double_shell_bd_1.zynq.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/double-shell-example/double_shell_bd_1.zynq.pynqz2.tar.xz.b64
     - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/double-shell-example/zynq/run.log $CI_PROJECT_DIR/cosim/double-shell-example/zynq/run.log
     - grep "bsg_zynq_pl:.*done() called, exiting" cosim/double-shell-example/zynq/run.log
@@ -294,7 +294,7 @@ black-parrot-example-vivado-pynqz2:
   artifacts:
     paths:
       - cosim/black-parrot-example/vivado/vivado.log
-      - cosim/black-parrot-example/blackparrot_bd_1.pynqz2.tar.xz.b64
+      - cosim/black-parrot-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64
 
 black-parrot-example-zynq-pynqz2:
   <<: *job_definition
@@ -308,7 +308,7 @@ black-parrot-example-zynq-pynqz2:
     - export NBF_FILE=/home/xilinx/mnt/zynqparrot_nbf/bp-tests/hello_world.nbf
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/black-parrot-example/blackparrot_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/blackparrot_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/black-parrot-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64
     - cp -r $SOFTWARE_NBF_DIR $CI_MOUNT_DIR/zynqparrot_nbf
     - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/zynq/run.log $CI_PROJECT_DIR/cosim/black-parrot-example/zynq/run.log
@@ -334,7 +334,7 @@ black-parrot-example-vivado-ultra96v2:
   artifacts:
     paths:
       - cosim/black-parrot-example/vivado/vivado.log
-      - cosim/black-parrot-example/blackparrot_bd_1.ultra96v2.tar.xz.b64
+      - cosim/black-parrot-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64
 
 black-parrot-example-zynq-ultra96v2:
   <<: *job_definition
@@ -348,7 +348,7 @@ black-parrot-example-zynq-ultra96v2:
     - export NBF_FILE=/home/xilinx/mnt/zynqparrot_nbf/bp-tests/hello_world.nbf
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/black-parrot-example/blackparrot_bd_1.ultra96v2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/blackparrot_bd_1.ultra96v2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/black-parrot-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64
     - cp -r $SOFTWARE_NBF_DIR $CI_MOUNT_DIR/zynqparrot_nbf
     - ssh xilinx@$CI_ULTRA96V2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/zynq/run.log $CI_PROJECT_DIR/cosim/black-parrot-example/zynq/run.log
@@ -402,7 +402,7 @@ black-parrot-minimal-example-vivado-pynqz2:
   artifacts:
     paths:
       - cosim/black-parrot-minimal-example/vivado/vivado.log
-      - cosim/black-parrot-minimal-example/blackparrot_bd_1.pynqz2.tar.xz.b64
+      - cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64
 
 black-parrot-minimal-example-zynq-pynqz2:
   <<: *job_definition
@@ -416,7 +416,7 @@ black-parrot-minimal-example-zynq-pynqz2:
     - export NBF_FILE=/home/xilinx/mnt/zynqparrot_nbf/bp-tests/hello_world.nbf
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/blackparrot_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/blackparrot_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64
     - cp -r $SOFTWARE_NBF_DIR $CI_MOUNT_DIR/zynqparrot_nbf
     - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/zynq/run.log $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/zynq/run.log
@@ -442,7 +442,7 @@ black-parrot-minimal-example-vivado-ultra96v2:
   artifacts:
     paths:
       - cosim/black-parrot-minimal-example/vivado/vivado.log
-      - cosim/black-parrot-minimal-example/blackparrot_bd_1.ultra96v2.tar.xz.b64
+      - cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64
 
 black-parrot-minimal-example-zynq-ultra96v2:
   <<: *job_definition
@@ -456,7 +456,7 @@ black-parrot-minimal-example-zynq-ultra96v2:
     - export NBF_FILE=/home/xilinx/mnt/zynqparrot_nbf/bp-tests/hello_world.nbf
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/blackparrot_bd_1.ultra96v2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/blackparrot_bd_1.ultra96v2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64
     - cp -r $SOFTWARE_NBF_DIR $CI_MOUNT_DIR/zynqparrot_nbf
     - ssh xilinx@$CI_ULTRA96V2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
     - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/zynq/run.log $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/zynq/run.log
