@@ -5,6 +5,7 @@ variables:
 stages:
   - verilator
   - vcs
+  - xcelium
   - vivado
   - fpga
   - all
