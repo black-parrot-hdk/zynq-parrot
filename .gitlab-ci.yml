@@ -51,20 +51,6 @@ simple-example-vcs:
     paths:
       - cosim/simple-example/vcs/run.log
 
-simple-example-xcelium:
-  <<: *job_definition
-  stage: xcelium
-  tags:
-    - xcelium
-  script:
-    - export BASENAME="simple"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="simple-example"
-    - make -C cosim/simple-example/xcelium/ run
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/simple-example/xcelium/run.log
-  artifacts:
-    paths:
-      - cosim/simple-example/xcelium/run.log
-
 simple-example-vivado-pynqz2:
   <<: *job_definition
   stage: vivado
@@ -127,6 +113,20 @@ shell-example-vcs:
   artifacts:
     paths:
       - cosim/shell-example/vcs/run.log
+
+shell-example-xcelium:
+  <<: *job_definition
+  stage: xcelium
+  tags:
+    - xcelium
+  script:
+    - export BASENAME="shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
+    - export EXAMPLE_NAME="shell-example"
+    - make -C cosim/shell-example/xcelium/ run
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/shell-example/xcelium/run.log
+  artifacts:
+    paths:
+      - cosim/shell-example/xcelium/run.log
 
 shell-example-vivado-pynqz2:
   <<: *job_definition
