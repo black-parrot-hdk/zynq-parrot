@@ -203,20 +203,21 @@ class bsg_zynq_pl_hardware {
 #endif
 
 	public:
-		void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) {
-#ifdef HOST_ZYNQ
-			axil_write(addr, data, wmask);
-#else
-			uart_write(addr, data, wmask);
-#endif
+		virtual int32_t shell_read(uintptr_t addr) = 0;
+		virtual void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) = 0;
+
+		virtual void shell_read4(uintptr_t addr, int32_t *data0, int32_t *data1, int32_t *data2, int32_t *data3) {
+            *data0 = shell_read(addr+0);
+            *data1 = shell_read(addr+4);
+            *data2 = shell_read(addr+8);
+            *data3 = shell_read(addr+12);
 		}
 
-		int32_t shell_read(uintptr_t addr) {
-#ifdef HOST_ZYNQ
-			return axil_read(addr);
-#else
-			return uart_read(addr);
-#endif
+		virtual void shell_write4(uintptr_t addr, int32_t data0, int32_t data1, int32_t data2, int32_t data3) {
+			shell_write(addr+0, data0, 0xf);
+			shell_write(addr+4, data1, 0xf);
+			shell_write(addr+8, data2, 0xf);
+			shell_write(addr+12, data3, 0xf);
 		}
 
 	public:

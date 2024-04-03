@@ -15,9 +15,6 @@
 
 #include <sys/time.h>
 
-// select between testing NEON and not testing NEON
-#define TEST_BANDWIDTH_ENABLE_NEON
-
 uint64_t get_microseconds()
 {
     struct timeval tv;
@@ -77,14 +74,14 @@ int ps_main(int argc, char **argv) {
   printf("%s: %llu microseconds for %d xfers: %f words per microsecond\n",label,net,limit*16,((double) (limit * 16 * words_per_xfer)) / ((double) net) ); 
 
   {
-    volatile uint32x4_t *p =  (uint32x4_t *)zpl->axil_get_ptr(0x0+GP0_ADDR_BASE);
+    volatile uint32x4_t *p =  (uint32x4_t *)zpl->shell_get_ptr(0x0+GP0_ADDR_BASE);
     uint32x4_t val = set4(23,12,1,43);
     uint32_t words_per_xfer = 4;
     const char *label="neon 4x32:";
     TEST_LOOP
   }
   {
-    volatile int *p = (volatile int *)zpl->axil_get_ptr(0x0+GP0_ADDR_BASE);
+    volatile int *p = (volatile int *)zpl->shell_get_ptr(0x0+GP0_ADDR_BASE);
     uint32_t val = 23;
     uint32_t words_per_xfer = 1;
     const char *label="int32    :";

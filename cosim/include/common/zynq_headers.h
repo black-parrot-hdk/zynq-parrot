@@ -26,6 +26,13 @@
 #define HAS_COSIM_MAIN
 #endif
 
+#ifdef NEON
+#include "arm_neon.h"
+#else
+// Define our own since we're not running NEON
+typedef uint32_t uint32x4_t[4];
+#endif
+
 #ifndef GP0_ENABLE
 #define GP0_ADDR_WIDTH 0
 #define GP0_DATA_WIDTH 0
