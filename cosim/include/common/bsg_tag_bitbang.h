@@ -26,7 +26,7 @@ class bsg_tag_bitbang {
 
     // low-level bit manipulation function
     void write_bit(int bit) {
-        zpl->axil_write(shell_addr, (bit&1), 0xf);
+        zpl->shell_write(shell_addr, (bit&1), 0xf);
     }
 
     // low-level tag interaction

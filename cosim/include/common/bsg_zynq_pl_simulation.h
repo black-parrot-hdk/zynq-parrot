@@ -344,6 +344,7 @@ class bsg_zynq_pl_simulation {
         }
 
     public:
+        virtual void poll(void) { poll_tick(); };
         virtual void tick(void) = 0;
         virtual void done(void) = 0;
         virtual void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) = 0;

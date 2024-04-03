@@ -221,6 +221,7 @@ class bsg_zynq_pl_hardware {
         }
 
     public:
+        virtual void poll(void) { };
         virtual void tick(void) = 0;
         virtual void done(void) = 0;
         virtual void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) = 0;
