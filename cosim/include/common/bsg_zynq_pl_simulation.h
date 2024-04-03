@@ -148,7 +148,7 @@ class bsg_zynq_pl_simulation {
 #endif
 #ifdef UART_ENABLE
                 } else if (uart->is_write(awaddr)) {
-                axi_hp1->axil_write_helper((s_axil_device *)uart.get(), f_next_tick);
+                    axi_hp1->axil_write_helper((s_axil_device *)uart.get(), f_next_tick);
 #endif
                 } else {
                     bsg_pr_err("  bsg_zynq_pl: Unsupported AXI device write at [%x]\n", awaddr);
@@ -180,10 +180,8 @@ class bsg_zynq_pl_simulation {
 #endif
         }
 
-    public:
-
 #ifdef AXI_ENABLE
-        virtual int32_t axil_read(uintptr_t address) {
+        int32_t axil_read(uintptr_t address) {
             uintptr_t address_orig = address;
             int index = -1;
             int data;
@@ -216,7 +214,7 @@ class bsg_zynq_pl_simulation {
             return data;
         }
 
-        virtual void axil_write(uintptr_t address, int32_t data, uint8_t wstrb) {
+        void axil_write(uintptr_t address, int32_t data, uint8_t wstrb) {
             uintptr_t address_orig = address;
             int index = -1;
 
@@ -254,13 +252,13 @@ class bsg_zynq_pl_simulation {
         //       logic [6:0]  addr8to2;
         //       logic        wr_not_rd;
         //     } bsg_uart_pkt_s;
-        virtual void uart_write(uintptr_t addr, int32_t data, uint8_t wmask) {
-             uint64_t uart_pkt = 0;
-             uintptr_t word = addr >> 2;
+        void uart_write(uintptr_t addr, int32_t data, uint8_t wmask) {
+            uint64_t uart_pkt = 0;
+            uintptr_t word = addr >> 2;
 
-             uart_pkt |= (data & 0xffffffff) << 8;
-             uart_pkt |= (word & 0x0000007f) << 1;
-             uart_pkt |= (1    & 0x00000001) << 0;
+            uart_pkt |= (data & 0xffffffff) << 8;
+            uart_pkt |= (word & 0x0000007f) << 1;
+            uart_pkt |= (1    & 0x00000001) << 0;
 
             for (int i = 0; i < 40; i+=8) {
                 uint8_t b = (uart_pkt >> i) & 0xff;
@@ -268,14 +266,14 @@ class bsg_zynq_pl_simulation {
             }
         }
 
-        virtual int32_t uart_read(uintptr_t addr) {
-             uint64_t uart_pkt = 0;
-             uintptr_t word = addr >> 2;
-             int32_t data = 0;
+        int32_t uart_read(uintptr_t addr) {
+            uint64_t uart_pkt = 0;
+            uintptr_t word = addr >> 2;
+            int32_t data = 0;
 
-             uart_pkt |= (data & 0xffffffff) << 8;
-             uart_pkt |= (word & 0x0000007f) << 1;
-             uart_pkt |= (0    & 0x00000001) << 0;
+            uart_pkt |= (data & 0xffffffff) << 8;
+            uart_pkt |= (word & 0x0000007f) << 1;
+            uart_pkt |= (0    & 0x00000001) << 0;
 
             for (int i = 0; i < 40; i+=8) {
                 uint8_t b = (uart_pkt >> i) & 0xff;
@@ -291,14 +289,11 @@ class bsg_zynq_pl_simulation {
             return data;
         }
 #endif
-        virtual void tick(void) = 0;
-        virtual void done(void) = 0;
-
-        virtual void next_tick() {
+        void next_tick() {
             (*co_next)();
         }
 
-        virtual void poll_tick() {
+        void poll_tick() {
 #ifdef HP0_ENABLE
 #ifndef AXI_MEM_ENABLE
             (*co_polls)();
@@ -310,12 +305,50 @@ class bsg_zynq_pl_simulation {
 #ifdef HP2_ENABLE
             (*co_polls)();
 #endif
-// GP0 and GP1 are always Zynq-Driven
+            // GP0 and GP1 are always Zynq-Driven
 #ifdef GP2_ENABLE
             (*co_pollm)();
 #endif
             (*co_next)();
         }
+
+    public:
+        virtual void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) {
+#ifdef HOST_ZYNQ
+            axil_write(addr, data, wmask);
+#else
+            uart_write(addr, data, wmask);
+#endif
+        }
+
+        virtual int32_t shell_read(uintptr_t addr) {
+#ifdef HOST_ZYNQ
+            return axil_read(addr);
+#else
+            return uart_read(addr);
+#endif
+        }
+
+        virtual void shell_read4(uintptr_t addr, int32_t *data0, int32_t *data1, int32_t *data2, int32_t *data3) {
+            *data0 = shell_read(addr+0);
+            *data1 = shell_read(addr+4);
+            *data2 = shell_read(addr+8);
+            *data3 = shell_read(addr+12);
+        }
+
+        virtual void shell_write4(uintptr_t addr, int32_t data0, int32_t data1, int32_t data2, int32_t    data3) {
+            shell_write(addr+0, data0, 0xf);
+            shell_write(addr+4, data1, 0xf);
+            shell_write(addr+8, data2, 0xf);
+            shell_write(addr+12, data3, 0xf);
+        }
+
+    public:
+        virtual void tick(void) = 0;
+        virtual void done(void) = 0;
+        virtual void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) = 0;
+        virtual void free_dram(void *virtual_ptr) = 0;
 };
 
 #endif
+

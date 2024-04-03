@@ -87,32 +87,38 @@ class bsg_zynq_pl_hardware {
             close(fd);
 
 #ifdef UART_ENABLE
-             serial_port = open(UART_DEV_STR, O_RDWR | O_NOCTTY);
+            serial_port = open(UART_DEV_STR, O_RDWR | O_NOCTTY);
 
-             struct termios tty;
-             assert (!tcgetattr(serial_port, &tty));
+            struct termios tty;
+            assert (!tcgetattr(serial_port, &tty));
 
-             tty.c_cflag &= ~PARENB;
-             tty.c_cflag &= ~CSTOPB;
-             tty.c_cflag &= ~CSIZE;
-             tty.c_cflag |=  CS8;
-             tty.c_cflag &= ~CRTSCTS;
-             tty.c_cflag |=  (CREAD | CLOCAL);
+            tty.c_cflag &= ~PARENB;
+            tty.c_cflag &= ~CSTOPB;
+            tty.c_cflag &= ~CSIZE;
+            tty.c_cflag |=  CS8;
+            tty.c_cflag &= ~CRTSCTS;
+            tty.c_cflag |=  (CREAD | CLOCAL);
 
-             tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHONL | ISIG);
+            tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHONL | ISIG);
 
-             tty.c_iflag &= ~(IXON | IXOFF | IXANY);
-             tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL);
+            tty.c_iflag &= ~(IXON | IXOFF | IXANY);
+            tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL);
 
-             tty.c_oflag &= ~OPOST;
-             tty.c_oflag &= ~ONLCR;
+            tty.c_oflag &= ~OPOST;
+            tty.c_oflag &= ~ONLCR;
 
-             tty.c_cc[VTIME] = 0;
-             tty.c_cc[VMIN] = 4;
+            tty.c_cc[VTIME] = 0;
+            tty.c_cc[VMIN] = 4;
 
-             cfsetspeed(&tty, UART_BAUD_ENUM);
+            cfsetspeed(&tty, UART_BAUD_ENUM);
 
-             assert (!tcsetattr(serial_port, TCSANOW, &tty));
+            assert (!tcsetattr(serial_port, TCSANOW, &tty));
+#endif
+        }
+
+        void deinit(void) {
+#ifdef UART_ENABLE
+            close(serial_port);
 #endif
         }
 
@@ -154,47 +160,72 @@ class bsg_zynq_pl_hardware {
         }
 #endif
 
- #ifdef UART_ENABLE
-         // Must sync to verilog
-         //     typedef struct packed
-         //     {
-         //       logic [31:0] data;
-         //       logic [6:0]  addr8to2;
-         //       logic        wr_not_rd;
-         //     } bsg_uart_pkt_s;
+#ifdef UART_ENABLE
+        // Must sync to verilog
+        //     typedef struct packed
+        //     {
+        //       logic [31:0] data;
+        //       logic [6:0]  addr8to2;
+        //       logic        wr_not_rd;
+        //     } bsg_uart_pkt_s;
 
-         void uart_write(uintptr_t addr, int32_t data, uint8_t wmask) {
-             int count;
-             uint64_t uart_pkt = 0;
-             uintptr_t word = addr >> 2;
+        void uart_write(uintptr_t addr, int32_t data, uint8_t wmask) {
+            int count;
+            uint64_t uart_pkt = 0;
+            uintptr_t word = addr >> 2;
 
-             uart_pkt |= (data & 0xffffffff) << 8;
-             uart_pkt |= (word & 0x0000007f) << 1;
-             uart_pkt |= (1    & 0x00000001) << 0;
+            uart_pkt |= (data & 0xffffffff) << 8;
+            uart_pkt |= (word & 0x0000007f) << 1;
+            uart_pkt |= (1    & 0x00000001) << 0;
 
-             count = write(serial_port, &uart_pkt, 5);
-             bsg_pr_dbg_ps("uart tx write: %x bytes\n", count);
-         }
+            count = write(serial_port, &uart_pkt, 5);
+            bsg_pr_dbg_ps("uart tx write: %x bytes\n", count);
+        }
 
-         int32_t uart_read(uintptr_t addr) {
-             int count;
-             uint64_t uart_pkt = 0;
-             uintptr_t word = addr >> 2;
+        int32_t uart_read(uintptr_t addr) {
+            int count;
+            uint64_t uart_pkt = 0;
+            uintptr_t word = addr >> 2;
 
-             uart_pkt |= (0    & 0xffffffff) << 8;
-             uart_pkt |= (word & 0x0000007f) << 1;
-             uart_pkt |= (0    & 0x00000001) << 0;
+            uart_pkt |= (0    & 0xffffffff) << 8;
+            uart_pkt |= (word & 0x0000007f) << 1;
+            uart_pkt |= (0    & 0x00000001) << 0;
 
-             count = write(serial_port, &uart_pkt, 5);
-             bsg_pr_dbg_ps("uart rx write: %x bytes\n", count);
+            count = write(serial_port, &uart_pkt, 5);
+            bsg_pr_dbg_ps("uart rx write: %x bytes\n", count);
 
-             int32_t read_buf;
-             count = read(serial_port, &read_buf, 4);
-             bsg_pr_dbg_ps("uart rx read: %x\n", read_buf, count);
+            int32_t read_buf;
+            count = read(serial_port, &read_buf, 4);
+            bsg_pr_dbg_ps("uart rx read: %x\n", read_buf, count);
 
-             return read_buf;
-         }
- #endif
+            return read_buf;
+        }
+#endif
+
+    public:
+        virtual int32_t shell_read(uintptr_t addr) = 0;
+        virtual void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) = 0;
+
+        virtual void shell_read4(uintptr_t addr, int32_t *data0, int32_t *data1, int32_t *data2, int32_t *data3) {
+            *data0 = shell_read(addr+0);
+            *data1 = shell_read(addr+4);
+            *data2 = shell_read(addr+8);
+            *data3 = shell_read(addr+12);
+        }
+
+        virtual void shell_write4(uintptr_t addr, int32_t data0, int32_t data1, int32_t data2, int32_t data3) {
+            shell_write(addr+0, data0, 0xf);
+            shell_write(addr+4, data1, 0xf);
+            shell_write(addr+8, data2, 0xf);
+            shell_write(addr+12, data3, 0xf);
+        }
+
+    public:
+        virtual void tick(void) = 0;
+        virtual void done(void) = 0;
+        virtual void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) = 0;
+        virtual void free_dram(void *virtual_ptr) = 0;
 };
 
 #endif
+

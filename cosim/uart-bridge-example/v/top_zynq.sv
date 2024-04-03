@@ -1,8 +1,6 @@
 
 `timescale 1 ps / 1 ps
 
-`include "bp_zynq_pl.vh"
-
 module top_zynq #
   (
    // Users to add parameters here

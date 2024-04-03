@@ -5,8 +5,9 @@ variables:
 stages:
   - verilator
   - vcs
+  - xcelium
   - vivado
-  - fpga
+  - zynq
   - all
 
 .job_template: &job_definition
@@ -16,19 +17,22 @@ stages:
   artifacts:
     name: $CI_JOB_ID
   dependencies: []
+  before_script:
+    - git submodule update --init --checkout --recursive cosim/import/black-parrot
+    - git submodule update --init --checkout --recursive cosim/import/black-parrot-subsystems
+    - git submodule update --init --checkout --recursive cosim/import/basejump_stl
+    - git submodule update --init --checkout --recursive cosim/import/bsg_manycore
 
 simple-example-verilator:
   <<: *job_definition
   stage: verilator
   tags:
     - verilator
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+  script:
     - export BASENAME="simple"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="simple-example"
-  script:
     - make -C cosim/simple-example/verilator/ run
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/simple-example/verilator/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/simple-example/verilator/run.log
   artifacts:
     paths:
       - cosim/simple-example/verilator/run.log
@@ -38,13 +42,11 @@ simple-example-vcs:
   stage: vcs
   tags:
     - vcs
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+  script:
     - export BASENAME="simple"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="simple-example"
-  script:
     - make -C cosim/simple-example/vcs/ run
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/simple-example/vcs/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/simple-example/vcs/run.log
   artifacts:
     paths:
       - cosim/simple-example/vcs/run.log
@@ -54,37 +56,33 @@ simple-example-vivado-pynqz2:
   stage: vivado
   tags:
     - vivado
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+  script:
     - export BASENAME="simple"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="simple-example"
-  script:
     - echo "Simple example does not have a vivado script, copying from local copy"
-    - cp $CI_MISC_DIR/simple_bd_1.pynqz2.tar.xz.b64 cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_MISC_DIR/simple_bd_1.zynq.pynqz2.tar.xz.b64 cosim/simple-example/simple_bd_1.zynq.pynqz2.tar.xz.b64
   artifacts:
     paths:
-      - cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
+      - cosim/simple-example/simple_bd_1.zynq.pynqz2.tar.xz.b64
 
-simple-example-fpga-pynqz2:
+simple-example-zynq-pynqz2:
   <<: *job_definition
-  stage: fpga
+  stage: zynq
   tags:
-    - fpga
-  resource_group: fpga
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+    - zynq
+  resource_group: zynq
+  script:
     - export BASENAME="simple"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="simple-example"
-  script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/simple-example/simple_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/simple-example/simple_bd_1.zynq.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/simple-example/simple_bd_1.zynq.pynqz2.tar.xz.b64
     - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/simple-example/fpga/run.log $CI_PROJECT_DIR/cosim/simple-example/fpga/run.log
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/simple-example/fpga/run.log
+    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/simple-example/zynq/run.log $CI_PROJECT_DIR/cosim/simple-example/zynq/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/simple-example/zynq/run.log
   artifacts:
     paths:
-      - cosim/simple-example/fpga/run.log
+      - cosim/simple-example/zynq/run.log
   dependencies:
     - simple-example-vivado-pynqz2
 
@@ -93,43 +91,51 @@ shell-example-verilator:
   stage: verilator
   tags:
     - verilator
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+  script:
     - export BASENAME="shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="shell-example"
-  script:
     - make -C cosim/shell-example/verilator/ run
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/shell-example/verilator/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/shell-example/verilator/run.log
   artifacts:
     paths:
       - cosim/shell-example/verilator/run.log
 
 shell-example-vcs:
   <<: *job_definition
-  stage: verilator
+  stage: vcs
   tags:
     - vcs
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+  script:
     - export BASENAME="shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="shell-example"
-  script:
     - make -C cosim/shell-example/vcs/ run
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/shell-example/vcs/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/shell-example/vcs/run.log
   artifacts:
     paths:
       - cosim/shell-example/vcs/run.log
+
+shell-example-xcelium:
+  <<: *job_definition
+  stage: xcelium
+  tags:
+    - xcelium
+  script:
+    - export BASENAME="shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
+    - export EXAMPLE_NAME="shell-example"
+    - make -C cosim/shell-example/xcelium/ run
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/shell-example/xcelium/run.log
+  artifacts:
+    paths:
+      - cosim/shell-example/xcelium/run.log
 
 shell-example-vivado-pynqz2:
   <<: *job_definition
   stage: vivado
   tags:
     - vivado
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+  script:
     - export BASENAME="shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="shell-example"
-  script:
     - echo "Building shell-example for Pynq Z2"
     - make -C cosim/shell-example/vivado clean fpga_build
     - echo "Packing up bitstream"
@@ -137,28 +143,26 @@ shell-example-vivado-pynqz2:
   artifacts:
     paths:
       - cosim/shell-example/vivado/vivado.log
-      - cosim/shell-example/shell_bd_1.pynqz2.tar.xz.b64
+      - cosim/shell-example/shell_bd_1.zynq.pynqz2.tar.xz.b64
 
-shell-example-fpga-pynqz2:
+shell-example-zynq-pynqz2:
   <<: *job_definition
-  stage: fpga
+  stage: zynq
   tags:
-    - fpga
-  resource_group: fpga
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+    - zynq
+  resource_group: zynq
+  script:
     - export BASENAME="shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="shell-example"
-  script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/shell-example/shell_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/shell-example/shell_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/shell-example/shell_bd_1.zynq.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/shell-example/shell_bd_1.zynq.pynqz2.tar.xz.b64
     - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/shell-example/fpga/run.log $CI_PROJECT_DIR/cosim/shell-example/fpga/run.log
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/shell-example/fpga/run.log
+    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/shell-example/zynq/run.log $CI_PROJECT_DIR/cosim/shell-example/zynq/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/shell-example/zynq/run.log
   artifacts:
     paths:
-      - cosim/shell-example/fpga/run.log
+      - cosim/shell-example/zynq/run.log
   dependencies:
     - shell-example-vivado-pynqz2
 
@@ -167,13 +171,11 @@ double-shell-example-verilator:
   stage: verilator
   tags:
     - verilator
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+  script:
     - export BASENAME="double_shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2020.1"
     - export EXAMPLE_NAME="double-shell-example"
-  script:
     - make -C cosim/double-shell-example/verilator/ run
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/double-shell-example/verilator/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/double-shell-example/verilator/run.log
   artifacts:
     paths:
       - cosim/double-shell-example/verilator/run.log
@@ -183,13 +185,11 @@ double-shell-example-vcs:
   stage: vcs
   tags:
     - vcs
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+  script:
     - export BASENAME="double_shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2020.1"
     - export EXAMPLE_NAME="double-shell-example"
-  script:
     - make -C cosim/double-shell-example/vcs/ run
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/double-shell-example/vcs/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/double-shell-example/vcs/run.log
   artifacts:
     paths:
       - cosim/double-shell-example/vcs/run.log
@@ -199,11 +199,9 @@ double-shell-example-vivado-pynqz2:
   stage: vivado
   tags:
     - vivado
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+  script:
     - export BASENAME="double_shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2020.1"
     - export EXAMPLE_NAME="double-shell-example"
-  script:
     - echo "Building double-shell-example for Pynq Z2"
     - make -C cosim/double-shell-example/vivado clean fpga_build
     - echo "Packing up bitstream"
@@ -211,50 +209,46 @@ double-shell-example-vivado-pynqz2:
   artifacts:
     paths:
       - cosim/double-shell-example/vivado/vivado.log
-      - cosim/double-shell-example/double_shell_bd_1.pynqz2.tar.xz.b64
+      - cosim/double-shell-example/double_shell_bd_1.zynq.pynqz2.tar.xz.b64
 
-double-shell-example-fpga-pynqz2:
+double-shell-example-zynq-pynqz2:
   <<: *job_definition
-  stage: fpga
+  stage: zynq
   tags:
-    - fpga
-  resource_group: fpga
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+    - zynq
+  resource_group: zynq
+  script:
     - export BASENAME="double_shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2020.1"
     - export EXAMPLE_NAME="double-shell-example"
-  script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/double-shell-example/double_shell_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/double-shell-example/double_shell_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/double-shell-example/double_shell_bd_1.zynq.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/double-shell-example/double_shell_bd_1.zynq.pynqz2.tar.xz.b64
     - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/double-shell-example/fpga/run.log $CI_PROJECT_DIR/cosim/double-shell-example/fpga/run.log
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/double-shell-example/fpga/run.log
+    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/double-shell-example/zynq/run.log $CI_PROJECT_DIR/cosim/double-shell-example/zynq/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/double-shell-example/zynq/run.log
   artifacts:
     paths:
-      - cosim/double-shell-example/fpga/run.log
+      - cosim/double-shell-example/zynq/run.log
   dependencies:
     - double-shell-example-vivado-pynqz2
 
-dram-example-fpga-pynqz2:
+dram-example-zynq-pynqz2:
   <<: *job_definition
-  stage: fpga
+  stage: zynq
   tags:
-    - fpga
-  resource_group: fpga
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+    - zynq
+  resource_group: zynq
+  script:
     - export BASENAME="dram"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="dram-example"
-  script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/dram-run.sh | envsubst > $CI_PROJECT_DIR/ci/dram-run-envsubst.sh
     - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/dram-run-envsubst.sh
-    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/dram-example/fpga/run.log $CI_PROJECT_DIR/cosim/dram-example/fpga/run.log
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/dram-example/fpga/run.log
+    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/dram-example/zynq/run.log $CI_PROJECT_DIR/cosim/dram-example/zynq/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/dram-example/zynq/run.log
   artifacts:
     paths:
-      - cosim/dram-example/fpga/run.log
+      - cosim/dram-example/zynq/run.log
   dependencies: []
 
 black-parrot-example-verilator:
@@ -262,13 +256,11 @@ black-parrot-example-verilator:
   stage: verilator
   tags:
     - verilator
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+  script:
     - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="black-parrot-example"
-  script:
     - make -C cosim/black-parrot-example/verilator/ run NBF_FILE=$SOFTWARE_NBF_DIR/bp-tests/hello_world.nbf
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/verilator/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/verilator/run.log
   artifacts:
     paths:
       - cosim/black-parrot-example/verilator/run.log
@@ -278,13 +270,11 @@ black-parrot-example-vcs:
   stage: vcs
   tags:
     - vcs
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+  script:
     - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="black-parrot-example"
-  script:
     - make -C cosim/black-parrot-example/vcs/ run NBF_FILE=$SOFTWARE_NBF_DIR/bp-tests/hello_world.nbf
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/vcs/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/vcs/run.log
   artifacts:
     paths:
       - cosim/black-parrot-example/vcs/run.log
@@ -294,11 +284,9 @@ black-parrot-example-vivado-pynqz2:
   stage: vivado
   tags:
     - vivado
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+  script:
     - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="black-parrot-example"
-  script:
     - echo "Building black-parrot-example for Pynq Z2"
     - make -C cosim/black-parrot-example/vivado clean fpga_build
     - echo "Packing up bitstream"
@@ -306,30 +294,28 @@ black-parrot-example-vivado-pynqz2:
   artifacts:
     paths:
       - cosim/black-parrot-example/vivado/vivado.log
-      - cosim/black-parrot-example/blackparrot_bd_1.pynqz2.tar.xz.b64
+      - cosim/black-parrot-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64
 
-black-parrot-example-fpga-pynqz2:
+black-parrot-example-zynq-pynqz2:
   <<: *job_definition
-  stage: fpga
+  stage: zynq
   tags:
-    - fpga
-  resource_group: fpga
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+    - zynq
+  resource_group: zynq
+  script:
     - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="black-parrot-example"
     - export NBF_FILE=/home/xilinx/mnt/zynqparrot_nbf/bp-tests/hello_world.nbf
-  script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/black-parrot-example/blackparrot_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/blackparrot_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/black-parrot-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64
     - cp -r $SOFTWARE_NBF_DIR $CI_MOUNT_DIR/zynqparrot_nbf
     - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/fpga/run.log $CI_PROJECT_DIR/cosim/black-parrot-example/fpga/run.log
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/fpga/run.log
+    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/zynq/run.log $CI_PROJECT_DIR/cosim/black-parrot-example/zynq/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/zynq/run.log
   artifacts:
     paths:
-      - cosim/black-parrot-example/fpga/run.log
+      - cosim/black-parrot-example/zynq/run.log
   dependencies:
     - black-parrot-example-vivado-pynqz2
 
@@ -338,11 +324,9 @@ black-parrot-example-vivado-ultra96v2:
   stage: vivado
   tags:
     - vivado
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+  script:
     - export BASENAME="blackparrot"; export BOARDNAME="ultra96v2"; export VIVADO_VERSION="2020.1"
     - export EXAMPLE_NAME="black-parrot-example"
-  script:
     - echo "Building black-parrot-example for Ultra96v2"
     - make -C cosim/black-parrot-example/vivado clean fpga_build
     - echo "Packing up bitstream"
@@ -350,30 +334,28 @@ black-parrot-example-vivado-ultra96v2:
   artifacts:
     paths:
       - cosim/black-parrot-example/vivado/vivado.log
-      - cosim/black-parrot-example/blackparrot_bd_1.ultra96v2.tar.xz.b64
+      - cosim/black-parrot-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64
 
-black-parrot-example-fpga-ultra96v2:
+black-parrot-example-zynq-ultra96v2:
   <<: *job_definition
-  stage: fpga
+  stage: zynq
   tags:
-    - fpga
-  resource_group: fpga
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+    - zynq
+  resource_group: zynq
+  script:
     - export BASENAME="blackparrot"; export BOARDNAME="ultra96v2"; export VIVADO_VERSION="2020.1"
     - export EXAMPLE_NAME="black-parrot-example"
     - export NBF_FILE=/home/xilinx/mnt/zynqparrot_nbf/bp-tests/hello_world.nbf
-  script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/black-parrot-example/blackparrot_bd_1.ultra96v2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/blackparrot_bd_1.ultra96v2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/black-parrot-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64
     - cp -r $SOFTWARE_NBF_DIR $CI_MOUNT_DIR/zynqparrot_nbf
     - ssh xilinx@$CI_ULTRA96V2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/fpga/run.log $CI_PROJECT_DIR/cosim/black-parrot-example/fpga/run.log
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/fpga/run.log
+    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/zynq/run.log $CI_PROJECT_DIR/cosim/black-parrot-example/zynq/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/zynq/run.log
   artifacts:
     paths:
-      - cosim/black-parrot-example/fpga/run.log
+      - cosim/black-parrot-example/zynq/run.log
   dependencies:
     - black-parrot-example-vivado-ultra96v2
 
@@ -382,13 +364,11 @@ black-parrot-minimal-example-verilator:
   stage: verilator
   tags:
     - verilator
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+  script:
     - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="black-parrot-minimal-example"
-  script:
     - make -C cosim/black-parrot-minimal-example/verilator/ run NBF_FILE=$SOFTWARE_NBF_DIR/bp-tests/hello_world.nbf
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-minimal-example/verilator/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/black-parrot-minimal-example/verilator/run.log
   artifacts:
     paths:
       - cosim/black-parrot-minimal-example/verilator/run.log
@@ -398,13 +378,11 @@ black-parrot-minimal-example-vcs:
   stage: vcs
   tags:
     - vcs
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+  script:
     - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="black-parrot-minimal-example"
-  script:
     - make -C cosim/black-parrot-minimal-example/vcs/ run NBF_FILE=$SOFTWARE_NBF_DIR/bp-tests/hello_world.nbf
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-minimal-example/vcs/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/black-parrot-minimal-example/vcs/run.log
   artifacts:
     paths:
       - cosim/black-parrot-minimal-example/vcs/run.log
@@ -414,11 +392,9 @@ black-parrot-minimal-example-vivado-pynqz2:
   stage: vivado
   tags:
     - vivado
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+  script:
     - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="black-parrot-minimal-example"
-  script:
     - echo "Building black-parrot-minimal-example for Pynq Z2"
     - make -C cosim/black-parrot-minimal-example/vivado clean fpga_build
     - echo "Packing up bitstream"
@@ -426,30 +402,28 @@ black-parrot-minimal-example-vivado-pynqz2:
   artifacts:
     paths:
       - cosim/black-parrot-minimal-example/vivado/vivado.log
-      - cosim/black-parrot-minimal-example/blackparrot_bd_1.pynqz2.tar.xz.b64
+      - cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64
 
-black-parrot-minimal-example-fpga-pynqz2:
+black-parrot-minimal-example-zynq-pynqz2:
   <<: *job_definition
-  stage: fpga
+  stage: zynq
   tags:
-    - fpga
-  resource_group: fpga
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+    - zynq
+  resource_group: zynq
+  script:
     - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
     - export EXAMPLE_NAME="black-parrot-minimal-example"
     - export NBF_FILE=/home/xilinx/mnt/zynqparrot_nbf/bp-tests/hello_world.nbf
-  script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/blackparrot_bd_1.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/blackparrot_bd_1.pynqz2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64
     - cp -r $SOFTWARE_NBF_DIR $CI_MOUNT_DIR/zynqparrot_nbf
     - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/fpga/run.log $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/fpga/run.log
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-minimal-example/fpga/run.log
+    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/zynq/run.log $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/zynq/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/black-parrot-minimal-example/zynq/run.log
   artifacts:
     paths:
-      - cosim/black-parrot-minimal-example/fpga/run.log
+      - cosim/black-parrot-minimal-example/zynq/run.log
   dependencies:
     - black-parrot-minimal-example-vivado-pynqz2
 
@@ -458,11 +432,9 @@ black-parrot-minimal-example-vivado-ultra96v2:
   stage: vivado
   tags:
     - vivado
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+  script:
     - export BASENAME="blackparrot"; export BOARDNAME="ultra96v2"; export VIVADO_VERSION="2020.1"
     - export EXAMPLE_NAME="black-parrot-minimal-example"
-  script:
     - echo "Building black-parrot-minimal-example for Ultra96v2"
     - make -C cosim/black-parrot-minimal-example/vivado clean fpga_build
     - echo "Packing up bitstream"
@@ -470,30 +442,28 @@ black-parrot-minimal-example-vivado-ultra96v2:
   artifacts:
     paths:
       - cosim/black-parrot-minimal-example/vivado/vivado.log
-      - cosim/black-parrot-minimal-example/blackparrot_bd_1.ultra96v2.tar.xz.b64
+      - cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64
 
-black-parrot-minimal-example-fpga-ultra96v2:
+black-parrot-minimal-example-zynq-ultra96v2:
   <<: *job_definition
-  stage: fpga
+  stage: zynq
   tags:
-    - fpga
-  resource_group: fpga
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import
+    - zynq
+  resource_group: zynq
+  script:
     - export BASENAME="blackparrot"; export BOARDNAME="ultra96v2"; export VIVADO_VERSION="2020.1"
     - export EXAMPLE_NAME="black-parrot-minimal-example"
     - export NBF_FILE=/home/xilinx/mnt/zynqparrot_nbf/bp-tests/hello_world.nbf
-  script:
     - $CI_PROJECT_DIR/ci/fpga-setup.sh
     - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/blackparrot_bd_1.ultra96v2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/blackparrot_bd_1.ultra96v2.tar.xz.b64
+    - cp $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64
     - cp -r $SOFTWARE_NBF_DIR $CI_MOUNT_DIR/zynqparrot_nbf
     - ssh xilinx@$CI_ULTRA96V2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/fpga/run.log $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/fpga/run.log
-    - grep "bp_zynq_pl:.*done() called, exiting" cosim/black-parrot-minimal-example/fpga/run.log
+    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/zynq/run.log $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/zynq/run.log
+    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/black-parrot-minimal-example/zynq/run.log
   artifacts:
     paths:
-      - cosim/black-parrot-minimal-example/fpga/run.log
+      - cosim/black-parrot-minimal-example/zynq/run.log
   dependencies:
     - black-parrot-minimal-example-vivado-ultra96v2
 

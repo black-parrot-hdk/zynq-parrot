@@ -30,6 +30,13 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
 
         ~bsg_zynq_pl(void) { }
 
+        void tick(void) override {
+            bsg_dpi_next();
+        }
+
+        void done(void) override {
+            bsg_pr_info("  bsg_zynq_pl: done() called, exiting\n");
+        }
 
         void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) {
             bsg_pr_info("  bsg_zynq_pl: Allocated dummy DRAM\n");
@@ -39,40 +46,6 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
         void free_dram(void *virtual_ptr) {
             printf("bsg_zynq_pl: Freeing dummy DRAM\n");
         }
-
-        void tick(void) override {
-            bsg_dpi_next();
-        }
-
-        void done(void) override {
-            bsg_pr_info("  bsg_zynq_pl: done() called, exiting\n");
-        }
-
-        void next_tick() override {
-            bsg_zynq_pl_simulation::next_tick();
-        }
-
-        void poll_tick() override {
-            bsg_zynq_pl_simulation::poll_tick();
-        }
-
-#ifdef HOST_ZYNQ
-        void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) {
-            axil_write(addr, data, wmask);
-        }
-
-        int32_t shell_read(uintptr_t addr) {
-            return axil_read(addr);
-        }
-#else
-        void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) {
-            uart_write(addr, data, wmask);
-        }
-
-        int32_t shell_read(uintptr_t addr) {
-            return uart_read(addr);
-        }
-#endif
 };
 
 #endif

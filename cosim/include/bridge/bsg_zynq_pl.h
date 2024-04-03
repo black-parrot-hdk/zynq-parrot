@@ -32,39 +32,34 @@ class bsg_zynq_pl : public bsg_zynq_pl_hardware {
         }
 
         ~bsg_zynq_pl(void) {
-#ifdef UART_ENABLE
-            close(serial_port);
-#endif
+            deinit();
         }
 
-        void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) {
+        void tick(void) override {
+            /* Does nothing on PS */
+        }
+
+        void done(void) override {
+            printf("bsg_zynq_pl: done() called, exiting\n");
+        }
+
+        void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) override {
             bsg_pr_info("  bsg_zynq_pl: Allocated dummy DRAM\n");
             return (void *)(physical_ptr = (unsigned long *)0xdeadbeef);
         }
 
-        void free_dram(void *virtual_ptr) {
+        void free_dram(void *virtual_ptr) override {
             printf("bsg_zynq_pl: Freeing dummy DRAM\n");
         }
 
-        void done(void) {
-            printf("bsg_zynq_pl: done() called, exiting\n");
-        }
-
-        void next_tick(void) {
-            /* Does nothing on PS */
-        }
-
-        void poll_tick(void) {
-            /* Does nothing on PS */
-        }
-
-        void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) {
-            uart_write(addr, data, wmask);
-        }
-
-        int32_t shell_read(uintptr_t addr) {
+        int32_t shell_read(uintptr_t addr) override {
             return uart_read(addr);
+        }
+
+        void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) override {
+            uart_write(addr, data, wmask);
         }
 };
 
 #endif
+

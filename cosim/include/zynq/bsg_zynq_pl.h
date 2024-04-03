@@ -53,8 +53,25 @@ using namespace std;
 
 class bsg_zynq_pl : public bsg_zynq_pl_hardware {
     public:
+        bsg_zynq_pl(int argc, char *argv[]) {
+            printf("// bsg_zynq_pl: be sure to run as root\n");
+            init();
+        }
+
+        ~bsg_zynq_pl(void) {
+            deinit();
+        }
+
+        void tick(void) override {
+            /* Does nothing on PS */
+        }
+
+        void done(void) override {
+            printf("bsg_zynq_pl: done() called, exiting\n");
+        }
+
         // returns virtual pointer, writes physical parameter into arguments
-        void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) {
+        void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) override {
 
             // resets all CMA buffers across system (eek!)
             _xlnk_reset();
@@ -73,41 +90,41 @@ class bsg_zynq_pl : public bsg_zynq_pl_hardware {
             return virtual_ptr;
         }
 
-        void free_dram(void *virtual_ptr) {
+        void free_dram(void *virtual_ptr) override {
             printf("bsg_zynq_pl: free_dram() called on virtual ptr=%p\n", virtual_ptr);
             cma_free(virtual_ptr);
         }
 
-        bsg_zynq_pl(int argc, char *argv[]) {
-            printf("// bsg_zynq_pl: be sure to run as root\n");
-            init();
+        int32_t shell_read(uintptr_t addr) override {
+            return axil_read(addr);
         }
 
-        ~bsg_zynq_pl(void) {
-#ifdef UART_ENABLE
-            close(serial_port);
-#endif
-        }
-
-        void done(void) {
-            printf("bsg_zynq_pl: done() called, exiting\n");
-        }
-
-        void next_tick(void) {
-            /* Does nothing on PS */
-        }
-
-        void poll_tick(void) {
-            /* Does nothing on PS */
-        }
-
-        void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) {
+        void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) override {
             axil_write(addr, data, wmask);
         }
 
-        int32_t shell_read(uintptr_t addr) {
-            return axil_read(addr);
+#ifdef NEON
+        //typedef uint32_t uint32x4_t[4];
+        void shell_write4(uintptr_t addr, int32_t data0, int32_t data1, int32_t data2, int32_t data3) override {
+            volatile uint32x4_t *ptr = (volatile uint32x4_t *) addr;
+            int32_t sarray[4] = {data0, data1, data2, data3};
+            uint32_t *array{reinterpret_cast<uint32_t *>(sarray)};
+            uint32x4_t val = vld1q_u32(array);
+
+            *ptr = val;
         }
+
+        void shell_read4(uintptr_t addr, int32_t *data0, int32_t *data1, int32_t *data2, int32_t *data3) override {
+            volatile uint32x4_t *ptr = (volatile uint32x4_t *) addr;
+            uint32x4_t val = *ptr;
+
+            *data0 = val[0];
+            *data1 = val[1];
+            *data2 = val[2];
+            *data3 = val[3];
+        }
+#endif
 };
 
 #endif
+

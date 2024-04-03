@@ -4,9 +4,6 @@
 // the API we provide abstracts away the
 // communication plumbing differences.
 
-#ifdef NEON
-#include "arm_neon.h"
-#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include "bsg_zynq_pl.h"
@@ -15,24 +12,12 @@
 
 #include <sys/time.h>
 
-// select between testing NEON and not testing NEON
-#define TEST_BANDWIDTH_ENABLE_NEON
-
 uint64_t get_microseconds()
 {
     struct timeval tv;
     gettimeofday(&tv,NULL);
     return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
 }
-
-#ifdef NEON
-
-inline uint32x4_t set4(uint32_t a, uint32_t b, uint32_t c, uint32_t d) {
-  uint32_t array[4] = {a, b, c, d};
-  return vld1q_u32(array);
-}
-
-#endif
 
 int ps_main(int argc, char **argv) {
 
@@ -58,42 +43,36 @@ int ps_main(int argc, char **argv) {
   int mask1 = 0xf;
   int mask2 = 0xf;
 
-#ifdef NEON
-
-#define TEST_LOOP    \
-  *p = val;          \
-  /* this will show the last address written; a good test for whether NEON is working */ \
-  uint64_t start=get_microseconds();                             \
-  int limit = 100000;                                            \
-  for (int i = 0; i < limit; i++)                                \
-    {                                                            \
-      *p = val;      *p = val;      *p = val;      *p = val;     \
-      *p = val;      *p = val;      *p = val;      *p = val;     \
-      *p = val;      *p = val;      *p = val;      *p = val;     \
-      *p = val;      *p = val;      *p = val;      *p = val;     \
-    }                                                            \
-  uint64_t net=get_microseconds()-start;                         \
-  /* * 16 because of unroll factor */                            \
-  printf("%s: %llu microseconds for %d xfers: %f words per microsecond\n",label,net,limit*16,((double) (limit * 16 * words_per_xfer)) / ((double) net) ); 
-
+  // NEON
   {
-    volatile uint32x4_t *p =  (uint32x4_t *)zpl->axil_get_ptr(0x0+GP0_ADDR_BASE);
-    uint32x4_t val = set4(23,12,1,43);
     uint32_t words_per_xfer = 4;
     const char *label="neon 4x32:";
-    TEST_LOOP
+    uint64_t start=get_microseconds();
+    int limit = 100000;
+    for (int i = 0; i < limit/4; i++) {
+        zpl->shell_write(GP0_ADDR_BASE, 23, 0xf);
+        zpl->shell_write(GP0_ADDR_BASE, 12, 0xf);
+        zpl->shell_write(GP0_ADDR_BASE, 1, 0xf);
+        zpl->shell_write(GP0_ADDR_BASE, 43, 0xf);
+    }
+    uint64_t net=get_microseconds()-start;
+    printf("%s: %llu microseconds for %d xfers: %f words per microsecond\n", label, net, limit, ((double) limit) / ((double) net) ); 
   }
+
+  // Single AXI request
   {
-    volatile int *p = (volatile int *)zpl->axil_get_ptr(0x0+GP0_ADDR_BASE);
-    uint32_t val = 23;
     uint32_t words_per_xfer = 1;
     const char *label="int32    :";
-    TEST_LOOP
+    uint64_t start=get_microseconds();
+    int limit = 100000;
+    for (int i = 0; i < limit; i++) {
+        zpl->shell_write4(GP0_ADDR_BASE, 23, 12, 1, 43);
+    }
+    uint64_t net=get_microseconds()-start;
+    printf("%s: %llu microseconds for %d xfers: %f words per microsecond\n", label, net, limit, ((double) limit) / ((double) net) ); 
   }
 
-#endif
-
-  if (0) {  
+  if (1) {  
   // write to two registers, checking our address snoop to see
   // actual address that was received over the AXI bus
   zpl->shell_write(0x0 + GP0_ADDR_BASE, val1, mask1);
@@ -107,7 +86,7 @@ int ps_main(int argc, char **argv) {
   assert((zpl->shell_read(0x1C + GP0_ADDR_BASE) == 0));
 
   // check input fifo counters
-  bsg_pr_dbg_ps("%lx\n", zpl->shell_read(0x20 + GP0_ADDR_BASE));
+  bsg_pr_dbg_ps("%d\n", zpl->shell_read(0x20 + GP0_ADDR_BASE));
   assert((zpl->shell_read(0x20 + GP0_ADDR_BASE) == 4));
   assert((zpl->shell_read(0x24 + GP0_ADDR_BASE) == 4));
   assert((zpl->shell_read(0x28 + GP0_ADDR_BASE) == 4));
