@@ -11,8 +11,8 @@ VCS_OPTS += -timescale=1ps/1ps
 VCS_OPTS += -diag timescale
 VCS_OPTS += -f flist.vcs
 VCS_OPTS += -top $(TB_MODULE)
-VCS_OPTS += -debug_all
-VCS_OPTS += +vcs+vcdpluson +vcs+vcdplusautoflushon +vpdfilesize+512
+VCS_OPTS += -debug_pp
+VCS_OPTS += +vcs+vcdpluson +vcs+vcdplusautoflushon +vpdfilesize+64
 VCS_OPTS += +vcs+lic+wait
 VCS_OPTS += +incdir+$(COSIM_DIR)/include/vcs
 VCS_OPTS += $(addprefix +define+,$(DEFINES))
