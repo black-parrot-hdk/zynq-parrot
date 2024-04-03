@@ -106,22 +106,22 @@ class bsg_zynq_pl : public bsg_zynq_pl_hardware {
 #ifdef NEON
         //typedef uint32_t uint32x4_t[4];
         void shell_write4(uintptr_t addr, int32_t data0, int32_t data1, int32_t data2, int32_t data3) override {
-			volatile uint32x4_t *ptr = (volatile uint32x4_t *) addr;
-			int32_t sarray[4] = {data0, data1, data2, data3};
-			uint32_t *array{reinterpret_cast<uint32_t *>(sarray)};
-			uint32x4_t val = vld1q_u32(array);
+            volatile uint32x4_t *ptr = (volatile uint32x4_t *) addr;
+            int32_t sarray[4] = {data0, data1, data2, data3};
+            uint32_t *array{reinterpret_cast<uint32_t *>(sarray)};
+            uint32x4_t val = vld1q_u32(array);
 
-			*ptr = val;
+            *ptr = val;
         }
 
         void shell_read4(uintptr_t addr, int32_t *data0, int32_t *data1, int32_t *data2, int32_t *data3) override {
-			volatile uint32x4_t *ptr = (volatile uint32x4_t *) addr;
-			uint32x4_t val = *ptr;
+            volatile uint32x4_t *ptr = (volatile uint32x4_t *) addr;
+            uint32x4_t val = *ptr;
 
-			*data0 = val[0];
-			*data1 = val[1];
-			*data2 = val[2];
-			*data3 = val[3];
+            *data0 = val[0];
+            *data1 = val[1];
+            *data2 = val[2];
+            *data3 = val[3];
         }
 #endif
 };
