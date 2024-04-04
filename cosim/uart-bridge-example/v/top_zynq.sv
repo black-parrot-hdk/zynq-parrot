@@ -96,29 +96,29 @@ module top_zynq #
        ,.m_axil_rvalid_i(m01_axi_rvalid)
        ,.m_axil_rready_o(m01_axi_rready)
 
-       ,.gp0_axil_awaddr_o(gp0_axil_awaddr)
-       ,.gp0_axil_awprot_o(gp0_axil_awprot)
-       ,.gp0_axil_awvalid_o(gp0_axil_awvalid)
-       ,.gp0_axil_awready_i(gp0_axil_awready)
+       ,.gp_axil_awaddr_o(gp0_axil_awaddr)
+       ,.gp_axil_awprot_o(gp0_axil_awprot)
+       ,.gp_axil_awvalid_o(gp0_axil_awvalid)
+       ,.gp_axil_awready_i(gp0_axil_awready)
 
-       ,.gp0_axil_wdata_o(gp0_axil_wdata)
-       ,.gp0_axil_wstrb_o(gp0_axil_wstrb)
-       ,.gp0_axil_wvalid_o(gp0_axil_wvalid)
-       ,.gp0_axil_wready_i(gp0_axil_wready)
+       ,.gp_axil_wdata_o(gp0_axil_wdata)
+       ,.gp_axil_wstrb_o(gp0_axil_wstrb)
+       ,.gp_axil_wvalid_o(gp0_axil_wvalid)
+       ,.gp_axil_wready_i(gp0_axil_wready)
 
-       ,.gp0_axil_bresp_i(gp0_axil_bresp)
-       ,.gp0_axil_bvalid_i(gp0_axil_bvalid)
-       ,.gp0_axil_bready_o(gp0_axil_bready)
+       ,.gp_axil_bresp_i(gp0_axil_bresp)
+       ,.gp_axil_bvalid_i(gp0_axil_bvalid)
+       ,.gp_axil_bready_o(gp0_axil_bready)
 
-       ,.gp0_axil_araddr_o(gp0_axil_araddr)
-       ,.gp0_axil_arprot_o(gp0_axil_arprot)
-       ,.gp0_axil_arvalid_o(gp0_axil_arvalid)
-       ,.gp0_axil_arready_i(gp0_axil_arready)
+       ,.gp_axil_araddr_o(gp0_axil_araddr)
+       ,.gp_axil_arprot_o(gp0_axil_arprot)
+       ,.gp_axil_arvalid_o(gp0_axil_arvalid)
+       ,.gp_axil_arready_i(gp0_axil_arready)
 
-       ,.gp0_axil_rdata_i(gp0_axil_rdata)
-       ,.gp0_axil_rresp_i(gp0_axil_rresp)
-       ,.gp0_axil_rvalid_i(gp0_axil_rvalid)
-       ,.gp0_axil_rready_o(gp0_axil_rready)
+       ,.gp_axil_rdata_i(gp0_axil_rdata)
+       ,.gp_axil_rresp_i(gp0_axil_rresp)
+       ,.gp_axil_rvalid_i(gp0_axil_rvalid)
+       ,.gp_axil_rready_o(gp0_axil_rready)
        );
 
     localparam num_regs_ps_to_pl_lp = 1;

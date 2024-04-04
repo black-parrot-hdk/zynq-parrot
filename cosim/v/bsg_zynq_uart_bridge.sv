@@ -7,9 +7,9 @@ module bsg_zynq_uart_bridge
    , parameter `BSG_INV_PARAM(uart_base_addr_p)
    , localparam m_axil_mask_width_lp = m_axil_data_width_p/8
 
-   , parameter `BSG_INV_PARAM(gp0_axil_data_width_p)
-   , parameter `BSG_INV_PARAM(gp0_axil_addr_width_p)
-   , localparam gp0_axil_mask_width_lp = gp0_axil_data_width_p/8
+   , parameter `BSG_INV_PARAM(gp_axil_data_width_p)
+   , parameter `BSG_INV_PARAM(gp_axil_addr_width_p)
+   , localparam gp_axil_mask_width_lp = gp_axil_data_width_p/8
    )
    (input                                        clk_i
     , input                                      reset_i
@@ -44,33 +44,33 @@ module bsg_zynq_uart_bridge
     , output logic                               m_axil_rready_o
 
     // WRITE ADDRESS CHANNEL SIGNALS
-    , output logic [gp0_axil_addr_width_p-1:0]   gp0_axil_awaddr_o
-    , output logic [2:0]                         gp0_axil_awprot_o
-    , output logic                               gp0_axil_awvalid_o
-    , input                                      gp0_axil_awready_i
+    , output logic [gp_axil_addr_width_p-1:0]    gp_axil_awaddr_o
+    , output logic [2:0]                         gp_axil_awprot_o
+    , output logic                               gp_axil_awvalid_o
+    , input                                      gp_axil_awready_i
 
     // WRITE DATA CHANNEL SIGNALS
-    , output logic [gp0_axil_data_width_p-1:0]   gp0_axil_wdata_o
-    , output logic [gp0_axil_mask_width_lp-1:0]  gp0_axil_wstrb_o
-    , output logic                               gp0_axil_wvalid_o
-    , input                                      gp0_axil_wready_i
+    , output logic [gp_axil_data_width_p-1:0]    gp_axil_wdata_o
+    , output logic [gp_axil_mask_width_lp-1:0]   gp_axil_wstrb_o
+    , output logic                               gp_axil_wvalid_o
+    , input                                      gp_axil_wready_i
 
     // WRITE RESPONSE CHANNEL SIGNALS
-    , input [1:0]                                gp0_axil_bresp_i
-    , input                                      gp0_axil_bvalid_i
-    , output logic                               gp0_axil_bready_o
+    , input [1:0]                                gp_axil_bresp_i
+    , input                                      gp_axil_bvalid_i
+    , output logic                               gp_axil_bready_o
 
     // READ ADDRESS CHANNEL SIGNALS
-    , output logic [gp0_axil_addr_width_p-1:0]   gp0_axil_araddr_o
-    , output logic [2:0]                         gp0_axil_arprot_o
-    , output logic                               gp0_axil_arvalid_o
-    , input                                      gp0_axil_arready_i
+    , output logic [gp_axil_addr_width_p-1:0]    gp_axil_araddr_o
+    , output logic [2:0]                         gp_axil_arprot_o
+    , output logic                               gp_axil_arvalid_o
+    , input                                      gp_axil_arready_i
 
     // READ DATA CHANNEL SIGNALS
-    , input [gp0_axil_data_width_p-1:0]          gp0_axil_rdata_i
-    , input [1:0]                                gp0_axil_rresp_i
-    , input                                      gp0_axil_rvalid_i
-    , output logic                               gp0_axil_rready_o
+    , input [gp_axil_data_width_p-1:0]           gp_axil_rdata_i
+    , input [1:0]                                gp_axil_rresp_i
+    , input                                      gp_axil_rvalid_i
+    , output logic                               gp_axil_rready_o
     );
 
   enum logic [3:0]
@@ -185,63 +185,63 @@ module bsg_zynq_uart_bridge
      ,.yumi_i(uart_pkt_yumi_li)
      );
 
-  logic [gp0_axil_data_width_p-1:0] gp0_wdata_li;
-  logic [gp0_axil_addr_width_p-1:0] gp0_addr_li;
-  logic gp0_v_li, gp0_w_li, gp0_ready_and_lo;
-  logic [gp0_axil_mask_width_lp-1:0] gp0_wmask_li;
+  logic [gp_axil_data_width_p-1:0] gp_wdata_li;
+  logic [gp_axil_addr_width_p-1:0] gp_addr_li;
+  logic gp_v_li, gp_w_li, gp_ready_and_lo;
+  logic [gp_axil_mask_width_lp-1:0] gp_wmask_li;
 
-  logic [gp0_axil_data_width_p-1:0] gp0_rdata_lo;
-  logic gp0_v_lo, gp0_ready_and_li;
+  logic [gp_axil_data_width_p-1:0] gp_rdata_lo;
+  logic gp_v_lo, gp_ready_and_li;
   bsg_axil_fifo_master
-   #(.axil_data_width_p(gp0_axil_data_width_p)
-     ,.axil_addr_width_p(gp0_axil_addr_width_p)
+   #(.axil_data_width_p(gp_axil_data_width_p)
+     ,.axil_addr_width_p(gp_axil_addr_width_p)
      )
-   gp0_master
+   gp_master
     (.clk_i(clk_i)
      ,.reset_i(reset_i)
 
-     ,.data_i(gp0_wdata_li)
-     ,.addr_i(gp0_addr_li)
-     ,.v_i(gp0_v_li)
-     ,.w_i(gp0_w_li)
-     ,.wmask_i(gp0_wmask_li)
-     ,.ready_and_o(gp0_ready_and_lo)
+     ,.data_i(gp_wdata_li)
+     ,.addr_i(gp_addr_li)
+     ,.v_i(gp_v_li)
+     ,.w_i(gp_w_li)
+     ,.wmask_i(gp_wmask_li)
+     ,.ready_and_o(gp_ready_and_lo)
 
-     ,.data_o(gp0_rdata_lo)
-     ,.v_o(gp0_v_lo)
-     ,.ready_and_i(gp0_ready_and_li)
+     ,.data_o(gp_rdata_lo)
+     ,.v_o(gp_v_lo)
+     ,.ready_and_i(gp_ready_and_li)
 
-     ,.m_axil_awaddr_o(gp0_axil_awaddr_o)
-     ,.m_axil_awprot_o(gp0_axil_awprot_o)
-     ,.m_axil_awvalid_o(gp0_axil_awvalid_o)
-     ,.m_axil_awready_i(gp0_axil_awready_i)
+     ,.m_axil_awaddr_o(gp_axil_awaddr_o)
+     ,.m_axil_awprot_o(gp_axil_awprot_o)
+     ,.m_axil_awvalid_o(gp_axil_awvalid_o)
+     ,.m_axil_awready_i(gp_axil_awready_i)
 
-     ,.m_axil_wdata_o(gp0_axil_wdata_o)
-     ,.m_axil_wstrb_o(gp0_axil_wstrb_o)
-     ,.m_axil_wvalid_o(gp0_axil_wvalid_o)
-     ,.m_axil_wready_i(gp0_axil_wready_i)
+     ,.m_axil_wdata_o(gp_axil_wdata_o)
+     ,.m_axil_wstrb_o(gp_axil_wstrb_o)
+     ,.m_axil_wvalid_o(gp_axil_wvalid_o)
+     ,.m_axil_wready_i(gp_axil_wready_i)
 
-     ,.m_axil_bresp_i(gp0_axil_bresp_i)
-     ,.m_axil_bvalid_i(gp0_axil_bvalid_i)
-     ,.m_axil_bready_o(gp0_axil_bready_o)
+     ,.m_axil_bresp_i(gp_axil_bresp_i)
+     ,.m_axil_bvalid_i(gp_axil_bvalid_i)
+     ,.m_axil_bready_o(gp_axil_bready_o)
 
-     ,.m_axil_araddr_o(gp0_axil_araddr_o)
-     ,.m_axil_arprot_o(gp0_axil_arprot_o)
-     ,.m_axil_arvalid_o(gp0_axil_arvalid_o)
-     ,.m_axil_arready_i(gp0_axil_arready_i)
+     ,.m_axil_araddr_o(gp_axil_araddr_o)
+     ,.m_axil_arprot_o(gp_axil_arprot_o)
+     ,.m_axil_arvalid_o(gp_axil_arvalid_o)
+     ,.m_axil_arready_i(gp_axil_arready_i)
 
-     ,.m_axil_rdata_i(gp0_axil_rdata_i)
-     ,.m_axil_rresp_i(gp0_axil_rresp_i)
-     ,.m_axil_rvalid_i(gp0_axil_rvalid_i)
-     ,.m_axil_rready_o(gp0_axil_rready_o)
+     ,.m_axil_rdata_i(gp_axil_rdata_i)
+     ,.m_axil_rresp_i(gp_axil_rresp_i)
+     ,.m_axil_rvalid_i(gp_axil_rvalid_i)
+     ,.m_axil_rready_o(gp_axil_rready_o)
      );
 
-  logic [gp0_axil_data_width_p-1:0] uart_data_li;
+  logic [gp_axil_data_width_p-1:0] uart_data_li;
   logic uart_v_li;
   logic [7:0] tx_data_lo;
   logic tx_v_lo, tx_yumi_li;
   bsg_parallel_in_serial_out
-   #(.width_p(8), .els_p(gp0_axil_data_width_p/8))
+   #(.width_p(8), .els_p(gp_axil_data_width_p/8))
    tx_piso
     (.clk_i(clk_i)
      ,.reset_i(reset_i)
@@ -268,12 +268,12 @@ module bsg_zynq_uart_bridge
       recv_v_li = '0;
       uart_pkt_yumi_li = '0;
 
-      gp0_wdata_li = '0;
-      gp0_addr_li = '0;
-      gp0_v_li = '0;
-      gp0_w_li = '0;
-      gp0_wmask_li = '1;
-      gp0_ready_and_li = '0;
+      gp_wdata_li = '0;
+      gp_addr_li = '0;
+      gp_v_li = '0;
+      gp_w_li = '0;
+      gp_wmask_li = '1;
+      gp_ready_and_li = '0;
 
       uart_data_li = '0;
       uart_v_li = '0;
@@ -319,20 +319,20 @@ module bsg_zynq_uart_bridge
         // Send a GP0 req
         e_req_send:
           begin
-            gp0_wdata_li = uart_pkt_lo.data;
-            gp0_addr_li = (uart_pkt_lo.addr8to2 << 2'b10);
-            gp0_v_li = uart_pkt_v_lo;
-            gp0_w_li = uart_pkt_lo.wr_not_rd;
+            gp_wdata_li = uart_pkt_lo.data;
+            gp_addr_li = (uart_pkt_lo.addr8to2 << 2'b10);
+            gp_v_li = uart_pkt_v_lo;
+            gp_w_li = uart_pkt_lo.wr_not_rd;
 
-            state_n = (gp0_ready_and_lo & gp0_v_li) ? e_req_wait : state_r;
+            state_n = (gp_ready_and_lo & gp_v_li) ? e_req_wait : state_r;
           end
         // Recv a GP0 response
         e_req_wait:
           begin
-            uart_v_li = gp0_v_lo & !uart_pkt_lo.wr_not_rd;
-            uart_data_li = gp0_rdata_lo;
-            gp0_ready_and_li = (uart_pkt_lo.wr_not_rd | uart_ready_and_lo);
-            uart_pkt_yumi_li = gp0_ready_and_li & gp0_v_lo;
+            uart_v_li = gp_v_lo & !uart_pkt_lo.wr_not_rd;
+            uart_data_li = gp_rdata_lo;
+            gp_ready_and_li = (uart_pkt_lo.wr_not_rd | uart_ready_and_lo);
+            uart_pkt_yumi_li = gp_ready_and_li & gp_v_lo;
 
             state_n = uart_pkt_yumi_li ? !uart_pkt_lo.wr_not_rd ? e_tx_send : e_ready : state_r;
           end

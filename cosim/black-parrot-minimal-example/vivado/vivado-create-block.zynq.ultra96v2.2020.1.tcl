@@ -15,7 +15,7 @@ create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.3 zynq_ultra_ps_e_
 set_property -dict [list CONFIG.PSU__FPGA_PL0_ENABLE {1}  CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {50}] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP0 {1} CONFIG.PSU__MAXIGP0__DATA_WIDTH {32}] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP2 {0}] [get_bd_cells zynq_ultra_ps_e_0]
-set_property -dict [list CONFIG.PSU__USE__S_AXI_GP3 {1} CONFIG.PSU__SAXIGP3__DATA_WIDTH {64}] [get_bd_cells zynq_ultra_ps_e_0]
+set_property -dict [list CONFIG.PSU__USE__S_AXI_GP3 {1} CONFIG.PSU__SAXIGP3__DATA_WIDTH {32}] [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list CONFIG.PSU__FPGA_PL1_ENABLE {1} CONFIG.PSU__CRL_APB__PL1_REF_CTRL__FREQMHZ {0.4}] [get_bd_cells zynq_ultra_ps_e_0]
 endgroup
 
@@ -64,14 +64,14 @@ save_bd_design
 # Change to 0 to have it stop before synthesis / implementation
 # so you can inspect the design with the GUI
 
-if {1} {
+if {0} {
   launch_runs synth_1 -jobs 4
   wait_on_run synth_1
   open_run synth_1 -name synth_1
   source ${tcl_dir}/additional_constraints.tcl
 }
 
-if {1} {
+if {0} {
   launch_runs impl_1 -to_step write_bitstream -jobs 4
   wait_on_run impl_1
 }
