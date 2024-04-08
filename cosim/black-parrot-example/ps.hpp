@@ -32,6 +32,7 @@
 #define DRAM_MAX_ALLOC_SIZE 0x20000000U
 // GP1
 #define GP1_DRAM_BASE_ADDR GP1_ADDR_BASE
+// TODO: Aperture has to be big enough for DRAM and CSR space 1G???
 #define GP1_CSR_BASE_ADDR (GP1_DRAM_BASE_ADDR + DRAM_MAX_ALLOC_SIZE)
 
 #define TAG_NUM_CLIENTS 16

@@ -130,11 +130,9 @@ public:
     }
 };
 
-#define WATCHDOG_BASE 0x0F00000
-#define WATCHDOG_SIZE 0x0001000
-#define WATCHDOG_ADDRESS WATCHDOG_BASE
-#define WATCHDOG_PERIOD 0x10000
-class zynq_watchdog : public m_axil_device, public s_axil_device {
+#define WATCHDOG_ADDRESS 0x0F00000
+#define WATCHDOG_PERIOD 0x1000
+class zynq_watchdog : public m_axil_device {
     int count = 0;
 
 public:
@@ -158,26 +156,6 @@ public:
     }
 
     void return_read(int32_t data) { /* Unimp */ }
-
-
-    bool is_read(uintptr_t address) override {
-        return (address >= WATCHDOG_BASE) &&
-               (address < WATCHDOG_BASE + WATCHDOG_SIZE);
-    }
-
-    bool is_write(uintptr_t address) override {
-        return (address >= WATCHDOG_BASE) &&
-               (address < WATCHDOG_BASE + WATCHDOG_SIZE);
-    }
-
-    int32_t read(uintptr_t address) override {
-        bsg_pr_err("  bsg_zynq_pl: watchdog read??\n");
-        return -1;
-    }
-
-    void write(uintptr_t address, int32_t data) override {
-        bsg_pr_dbg_pl("  bsg_zynq_pl: watchdog tick\n");
-    }
 };
 
 #endif

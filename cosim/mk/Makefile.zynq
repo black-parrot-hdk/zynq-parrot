@@ -13,12 +13,16 @@ CFLAGS += $(addprefix -D,$(DEFINES))
 CFLAGS += -O2
 CFLAGS += -lcma -lpthread
 CFLAGS += -std=c++14
+CFLAGS += $(shell cat $(BASENAME)_bd_1.map)
+CFLAGS += -DGP2_ADDR_BASE=0 -DHP1_ADDR_BASE=0
 
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/zynq
 CINCLUDES += -I$(CURR_DESIGN_DIR)
 
 CSOURCES += $(MAIN_PROGRAM)
+
+BUILD_COLLATERAL += $(BASENAME)_bd_1.map
 
 all:
 	@echo "Rules for ZYNQ; see $(TOP)/cosim/mk/Makefile.zynq for more:"
@@ -28,24 +32,20 @@ EXE ?= control-program
 run: $(EXE) $(RUN_COLLATERAL)
 	sudo ./$< $(SIM_ARGS) | tee run.log
 
-$(EXE): $(HOST_PROGRAM) $(BUILD_COLLATERAL)
+$(EXE): $(HOST_PROGRAM) $(BASENAME)_bd_1.map
 	$(GCC) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $(CSOURCES) $< $(CFLAGS) $(LDFLAGS) -o $@ | tee build.log
+
+unpack_bitstream: $(BASENAME)_bd_1.bit
+$(BASENAME)_bd_1.bit $(BASENAME)_bd_1.map:
+	$(BASE64) -d ../$(BASENAME)_bd_1.$(HOST).$(BOARDNAME).tar.xz.b64 | $(TAR) xvJ
 
 reset_pl:
 	echo 'from pynq import PL; PL.reset();' | sudo -E $(PYTHON3)
 
-unpack_bitstream:
-	$(BASE64) -d ../$(BASENAME)_bd_1.$(HOST).$(BOARDNAME).tar.xz.b64 | $(TAR) xvJ
-
 # load the bitstream on the Zynq board (copy the .b64 file into this dir first)
 # make sure to unpack it first
-load_bitstream:
+load_bitstream: reset_pl
 	echo 'import pprint; from pynq import Overlay; overlay=Overlay("$(BASENAME)_bd_1.bit"); print (overlay.__doc__); pprint.pprint(overlay.ip_dict,width=1); pprint.pprint(overlay.clock_dict,width=1);' | sudo -E $(PYTHON3)
-
-# load the bitstream and then don't do anything
-load_and_sleep: load_bitstream
-	@echo 'allocating memory and sleeping...'
-	sudo ./$(EXE) &
 
 # use this instead if you have already loaded the bitstream this will load the bitstream, but transfer
 # over the physical memory pointer that was written into the accelerator before

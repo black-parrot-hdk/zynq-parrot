@@ -1,3 +1,4 @@
+
 include ../Makefile.design
 
 #############################
@@ -9,10 +10,11 @@ BP_FLIST   ?= $(abspath flist.blackparrot.vcs)
 FLIST      ?= $(abspath flist.vcs)
 
 $(BP_FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs
-	cp $^ $@
+	cat $^ | envsubst > $@
 	sed -i "s/BASEJUMP_STL_DIR/BP_BASEJUMP_STL_DIR/g" $@
 	sed -i "/bp_common_pkg.sv/d" $@
 	sed -i "1i $(CURR_VSRC_DIR)/bp_common_pkg.sv" $@
+	echo "+incdir+$(COSIM_DIR)/include/vivado" >> $@
 
 $(MC_FLIST): $(BSG_MANYCORE_DIR)/machines/arch_filelist.mk
 	cp $^ $@
@@ -25,7 +27,11 @@ $(MC_FLIST): $(BSG_MANYCORE_DIR)/machines/arch_filelist.mk
 $(FLIST): $(BP_FLIST) $(MC_FLIST) $(BASE_FLIST)
 	cat $^ | envsubst > $@
 	echo "+incdir+$(CURR_VSRC_DIR)" >> $@
-	echo "+incdir+$(COSIM_DIR)/include/vivado" >> $@
+	# Remove duplicates, TODO: detect automatically
+	sed -i "/imports\/basejump_stl.*bsg_cache_pkg.sv/d" $@
+	sed -i "/imports\/basejump_stl.*bsg_noc_pkg.sv/d" $@
+	sed -i "/imports\/basejump_stl.*bsg_wormhole_router_pkg.sv/d" $@
+	sed -i "/imports\/HardFloat.*divSqrtRecFN.v/d" $@
 	# Harden synchronizers and clock muxes
 	sed -i "s#.*bsg_launch_sync_sync.sv#$(BASEJUMP_STL_DIR)/hard/ultrascale_plus/bsg_async/bsg_launch_sync_sync.sv#g" $@
 	sed -i "s#.*bsg_mux.sv#$(BASEJUMP_STL_DIR)/hard/ultrascale_plus/bsg_misc/bsg_mux.sv#g" $@

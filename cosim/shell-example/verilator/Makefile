@@ -6,8 +6,7 @@ include ../Makefile.design
 CFLAGS += -DZYNQ_PL_DEBUG
 CFLAGS += -DZYNQ_PS_DEBUG
 
-DEFINES += GP0_ENABLE
-DEFINES += GP0_ADDR_BASE=0x43C00000 GP0_ADDR_WIDTH=6 GP0_DATA_WIDTH=32
+DEFINES += GP0_ADDR_BASE=0x43C00000
 DEFINES += GP0_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil0
 
 # Enable backpressure, emulating context switches

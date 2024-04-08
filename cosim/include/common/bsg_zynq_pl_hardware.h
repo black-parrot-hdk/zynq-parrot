@@ -66,17 +66,16 @@ protected:
         return (int8_t *)axil_get_ptr(address);
     }
 
-public:
     void init(void) {
         // open memory device
         int fd = open("/dev/mem", O_RDWR | O_SYNC);
         assert(fd != 0);
 #ifdef GP0_ENABLE
         // map in first PLAXI region of physical addresses to virtual addresses
-        volatile uintptr_t ptr0 = (uintptr_t)mmap(
+        uintptr_t ptr0 = (uintptr_t)mmap(
             (void *)gp0_addr_base, gp0_addr_size_bytes, PROT_READ | PROT_WRITE,
             MAP_SHARED, fd, gp0_addr_base);
-        assert(ptr0 == (uintptr_t)gp0_addr_base);
+        assert((uintptr_t)ptr0 == (uintptr_t)gp0_addr_base);
 
         printf("// bsg_zynq_pl: mmap returned %" PRIxPTR " (offset %" PRIxPTR
                ") errno=%x\n",
@@ -85,10 +84,10 @@ public:
 
 #ifdef GP1_ENABLE
         // map in second PLAXI region of physical addresses to virtual addresses
-        volatile uintptr_t ptr1 = (uintptr_t)mmap(
+        uintptr_t ptr1 = (uintptr_t)mmap(
             (void *)gp1_addr_base, gp1_addr_size_bytes, PROT_READ | PROT_WRITE,
             MAP_SHARED, fd, gp1_addr_base);
-        assert(ptr1 == (uintptr_t)gp1_addr_base);
+        assert((uintptr_t)ptr1 == (uintptr_t)gp1_addr_base);
 
         printf("// bsg_zynq_pl: mmap returned %" PRIxPTR " (offset %" PRIxPTR
                ") errno=%x\n",
@@ -142,7 +141,6 @@ public:
         // bus
         volatile int32_t *ptr32 = axil_get_ptr32(address);
         int32_t data = *ptr32;
-
         bsg_pr_dbg_pl("  bsg_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n",
                         address, data);
 
@@ -177,18 +175,22 @@ public:
     //     typedef struct packed
     //     {
     //       logic [31:0] data;
-    //       logic [6:0]  addr8to2;
+    //       logic [5:0]  addr7to2;
     //       logic        wr_not_rd;
+    //       logic        port;
     //     } bsg_uart_pkt_s;
 
     void uart_write(uintptr_t addr, int32_t data, uint8_t wmask) {
         int count;
+
         uint64_t uart_pkt = 0;
         uintptr_t word = addr >> 2;
+        int rdwr = 1;
 
         uart_pkt |= (data & 0xffffffff) << 8;
-        uart_pkt |= (word & 0x0000007f) << 1;
-        uart_pkt |= (1 & 0x00000001) << 0;
+        uart_pkt |= (word & 0x0000003f) << 2;
+        uart_pkt |= (rdwr & 0x00000001) << 1;
+        uart_pkt |= (port & 0x00000001) << 0;
 
         count = write(serial_port, &uart_pkt, 5);
         bsg_pr_dbg_ps("uart tx write: %x bytes\n", count);
@@ -199,9 +201,15 @@ public:
         uint64_t uart_pkt = 0;
         uintptr_t word = addr >> 2;
 
-        uart_pkt |= (0 & 0xffffffff) << 8;
-        uart_pkt |= (word & 0x0000007f) << 1;
-        uart_pkt |= (0 & 0x00000001) << 0;
+        uint64_t uart_pkt = 0;
+        uintptr_t word = addr >> 2;
+        int32_t data = 0;
+        int rdwr = 0;
+
+        uart_pkt |= (data & 0xffffffff) << 8;
+        uart_pkt |= (word & 0x0000003f) << 2;
+        uart_pkt |= (rdwr & 0x00000001) << 1;
+        uart_pkt |= (port & 0x00000001) << 0;
 
         count = write(serial_port, &uart_pkt, 5);
         bsg_pr_dbg_ps("uart rx write: %x bytes\n", count);

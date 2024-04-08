@@ -49,9 +49,45 @@ package bp_common_pkg;
                         ,bp_default_cfg_p
                         );
 
+  localparam bp_proc_param_s bp_unicore_miniblade_cfg_override_p =
+    '{l2_features               : 0
+
+      ,branch_metadata_fwd_width: 31
+      ,ras_idx_width            : 1
+      ,btb_tag_width            : 6
+      ,btb_idx_width            : 4
+      ,bht_idx_width            : 5
+      ,bht_row_els              : 2
+      ,ghist_width              : 2
+
+      ,icache_sets              : 128
+      ,icache_assoc             : 1
+      ,icache_block_width       : 64
+      ,icache_fill_width        : 64
+
+      ,dcache_sets              : 128
+      ,dcache_assoc             : 1
+      ,dcache_block_width       : 64
+      ,dcache_fill_width        : 64
+
+      ,bedrock_fill_width       : 64
+      ,bedrock_block_width      : 64
+
+      ,integer_support          : (1 << e_basic)
+      ,muldiv_support           : (1 << e_idiv) | (1 << e_imul)
+      ,fpu_support              : (1 << e_fma) | (1 << e_fdivsqrt)
+
+      ,default : "inv"
+      };
+  `bp_aviary_derive_cfg(bp_unicore_miniblade_cfg_p
+                        ,bp_unicore_miniblade_cfg_override_p
+                        ,bp_unicore_hammerblade_cfg_p
+                        );
+
   parameter bp_proc_param_s [max_cfgs-1:0] all_cfgs_gp =
   {
-    bp_unicore_hammerblade_cfg_p
+    bp_unicore_miniblade_cfg_p
+    ,bp_unicore_hammerblade_cfg_p
 
     // A custom BP configuration generated from Makefile
     ,bp_custom_cfg_p
@@ -62,7 +98,8 @@ package bp_common_pkg;
   // This enum MUST be kept up to date with the parameter array above
   typedef enum bit [lg_max_cfgs-1:0]
   {
-    e_bp_unicore_hammerblade_cfg                    = 2
+    e_bp_unicore_miniblade_cfg                      = 3
+    ,e_bp_unicore_hammerblade_cfg                   = 2
 
     // A custom BP configuration generated from `defines
     ,e_bp_custom_cfg                                = 1

@@ -12,6 +12,8 @@
 
 #include <sys/time.h>
 
+#define DRAM_ALLOC_SIZE_BYTES 16384
+
 int ps_main(int argc, char **argv) {
   bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
@@ -105,6 +107,19 @@ int ps_main(int argc, char **argv) {
   assert((zpl->shell_read(0x18 + GP0_ADDR_BASE) == (0)));
   assert((zpl->shell_read(0x1C + GP0_ADDR_BASE) == (0)));
 
+  // DRAM test
+  unsigned long phys_ptr;
+  volatile int *buf;
+
+  buf = (volatile int *)zpl->allocate_dram(DRAM_ALLOC_SIZE_BYTES, &phys_ptr);
+
+  // write all of the dram
+  for (int i = 0; i < DRAM_ALLOC_SIZE_BYTES / 4; i++)
+    buf[i] = i;
+
+  // read all of the dram
+  for (int i = 0; i < DRAM_ALLOC_SIZE_BYTES / 4; i++)
+    assert(buf[i] == i);
 
   printf("## everything passed; at end of test\n");
   zpl->done();

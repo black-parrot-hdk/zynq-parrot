@@ -3,13 +3,16 @@ include ../Makefile.design
 #############################
 # Accelerator Software Settings
 #############################
-CFLAGS += -DZYNQ_PL_DEBUG
+#CFLAGS += -DZYNQ_PL_DEBUG
 CFLAGS += -DZYNQ_PS_DEBUG
 
+DEFINES += GP0_ADDR_BASE=0x43C00000
+DEFINES += GP0_HIER_BASE=bsg_nonsynth_zynq_testbench.axil0
 DEFINES += HP1_ENABLE
 DEFINES += HP1_ADDR_BASE=0 HP1_ADDR_WIDTH=28
 DEFINES += HP1_DATA_WIDTH=32
 DEFINES += HP1_HIER_BASE=bsg_nonsynth_zynq_testbench.axil4
+DEFINES += AXI_ENABLE
 DEFINES += UART_ENABLE
 
 #############################
@@ -25,6 +28,7 @@ $(FLIST): $(BASE_FLIST)
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.sv" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_reset_gen.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_axil_to_dpi.sv" >> $@
+	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axil.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv" >> $@
 
 include $(TOP)/cosim/mk/Makefile.vcs

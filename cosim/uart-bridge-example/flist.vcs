@@ -27,8 +27,8 @@ $BASEJUMP_STL_DIR/bsg_misc/bsg_mux_one_hot.sv
 
 $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_fifo_master.sv
 $BLACKPARROT_SUB_DIR/axi/v/bsg_axil_fifo_client.sv
+$BLACKPARROT_SUB_DIR/zynq/v/bsg_axil_uart_bridge.sv
 
-$COSIM_VSRC_DIR/bsg_zynq_uart_bridge.sv
 $COSIM_VSRC_DIR/bsg_zynq_pl_shell.sv
 $CURR_VSRC_DIR/top_zynq.sv
 $CURR_VSRC_DIR/top.v

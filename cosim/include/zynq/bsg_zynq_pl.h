@@ -66,17 +66,17 @@ class bsg_zynq_pl : public bsg_zynq_pl_hardware {
             /* Does nothing on PS */
         }
 
+        void start(void) override {
+            printf("bsg_zynq_pl: start() called\n");
+        }
+
+        void stop(void) override {
+            printf("bsg_zynq_pl: stop() called\n");
+        }
+
         void done(void) override {
             printf("bsg_zynq_pl: done() called, exiting\n");
         }
-
-	void start(void) override {
-
-	}
-
-	void stop(void) override {
-
-	}
 
         // returns virtual pointer, writes physical parameter into arguments
         void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) override {

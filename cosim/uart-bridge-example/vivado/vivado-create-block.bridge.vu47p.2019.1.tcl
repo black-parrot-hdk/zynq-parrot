@@ -2,9 +2,15 @@
 set project_name $::env(BASENAME)_bd_proj
 set project_part $::env(PART)
 set project_bd   $::env(BASENAME)_bd_1
-set xdc_dir      $::env(COSIM_XDC_DIR)
 set boardname    $::env(BOARDNAME)
-set uart_baud    $::env(UART_BAUD)
+set xdc_dir      $::env(COSIM_XDC_DIR)
+set xdc_file     ${xdc_dir}/board.${boardname}.xdc
+
+set do_synth $::env(SYNTH)
+set do_impl  $::env(IMPL)
+set threads  $::env(THREADS)
+
+set uart_baud $::env(UART_BAUD)
 
 create_project -force ${project_name} [pwd] -part ${project_part}
 create_bd_design "${project_bd}"
@@ -84,14 +90,6 @@ set_property -name "file_type" -value "XDC" -objects ${file_obj}
 #### Change to 0 to have it stop before synthesis / implementation
 #### so you can inspect the design with the GUI
 
-if {1} {
-  launch_runs synth_1 -jobs 16
-  wait_on_run synth_1
-  open_run synth_1 -name synth_1
-}
-
-if {1} {
-  launch_runs impl_1 -to_step write_bitstream -jobs 16
-  wait_on_run impl_1
-}
+vivado_synth_wrap ${do_synth} ${threads}
+vivado_impl_wrap ${do_impl} ${threads}
 
