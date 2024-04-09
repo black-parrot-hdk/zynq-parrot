@@ -97,20 +97,24 @@ inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr) {
 }
 
 #ifdef COV_EN
+int idx = 0;
+
 void cov_poll(bsg_zynq_pl *zpl) {
-  uint32_t cov;
-  int idx = zpl->shell_read(GP0_RD_COV_IDX);
-  while(idx != 0) {
-    int cnt = zpl->shell_read(GP0_RD_PL2PS_FIFO_0_CTRS + (0x4 * idx));
-    while(cnt != 0) {
-      for(int i = 0; i < cnt; i++) {
-        //TODO: use NEON
-        cov = zpl->shell_read(GP0_RD_PL2PS_FIFO_0_DATA + (0x4 * idx));
-        covs[idx - 1].insert(cov);
+  int cnt;
+  uint32_t cov, data;
+
+  cnt = zpl->shell_read(GP0_RD_PL2PS_FIFO_1_CTRS);
+  while(cnt != 0) {
+    for(int i = 0; i < cnt; i++) {
+      data = zpl->shell_read(GP0_RD_PL2PS_FIFO_1_DATA);
+      if((data >> 31) & 0x1)
+        idx = (data & 0x7FFFFFFF);
+      else {
+        cov = (data & 0x7FFFFFFF);
+        covs[idx].insert(cov);
       }
-      cnt = zpl->shell_read(GP0_RD_PL2PS_FIFO_0_CTRS + (0x4 * idx));
     }
-    idx = zpl->shell_read(GP0_RD_COV_IDX);
+    cnt = zpl->shell_read(GP0_RD_PL2PS_FIFO_1_CTRS);
   }
 }
 
@@ -123,7 +127,9 @@ void cov_done(bsg_zynq_pl *zpl) {
   // deassert coverage collection and drain leftover samples
   bsg_pr_info("ps.cpp: Desserting coverage collection enable\n");
   zpl->shell_write(GP0_WR_CSR_COV_EN, 0x0, 0xf);
-  cov_poll(zpl);
+  do {
+    cov_poll(zpl);
+  } while(zpl->shell_read(GP0_RD_PL2PS_FIFO_1_CTRS) != 0);
 
   // report covergroup utilization
   for(int i = 0; i < COV_NUM; i++) {

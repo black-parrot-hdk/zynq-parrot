@@ -183,10 +183,10 @@ module top_zynq
  
 `ifdef COV_EN
    localparam num_regs_ps_to_pl_lp  = 8;
-   localparam num_regs_pl_to_ps_lp  = 12;
+   localparam num_regs_pl_to_ps_lp  = 11;
 
    localparam num_fifo_ps_to_pl_lp = 1;
-   localparam num_fifo_pl_to_ps_lp = 1 + num_cov_p;
+   localparam num_fifo_pl_to_ps_lp = 2;
 `else
    localparam num_regs_ps_to_pl_lp  = 7;
    localparam num_regs_pl_to_ps_lp  = 11;
@@ -221,7 +221,6 @@ module top_zynq
    // 5-6: cycle
    // 7-8: mcycle
    // 9-10: minstret
-   // 11: covergroup FIFO index
    //
    logic [num_regs_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_li;
 
@@ -229,7 +228,7 @@ module top_zynq
    // pl_to_ps_fifo:
    //
    // 0: BP host IO access request
-   // 1-end: covergroups
+   // 1: covergroup samples
    //
    logic [num_fifo_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] pl_to_ps_fifo_data_li;
    logic [num_fifo_pl_to_ps_lp-1:0]                           pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
@@ -379,11 +378,6 @@ module top_zynq
    assign csr_data_li[5+:2] = cycle_lo;
    assign csr_data_li[7+:2] = mcycle_lo;
    assign csr_data_li[9+:2] = minstret_lo;
-`ifdef COV_EN
-   logic cov_idx_v_lo;
-   logic [`BSG_SAFE_CLOG2(num_cov_p)-1:0] cov_idx_lo;
-   assign csr_data_li[11] = cov_idx_v_lo ? (cov_idx_lo + 1'b1) : '0;
-`endif
 
    bsg_bootrom
     #(.width_p(bootrom_data_lp), .addr_width_p(bootrom_addr_lp))
@@ -903,6 +897,7 @@ module top_zynq
 
 `ifdef COV_EN
    // Coverage
+   // reset generation
    logic bp_reset_li, ds_reset_li;
    bsg_sync_sync
     #(.width_p(1))
@@ -920,16 +915,18 @@ module top_zynq
      ,.oclk_data_o(ds_reset_li)
      );
 
-   logic cov_v_lo;
-   logic [num_cov_p-1:0][32-1:0] cov_lo;
+   // coverage valid when enabled
+   logic cov_v_li;
+   logic [num_cov_p-1:0][32-1:0] cov_li;
    bsg_sync_sync
     #(.width_p(1))
     cov_en_bp_bss
      (.oclk_i(bp_clk)
      ,.iclk_data_i(cov_en_li)
-     ,.oclk_data_o(cov_v_lo)
+     ,.oclk_data_o(cov_v_li)
      );
 
+   // drain remaining coverage data after stopping coverage collection
    logic cov_drain_li, cov_en_ds_sync_li;
    bsg_sync_sync
     #(.width_p(1))
@@ -948,17 +945,23 @@ module top_zynq
       ,.detect_o(cov_drain_li)
       );
 
+   // pick first covergroup to drain
+   logic [`BSG_SAFE_CLOG2(num_cov_p)-1:0] cov_idx_enc_lo;
    bsg_priority_encode
     #(.width_p(num_cov_p)
      ,.lo_to_hi_p(1)
      )
     enc
      (.i(cov_gate_lo)
-     ,.addr_o(cov_idx_lo)
-     ,.v_o(cov_idx_v_lo)
+     ,.addr_o(cov_idx_enc_lo)
+     ,.v_o()
      );
 
+   // covergroup instances
+   logic [num_cov_p-1:0] cov_v_lo, cov_ready_li, cov_idx_v_lo;
+   logic [num_cov_p-1:0][32-1:0] cov_data_lo;
    for(genvar i = 0; i < num_cov_p; i++) begin: rof
+     // random covergroup input for testing
      bsg_nonsynth_random_gen
       #(.width_p(32)
        ,.seed_p(100 + i)
@@ -967,11 +970,12 @@ module top_zynq
        (.clk_i(bp_clk)
        ,.reset_i(bp_reset_li)
        ,.yumi_i(1'b1)
-       ,.data_o(cov_lo[i])
+       ,.data_o(cov_li[i])
        );
 
      bsg_cover
-      #(.width_p(32)
+      #(.idx_p(i)
+       ,.width_p(32)
        ,.els_p(16)
        ,.lg_afifo_size_p(3)
        )
@@ -985,18 +989,51 @@ module top_zynq
        ,.axi_clk_i(aclk)
        ,.axi_reset_i(bp_async_reset_li)
 
-       ,.v_i(cov_v_lo)
-       ,.data_i(cov_lo[i])
+       ,.v_i(cov_v_li)
+       ,.data_i(cov_li[i])
        ,.ready_o()
 
        ,.drain_i(cov_drain_li)
        ,.gate_o(cov_gate_lo[i])
 
-       ,.v_o(pl_to_ps_fifo_v_li[1+i])
-       ,.data_o(pl_to_ps_fifo_data_li[1+i])
-       ,.yumi_i(pl_to_ps_fifo_ready_lo[1+i] & pl_to_ps_fifo_v_li[1+i])
+       ,.ready_i(cov_ready_li[i])
+       ,.v_o(cov_v_lo[i])
+       ,.idx_v_o(cov_idx_v_lo[i])
+       ,.data_o(cov_data_lo[i])
        );
    end
+
+   logic cov_afifo_enq_li, cov_afifo_full_lo;
+   logic [32-1:0] cov_afifo_data_li;
+   assign cov_afifo_enq_li = ~cov_afifo_full_lo & cov_v_lo[cov_idx_enc_lo];
+   assign cov_afifo_data_li = {cov_idx_v_lo[cov_idx_enc_lo], cov_data_lo[cov_idx_enc_lo][0+:31]};
+   bsg_decode_with_v
+    #(.num_out_p(num_cov_p))
+    cov_demux
+     (.i(cov_idx_enc_lo)
+     ,.v_i(~cov_afifo_full_lo)
+     ,.o(cov_ready_li)
+     );
+
+   bsg_async_fifo
+    #(.lg_size_p(3)
+     ,.width_p(32)
+     )
+    cov_afifo
+     (.w_clk_i(ds_clk)
+     ,.w_reset_i(ds_reset_li)
+
+     ,.w_enq_i(cov_afifo_enq_li)
+     ,.w_data_i(cov_afifo_data_li)
+     ,.w_full_o(cov_afifo_full_lo)
+
+     ,.r_clk_i(aclk)
+     ,.r_reset_i(bp_async_reset_li)
+
+     ,.r_valid_o(pl_to_ps_fifo_v_li[1])
+     ,.r_data_o(pl_to_ps_fifo_data_li[1])
+     ,.r_deq_i(pl_to_ps_fifo_ready_lo[1] & pl_to_ps_fifo_v_li[1])
+     );
 `endif
 
    // synopsys translate_off

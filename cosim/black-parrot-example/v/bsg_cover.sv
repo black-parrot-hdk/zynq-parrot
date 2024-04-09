@@ -2,7 +2,8 @@
 `include "bsg_defines.sv"
 
 module bsg_cover
- #(parameter `BSG_INV_PARAM(width_p)
+ #(parameter `BSG_INV_PARAM(idx_p)
+  ,parameter `BSG_INV_PARAM(width_p)
   ,parameter `BSG_INV_PARAM(els_p)
   ,parameter `BSG_INV_PARAM(lg_afifo_size_p)
 
@@ -26,14 +27,14 @@ module bsg_cover
   ,input drain_i
   ,output logic gate_o
 
-  // AXI domain
+  ,input ready_i
   ,output logic v_o
+  ,output logic idx_v_o
   ,output logic [width_p-1:0] data_o
-  ,input yumi_i
   );
 
   // signal definition
-  enum logic [0:0] {FILL, DRAIN} state_r, state_n;
+  enum logic [1:0] {FILL, IDX, DRAIN} state_r, state_n;
 
   logic in_full_lo, v_lo, deq_li;
   logic [width_p-1:0] data_lo;
@@ -48,11 +49,8 @@ module bsg_cover
   logic [els_p-1:0] cam_encoh_li, cam_idx_oh_lo;
   logic [lg_els_lp-1:0] cam_idx_enc_lo;
 
-  logic out_full_lo, enq_li;
-  logic [width_p-1:0] data_li;
-
   // cross into ungated and downsampled domain
-  // TODO: maybe use bsg_sync_sync instead?
+  // TODO: maybe replace with dff output & gate_i
   assign ready_o = ~in_full_lo;
   assign deq_li = v_lo & (state_r == FILL);
   bsg_async_fifo
@@ -82,27 +80,34 @@ module bsg_cover
   assign cam_r_v_li = deq_li;
   assign cam_r_tag_li = data_lo;
 
-  assign cam_w_v_li = (state_r == DRAIN)
-                      ? ({els_p{enq_li}} & cam_idx_oh_lo)
-                      : ({els_p{deq_li & ~(|cam_r_match_lo)}} & cam_idx_oh_lo);
+  assign cam_w_v_li = (state_r == FILL)
+                      ? ({els_p{deq_li & ~(|cam_r_match_lo)}} & cam_idx_oh_lo)
+                      : (state_r == DRAIN)
+                        ? ({els_p{v_o & ready_i}} & cam_idx_oh_lo)
+                        : '0;
   assign cam_set_not_clear_li = (state_r == DRAIN) ? 1'b0 : 1'b1;
   assign cam_w_tag_li = data_lo;
 
   assign cam_snoop_addr_li = cam_idx_enc_lo;
 
+  // output module index first and then start outputting coverage data
+  assign v_o     = (state_r == IDX) | ((state_r == DRAIN) & cam_idx_v_lo);
+  assign idx_v_o = (state_r == IDX);
+  assign data_o  = (state_r == IDX) ? (width_p)'(idx_p) : cam_snoop_tag_lo;
+
   // count the unique coverage data written/drained into/from the CAM
   // gate the core clock when:
   //// - CAM fills up
   //// - module is ordered to drain its data
-  assign gate_o = (state_r == DRAIN);
+  assign gate_o = (state_r != FILL);
 
   always_comb begin
-    if(state_r == FILL) begin
-      state_n = (drain_i | cam_w_v_li[els_p-1]) ? DRAIN : FILL;
-    end
-    else begin
-      state_n = cam_idx_v_lo ? DRAIN : FILL;
-    end
+    case(state_r)
+      FILL  : state_n = (drain_i | cam_w_v_li[els_p-1]) ? IDX : FILL;
+      IDX   : state_n = (v_o & ready_i) ? DRAIN : IDX;
+      DRAIN : state_n = ((v_o & ready_i & cam_w_v_li[els_p-1]) | ~cam_idx_v_lo) ? FILL : DRAIN;
+      default: state_n = FILL;
+    endcase
   end
 
   always_ff @(posedge ds_clk_i) begin
@@ -133,7 +138,7 @@ module bsg_cover
     ,.snoop_tag_o(cam_snoop_tag_lo)
     );
 
-  assign cam_encoh_li = (state_r == DRAIN) ? ~cam_w_empty_lo : cam_w_empty_lo;
+  assign cam_encoh_li = (state_r == FILL) ? cam_w_empty_lo : ~cam_w_empty_lo;
   bsg_priority_encode_one_hot_out
    #(.width_p(els_p)
     ,.lo_to_hi_p(1)
@@ -150,30 +155,6 @@ module bsg_cover
     (.i(cam_idx_oh_lo)
     ,.addr_o(cam_idx_enc_lo)
     ,.v_o()
-    );
-
-  // cross into AXI domain
-  // TODO: maybe use bsg_sync_sync instead?
-  assign enq_li = ~out_full_lo & cam_idx_v_lo & (state_r == DRAIN);
-  assign data_li = cam_snoop_tag_lo;
-  bsg_async_fifo
-   #(.lg_size_p(lg_afifo_size_p)
-    ,.width_p(width_p)
-    )
-   out_afifo
-    (.w_clk_i(ds_clk_i)
-    ,.w_reset_i(ds_reset_i)
-
-    ,.w_enq_i(enq_li)
-    ,.w_data_i(data_li)
-    ,.w_full_o(out_full_lo)
-
-    ,.r_clk_i(axi_clk_i)
-    ,.r_reset_i(axi_reset_i)
-
-    ,.r_valid_o(v_o)
-    ,.r_data_o(data_o)
-    ,.r_deq_i(yumi_i)
     );
 
 endmodule

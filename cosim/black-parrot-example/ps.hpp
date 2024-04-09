@@ -12,8 +12,10 @@
 #ifdef COV_EN
 #define GP0_RD_CSR_COV_EN         (GP0_RD_CSR_DRAM_LATENCY   + 0x4)
 #define GP0_RD_PL2PS_FIFO_0_DATA  (GP0_RD_CSR_COV_EN         + 0x4)
-#define GP0_RD_PL2PS_FIFO_0_CTRS  (GP0_RD_PL2PS_FIFO_0_DATA  + 0x4 + (0x4 * COV_NUM))
-#define GP0_RD_PS2PL_FIFO_CTRS    (GP0_RD_PL2PS_FIFO_0_CTRS  + 0x4 + (0x4 * COV_NUM))
+#define GP0_RD_PL2PS_FIFO_1_DATA  (GP0_RD_PL2PS_FIFO_0_DATA  + 0x4)
+#define GP0_RD_PL2PS_FIFO_0_CTRS  (GP0_RD_PL2PS_FIFO_1_DATA  + 0x4)
+#define GP0_RD_PL2PS_FIFO_1_CTRS  (GP0_RD_PL2PS_FIFO_0_CTRS  + 0x4)
+#define GP0_RD_PS2PL_FIFO_CTRS    (GP0_RD_PL2PS_FIFO_1_CTRS  + 0x4)
 #else
 #define GP0_RD_PL2PS_FIFO_0_DATA  (GP0_RD_CSR_DRAM_LATENCY   + 0x4)
 #define GP0_RD_PL2PS_FIFO_0_CTRS  (GP0_RD_PL2PS_FIFO_0_DATA  + 0x4)
@@ -28,9 +30,6 @@
 #define GP0_RD_CYCLE              (GP0_RD_BOOTROM_DATA       + 0x4)
 #define GP0_RD_MCYCLE             (GP0_RD_CYCLE              + 0x8)
 #define GP0_RD_MINSTRET           (GP0_RD_MCYCLE             + 0x8)
-#ifdef COV_EN
-#define GP0_RD_COV_IDX            (GP0_RD_MINSTRET           + 0x8)
-#endif
 #define GP0_RD_COUNTERS           (GP0_RD_CYCLE)
 
 // GP0 Write Memory Map
