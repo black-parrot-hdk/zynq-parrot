@@ -1,0 +1,115 @@
+#############################
+# instrumentation infrastructure
+#############################
+# if you change this, then file IO in ps.cpp needs to change as well
+INSTRUMENTATION_DIR = $(CURR)/../instrumentation
+SURELOG_RUN_DIR     = $(abspath ../surelog.run)
+WALKER              = walker
+SURELOG_TOP_MODULE  = bp_unicore
+TOGGLE_ONLY        ?= 1
+S_FLIST            ?= $(SURELOG_RUN_DIR)/flist
+
+$(S_FLIST): $(FLIST)
+	mkdir -p $(SURELOG_RUN_DIR)
+	grep -v -e "^\#" $(FLIST) >> $@
+	echo +incdir+$(COSIM_DIR)/include/verilator >> $@
+	sed -i '/top_zynq/d' $@
+
+# updates Surelog CMakeLists.txt
+define updateTarget
+	@echo Updating Surelog CMakeLists.txt with our walker target
+	sed -i '/target_link_libraries(roundtrip/a target_link_libraries($(WALKER) surelog)' $(1)
+	sed -i '/add_executable(roundtrip/a add_executable($(WALKER) $${PROJECT_SOURCE_DIR}/src/$(WALKER).cpp)' $(1)
+	sed -i '/set_target_properties(roundtrip/a \ \ set_target_properties($(WALKER) PROPERTIES ARCHIVE_OUTPUT_DIRECTORY $${CMAKE_CURRENT_BINARY_DIR}/bin)' $(1)
+endef
+
+# builds Surelog with our walker
+# APIs change between different versions of Surelog, hence the commit particulars
+define build_surelog
+	echo Building Surelog
+	cd $(BLACKPARROT_TOOLS_DIR); \
+		cd Surelog; \
+    git checkout e181f1241be19270f9b95d3a8ad1d986af7104d7; \
+		git submodule update --init --recursive
+	cp $(INSTRUMENTATION_DIR)/walker.cpp $(BLACKPARROT_TOOLS_DIR)/Surelog/src/
+	$(if $(shell grep walker $(BLACKPARROT_TOOLS_DIR)/Surelog/CMakeLists.txt), @echo CMakeLists.txt already updated, $(call updateTarget, $(BLACKPARROT_TOOLS_DIR)/Surelog/CMakeLists.txt))
+	make -C $(BLACKPARROT_TOOLS_DIR)/Surelog/
+endef
+
+build_surelog: $(INSTRUMENTATION_DIR)/walker.cpp
+	$(call build_surelog)
+
+SURELOG_OPTS += -sverilog
+SURELOG_OPTS += -fileunit
+SURELOG_OPTS += -parse
+SURELOG_OPTS += -timescale=1ps/1ps 
+SURELOG_OPTS += -elabuhdm 
+SURELOG_OPTS += -d coveruhdm 
+SURELOG_OPTS += -verbose 
+SURELOG_OPTS += -nocache 
+SURELOG_OPTS += -mt 12 
+SURELOG_OPTS += -mp 12 
+SURELOG_OPTS += -nobuiltin
+SURELOG_OPTS += --top-module $(SURELOG_TOP_MODULE)
+SURELOG_OPTS += -f $(S_FLIST)
+SURELOG_OPTS += -o $(SURELOG_RUN_DIR)
+SURELOG      ?= $(BLACKPARROT_TOOLS_DIR)/Surelog/build/bin/$(WALKER)
+
+analyze_rtl: build_surelog $(S_FLIST)
+	$(SURELOG) $(SURELOG_OPTS) > $(SURELOG_RUN_DIR)/surelog_run.log
+
+# these need to be debugged as the wires tapped into paths containing these fail synthesis and hang verilator (?)
+UNIMPLEMENTED = \
+  UNKNOWN_NODE \
+  genblk \
+  ptr_wrap \
+  data_mem_fast_write \
+  data_mem_fast_read \
+  e_cache_data_mem_uncached \
+  edge_latch \
+  inside \
+  realigner \
+  initial_data_reg
+
+# filters signals from signals file
+%.fsigs: %.sigs
+	cat $< | wc -l
+	sed 's/work@bp_unicore/blackparrot.processor.u.unicore/g' $< > $@
+	sed -i '/work@/d' $@
+	# unimplemented visitor pattern
+	for i in $(UNIMPLEMENTED); do \
+    sed -i "/$${i}/d" $@; \
+  done
+	cat $@ | wc -l
+	sed -i '/^[^a-zA-Z]\+$$/d' $@
+	sed -i '/reset/Id' $@
+	sort -u -o $@ $@
+
+CONTROL_SIGS:=$(subst sigs,fsigs,$(shell ls $(SURELOG_RUN_DIR)/*.sigs))
+collect_sigs: $(CONTROL_SIGS)
+	cat $(CONTROL_SIGS) | sort -u > all.fsigs
+
+INSTRUMENTATION_OPTS +=  -s all.fsigs
+INSTRUMENTATION_OPTS +=  -o $(INSTRUMENTATION_DIR)/macro
+INSTRUMENTATION_OPTS +=  -n $(shell cat all.fsigs | wc -l)
+ifeq ($(TOGGLE_ONLY),1)
+INSTRUMENTATION_OPTS +=  -g 32
+else
+INSTRUMENTATION_OPTS +=  -g 10
+endif
+INSTRUMENTATION_OPTS +=  -t $(TOGGLE_ONLY)
+
+instrument: collect_sigs
+	$(PYTHON) $(INSTRUMENTATION_DIR)/instrument.py $(INSTRUMENTATION_OPTS)
+	sed -e '/COVERAGE_MACRO/{r $(INSTRUMENTATION_DIR)/macro' -e 'd}' ../v/top_zynq.sv > $(INSTRUMENTATION_DIR)/instrumented_top_zynq.sv
+
+interpret_coverage:
+	ls $(INSTRUMENTATION_DIR)/runs/*.cov > logs/coverage_flist
+	$(PYTHON) $(INSTRUMENTATION_DIR)/parser.py -f logs/coverage_flist -g $(shell cat all.fsigs | wc -l) -p $(shell ls logs/*.cov | wc -l)
+
+clean.build_surelog:
+	cd $(BLACKPARROT_TOOLS_DIR)/Surelog && git checkout CMakeLists.txt
+	rm -rf $(SURELOG_RUN_DIR)
+
+clean.instrument:
+	rm -rf $(SURELOG_RUN_DIR)/* *fsigs $(INSTRUMENTATION_DIR)/{macro,instrumented_top_zynq.sv}
