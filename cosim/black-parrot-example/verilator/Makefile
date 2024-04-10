@@ -1,4 +1,5 @@
 include ../Makefile.design
+include ../Makefile.cov
 
 #############################
 # Accelerator Software Settings
