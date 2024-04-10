@@ -937,6 +937,7 @@ module top_zynq
    logic [num_cov_p-1:0][cov_els_width_lp-1:0] cov_els_lo;
    logic [num_cov_p-1:0][cov_len_width_lp-1:0] cov_len_lo;
 
+`ifdef RAND_COV
    for(genvar i = 0; i < num_cov_p; i++) begin: rof
      // random covergroup input for testing
      bsg_lfsr
@@ -986,6 +987,9 @@ module top_zynq
        ,.data_o(cov_data_lo[i])
        );
    end
+`else
+   // COVERAGE_MACRO
+`endif
 
    // coverage stream construction
    typedef struct packed {
