@@ -961,6 +961,7 @@ module top_zynq
    // covergroup instances
    logic [num_cov_p-1:0] cov_v_lo, cov_ready_li, cov_idx_v_lo;
    logic [num_cov_p-1:0][32-1:0] cov_data_lo;
+`ifdef RAND_COV
    for(genvar i = 0; i < num_cov_p; i++) begin: rof
      // random covergroup input for testing
 /*
@@ -1013,6 +1014,9 @@ module top_zynq
        ,.data_o(cov_data_lo[i])
        );
    end
+`else
+   // COVERAGE_MACRO
+`endif
 
    logic cov_afifo_enq_li, cov_afifo_full_lo;
    logic [32-1:0] cov_afifo_data_li;

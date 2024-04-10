@@ -69,7 +69,15 @@ UNIMPLEMENTED = \
   edge_latch \
   inside \
   realigner \
-  initial_data_reg
+  initial_data_reg \
+  NEG_ \
+  data_size_op \
+  CALC \
+  nz.i \
+  mem_reg \
+  dirty \
+  l2s \
+  immu.tlb \
 
 # filters signals from signals file
 %.fsigs: %.sigs
@@ -82,6 +90,7 @@ UNIMPLEMENTED = \
   done
 	cat $@ | wc -l
 	sed -i '/^[^a-zA-Z]\+$$/d' $@
+	sed -i "/[0-9]\+'[bdh][0-9]\+/d" $@
 	sed -i '/reset/Id' $@
 	sort -u -o $@ $@
 
@@ -97,10 +106,9 @@ INSTRUMENTATION_OPTS +=  -g 32
 else
 INSTRUMENTATION_OPTS +=  -g 10
 endif
-INSTRUMENTATION_OPTS +=  -t $(TOGGLE_ONLY)
 
 instrument: collect_sigs
-	$(PYTHON) $(INSTRUMENTATION_DIR)/instrument.py $(INSTRUMENTATION_OPTS)
+	python3 $(INSTRUMENTATION_DIR)/instrument.py $(INSTRUMENTATION_OPTS)
 	sed -e '/COVERAGE_MACRO/{r $(INSTRUMENTATION_DIR)/macro' -e 'd}' ../v/top_zynq.sv > $(INSTRUMENTATION_DIR)/instrumented_top_zynq.sv
 
 interpret_coverage:
