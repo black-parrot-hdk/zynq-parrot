@@ -14,7 +14,12 @@ CLK_DIV ?= 4
 
 # Coverage
 COV_EN ?= 1
+RAND_COV ?= 0
+ifeq ($(RAND_COV),1)
 COV_NUM ?= 4
+else
+COV_NUM ?= $(shell cat all.fsigs | wc -l)
+endif
 
 # DRAM constant delay model
 DRAM_GATE_EN ?= 0
@@ -86,6 +91,10 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axil.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_axil_to_dpi.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv" >> $@
+	if [ "$(COV_EN)" = "1" ]; then \
+	  sed -i "/top_zynq.sv/d" $@ ;\
+	  echo "$(INSTRUMENTATION_DIR)/instrumented_top_zynq.sv" >> $@ ;\
+	fi
 	if [ "$(DROMAJO_COSIM)" = "1" ]; then \
 		echo "$(BLACKPARROT_DIR)/bp_top/test/common/bp_nonsynth_cosim.sv" >> $@; \
 		echo "$(BLACKPARROT_DIR)/bp_top/test/common/dromajo_cosim.cpp" >> $@; \
