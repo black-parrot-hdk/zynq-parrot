@@ -48,9 +48,59 @@ package bp_common_pkg;
                         ,bp_default_cfg_p
                         );
 
+  localparam bp_proc_param_s bp_multicore_zynqparrot_cfg_override_p =
+    '{paddr_width: 34
+      ,cce_type : e_cce_fsm
+      ,ic_y_dim : 1
+
+      ,icache_fill_width: 64
+
+      ,dcache_fill_width: 64
+
+      ,acache_fill_width: 64
+
+      ,bedrock_fill_width: 64
+
+      ,coh_noc_flit_width : 64
+      ,mem_noc_flit_width : 64
+      ,dma_noc_flit_width : 64
+
+      ,icache_features      : (1 << e_cfg_enabled) | (1 << e_cfg_coherent)
+                              | (1 << e_cfg_misaligned)
+      ,dcache_features      : (1 << e_cfg_enabled)
+                              | (1 << e_cfg_coherent)
+                              | (1 << e_cfg_writeback)
+                              | (1 << e_cfg_lr_sc)
+                              | (1 << e_cfg_amo_swap)
+                              | (1 << e_cfg_amo_fetch_logic)
+                              | (1 << e_cfg_amo_fetch_arithmetic)
+      ,l2_features          : (1 << e_cfg_enabled) | (1 << e_cfg_writeback)
+                              | (1 << e_cfg_word_tracking)
+
+      ,l2_data_width: 64
+      ,l2_fill_width: 64
+      ,l2_slices    : 1
+      ,l2_banks     : 1
+
+      ,itlb_els_4k : 16
+      ,itlb_els_2m : 1
+      ,itlb_els_1g : 1
+      ,dtlb_els_4k : 16
+      ,dtlb_els_2m : 4
+      ,dtlb_els_1g : 1
+
+      ,default : "inv"
+      };
+  `bp_aviary_derive_cfg(bp_multicore_zynqparrot_cfg_p
+                        ,bp_multicore_zynqparrot_cfg_override_p
+                        ,bp_default_cfg_p
+                        );
+
+
   parameter bp_proc_param_s [max_cfgs-1:0] all_cfgs_gp =
   {
-    bp_unicore_zynqparrot_cfg_p
+    bp_multicore_zynqparrot_cfg_p
+    ,bp_unicore_zynqparrot_cfg_p
 
     // A custom BP configuration generated from Makefile
     ,bp_custom_cfg_p
@@ -61,7 +111,8 @@ package bp_common_pkg;
   // This enum MUST be kept up to date with the parameter array above
   typedef enum bit [lg_max_cfgs-1:0]
   {
-    e_bp_unicore_zynqparrot_cfg                     = 2
+    e_bp_multicore_zynqparrot_cfg                   = 3
+    ,e_bp_unicore_zynqparrot_cfg                    = 2
 
     // A custom BP configuration generated from `defines
     ,e_bp_custom_cfg                                = 1

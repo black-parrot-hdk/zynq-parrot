@@ -153,6 +153,7 @@ template <unsigned int A, unsigned int D> class axilm {
             while (!ar_done) {
                 if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
                     bsg_pr_err("bsg_zynq_pl: AXI M read arready timeout\n");
+                    timeout_counter = 0;
                 }
 
                 if (this->p_arready == 1) {
@@ -168,6 +169,7 @@ template <unsigned int A, unsigned int D> class axilm {
             while (!r_done) {
                 if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
                     bsg_pr_err("bsg_zynq_pl: AXI M read rvalid timeout\n");
+                    timeout_counter = 0;
                 }
 
                 if (this->p_rvalid == 1) {
@@ -210,6 +212,7 @@ template <unsigned int A, unsigned int D> class axilm {
                 // check timeout
                 if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
                     bsg_pr_err("bsg_zynq_pl: AXI S write timeout\n");
+                    timeout_counter = 0;
                 }
 
                 if (this->p_awready == 1) {
@@ -230,6 +233,7 @@ template <unsigned int A, unsigned int D> class axilm {
             while (!b_done) {
                 if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
                     bsg_pr_err("bsg_zynq_pl: AXI M bvalid timeout\n");
+                    timeout_counter = 0;
                 }
 
                 if (this->p_bvalid == 1) {
@@ -316,6 +320,7 @@ template <unsigned int A, unsigned int D> class axils {
             while (!ar_done) {
                 if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
                     bsg_pr_err("bsg_zynq_pl: AXI S read request timeout\n");
+                    timeout_counter = 0;
                 }
 
                 if (this->p_arvalid == 1) {
@@ -335,6 +340,7 @@ template <unsigned int A, unsigned int D> class axils {
             while (!r_done) {
                 if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
                     bsg_pr_err("bsg_zynq_pl: AXI S read data timeout\n");
+                    timeout_counter = 0;
                 }
 
                 if (this->p_rready == 1) {
@@ -364,6 +370,7 @@ template <unsigned int A, unsigned int D> class axils {
             while (!aw_done || !w_done) {
                 if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
                     bsg_pr_err("bsg_zynq_pl: AXI S write timeout\n");
+                    timeout_counter = 0;
                 }
 
                 if (this->p_awvalid) {
@@ -393,6 +400,7 @@ template <unsigned int A, unsigned int D> class axils {
             while (!b_done) {
                 if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
                     bsg_pr_err("bsg_zynq_pl: AXI S bvalid timeout\n");
+                    timeout_counter = 0;
                 }
 
                 if (this->p_bready == 1) {
