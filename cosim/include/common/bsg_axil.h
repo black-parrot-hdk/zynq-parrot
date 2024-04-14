@@ -211,7 +211,7 @@ template <unsigned int A, unsigned int D> class axilm {
             while (!aw_done || !w_done) {
                 // check timeout
                 if (timeout_counter++ > ZYNQ_AXI_TIMEOUT) {
-                    bsg_pr_err("bsg_zynq_pl: AXI S write timeout\n");
+                    bsg_pr_err("bsg_zynq_pl: AXI M write timeout\n");
                     timeout_counter = 0;
                 }
 
