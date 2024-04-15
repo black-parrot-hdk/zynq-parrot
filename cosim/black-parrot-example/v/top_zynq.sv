@@ -17,8 +17,9 @@ module top_zynq
  #(parameter bp_params_e bp_params_p = bp_cfg_gp
    `declare_bp_proc_params(bp_params_p)
    `declare_bp_bedrock_if_widths(paddr_width_p, lce_id_width_p, cce_id_width_p, did_width_p, lce_assoc_p)
-
+`ifdef CLK_DIV
    , parameter clk_div_p = `CLK_DIV
+`endif
 `ifdef COV_EN
    , parameter num_cov_p = `COV_NUM
 `endif
@@ -962,6 +963,7 @@ module top_zynq
    logic [num_cov_p-1:0][32-1:0] cov_data_lo;
    for(genvar i = 0; i < num_cov_p; i++) begin: rof
      // random covergroup input for testing
+/*
      bsg_nonsynth_random_gen
       #(.width_p(32)
        ,.seed_p(100 + i)
@@ -971,6 +973,15 @@ module top_zynq
        ,.reset_i(bp_reset_li)
        ,.yumi_i(1'b1)
        ,.data_o(cov_li[i])
+       );
+*/
+     bsg_lfsr
+      #(.width_p(32))
+      i_rand
+       (.clk(bp_clk)
+       ,.reset_i(bp_reset_li)
+       ,.yumi_i(1'b1)
+       ,.o(cov_li[i])
        );
 
      bsg_cover
