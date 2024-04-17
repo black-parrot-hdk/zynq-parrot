@@ -78,6 +78,11 @@ UNIMPLEMENTED = \
   dirty \
   l2s \
   immu.tlb \
+  pump_control \
+  remote_did_li \
+  tag_array_1g.nz \
+  rr0 \
+  in_fifo \
 
 # filters signals from signals file
 %.fsigs: %.sigs
