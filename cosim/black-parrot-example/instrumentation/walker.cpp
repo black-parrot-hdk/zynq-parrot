@@ -3,7 +3,6 @@
 #include <list>
 #include <tuple>
 #include <fstream>
-#include <queue>
 
 #include <Surelog/surelog.h>
 
@@ -27,7 +26,6 @@ void visitAssignment(vpiHandle);
 void visitBlocks(vpiHandle);
 void visitTernary(vpiHandle);
 void visitTopModules(vpiHandle);
-int search_width(vpiHandle);
 
 int evalOperation(vpiHandle);
 int evalLeaf(vpiHandle);
@@ -52,32 +50,12 @@ struct vars {
   std::string type; //reg/wire
 };
 
-// Pair of a lhs to an assignment and a level (distance from assignment)
-// for determining dependencies of a single net/lhs
-struct lhsLevel {
-  std::string lhs;
-  int level;
-};
-bool operator==(const lhsLevel& l, const lhsLevel& r) {
-  return l.lhs == r.lhs && l.level == r.level;
-}
-struct lhsLevelHash {
-    std::size_t operator()(const lhsLevel& s) const noexcept {
-        std::size_t h1 = std::hash<std::string>{}(s.lhs);
-        return h1 ^ (s.level << 1);
-    }
-};
-
 // global data structures
 std::list <vars> nets, netsCurrent; // for storing nets discovered
-std::list <std::string> all, ternaries, cases, ifs, ternOperands; // for storing specific control expressions (see definition in main README.md)
+
+std::list <std::string> all, ternaries, cases, ifs; // for storing specific control expressions (see definition in main README.md)
 std::list <int> nAll, nTernaries, nCases, nIfs, nSubexpressions; // numbers for quick print debug
 std::map <std::string, int> paramsAll, params; // for params, needed for supplanting in expressions expansions
-// map: (net, level) -> dependencies added at that level
-// note that we don't separate by module, since nets should use their fully-qualified name
-std::unordered_map<lhsLevel, std::unordered_set<std::string>, lhsLevelHash> dependencies;
-std::unordered_map<lhsLevel, std::unordered_set<std::string>, lhsLevelHash> dependenciesAll;
-std::unordered_set <std::string> operandsCurrent; // operands for the current assignment RHS
 
 // ancillary functions
 // prints out discovered control expressions to file or stdout
@@ -140,8 +118,6 @@ std::string visitref_obj(vpiHandle h) {
       else std::cout << "Decompilation unavailable\n";
     }
   }
-  // We want to record this as a dependency
-  operandsCurrent.insert(out);
   return out;
 }
 
@@ -271,18 +247,12 @@ std::list <std::string> visitLeaf(vpiHandle h) {
       std::cout << "Ref object at leaf\n";
       std::string tmp = visitref_obj(h);
       out.push_back(tmp);
-      // TODO: this should be fine once width works, but double-check
-      if (search_width(h) == 1) {
-        ternOperands.push_back(tmp);
-      }
       break;
     }
     case UHDM::uhdmbit_select : {
       std::cout << "Bit select at leaf\n";
       std::string tmp = visitbit_sel(h);
       out.push_back(tmp);
-      // Bit selection will always have width 1
-      ternOperands.push_back(tmp);
       break;
     }
     case UHDM::uhdmpart_select : {
@@ -404,7 +374,7 @@ int search_width(vpiHandle h) {
   return -1;
 }
 
-// Returns pair of (constantsOnly, list of ())
+
 std::tuple <bool, std::list <std::string>> visitOperation(vpiHandle h) {
   vpiHandle ops = vpi_iterate(vpiOperand, h);
   std::list <std::string> current;
@@ -614,6 +584,7 @@ std::tuple <bool, std::list <std::string>> visitOperation(vpiHandle h) {
 }
 
 std::list <std::string> visitCond(vpiHandle h) {
+
   std::cout << "Walking condition; type: " << 
     UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)h)->type) << std::endl;
   //FIXME breaks
@@ -704,9 +675,6 @@ void visitCase(vpiHandle h) {
 
 void visitAssignment(vpiHandle h) {
   std::cout << "Walking assignment\n";
-
-  // Clear out current operands so we just get those in the current RHS
-  operandsCurrent.clear();
   if(vpiHandle rhs = vpi_handle(vpiRhs, h)) {
     if(((uhdm_handle *)rhs)->type == UHDM::uhdmoperation) {
       std::cout << "Operation found in RHS\n";
@@ -728,24 +696,6 @@ void visitAssignment(vpiHandle h) {
           vpi_release_handle(operands);
         }
       }
-
-      if (vpiHandle lhs = vpi_handle(vpiLhs, h)) {
-        // Try to get the LHS of the assignment and add the operands it depends on
-        if (const char *lhsName = vpi_get_str(vpiFullName, lhs)) {
-          std::string lhsStr = lhsName;
-
-          // Update dependencies with operands collected during visit
-          std::unordered_set<std::string> rhsOps = std::unordered_set(operandsCurrent);
-          operandsCurrent.clear();
-          dependencies[{lhsName, 0}].insert(rhsOps.begin(), rhsOps.end());
-          vpi_release_handle(lhs);
-        } else {
-          std::cerr << "No full name available for LHS of assignment.\n";
-        }
-      } else {
-        std::cerr << "Assignment without LHS handle\n";
-      }
-
     	vpi_release_handle(rhs);
     } else
       std::cout << "Not an operation on the RHS; ignoring\n";
@@ -827,8 +777,6 @@ void findTernaryInOperation(vpiHandle h) {
 }
 
 void visitTernary(vpiHandle h) {
-  // TODO: in here, keep track of conditions from ternaries and what vars they contain
-  // For each element added to "current", there should be a corresponding list of vars 
   std::list <std::string> current;
   std::cout << "Analysing ternary operation\n";
   vpiHandle i = vpi_iterate(vpiOperand, h);
@@ -970,9 +918,7 @@ int evalOperation(vpiHandle h) {
 }
 
 int width(vpiHandle h, int *ptr) {
-  std::cout << "Calculating width of " << vpi_get_str(vpiFullName, h) << std::endl;
-  // Hypothesis: based on the spec we should be able to get these things, so perhaps
-  // the handle is the wrong type?
+  std::cout << "Calculating width\n";
   vpiHandle ranges;
   std::string out = "";
   int dims=0;
@@ -981,7 +927,6 @@ int width(vpiHandle h, int *ptr) {
   if((ranges = vpi_iterate(vpiRange, h))) {
     std::cout << "Range found\n";
     while (vpiHandle range = vpi_scan(ranges) ) {
-      // TODO: range is always null
       if(dims < 4) {
         std::cout << "New dimension\n";
         dims++;
@@ -1044,8 +989,6 @@ void visitVariables(vpiHandle i) {
           tmp.name = vpi_get_str(vpiFullName, h);
           tmp.dims = width(h, tmp.width);
           netsCurrent.push_back(tmp);
-          // TODO: why are these widths always 1?
-          std::cout << "Found width of " << tmp.name << ": " << tmp.dims << ", width " << tmp.width[0] << " " << tmp.width[1] << " "<< tmp.width[2] << " " << tmp.width[3] << " ";
           break;
       }
     }
@@ -1107,62 +1050,6 @@ void visitParams(vpiHandle p) {
   return;
 }
 
-// Update dependencies list with all levels (up to maxLevel, if used) of transitive dependencies
-// of variable assignments, by doing a BFS
-// maxLevel: maximum level of dependencies to discover, or -1 to discover all possible dependencies
-void discoverDependencies(
-  int maxLevel,
-  std::unordered_map<lhsLevel, std::unordered_set<std::string>, lhsLevelHash> &dependencies
-) {
-  // ASSUMPTION: all variables in RHS exist as a LHS
-
-  struct levelToProcess {
-    // LHS to add a level to
-    std::string lhs;
-    // Level to add
-    int level;
-    // Dependencies from previous level
-    std::unordered_set<std::string> prevDeps;
-  };
-  // Use a queue so that all assignments of one level are processed before the next (and BFS)
-  std::queue<levelToProcess> toProcess;
-
-  // Initialize queue to all keys in the dependencies
-  for (const auto &kv : dependencies) {
-    levelToProcess ltp = {kv.first.lhs, kv.first.level, kv.second};
-    toProcess.push(ltp);
-  }
-
-  while (!toProcess.empty()) {
-    // TODO: check if we've already processed something at this level to avoid duplicate effort
-    levelToProcess level = toProcess.front();
-    toProcess.pop();
-    if (maxLevel >= 0 && level.level > maxLevel) {
-      continue;
-    }
-    lhsLevel next = {level.lhs, level.level + 1};
-    std::cout << "Processing level " << level.lhs << "(" << level.level << ")\n";
-    for (const auto &dependency : level.prevDeps) {
-      // Insert all dependencies of current level's dependencies into the next level
-      std::cout << "Adding dependency for " << dependency << std::endl;
-      lhsLevel depLvl = {dependency, 0};
-      std::unordered_set<std::string> nextLvlDeps = dependencies[depLvl];
-      if (!nextLvlDeps.empty()) {
-        std::cout << "Nonempty dependency list for next level.\n";
-      }
-      dependencies[next].insert(nextLvlDeps.begin(), nextLvlDeps.end());
-    }
-
-    // Add all the new dependencies to the queue, if new dependencies were added
-    // Depends on the invariant: each (lhs, level + 1) pair only gets processed once
-    // by this loop.
-    // otherwise, this duplicates a lot of work
-    if (!dependencies[next].empty()) {
-      levelToProcess ltp = {level.lhs, level.level + 1, dependencies[next]};
-      toProcess.push(ltp);
-    }
-  }
-}
 
 void visitTopModules(vpiHandle ti) {
   std::cout << "Exercising iterator\n";
@@ -1177,6 +1064,7 @@ void visitTopModules(vpiHandle ti) {
     //lambda for module visit
     std::function<void(vpiHandle, std::string)> visit =
       [&visit](vpiHandle mh, std::string depth) {
+
         std::string out_f;
         std::string defName;
         std::string objectName;
@@ -1273,12 +1161,6 @@ void visitTopModules(vpiHandle ti) {
         netsCurrent.clear();
         paramsAll.insert(params.begin(), params.end());
         params.clear();
-
-        // Discover dependencies:
-        // We limit to dependencies within the current module
-        discoverDependencies(3, dependencies);
-        dependenciesAll.insert(dependencies.begin(), dependencies.end());
-        dependencies.clear();
 
         //Statistics:
         static int numTernaries, numIfs, numCases;
@@ -1419,8 +1301,6 @@ int main(int argc, const char** argv) {
   print_list(ifs, true, "../surelog.run/if.sigs");
   std::cout << "\n\n\n*** Printing ternary conditions ***\n\n\n";
   print_list(ternaries, true, "../surelog.run/tern.sigs");
-  std::cout << "\n\n\n*** Printing operands from ternary conditions ***\n\n\n";
-  print_list(ternOperands, true, "../surelog.run/ternOperands.sigs");
   std::cout << "\n\n\n*** Printing variables ***\n\n\n";
   std::ofstream file;
   file.open("../surelog.run/all.nets", std::ios_base::app);
@@ -1440,18 +1320,7 @@ int main(int argc, const char** argv) {
   for (itr = paramsAll.begin(); itr != paramsAll.end(); ++itr)
     file << itr->first << " = " << itr->second << std::endl;
   file.close();
-  std::cout << "\n\n\n*** Printing dependencies ***\n\n\n";
-  file.open("../surelog.run/dependencies.csv", std::ios_base::app);
-  for (auto &kv : dependenciesAll) {
-    if (!kv.second.empty()) {
-      file << kv.first.lhs << "," << kv.first.level;
-      for (auto &dep : kv.second) {
-        file << "," << dep;
-      }
-      file << std::endl;
-    }
-  }
-  file.close();
+
 
   std::cout << "\n\n\n*** Parsing Complete!!! ***\n\n\n";
 
