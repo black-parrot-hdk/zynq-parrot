@@ -3,7 +3,7 @@ include ../Makefile.design
 #############################
 # Accelerator Software Settings
 #############################
-#CFLAGS += -DZYNQ_PL_DEBUG
+CFLAGS += -DZYNQ_PL_DEBUG
 CFLAGS += -DZYNQ_PS_DEBUG
 
 DEFINES += HP1_ENABLE

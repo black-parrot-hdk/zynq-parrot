@@ -40,10 +40,10 @@ typedef uint32_t uint32x4_t[4];
 #define GP0_HIER_BASE ""
 #endif
 
+#ifndef GP0_ADDR_SIZE_BYTES
 #ifndef GP0_ADDR_WIDTH
 #error GP0_ADDR_WIDTH must be defined
 #endif
-#ifndef GP0_ADDR_SIZE_BYTES
 #define GP0_ADDR_SIZE_BYTES (1ULL << GP0_ADDR_WIDTH)
 #endif
 static uintptr_t gp0_addr_size_bytes = (uintptr_t) GP0_ADDR_SIZE_BYTES;
@@ -70,10 +70,10 @@ static uintptr_t gp0_addr_base = (uintptr_t) GP0_ADDR_BASE;
 #define GP1_HIER_BASE ""
 #endif
 
+#ifndef GP1_ADDR_SIZE_BYTES
 #ifndef GP1_ADDR_WIDTH
 #error GP1_ADDR_WIDTH must be defined
 #endif
-#ifndef GP1_ADDR_SIZE_BYTES
 #define GP1_ADDR_SIZE_BYTES (1ULL << GP1_ADDR_WIDTH)
 #endif
 static uintptr_t gp1_addr_size_bytes = (uintptr_t) GP1_ADDR_SIZE_BYTES;
@@ -108,10 +108,10 @@ static uintptr_t gp1_addr_base = (uintptr_t) GP1_ADDR_BASE;
 #define GP2_HIER_BASE ""
 #endif
 
+#ifndef GP2_ADDR_SIZE_BYTES
 #ifndef GP2_ADDR_WIDTH
 #error GP2_ADDR_WIDTH must be defined
 #endif
-#ifndef GP2_ADDR_SIZE_BYTES
 #define GP2_ADDR_SIZE_BYTES (1ULL << GP2_ADDR_WIDTH)
 #endif
 static uintptr_t gp2_addr_size_bytes = (uintptr_t) GP2_ADDR_SIZE_BYTES;
@@ -138,10 +138,10 @@ static uintptr_t gp2_addr_base = (uintptr_t) GP2_ADDR_BASE;
 #define HP0_HIER_BASE ""
 #endif
 
+#ifndef HP0_ADDR_SIZE_BYTES
 #ifndef HP0_ADDR_WIDTH
 #error HP0_ADDR_WIDTH must be defined
 #endif
-#ifndef HP0_ADDR_SIZE_BYTES
 #define HP0_ADDR_SIZE_BYTES (1ULL << HP0_ADDR_WIDTH)
 #endif
 static uintptr_t hp0_addr_size_bytes = (uintptr_t) HP0_ADDR_SIZE_BYTES;
@@ -170,10 +170,10 @@ static uintptr_t hp0_addr_base = (uintptr_t) HP0_ADDR_BASE;
 #define HP1_HIER_BASE ""
 #endif
 
+#ifndef HP1_ADDR_SIZE_BYTES
 #ifndef HP1_ADDR_WIDTH
 #error HP1_ADDR_WIDTH must be defined
 #endif
-#ifndef HP1_ADDR_SIZE_BYTES
 #define HP1_ADDR_SIZE_BYTES (1ULL << HP1_ADDR_WIDTH)
 #endif
 static uintptr_t hp1_addr_size_bytes = (uintptr_t) HP1_ADDR_SIZE_BYTES;
@@ -200,10 +200,10 @@ static uintptr_t hp1_addr_base = (uintptr_t) HP1_ADDR_BASE;
 #define HP2_HIER_BASE ""
 #endif
 
+#ifndef HP2_ADDR_SIZE_BYTES
 #ifndef HP2_ADDR_WIDTH
 #error HP2_ADDR_WIDTH must be defined
 #endif
-#ifndef HP2_ADDR_SIZE_BYTES
 #define HP2_ADDR_SIZE_BYTES (1ULL << HP2_ADDR_WIDTH)
 #endif
 static uintptr_t hp2_addr_size_bytes = (uintptr_t) HP2_ADDR_SIZE_BYTES;
