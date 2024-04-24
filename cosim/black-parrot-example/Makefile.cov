@@ -56,7 +56,7 @@ SURELOG_OPTS += -o $(SURELOG_RUN_DIR)
 SURELOG      ?= $(BLACKPARROT_TOOLS_DIR)/Surelog/build/bin/$(WALKER)
 
 analyze_rtl: build_surelog $(S_FLIST)
-	$(SURELOG) $(SURELOG_OPTS) > $(SURELOG_RUN_DIR)/surelog_run.log
+	$(SURELOG) $(SURELOG_OPTS) 2>$(SURELOG_RUN_DIR)/stderr 1> $(SURELOG_RUN_DIR)/stdout
 
 # these need to be debugged as the wires tapped into paths containing these fail synthesis and hang verilator (?)
 UNIMPLEMENTED = \
