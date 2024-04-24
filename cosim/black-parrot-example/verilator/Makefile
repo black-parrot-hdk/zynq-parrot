@@ -11,7 +11,7 @@ BP_NCPUS ?= 1
 
 # Coverage
 COV_EN ?= 1
-RAND_COV ?= 0
+RAND_COV ?= 1
 ifeq ($(RAND_COV),1)
 COV_NUM ?= 4
 else
@@ -32,6 +32,7 @@ DEFINES += COV_NUM=$(COV_NUM)
 DEFINES += AXIS_ENABLE=1
 DEFINES += AXIS_DATA_WIDTH=32
 DEFINES += AXIS_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil5
+DEFINES += RAND_COV=$(RAND_COV)
 endif
 DEFINES += GP0_ADDR_BASE=0x400000000U
 DEFINES += GP0_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil0
@@ -79,10 +80,10 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_axil_to_dpi.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_axis_to_dpi.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv" >> $@
-	#if [ "$(COV_EN)" = "1" ]; then \
-	#  sed -i "/top_zynq.sv/d" $@ ;\
-	#  echo "$(INSTRUMENTATION_DIR)/instrumented_top_zynq.sv" >> $@ ;\
-	#fi
+	if [ "$(COV_EN)" = "1" -a "$(RAND_COV)" = "1" ]; then \
+	  sed -i "/top_zynq.sv/d" $@ ;\
+	  echo "$(INSTRUMENTATION_DIR)/instrumented_top_zynq.sv" >> $@ ;\
+	fi
 	if [ "$(DROMAJO_COSIM)" = "1" ]; then \
 		echo "$(BLACKPARROT_DIR)/bp_top/test/common/bp_nonsynth_cosim.sv" >> $@; \
 		echo "$(BLACKPARROT_DIR)/bp_top/test/common/dromajo_cosim.cpp" >> $@; \
