@@ -80,9 +80,11 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_axil_to_dpi.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_axis_to_dpi.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv" >> $@
-	if [ "$(COV_EN)" = "1" -a "$(RAND_COV)" = "1" ]; then \
-	  sed -i "/top_zynq.sv/d" $@ ;\
-	  echo "$(INSTRUMENTATION_DIR)/instrumented_top_zynq.sv" >> $@ ;\
+	if [ "$(COV_EN)" = "1" ]; then \
+	  if [ "$(RAND_COV)" = "0" ]; then \
+	    sed -i "/top_zynq.sv/d" $@ ;\
+	    echo "$(INSTRUMENTATION_DIR)/instrumented_top_zynq.sv" >> $@ ;\
+	  fi \
 	fi
 	if [ "$(DROMAJO_COSIM)" = "1" ]; then \
 		echo "$(BLACKPARROT_DIR)/bp_top/test/common/bp_nonsynth_cosim.sv" >> $@; \
