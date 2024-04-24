@@ -14,7 +14,7 @@ CLK_DIV ?= 4
 
 # Coverage
 COV_EN ?= 1
-RAND_COV ?= 0
+RAND_COV ?= 1
 ifeq ($(RAND_COV),1)
 COV_NUM ?= 4
 else
