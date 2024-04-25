@@ -17,7 +17,7 @@ parser.add_argument("-g", "--groupsize",\
                           required=True,
                             default=32)
 args = parser.parse_args()
-print(args)
+#print(args)
 
 def macro_head(i):
   return f"\
@@ -25,7 +25,7 @@ def macro_head(i):
   bsg_cover \n\
     #(.idx_p           ({i}) \n\
      ,.width_p         ({args.groupsize}) \n\
-     ,.els_p           (1) \n\
+     ,.els_p           (16) \n\
      ,.lg_afifo_size_p (3)) \n\
    cover_{i} \n\
     (.core_clk_i       (bp_clk) \n\
@@ -63,3 +63,4 @@ with open(args.output, 'w') as f:
     f.write('\t\t\t\t}')
     f.write(macro_tail(group_id))
   f.close()
+print('Number of covergroups:', int(len(lines)/args.groupsize))

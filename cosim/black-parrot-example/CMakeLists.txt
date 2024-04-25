@@ -1,10 +1,25 @@
 cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 project(ExampleProject)
-
-# Set this to the path where Surelog's CMake config file is located
-set(Surelog_DIR "/home/mysanoop/.local")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/../import/black-parrot-tools/surelog_install)
 
 find_package(Surelog REQUIRED)
+find_package(UHDM REQUIRED)
+set(UHDM_LIBRARY uhdm::uhdm)
+
+link_directories(${CMAKE_SOURCE_DIR}/../import/black-parrot-tools/surelog_install/lib/surelog)
+find_library(SURELOG_LIBRARY NAMES surelog PATHS /home/mysanoop/zynq-farm/zynq-parrot/cosim/import/black-parrot-tools/surelog_install/lib/surelog)
+if(NOT SURELOG_LIBRARY)
+    message(FATAL_ERROR "Surelog library not found")
+endif()
+link_directories(${CMAKE_SOURCE_DIR}/../import/black-parrot-tools/surelog_install/lib/uhdm)
+find_library(UHDM_LIBRARY NAMES uhdm PATHS /home/mysanoop/zynq-farm/zynq-parrot/cosim/import/black-parrot-tools/surelog_install/lib/uhdm)
+if(NOT UHDM_LIBRARY)
+    message(FATAL_ERROR "UHDM library not found")
+endif()
 
 add_executable(example instrumentation/walker.cpp)
 target_link_libraries(example surelog)
+target_link_libraries(example uhdm)
+target_link_libraries(example pthread)
+target_include_directories(example PRIVATE ${SURELOG_INCLUDE_DIRS})

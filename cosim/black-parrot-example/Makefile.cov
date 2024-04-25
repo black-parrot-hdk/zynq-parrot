@@ -83,6 +83,7 @@ UNIMPLEMENTED = \
   tag_array_1g.nz \
   rr0 \
   in_fifo \
+  comp_stage_r \
 
 # filters signals from signals file
 %.fsigs: %.sigs

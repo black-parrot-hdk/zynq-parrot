@@ -11,11 +11,11 @@ BP_NCPUS ?= 1
 
 # Coverage
 COV_EN ?= 1
-RAND_COV ?= 1
+RAND_COV ?= 0
 ifeq ($(RAND_COV),1)
 COV_NUM ?= 4
 else
-COV_NUM ?= $(shell cat all.fsigs | wc -l)
+COV_NUM := 36
 endif
 
 #CFLAGS += -DDRAM_TEST
@@ -32,7 +32,9 @@ DEFINES += COV_NUM=$(COV_NUM)
 DEFINES += AXIS_ENABLE=1
 DEFINES += AXIS_DATA_WIDTH=32
 DEFINES += AXIS_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil5
+ifeq ($(RAND_COV),1)
 DEFINES += RAND_COV=$(RAND_COV)
+endif
 endif
 DEFINES += GP0_ADDR_BASE=0x400000000U
 DEFINES += GP0_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil0
