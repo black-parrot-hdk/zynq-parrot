@@ -5,7 +5,7 @@ CFLAGS += -DBRIDGE
 CFLAGS += -DHOST_$(call upper,$(HOST))
 CFLAGS += $(addprefix -D,$(DEFINES))
 CFLAGS += -O2
-CFLAGS += -std=c++14
+CFLAGS += -std=c++20
 
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/bridge

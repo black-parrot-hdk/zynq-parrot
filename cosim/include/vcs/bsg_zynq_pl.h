@@ -20,6 +20,7 @@
 #include "bsg_zynq_pl_simulation.h"
 
 extern "C" { void bsg_dpi_next(); }
+extern "C" { int bsg_dpi_time(); }
 
 class bsg_zynq_pl : public bsg_zynq_pl_simulation {
     public:

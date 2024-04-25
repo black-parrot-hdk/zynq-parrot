@@ -14,6 +14,9 @@
 
 #include "ps.hpp"
 
+
+#error "This example currently does not work, will be moved into shell example"
+
 int ps_main(int argc, char **argv) {
         bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
