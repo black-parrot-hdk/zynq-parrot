@@ -14,11 +14,11 @@ CLK_DIV ?= 4
 
 # Coverage
 COV_EN ?= 1
-RAND_COV ?= 1
+RAND_COV ?= 0
 ifeq ($(RAND_COV),1)
 COV_NUM ?= 4
 else
-COV_NUM ?= $(shell cat all.fsigs | wc -l)
+COV_NUM := 36
 endif
 
 # DRAM constant delay model
@@ -39,7 +39,9 @@ DEFINES += CLK_DIV=$(CLK_DIV)
 ifneq ($(COV_EN),0)
 DEFINES += COV_EN=$(COV_EN)
 DEFINES += COV_NUM=$(COV_NUM)
+ifeq ($(RAND_COV),1)
 DEFINES += RAND_COV=$(RAND_COV)
+endif
 endif
 DEFINES += GP0_ENABLE
 DEFINES += GP0_ADDR_BASE=0x400000000U GP0_ADDR_WIDTH=10 GP0_DATA_WIDTH=32
