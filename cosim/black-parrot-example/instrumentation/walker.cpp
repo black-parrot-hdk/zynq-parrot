@@ -5,6 +5,8 @@
 #include <fstream>
 
 #include <Surelog/surelog.h>
+#include <Surelog/Common/FileSystem.h>
+
 
 // UHDM
 #include <uhdm/ElaboratorListener.h>
@@ -1264,6 +1266,11 @@ int main(int argc, const char** argv) {
   // - Listener design pattern (See third_party/UHDM/tests/test_listener.cpp)
   // - Walker design pattern (See third_party/UHDM/src/vpi_visitor.cpp)
 
+  SURELOG::FileSystem* const fileSystem = SURELOG::FileSystem::getInstance();
+  const std::filesystem::path outputDir = 
+          fileSystem->toPlatformAbsPath(clp->getOutputDirId());
+  std::cout << "Output dir for *.sigs: "<< outputDir << std::endl;
+
   if (the_design) {
     UHDM::design* udesign = nullptr;
     if (vpi_get(vpiType, the_design) == vpiDesign) {
@@ -1294,13 +1301,13 @@ int main(int argc, const char** argv) {
 
   
   std::cout << "\n\n\n*** Printing all conditions ***\n\n\n";
-  print_list(all, true, "../surelog.run/all.sigs");
+  print_list(all, true, outputDir / "all.sigs");
   std::cout << "\n\n\n*** Printing case conditions ***\n\n\n";
-  print_list(cases, true, "../surelog.run/case.sigs");
+  print_list(cases, true, outputDir / "case.sigs");
   std::cout << "\n\n\n*** Printing if/if-else conditions ***\n\n\n";
-  print_list(ifs, true, "../surelog.run/if.sigs");
+  print_list(ifs, true, outputDir / "if.sigs");
   std::cout << "\n\n\n*** Printing ternary conditions ***\n\n\n";
-  print_list(ternaries, true, "../surelog.run/tern.sigs");
+  print_list(ternaries, true, outputDir / "tern.sigs");
   std::cout << "\n\n\n*** Printing variables ***\n\n\n";
   std::ofstream file;
   file.open("../surelog.run/all.nets", std::ios_base::app);
