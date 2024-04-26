@@ -54,12 +54,22 @@ package bp_common_pkg;
       ,ic_y_dim : 1
 
       ,icache_fill_width: 64
+      ,icache_assoc:      4
+      ,icache_sets:       128
+      ,icache_block_width: 256
 
       ,dcache_fill_width: 64
+      ,dcache_assoc:      4
+      ,dcache_sets:       128
+      ,dcache_block_width: 256
 
       ,acache_fill_width: 64
+      ,acache_assoc:      4
+      ,acache_sets:       128
+      ,acache_block_width: 256
 
       ,bedrock_fill_width: 64
+      ,bedrock_block_width: 256
 
       ,coh_noc_flit_width : 64
       ,mem_noc_flit_width : 64
@@ -81,8 +91,9 @@ package bp_common_pkg;
       ,l2_fill_width: 64
       ,l2_slices    : 1
       ,l2_banks     : 1
-      ,l2_assoc     : 4
-      ,l2_sets      : 64
+      ,l2_assoc     : 2
+      ,l2_sets      : 4
+      ,l2_block_width: 256
 
       ,itlb_els_4k : 16
       ,itlb_els_2m : 1
