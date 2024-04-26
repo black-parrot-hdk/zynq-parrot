@@ -245,6 +245,7 @@ public:
             // check timeout
             if (timeout_counter++ == ZYNQ_AXI_TIMEOUT) {
                 bsg_pr_err("bsg_zynq_pl: AXI M write timeout\n");
+                timeout_counter = 0;
             }
 
             if (this->p_awready == 1) {
@@ -273,6 +274,7 @@ public:
             if (timeout_counter++ == ZYNQ_AXI_TIMEOUT) {
                 bsg_pr_err("bsg_zynq_pl: %s, AXI M bvalid timeout at %lld\n,",
                            base.c_str(), bsg_dpi_time());
+                timeout_counter = 0;
             }
 
             if (this->p_bvalid == 1) {
