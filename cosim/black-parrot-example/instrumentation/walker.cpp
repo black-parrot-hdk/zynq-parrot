@@ -10,6 +10,7 @@
 #include <Surelog/surelog.h>
 #include <Surelog/Common/FileSystem.h>
 #include <typeinfo>
+#include <string_view>
 
 
 // UHDM
@@ -72,6 +73,11 @@ dependenciesAll, dependencies;
 // unordered_map : fast insertion, duplicates are ignored
 
 // ancillary functions
+static std::string_view ltrim(std::string_view str, char c) {
+  auto pos = str.find(c);
+  if (pos != std::string_view::npos) str = str.substr(pos + 1);
+  return str;
+}
 // prints out discovered control expressions to file or stdout
 void print_list(std::list<std::string> &list, bool f = false, std::string fileName = "", bool std = false) {
   std::ofstream file;
@@ -157,6 +163,7 @@ std::string visitbit_sel(vpiHandle h) {
   std::cout << "Parent: " << out << std::endl;
   out += "[";
   vpiHandle ind = vpi_handle(vpiIndex, h);
+  std::cout << "INDEX TYPE" <<  UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)(((const uhdm_handle *)ind)->type)) << std::endl;
   if(ind) {
     std::list <std::string> current = visitLeaf(ind);
     out += current.front();
@@ -891,18 +898,15 @@ void visitTernary(vpiHandle h) {
             if(isOpTernary(op)) {
               visitTernary(op);
             }
-            //if(first) {
-            //  std::list <std::string> out;
-            //  bool k;
-            //  std::tie(k, out) = visitOperation(op);
-            //  current.insert(current.end(), out.begin(), out.end());
-            //  first = false;
-            //}
             if(first) {
-              UHDM::any* op_obj = (UHDM::any *)(((uhdm_handle *)op)->object);
-              current.push_back(UHDM::vPrint(op_obj));
+              std::list <std::string> out;
+              bool k;
+              std::tie(k, out) = visitOperation(op);
+              current.insert(current.end(), out.begin(), out.end());
               first = false;
             }
+            //UHDM::any* op_obj = (UHDM::any *)(((uhdm_handle *)op)->object);
+            //current.push_back(UHDM::vPrint(op_obj));
             break;
           }
         case UHDM::uhdmref_obj :
@@ -912,14 +916,12 @@ void visitTernary(vpiHandle h) {
         case UHDM::uhdmparameter :
           if(first) {
             std::cout << "Leaf found in ternary\n";
+            //UHDM::any* op_obj = (UHDM::any *)(((uhdm_handle *)op)->object);
+            //current.push_back(UHDM::vPrint(op_obj));
 
-            //std::list <std::string> tmp = visitLeaf(op);
-            //current.insert(current.end(), tmp.begin(), tmp.end());
-            //first = false;
-            UHDM::any* op_obj = (UHDM::any *)(((uhdm_handle *)op)->object);
-            current.push_back(UHDM::vPrint(op_obj));
+            std::list <std::string> tmp = visitLeaf(op);
+            current.insert(current.end(), tmp.begin(), tmp.end());
             first = false;
-
           }
           break;
         case UHDM::uhdmhier_path :
@@ -1206,10 +1208,24 @@ void visitTopModules(vpiHandle ti) {
         std::cout << "****************************************\n";
         std::cout << "      ***  Now finding params        ***\n";
         std::cout << "****************************************\n";
-        if(vpiHandle pi = vpi_iterate(vpiParamAssign, mh)) { //do vpiParameter
-          std::cout << "Found params\n";
-          visitParams(pi);
-        } else std::cout << "No params found in current module/genscope\n";
+        if(vpiHandle pi = vpi_iterate(vpiParameter, mh)) {
+          std::cout << "Found parameters\n";
+          while (vpiHandle ps = vpi_scan(pi)) {
+            if(const char *s = vpi_get_str(vpiName, ps)) {
+              std::string pname = s;
+              const UHDM::parameter *op_obj = (const UHDM::parameter *)(((uhdm_handle *)ps)->object);
+              std::string_view pval = op_obj->VpiValue();
+
+              int pstr = std::atoi(ltrim(pval, ':').data());
+              params.insert(std::pair<std::string, int>(pname, pstr));
+            }
+          }
+        } else std::cout << "No parameters found in current module\n";
+
+        if(vpiHandle pai = vpi_iterate(vpiParamAssign, mh)) {
+          std::cout << "Found paramAssign\n";
+          visitParams(pai);
+        } else std::cout << "No paramAssign found in current module\n";
         std::cout << "Found below params:\n";
         std::map<std::string, int>::iterator pitr;
         for (pitr = params.begin(); pitr != params.end(); ++pitr)
@@ -1297,42 +1313,32 @@ void visitTopModules(vpiHandle ti) {
         numCases     = cases.size();
 
         // Recursive tree traversal
-        if (vpi_get(vpiType, mh) == vpiModule ||
-            vpi_get(vpiType, mh) == vpiGenScope) {
-          vpiHandle i = vpi_iterate(vpiModule, mh);
-          while (vpiHandle h = vpi_scan(i)) {
+        vpiHandle m = vpi_iterate(vpiModule, mh);
+        if(m) {
+          while (vpiHandle h = vpi_scan(m)) {
             std::cout << "Iterating next module\n";
             depth = depth + "  ";
             visit(h, depth);
             vpi_release_handle(h);
           }
-          vpi_release_handle(i);
-        } else
-          std::cout << "No children modules found\n";
-
-        if (vpi_get(vpiType, mh) == vpiModule ||
-            vpi_get(vpiType, mh) == vpiGenScope) {
-          vpiHandle i = vpi_iterate(vpiGenScopeArray, mh);
-          while (vpiHandle h = vpi_scan(i)) {
+          vpi_release_handle(m);
+        }
+        vpiHandle ga = vpi_iterate(vpiGenScopeArray, mh);
+        if(ga) {
+          while (vpiHandle h = vpi_scan(ga)) {
             std::cout << "Iterating genScopeArray\n";
-            depth = depth + "  ";
-            visit(h, depth);
+            vpiHandle g = vpi_iterate(vpiGenScope, h);
+            while (vpiHandle gi = vpi_scan(g)) {
+              std::cout << "Iterating genScope\n";
+              depth = depth + "  ";
+              visit(gi, depth);
+              vpi_release_handle(gi);
+            }
+            vpi_release_handle(g);
             vpi_release_handle(h);
           }
-          vpi_release_handle(i);
-        } else
-          std::cout << "No children genScopeArray found\n";
-
-        if (vpi_get(vpiType, mh) == vpiGenScopeArray) {
-          vpiHandle i = vpi_iterate(vpiGenScope, mh);
-          while (vpiHandle h = vpi_scan(i)) {
-            std::cout << "Iterating genScope\n";
-            visit(h, depth);
-            vpi_release_handle(h);
-          }
-          vpi_release_handle(i);
-        } else
-          std::cout << "No children genScope found\n";
+          vpi_release_handle(ga);
+        }
         return;
       };
     visit(th, "");
@@ -1355,7 +1361,7 @@ int main(int argc, const char** argv) {
   clp->setwritePpOutput(true);
   clp->setCompile(true);
   clp->setElaborate(true);  // Request Surelog instance tree Elaboration
-  // clp->setElabUhdm(true);  // Request UHDM Uniquification/Elaboration
+  clp->setElabUhdm(true);  // Request UHDM Uniquification/Elaboration
 
   bool success = clp->parseCommandLine(argc, argv);
   errors->printMessages(clp->muteStdout());
