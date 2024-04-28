@@ -3,9 +3,13 @@
 #include <list>
 #include <tuple>
 #include <fstream>
-
+#include <unordered_map>
+#include <unordered_set>
+#include <cstdlib>
+#include <cassert>
 #include <Surelog/surelog.h>
 #include <Surelog/Common/FileSystem.h>
+#include <typeinfo>
 
 
 // UHDM
@@ -55,23 +59,36 @@ struct vars {
 // global data structures
 std::list <vars> nets, netsCurrent; // for storing nets discovered
 
-std::list <std::string> all, ternaries, cases, ifs; // for storing specific control expressions (see definition in main README.md)
-std::list <int> nAll, nTernaries, nCases, nIfs, nSubexpressions; // numbers for quick print debug
-std::map <std::string, int> paramsAll, params; // for params, needed for supplanting in expressions expansions
+std::list <std::string>   all,  ternaries,  cases,  ifs;  // for storing specific control expressions (see definition in main README.md)
+std::list <int>           nAll, nTernaries, nCases, nIfs; // numbers for quick print debug
+std::map <std::string, int> 
+paramsAll, params; // for params, needed for supplanting in expressions expansions
+
+std::unordered_set <std::string> 
+rhsOperandsTemp; // operands or variables of any kind in the current assignment RHS
+std::unordered_map<std::string, std::pair< int, std::unordered_set<std::string>>> 
+dependenciesAll, dependencies;
+// unordered_map : not ordered, but lookups are faster
+// unordered_map : fast insertion, duplicates are ignored
 
 // ancillary functions
 // prints out discovered control expressions to file or stdout
 void print_list(std::list<std::string> &list, bool f = false, std::string fileName = "", bool std = false) {
-    std::ofstream file;
-    file.open(fileName, std::ios_base::app);
-    for (auto const &i: list) {
-      if(std)
-        std::cout << i << std::endl;
-      if(f)
-        file << i << std::endl;
-    }
+  std::ofstream file;
+  if(f)
+    file.open(fileName, std::ios_base::out);
+
+  for (auto const &i: list) {
+    if(std)
+      std::cout << i << std::endl;
+    if(f)
+      file << i << std::endl;
+  }
+
+  if(f)
     file.close();
-    return;
+
+  return;
 }
 
 // visitor functions for different node types
@@ -109,7 +126,7 @@ std::string visitref_obj(vpiHandle h) {
     } else std::cerr << "Neither FullName, nor Name available\n";
 
     if(const char *s = vpi_get_str(vpiDecompile, h)) {
-      //Produces string literals like 16'h4fc0
+      // Produces string literals like 16'h4fc0
       std::cout << "Decompilation available: " << s << std::endl;
       out += s;
     } else {
@@ -354,9 +371,9 @@ int search_width(vpiHandle h) {
       std::string name = visitref_obj(h);
       std::cout << "Finding width of " << name << std::endl;
       auto match = std::find_if(netsCurrent.cbegin(), netsCurrent.cend(),
-        [&] (const vars& s) {
+          [&] (const vars& s) {
           return s.name == name;
-        });
+          });
       if(match != netsCurrent.cend()) {
         std::cout << "Operand width: " << *(match->width) << std::endl;
         return *(match->width);
@@ -367,11 +384,11 @@ int search_width(vpiHandle h) {
     }
     case UHDM::uhdmconstant:
     case UHDM::uhdmparameter:
-      return -1;
+                               return -1;
     default: 
-      std::cout << "Operand width: UNKNOWN\n";
-      std::cout << "Operand type: " <<  UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)(((const uhdm_handle *)h)->type)) << std::endl;
-      return -1;
+                               std::cout << "Operand width: UNKNOWN\n";
+                               std::cout << "Operand type: " <<  UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)(((const uhdm_handle *)h)->type)) << std::endl;
+                               return -1;
   }
   return -1;
 }
@@ -481,7 +498,7 @@ std::tuple <bool, std::list <std::string>> visitOperation(vpiHandle h) {
                   ((const uhdm_handle *)actual)->type != UHDM::uhdmconstant)
                 constantsOnly &= false;
             if(((const uhdm_handle *)oph)->type != UHDM::uhdmparameter &&
-              ((const uhdm_handle *)oph)->type != UHDM::uhdmconstant) {
+                ((const uhdm_handle *)oph)->type != UHDM::uhdmconstant) {
               constantsOnly &= false;
             }
             if(!constantsOnly) {
@@ -529,9 +546,9 @@ std::tuple <bool, std::list <std::string>> visitOperation(vpiHandle h) {
               if(((const uhdm_handle *)actual)->type != UHDM::uhdmparameter &&
                   ((const uhdm_handle *)actual)->type != UHDM::uhdmconstant)
                 constantsOnly &= false;
-          
+
             if(((const uhdm_handle *)oph)->type != UHDM::uhdmparameter &&
-              ((const uhdm_handle *)oph)->type != UHDM::uhdmconstant) {
+                ((const uhdm_handle *)oph)->type != UHDM::uhdmconstant) {
               constantsOnly &= false;
             }
             if(constantsOnly) {
@@ -546,10 +563,10 @@ std::tuple <bool, std::list <std::string>> visitOperation(vpiHandle h) {
       }
       //closing operand
       if(type == 33 ||
-         type == 34 || 
-         type == 95 || 
-         type == 71 || 
-         type == 72)
+          type == 34 || 
+          type == 95 || 
+          type == 71 || 
+          type == 72)
         out += " }";
       else if(type == 67) 
         out += " )";
@@ -557,8 +574,8 @@ std::tuple <bool, std::list <std::string>> visitOperation(vpiHandle h) {
       if(constantsOnly) 
         std::cout << "Operation is constants-only: " << out << std::endl;
       //if(!chooseVars) {
-        std::cout << "Inserting Operation\n";
-        current.push_front(out);
+      std::cout << "Inserting Operation\n";
+      current.push_front(out);
       //}
       if(chooseVars) {
         std::cout << "Inserting Variables\n";
@@ -604,7 +621,7 @@ std::list <std::string> visitCond(vpiHandle h) {
     case UHDM::uhdmindexed_part_select :
     case UHDM::uhdmbit_select :
     case UHDM::uhdmref_obj :
-    //case UHDM::uhdmexpr :
+      //case UHDM::uhdmexpr :
       std::cout << "Leafs found\n";
       current = visitLeaf(h);
       break;
@@ -620,7 +637,7 @@ std::list <std::string> visitCond(vpiHandle h) {
     case UHDM::uhdmconstant :
     case UHDM::uhdmparameter : 
       std::cout << "Const/Param found at cond; ignored\n";
-			//current.push_back(visitLeaf(h));
+      //current.push_back(visitLeaf(h));
     default: 
       std::cout << "UNKNOWN type found\n";
       break;
@@ -638,7 +655,7 @@ void visitIfElse(vpiHandle h) {
   } else std::cerr << "No condition found\n";
   std::cout << "Saving to list: \n";
   print_list(out);
-  
+
   std::list <std::string> tmp(out);
   ifs.insert(ifs.end(), out.begin(), out.end());
   all.insert(all.end(), tmp.begin(), tmp.end());
@@ -675,38 +692,116 @@ void visitCase(vpiHandle h) {
   return;
 }
 
-void visitAssignment(vpiHandle h) {
-  std::cout << "Walking assignment\n";
-  if(vpiHandle rhs = vpi_handle(vpiRhs, h)) {
-    if(((uhdm_handle *)rhs)->type == UHDM::uhdmoperation) {
-      std::cout << "Operation found in RHS\n";
-      const int n = vpi_get(vpiOpType, rhs);
-      if (n == 32) {
-        visitTernary(rhs);
-      }
-      else {
-        if(vpiHandle operands = vpi_iterate(vpiOperand, rhs)) {
-          while(vpiHandle operand = vpi_scan(operands)) {
-            std::cout << "Operand type: "
-              << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((uhdm_handle *)operand)->type) << std::endl;
-            if(((uhdm_handle *)operand)->type == UHDM::uhdmoperation) {
-              std::cout << "\nOperand is operation; checking if ternary\n";
-              findTernaryInOperation(operand);
-              vpi_release_handle(operand);
-            }
-          }
-          vpi_release_handle(operands);
+bool isOpTernary(vpiHandle h) {
+  const int n = vpi_get(vpiOpType, h);
+  if (n == vpiConditionOp) {
+    return true;
+  }
+  return false;
+}
+void visitOperation2(vpiHandle h) {
+  if (isOpTernary(h)) {
+    std::cout << "Ternary found in RHS\n";
+    visitTernary(h);
+  } else {
+    if(vpiHandle operands = vpi_iterate(vpiOperand, h)) {
+      while(vpiHandle operand = vpi_scan(operands)) {
+        std::cout << "Walking operand | Type: "
+          << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((uhdm_handle *)operand)->type) << std::endl;
+        if(((uhdm_handle *)operand)->type == UHDM::uhdmoperation) {
+          std::cout << "\nOperand is an operation; recursing" << std::endl;
+          visitOperation2(operand);
         }
+        vpi_release_handle(operand);
       }
-    	vpi_release_handle(rhs);
+      vpi_release_handle(operands);
+    }
+  }
+}
+
+void visitAssignmentForDependencies(vpiHandle h) {
+  // TODO: if LHS is like a[i], or {a,...} what to do?
+
+  // clear rhsOperandsTemp -- once per assignment
+  rhsOperandsTemp.clear();
+  std::cout << "Walking assignment for dependency generation\n";
+  if(vpiHandle rhs = vpi_handle(vpiRhs, h)) {
+    /* In BlackParrot (at least), RHS in an assignment can only be:
+     * Type: bit_select
+     * Type: constant
+     * Type: hier_path
+     * Type: indexed_part_select    
+     * Type: part_select
+     * Type: ref_obj
+     * Type: var_select
+     * Type: operation           
+     */
+    std::cout << "Walking RHS | Type: "
+      << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)rhs)->type) << std::endl;
+    // save for creating the dependencies map everything except for when RHS is constnat (ignored)
+    UHDM::any* op_obj = (UHDM::any *)(((uhdm_handle *)rhs)->object);
+    rhsOperandsTemp.insert(UHDM::vPrint(op_obj)); // TODO what if the dependent operation contains a ternary? Easier to reference the ternary
+
+    if (vpiHandle lhs = vpi_handle(vpiLhs, h)) {
+      /* In BP, LHS can only be:
+       * Type: bit_select                
+       * Type: logic_net
+       * Type: hier_path                 
+       * Type: indexed_part_select       
+       * Type: part_select               
+       * Type: ref_obj                   
+       * Type: var_select                
+       * Type: operation                 
+       */
+      std::cout << "Walking LHS | Type: "
+        << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)lhs)->type) << std::endl;
+      std::string lhsStr;
+      if (((uhdm_handle *)lhs)->type == UHDM::uhdmoperation) {
+        // if LHS is an operation, it's a concat operation
+        assert((const int)vpi_get(vpiOpType, lhs) == vpiConcatOp);
+        // TODO how to use this?
+        // and uhdmpart_sel
+      }
+      UHDM::any* op_obj = (UHDM::any *)(((uhdm_handle *)lhs)->object);
+      lhsStr = UHDM::vPrint(op_obj);
+
+      // TODO depth is 0 for now; it should be the register-hop count
+      dependencies.emplace(lhsStr, std::make_pair(0, rhsOperandsTemp));
+      std::cout << "Dependencies: " << lhsStr << " :: ";
+      for (const auto& element : rhsOperandsTemp)
+        std::cout << "\t" << element << std::endl;
+      rhsOperandsTemp.clear();
+      vpi_release_handle(lhs);
     } else
-      std::cout << "Not an operation on the RHS; ignoring\n";
-  } else
+      std::cerr << "Assignment without LHS handle\n";
+
+    vpi_release_handle(rhs);
+  } else 
     std::cerr << "Assignment without RHS handle\n";
+}
+
+void visitAssignment(vpiHandle h) {
+  // both vpiContAssign and vpiAssign
+  std::cout << "Walking assignment | Type: "
+    << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)h)->type) << std::endl;
+  if(vpiHandle rhs = vpi_handle(vpiRhs, h)) {
+    std::cout << "Walking RHS | Type: "
+      << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)rhs)->type) << std::endl;
+    if(((uhdm_handle *)rhs)->type == UHDM::uhdmoperation) {
+      std::cout << "Walking operation" << std::endl;
+      visitOperation2(rhs);
+    } else
+      std::cout << "Not an operation on the RHS" << std::endl;
+
+    vpi_release_handle(rhs);
+  } else {
+    std::cerr << "No RHS handle on the assignment" << std::endl;
+  }
   return;
 }
 
 void visitBlocks(vpiHandle h) {
+  // always_ff, always_comb, always and possibly others are all recognized as always
   std::cout << "Block type: " 
     << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)h)->type) << std::endl;
   switch(((const uhdm_handle *)h)->type) {
@@ -746,6 +841,7 @@ void visitBlocks(vpiHandle h) {
       break;
     }
     case UHDM::uhdmassignment : {
+      // uses the same visitor for contAssign
       std::cout << "Assignment found; checking for ternaries\n";
       visitAssignment(h);
       break;
@@ -781,23 +877,30 @@ void findTernaryInOperation(vpiHandle h) {
 void visitTernary(vpiHandle h) {
   std::list <std::string> current;
   std::cout << "Analysing ternary operation\n";
-  vpiHandle i = vpi_iterate(vpiOperand, h);
   bool first = true;
-  if(i) {
+  if(vpiHandle i = vpi_iterate(vpiOperand, h)) {
     while (vpiHandle op = vpi_scan(i)) {
-      std::cout << "Operand type: " 
-        << ((const uhdm_handle *)op)->type << std::endl;
+      std::cout << "Walking " 
+          << (first ? "condition" : "second/third") << " operand | Type: " 
+          << ((const uhdm_handle *)op)->type << std::endl;
 
       switch(((const uhdm_handle *)op)->type) {
         case UHDM::uhdmoperation :
           {
             std::cout << "Operation found in ternary\n";
-            findTernaryInOperation(op);
+            if(isOpTernary(op)) {
+              visitTernary(op);
+            }
+            //if(first) {
+            //  std::list <std::string> out;
+            //  bool k;
+            //  std::tie(k, out) = visitOperation(op);
+            //  current.insert(current.end(), out.begin(), out.end());
+            //  first = false;
+            //}
             if(first) {
-              std::list <std::string> out;
-              bool k;
-              std::tie(k, out) = visitOperation(op);
-              current.insert(current.end(), out.begin(), out.end());
+              UHDM::any* op_obj = (UHDM::any *)(((uhdm_handle *)op)->object);
+              current.push_back(UHDM::vPrint(op_obj));
               first = false;
             }
             break;
@@ -807,13 +910,16 @@ void visitTernary(vpiHandle h) {
         case UHDM::uhdmbit_select :
         case UHDM::uhdmconstant : 
         case UHDM::uhdmparameter :
-        //case UHDM::uhdmexpr: //look into this again!
           if(first) {
             std::cout << "Leaf found in ternary\n";
 
-            std::list <std::string> tmp = visitLeaf(op);
-            current.insert(current.end(), tmp.begin(), tmp.end());
+            //std::list <std::string> tmp = visitLeaf(op);
+            //current.insert(current.end(), tmp.begin(), tmp.end());
+            //first = false;
+            UHDM::any* op_obj = (UHDM::any *)(((uhdm_handle *)op)->object);
+            current.push_back(UHDM::vPrint(op_obj));
             first = false;
+
           }
           break;
         case UHDM::uhdmhier_path :
@@ -834,7 +940,8 @@ void visitTernary(vpiHandle h) {
     }
     vpi_release_handle(i);
   } else
-    std::cout << "Couldn't iterate through statements!!\n";
+    std::cerr << "Couldn't iterate through operands" << std::endl;
+
   std::cout << "Saving ternaries...\n";
   print_list(current);
   ternaries.insert(ternaries.end(), current.begin(), current.end());
@@ -984,14 +1091,14 @@ void visitVariables(vpiHandle i) {
         break;
       }
       default: {
-          int t = vpi_get(vpiNetType, h);
-          struct vars tmp;
-          tmp.type = t == 48 ? "Reg" :
-            "Wire(" + UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)h)->type) + ")";
-          tmp.name = vpi_get_str(vpiFullName, h);
-          tmp.dims = width(h, tmp.width);
-          netsCurrent.push_back(tmp);
-          break;
+        int t = vpi_get(vpiNetType, h);
+        struct vars tmp;
+        tmp.type = t == 48 ? "Reg" :
+          "Wire(" + UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)h)->type) + ")";
+        tmp.name = vpi_get_str(vpiFullName, h);
+        tmp.dims = width(h, tmp.width);
+        netsCurrent.push_back(tmp);
+        break;
       }
     }
     vpi_release_handle(h);
@@ -1084,7 +1191,7 @@ void visitTopModules(vpiHandle ti) {
           file = s;
         std::cout << "Walking module: " + defName + objectName + "\n";// +
         ", file:" + file +
-        ", line:" + std::to_string(vpi_get(vpiLineNo, mh)) + "\n";
+          ", line:" + std::to_string(vpi_get(vpiLineNo, mh)) + "\n";
 
         // Params
         std::cout << "****************************************\n";
@@ -1131,16 +1238,27 @@ void visitTopModules(vpiHandle ti) {
         std::cout << "****************************************\n";
         std::cout << "      *** Now finding cont. assigns  ***\n";
         std::cout << "****************************************\n";
+        vpiHandle cid = vpi_iterate(vpiContAssign, mh);
         vpiHandle ci = vpi_iterate(vpiContAssign, mh);
+        // finds both when decared as:
+        //   wire x = ...
+        //   assign x = ...
         if(ci) {
-          std::cout << "Found continuous assign statements\n";
-            while (vpiHandle ch = vpi_scan(ci)) {
-              std::cout << "ContAssign Info -> " <<
-                std::string(vpi_get_str(vpiFile, ch)) <<
-                ", line:" << std::to_string(vpi_get(vpiLineNo, ch)) << std::endl;
-              visitAssignment(ch);
-              vpi_release_handle(ch);
-            }
+          std::cout << "Found continuous assign statements \n";
+          while (vpiHandle ch = vpi_scan(cid)) {
+            std::cout << "ContAssign Info -> " <<
+              std::string(vpi_get_str(vpiFile, ch)) <<
+              ", line:" << std::to_string(vpi_get(vpiLineNo, ch)) << std::endl;
+            visitAssignmentForDependencies(ch);
+            vpi_release_handle(ch);
+          }
+          while (vpiHandle ch = vpi_scan(ci)) {
+            std::cout << "ContAssign Info -> " <<
+              std::string(vpi_get_str(vpiFile, ch)) <<
+              ", line:" << std::to_string(vpi_get(vpiLineNo, ch)) << std::endl;
+            visitAssignment(ch);
+            vpi_release_handle(ch);
+          }
           vpi_release_handle(ci);
         } else std::cout << "No continuous assign statements found in current module\n";
 
@@ -1151,10 +1269,13 @@ void visitTopModules(vpiHandle ti) {
         vpiHandle ai = vpi_iterate(vpiProcess, mh);
         if(ai) {
           std::cout << "Found always block\n";
-            while(vpiHandle ah = vpi_scan(ai)) {
-              visitBlocks(ah);
-              vpi_release_handle(ah);
-            }
+          while(vpiHandle ah = vpi_scan(ai)) {
+            std::cout << "vpiProcess Info -> " <<
+              std::string(vpi_get_str(vpiFile, ah)) <<
+              ", line:" << std::to_string(vpi_get(vpiLineNo, ah)) << std::endl;
+            visitBlocks(ah);
+            vpi_release_handle(ah);
+          }
           vpi_release_handle(ai);
         } else std::cout << "No always blocks in current module\n";
 
@@ -1200,7 +1321,7 @@ void visitTopModules(vpiHandle ti) {
           }
           vpi_release_handle(i);
         } else
-         std::cout << "No children genScopeArray found\n";
+          std::cout << "No children genScopeArray found\n";
 
         if (vpi_get(vpiType, mh) == vpiGenScopeArray) {
           vpiHandle i = vpi_iterate(vpiGenScope, mh);
@@ -1268,7 +1389,7 @@ int main(int argc, const char** argv) {
 
   SURELOG::FileSystem* const fileSystem = SURELOG::FileSystem::getInstance();
   const std::filesystem::path outputDir = 
-          fileSystem->toPlatformAbsPath(clp->getOutputDirId());
+    fileSystem->toPlatformAbsPath(clp->getOutputDirId());
   std::cout << "Output dir for *.sigs: "<< outputDir << std::endl;
 
   if (the_design) {
@@ -1299,7 +1420,7 @@ int main(int argc, const char** argv) {
     } else std::cout << "No uhdmtopModules found!";
   }
 
-  
+
   std::cout << "\n\n\n*** Printing all conditions ***\n\n\n";
   print_list(all, true, outputDir / "all.sigs");
   std::cout << "\n\n\n*** Printing case conditions ***\n\n\n";
@@ -1312,13 +1433,13 @@ int main(int argc, const char** argv) {
   std::ofstream file;
   file.open("../surelog.run/all.nets", std::ios_base::app);
   for (auto const &i: nets) {
-      file << i.name << " ";
-      int k=0;
-      while(k<i.dims) {
-        file << i.width[k] << " ";
-        k++;
-      }
-      file << std::endl;
+    file << i.name << " ";
+    int k=0;
+    while(k<i.dims) {
+      file << i.width[k] << " ";
+      k++;
+    }
+    file << std::endl;
   }
   file.close();
   std::cout << "\n\n\n*** Printing params ***\n\n\n"; //why?
