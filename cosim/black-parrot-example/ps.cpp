@@ -185,12 +185,15 @@ int ps_main(int argc, char **argv) {
       "and HP0 connections)\n",
       num_times * outer, (allocated_dram) >> 20);
   zpl->shell_write(GP1_DRAM_BASE_ADDR, 0x12345678, mask1);
+	bsg_pr_info("shell write to GP1_DRAM_BASE_ADDR complete\n");
 
-  for (int s = 0; s < outer; s++)
+  for (int s = 0; s < outer; s++) {
     for (int t = 0; t < num_times; t++) {
       zpl->shell_write(GP1_DRAM_BASE_ADDR + 32768 * t + s * 4, 0x1ADACACA + t + s,
                       mask1);
     }
+		bsg_pr_info("outer %d of %d complete\n", s, outer);
+	}
   bsg_pr_info("ps.cpp: finished write L2 %ld times over %ld MB\n",
               num_times * outer, (allocated_dram) >> 20);
 
@@ -215,12 +218,16 @@ int ps_main(int argc, char **argv) {
       "ps.cpp: attempting to read L2 %ld times over %ld MB (testing ARM GP1 "
       "and HP0 connections)\n",
       num_times * outer, (allocated_dram) >> 20);
-  for (int s = 0; s < outer; s++)
-    for (int t = 0; t < num_times; t++)
-      if (zpl->shell_read(GP1_DRAM_BASE_ADDR + 32768 * t + s * 4) == 0x1ADACACA + t + s)
+  for (int s = 0; s < outer; s++) {
+    for (int t = 0; t < num_times; t++) {
+      if (zpl->shell_read(GP1_DRAM_BASE_ADDR + 32768 * t + s * 4) == 0x1ADACACA + t + s) {
         matches++;
-      else
+			} else {
         mismatches++;
+			}
+		}
+		bsg_pr_info("outer %d of %d complete\n", s, outer);
+	}
 
   bsg_pr_info("ps.cpp: READ access through BP (some L1 coherence mismatch "
               "expected): %d matches, %d mismatches, %f\n",
@@ -229,7 +236,6 @@ int ps_main(int argc, char **argv) {
 
 #endif // DRAM_TEST
 
-#ifdef ZYNQ
   // Must zero DRAM for FPGA Linux boot, because opensbi payload mode
   //   obliterates the section names of the payload (Linux)
   if (ZERO_DRAM) {
@@ -239,7 +245,6 @@ int ps_main(int argc, char **argv) {
       zpl->shell_write(gp1_addr_base + i, 0x0, mask1);
     }
   }
-#endif
 
   bsg_pr_info("ps.cpp: beginning nbf load\n");
   nbf_load(zpl, argv[1]);
