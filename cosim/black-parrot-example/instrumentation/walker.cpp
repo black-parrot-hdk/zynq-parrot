@@ -269,12 +269,14 @@ std::list <std::string> visitExpr(vpiHandle h) {
       out.push_back(tmp);
       break;
     }
+    case UHDM::uhdmlogic_net :
     case UHDM::uhdmref_obj : {
       std::cout << "Ref object at leaf\n";
       std::string tmp = visitref_obj(h);
       out.push_back(tmp);
       break;
     }
+    //case UHDM::uhdmvar_select : // TODO this needs to fetch the vpiActual to get out of the scope
     case UHDM::uhdmbit_select : {
       std::cout << "Bit select at leaf\n";
       std::string tmp = visitbit_sel(h);
@@ -822,7 +824,7 @@ void visitAssignmentForDependencies(vpiHandle h) {
             lhsType == UHDM::uhdmindexed_part_select ||
             lhsType == UHDM::uhdmref_obj ||
             lhsType == UHDM::uhdmvar_select);
-          std::list <std::string> tmp = visitExpr(h);
+          std::list <std::string> tmp = visitExpr(lhs);
           assert(tmp.size() == 1);
           lhsStr = tmp.front();
         }
@@ -985,6 +987,9 @@ void visitTernary(vpiHandle h) {
 
             std::list <std::string> tmp = visitExpr(op);
             current.insert(current.end(), tmp.begin(), tmp.end());
+
+
+
             first = false;
           }
           break;
