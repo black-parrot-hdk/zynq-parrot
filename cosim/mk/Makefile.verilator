@@ -13,7 +13,7 @@ VV_OPTS += $(addprefix +define+,$(DEFINES))
 CFLAGS += -DVERILATOR
 CFLAGS += -DHOST_$(call upper,$(HOST))
 CFLAGS += $(addprefix -D,$(DEFINES))
-CFLAGS += -std=c++20
+CFLAGS += -std=c++14
 
 LDFLAGS += -L$(BP_SDK_INSTALL_DIR)/lib
 LDFLAGS += -lboost_coroutine -lboost_context -lboost_system

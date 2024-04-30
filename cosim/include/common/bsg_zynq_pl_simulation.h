@@ -31,6 +31,18 @@ using namespace bsg_nonsynth_dpi;
 using namespace boost::coroutines2;
 using namespace std::placeholders;
 
+
+// Copy this to C++14 so we don't have to upgrade
+// https://stackoverflow.com/questions/3424962/where-is-erase-if
+// for std::vector
+namespace std {
+    template <class T, class A, class Predicate>
+    void erase_if(vector<T, A>& c, Predicate pred) {
+        c.erase(remove_if(c.begin(), c.end(), pred), c.end());
+    }
+}
+
+
 class bsg_zynq_pl_simulation {
 public:
     virtual void start(void) { create_peripherals(); }
@@ -129,6 +141,7 @@ protected:
             (*ptr)();
             return !(*ptr);
         });
+
         pollm_helper();
         polls_helper();
         tick();

@@ -42,3 +42,4 @@ bsg_manycore_machine.h
 boost/
 .Xil/
 bsg_bootrom.*
+NA/
