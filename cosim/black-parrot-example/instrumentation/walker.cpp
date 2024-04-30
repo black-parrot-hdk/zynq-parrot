@@ -60,7 +60,7 @@ struct vars {
 
 // global data structures
 std::list <vars> nets, netsCurrent; // for storing nets discovered
-
+std::list <std::list <std::string>> csvs;
 std::list <std::string>   all,  ternaries,  cases,  ifs;  // for storing specific control expressions (see definition in main README.md)
 std::list <int>           nAll, nTernaries, nCases, nIfs; // numbers for quick print debug
 std::map <std::string, int> 
@@ -80,6 +80,22 @@ static std::string_view ltrim(std::string_view str, char c) {
   return str;
 }
 // prints out discovered control expressions to file or stdout
+void print_csvs(std::string fileName = "") {
+  std::cout << "Printing CSVs" << std::endl;
+  std::ofstream file;
+  file.open(fileName, std::ios_base::out);
+  for (auto const &csv : csvs) {
+    for (auto j = csv.begin(); j != csv.end(); ++j) {
+      file << *j;
+      if (std::next(j) != csv.end()) {
+        file << "   dependsOn   "; 
+      }
+    }
+    file << std::endl;
+  }
+  file.close();
+}
+
 void print_list(std::list<std::string> &list, bool f = false, std::string fileName = "", bool std = false) {
   std::ofstream file;
   if(f)
@@ -111,6 +127,7 @@ std::string visitref_obj(vpiHandle h) {
         break;
       case UHDM::uhdmconstant:
       case UHDM::uhdmenum_const :
+      case UHDM::uhdmenum_var :
       default :
         std::cout << "Default actual object\n";
         if (const char* s = vpi_get_str(vpiFullName, actual))
@@ -943,6 +960,7 @@ void findTernaryInOperation(vpiHandle h) {
 
 void visitTernary(vpiHandle h) {
   std::list <std::string> current;
+  std::list <std::list <std::string>> csv;
   std::cout << "Analysing ternary operation\n";
   bool first = true;
   if(vpiHandle i = vpi_iterate(vpiOperand, h)) {
@@ -989,6 +1007,22 @@ void visitTernary(vpiHandle h) {
             current.insert(current.end(), tmp.begin(), tmp.end());
 
 
+            // TODO Do this for hier path (not operations) 
+            assert(tmp.size() == 1);
+            std::cout << "Checking dependents on " << tmp.front() << std::endl;
+            if (dependencies.find(tmp.front()) != dependencies.end()) {
+              std::cout << "Ternary " << tmp.front() << " depends on " << std::endl;
+              for (const auto& it : dependencies[tmp.front()]) {
+                std::cout << "\t" << it << std::endl;
+              }
+              std::unordered_set <std::string> deps = dependencies[tmp.front()];
+              tmp.insert(tmp.end(), deps.begin(), deps.end());
+
+            } else
+              std::cout << "Dependencies not found" << std::endl;
+
+            // insert the ternary expression list, dependencies will have been added if available
+            csv.push_back(tmp);
 
             first = false;
           }
@@ -1016,6 +1050,7 @@ void visitTernary(vpiHandle h) {
   std::cout << "Saving ternaries...\n";
   print_list(current);
   ternaries.insert(ternaries.end(), current.begin(), current.end());
+  csvs.insert(csvs.end(), csv.begin(), csv.end());
   all.insert(all.end(), current.begin(), current.end());
   return;
 }
@@ -1512,6 +1547,7 @@ int main(int argc, const char** argv) {
   print_list(ternaries, true, outputDir / "tern.sigs");
   std::cout << "\n\n\n*** Printing variables ***\n\n\n";
   std::ofstream file;
+  print_csvs(outputDir / "terns.csv");
   file.open("../surelog.run/all.nets", std::ios_base::app);
   for (auto const &i: nets) {
     file << i.name << " ";
