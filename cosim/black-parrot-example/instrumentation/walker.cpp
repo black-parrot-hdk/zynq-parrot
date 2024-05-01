@@ -96,6 +96,26 @@ void print_csvs(std::string fileName = "") {
   file.close();
 }
 
+void print_list(std::unordered_map<std::string, std::unordered_set<std::string>> &map, bool f = false, std::string fileName = "", bool std = false) {
+  std::ofstream file;
+  if(f)
+    file.open(fileName, std::ios_base::out);
+
+  for (const auto& pair : map) {
+    if(std) std::cout << pair.first << ": " << std::endl;
+    if(f) file << pair.first << ": " << std::endl;;
+    for (const std::string& item : pair.second) {
+      if(std) std::cout << "\t" << item << std::endl;
+      if(f) file << "\t" << item << std::endl;
+    }
+  }
+
+  if(f)
+    file.close();
+
+  return;
+}
+
 void print_list(std::list<std::string> &list, bool f = false, std::string fileName = "", bool std = false) {
   std::ofstream file;
   if(f)
@@ -750,13 +770,13 @@ void visitOperation2(vpiHandle h) {
 }
 
 // takes any RHS of an assignment and prints out operands
-void printOpsInExpr(vpiHandle h) {
+void printOperandsInExpr(vpiHandle h, std::unordered_set<std::string> *out, bool print=false) {
   assert(vpi_get(vpiType, h) == vpiExpr);
   switch(((const uhdm_handle *)h)->type) {
     case UHDM::uhdmoperation :  
       if(vpiHandle i = vpi_iterate(vpiOperand, h))
         while (vpiHandle op = vpi_scan(i))
-          printOpsInExpr(op);
+          printOperandsInExpr(op, out);
       else
         std::cerr << "No operands found for operation!\n";
       break;
@@ -765,12 +785,12 @@ void printOpsInExpr(vpiHandle h) {
     case UHDM::uhdmbit_select : {
       std::list <std::string> tmp = visitExpr(h);
       assert(tmp.size() == 1);
-      rhsOperands.insert(tmp.front());
+      out->insert(tmp.front());
       // TODO trim bit or part selects
       break;
     }
     case UHDM::uhdmhier_path : {
-      rhsOperands.insert(visithier_path(h));
+      out->insert(visithier_path(h));
       break;
     }
     case UHDM::uhdmconstant :
@@ -778,8 +798,13 @@ void printOpsInExpr(vpiHandle h) {
       // do not care about these
       break;
     default:
-      std::cout << "UNKNOWN type in printOpsInExpr" << std::endl;
+      std::cout << "UNKNOWN type while operands-printing" << std::endl;
       break;
+  }
+  if(print) {
+    std::cout << "Operands in given expression:" << std::endl;
+    for (auto const& ops: *out)
+      std::cout << "\t" << ops << std::endl;
   }
   return;
 }
@@ -808,7 +833,7 @@ void visitAssignmentForDependencies(vpiHandle h) {
     //UHDM::any* op_obj = (UHDM::any *)(((uhdm_handle *)rhs)->object);
     //rhsOperandsTemp.insert(UHDM::vPrint(op_obj));
 
-    printOpsInExpr(rhs); // updates rhsOperands
+    printOperandsInExpr(rhs, &rhsOperands); // updates rhsOperands
 
     if (vpiHandle lhs = vpi_handle(vpiLhs, h)) {
       /* In BP, LHS can only be:
@@ -981,8 +1006,26 @@ void visitTernary(vpiHandle h) {
               bool k;
               std::tie(k, out) = visitOperation(op);
               current.insert(current.end(), out.begin(), out.end());
+
+              UHDM::any* op_obj = (UHDM::any *)(((uhdm_handle *)op)->object);
+              std::cout << "Finding dependencies of an Expr:" << UHDM::vPrint(op_obj) << std::endl;
+              std::unordered_set <std::string> operands;
+              printOperandsInExpr(op, &operands, true);
+              for (auto &ref : operands) {
+                std::cout << "\tDepency on Operand: " << ref << std::endl;
+                if (dependencies.find(ref) != dependencies.end()) {
+                  std::unordered_set <std::string> deps = dependencies[ref];
+                  for (auto const& ref: deps)
+                    std::cout << "\t\t<< " << ref << std::endl;
+                  out.insert(out.end(), deps.begin(), deps.end());
+                } else
+                  std::cout << "Dependency on Operand not found" << std::endl;
+              }
+              csv.push_back(out);
+
               first = false;
             }
+            // Same comment as below
             //UHDM::any* op_obj = (UHDM::any *)(((uhdm_handle *)op)->object);
             //current.push_back(UHDM::vPrint(op_obj));
             break;
@@ -1031,8 +1074,25 @@ void visitTernary(vpiHandle h) {
           if(first) {
             std::cout << "Struct found in ternary\n";
             // cannot use vPrint since it doesn't do the parent path resolution like we do here
-            std::string out = visithier_path(op);
-            current.push_back(out);
+            std::list <std::string> out;
+            out.push_back(visithier_path(op));
+            current.push_back(out.front());
+
+            std::cout << "Checking dependents on " << out.front() << std::endl;
+            if (dependencies.find(out.front()) != dependencies.end()) {
+              std::cout << "Ternary " << out.front() << " depends on " << std::endl;
+              for (const auto& it : dependencies[out.front()]) {
+                std::cout << "\t" << it << std::endl;
+              }
+              std::unordered_set <std::string> deps = dependencies[out.front()];
+              out.insert(out.end(), deps.begin(), deps.end());
+
+            } else
+              std::cout << "Dependencies not found" << std::endl;
+
+            // insert the ternary expression list, dependencies will have been added if available
+            csv.push_back(out);
+
             first = false;
           }
           break;
@@ -1545,9 +1605,11 @@ int main(int argc, const char** argv) {
   print_list(ifs, true, outputDir / "if.sigs");
   std::cout << "\n\n\n*** Printing ternary conditions ***\n\n\n";
   print_list(ternaries, true, outputDir / "tern.sigs");
-  std::cout << "\n\n\n*** Printing variables ***\n\n\n";
+  std::cout << "\n\n\n*** Printing CSV ***\n\n\n";
   std::ofstream file;
-  print_csvs(outputDir / "terns.csv");
+  print_csvs(outputDir / "tern.csv");
+  print_list(dependencies, true, outputDir / "all.deps");
+  std::cout << "\n\n\n*** Printing variables ***\n\n\n";
   file.open("../surelog.run/all.nets", std::ios_base::app);
   for (auto const &i: nets) {
     file << i.name << " ";
