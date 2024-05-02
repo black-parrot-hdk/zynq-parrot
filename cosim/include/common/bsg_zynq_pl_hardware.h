@@ -143,14 +143,14 @@ public:
         volatile int32_t *ptr32 = axil_get_ptr32(address);
         int32_t data = *ptr32;
 
-        bsg_pr_debug_pl("  bsg_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n",
+        bsg_pr_dbg_pl("  bsg_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n",
                         address, data);
 
         return data;
     }
 
     inline void axil_write(uintptr_t address, int32_t data, uint8_t wstrb) {
-        bsg_pr_debug_pl("  bsg_zynq_pl: AXI writing [%" PRIxPTR
+        bsg_pr_dbg_pl("  bsg_zynq_pl: AXI writing [%" PRIxPTR
                         "]=%8.8x mask %" PRIu8 "\n",
                         address, data, wstrb);
 
