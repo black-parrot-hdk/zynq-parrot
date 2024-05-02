@@ -61,8 +61,9 @@ struct vars {
 // global data structures
 std::list <vars> nets, netsCurrent; // for storing nets discovered
 std::list <std::list <std::string>> csvs;
-std::list <std::string>   all,  ternaries,  cases,  ifs;  // for storing specific control expressions (see definition in main README.md)
-std::list <int>           nAll, nTernaries, nCases, nIfs; // numbers for quick print debug
+std::list <std::string> all, ternaries, cases, ifs;  // for storing specific control expressions (see definition in main README.md)
+// TODO make unordered_set
+std::list <int> nTernaries, nCases, nIfs; // incremental numbers for debug
 std::map <std::string, int> 
 paramsAll, params; // for params, needed for supplanting in expressions expansions
 
@@ -235,6 +236,23 @@ std::string visitindexed_part_sel(vpiHandle h) {
   return out;
 }
 
+std::string visitvar_sel(vpiHandle h) {
+  std::string out = "";
+  std::cout << "Walking var select\n";
+  out += vpi_get_str(vpiFullName, h);
+
+  if(vpiHandle indh = vpi_iterate(vpiIndex, h)) {
+    while(vpiHandle ind = vpi_scan(indh)) {
+      out += "[";
+      out += visitExpr(ind);
+      out += "]";
+    }
+    vpi_release_handle(indh);
+    vpi_release_handle(ind);
+  } else std::cerr << "Indices not found" << std::endl;
+  return out;
+}
+
 std::string visitpart_sel(vpiHandle h) {
   std::string out = "";
   std::cout << "Walking part select\n";
@@ -313,7 +331,6 @@ std::list <std::string> visitExpr(vpiHandle h) {
       out.push_back(tmp);
       break;
     }
-    //case UHDM::uhdmvar_select : // TODO this needs to fetch the vpiActual to get out of the scope
     case UHDM::uhdmbit_select : {
       std::cout << "Bit select at leaf\n";
       std::string tmp = visitbit_sel(h);
@@ -323,6 +340,12 @@ std::list <std::string> visitExpr(vpiHandle h) {
     case UHDM::uhdmpart_select : {
       std::cout << "Part select at leaf\n";
       std::string tmp = visitpart_sel(h);
+      out.push_back(tmp);
+      break;
+    }
+    case UHDM::uhdmvar_select : {
+      std::cout << "Var select at leaf\n";
+      std::string tmp = visitvar_sel(h);
       out.push_back(tmp);
       break;
     }
@@ -877,7 +900,7 @@ void visitAssignmentForDependencies(vpiHandle h) {
         dependencies.emplace(lhsStr, rhsOperands);
         std::cout << "Dependencies:"<< std::endl << lhsStr << std::endl;
         for (const auto& element : rhsOperands)
-          std::cout << "\t<<" << element << std::endl;
+          std::cout << "\t<< " << element << std::endl;
         rhsOperands.clear();
       }
       vpi_release_handle(lhs);
@@ -983,9 +1006,26 @@ void findTernaryInOperation(vpiHandle h) {
   return;
 }
 
+void printRecursiveDependents(std::string ref, std::unordered_set<std::string> *out, bool print=false) {
+  if (dependencies.find(ref) != dependencies.end()) {
+    std::unordered_set <std::string> deps = dependencies[ref];
+    for (auto const& ref: deps) {
+      std::cout << "\t\t<< " << ref << std::endl;
+      printRecursiveDependents(ref, out);
+    }
+    out->insert(deps.begin(), deps.end());
+  } else
+    std::cout << "\t\tNot found" << std::endl;
+  if(print)
+    for (auto const& it: *out)
+      std::cout << "\t\tParent: " << it << std::endl;
+  return;
+}
+
+
 void visitTernary(vpiHandle h) {
   std::list <std::string> current;
-  std::list <std::list <std::string>> csv;
+  std::list <std::list <std::string>> csv; // has to be a list to preserve hierarchical parental order
   std::cout << "Analysing ternary operation\n";
   bool first = true;
   if(vpiHandle i = vpi_iterate(vpiOperand, h)) {
@@ -1011,15 +1051,11 @@ void visitTernary(vpiHandle h) {
               std::cout << "Finding dependencies of an Expr:" << UHDM::vPrint(op_obj) << std::endl;
               std::unordered_set <std::string> operands;
               printOperandsInExpr(op, &operands, true);
+              
+              std::unordered_set<std::string> depsMap;
               for (auto &ref : operands) {
-                std::cout << "\tDepency on Operand: " << ref << std::endl;
-                if (dependencies.find(ref) != dependencies.end()) {
-                  std::unordered_set <std::string> deps = dependencies[ref];
-                  for (auto const& ref: deps)
-                    std::cout << "\t\t<< " << ref << std::endl;
-                  out.insert(out.end(), deps.begin(), deps.end());
-                } else
-                  std::cout << "Dependency on Operand not found" << std::endl;
+                std::cout << "\tDependency on Operand: " << ref << std::endl;
+                printRecursiveDependents(ref, &depsMap, true);
               }
               csv.push_back(out);
 
