@@ -30,8 +30,8 @@ using namespace std;
 
 class bsg_zynq_pl_hardware {
 public:
-    virtual void start(void) { }
-    virtual void stop(void) { }
+    virtual void start(void) = 0;
+    virtual void stop(void) = 0;
     virtual void tick(void) = 0;
     virtual void done(void) = 0;
     virtual void *allocate_dram(unsigned long len_in_bytes,

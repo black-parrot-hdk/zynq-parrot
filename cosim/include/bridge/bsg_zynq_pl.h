@@ -43,6 +43,12 @@ class bsg_zynq_pl : public bsg_zynq_pl_hardware {
             printf("bsg_zynq_pl: done() called, exiting\n");
         }
 
+        void start(void) override {
+        }
+
+        void stop(void) override {
+        }
+
         void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) override {
             bsg_pr_info("  bsg_zynq_pl: Allocated dummy DRAM\n");
             return (void *)(physical_ptr = (unsigned long *)0xdeadbeef);
