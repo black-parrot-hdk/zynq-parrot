@@ -116,7 +116,7 @@ private:
     pin<1> p_rready;
 
     // We use a boolean instead of true mutex so that we can check it
-    bool mutex;
+    bool mutex = 0;
 
     void lock(yield_t &yield) {
         do {
@@ -153,7 +153,8 @@ public:
           p_rdata(string(base) + string(".rdata_gpio")),
           p_rresp(string(base) + string(".rresp_gpio")),
           p_rvalid(string(base) + string(".rvalid_gpio")),
-          p_rready(string(base) + string(".rready_gpio")) {
+          p_rready(string(base) + string(".rready_gpio")),
+          mutex(0) {
         std::cout << "Instantiating AXIL at " << base << std::endl;
     }
 
@@ -323,7 +324,7 @@ private:
     pin<1> p_rready;
 
     // We use a boolean instead of true mutex so that we can check it
-    bool mutex;
+    bool mutex = 0;
 
     void lock(yield_t &yield) {
         do {

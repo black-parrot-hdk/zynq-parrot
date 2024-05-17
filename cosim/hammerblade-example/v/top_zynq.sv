@@ -339,9 +339,9 @@ module top_zynq
      ,.num_subarray_y_p(bsg_machine_pod_tiles_subarray_y_gp)
 
      ,.dmem_size_p(bsg_machine_core_dmem_words_gp)
-     ,.icache_entries_p(bsg_machine_core_icache_entries_gp)
-     ,.icache_tag_width_p(bsg_machine_core_icache_tag_width_gp)
-     ,.icache_block_size_in_words_p(bsg_machine_core_icache_line_words_gp)
+     ,.mc_icache_entries_p(bsg_machine_core_icache_entries_gp)
+     ,.mc_icache_tag_width_p(bsg_machine_core_icache_tag_width_gp)
+     ,.mc_icache_block_size_in_words_p(bsg_machine_core_icache_line_words_gp)
 
      ,.vcache_addr_width_p(bsg_machine_llcache_addr_width_lp)
      ,.vcache_data_width_p(bsg_machine_llcache_data_width_lp)

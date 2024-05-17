@@ -144,15 +144,15 @@ public:
         int32_t data = *ptr32;
 
         bsg_pr_dbg_pl("  bsg_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n",
-                      address, data);
+                        address, data);
 
         return data;
     }
 
     inline void axil_write(uintptr_t address, int32_t data, uint8_t wstrb) {
         bsg_pr_dbg_pl("  bsg_zynq_pl: AXI writing [%" PRIxPTR
-                      "]=%8.8x mask %" PRIu8 "\n",
-                      address, data, wstrb);
+                        "]=%8.8x mask %" PRIu8 "\n",
+                        address, data, wstrb);
 
         // for now we don't support alternate write strobes
         assert(wstrb == 0XF || wstrb == 0x3 || wstrb == 0x1);

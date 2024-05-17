@@ -484,12 +484,12 @@ module bsg_nonsynth_zynq_testbench;
      @(posedge aclk);
      #1;
    endtask
+`endif
 
    export "DPI-C" function bsg_dpi_time;
    function int bsg_dpi_time();
      return $time;
    endfunction
-`endif
 
 endmodule
 

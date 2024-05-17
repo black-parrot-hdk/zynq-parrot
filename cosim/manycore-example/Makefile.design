@@ -27,7 +27,7 @@ BSG_PLATFORM_PATH := $(LIBRARIES_PATH)/platforms/bigblade-vcs
 BSG_F1_DIR        := $(BSG_REPLICANT_DIR)
 include $(BSG_REPLICANT_DIR)/hardware/hardware.mk
 
-$(CURR_VSRC_DIR)/bsg_bladerunner_pkg.sv: $(BSG_MACHINE_PATH)/bsg_bladerunner_pkg.v
+$(CURR_VSRC_DIR)/bsg_bladerunner_pkg.sv: $(BSG_MACHINE_PATH)/bsg_bladerunner_pkg.sv
 	cp $< $@
 	$(SED) -i "/parameter int bsg_machine_hetero_type_vec_gp/d" $@
 

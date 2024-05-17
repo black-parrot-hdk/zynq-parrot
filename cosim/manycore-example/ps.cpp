@@ -137,7 +137,7 @@ int ps_main(int argc, char **argv) {
   buf = (volatile int32_t *)zpl->allocate_dram(allocated_dram, &phys_ptr);
   bsg_pr_info("ps.cpp: received %p (phys = %lx)\n", buf, phys_ptr);
   zpl->shell_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, 0xf);
-  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == phys_ptr));
+  assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == (int32_t)phys_ptr));
   bsg_pr_info("ps.cpp: wrote and verified base register\n");
 
   if (argc == 1) {
