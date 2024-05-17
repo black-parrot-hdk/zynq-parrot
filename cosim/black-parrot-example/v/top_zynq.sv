@@ -688,6 +688,13 @@ module top_zynq
       ,.data_o(mem_profiler_r)
       );
 
+   logic bp_m00_axi_awlock, bp_m00_axi_arlock;
+   assign m00_axi_awlock = {1'b0, bp_m00_axi_awlock};
+   assign m00_axi_arlock = {1'b0, bp_m00_axi_arlock};
+   logic [7:0] bp_m00_axi_awlen, bp_m00_axi_arlen;
+   assign m00_axi_awlen = bp_m00_axi_awlen[3:0];
+   assign m00_axi_arlen = bp_m00_axi_arlen[3:0];
+
    bp_axi_top #
      (.bp_params_p(bp_params_p)
       ,.m_axil_addr_width_p(bp_axil_addr_width_lp)
@@ -761,10 +768,10 @@ module top_zynq
       ,.m_axi_awvalid_o(m00_axi_awvalid)
       ,.m_axi_awready_i(m00_axi_awready)
       ,.m_axi_awid_o(m00_axi_awid)
-      ,.m_axi_awlock_o(m00_axi_awlock)
+      ,.m_axi_awlock_o(bp_m00_axi_awlock)
       ,.m_axi_awcache_o(m00_axi_awcache)
       ,.m_axi_awprot_o(m00_axi_awprot)
-      ,.m_axi_awlen_o(m00_axi_awlen)
+      ,.m_axi_awlen_o(bp_m00_axi_awlen)
       ,.m_axi_awsize_o(m00_axi_awsize)
       ,.m_axi_awburst_o(m00_axi_awburst)
       ,.m_axi_awqos_o(m00_axi_awqos)
@@ -785,10 +792,10 @@ module top_zynq
       ,.m_axi_arvalid_o(m00_axi_arvalid)
       ,.m_axi_arready_i(m00_axi_arready)
       ,.m_axi_arid_o(m00_axi_arid)
-      ,.m_axi_arlock_o(m00_axi_arlock)
+      ,.m_axi_arlock_o(bp_m00_axi_arlock)
       ,.m_axi_arcache_o(m00_axi_arcache)
       ,.m_axi_arprot_o(m00_axi_arprot)
-      ,.m_axi_arlen_o(m00_axi_arlen)
+      ,.m_axi_arlen_o(bp_m00_axi_arlen)
       ,.m_axi_arsize_o(m00_axi_arsize)
       ,.m_axi_arburst_o(m00_axi_arburst)
       ,.m_axi_arqos_o(m00_axi_arqos)
