@@ -84,16 +84,12 @@ package bp_common_pkg;
                               | (1 << e_cfg_amo_swap)
                               | (1 << e_cfg_amo_fetch_logic)
                               | (1 << e_cfg_amo_fetch_arithmetic)
-      ,l2_features          : (1 << e_cfg_enabled) | (1 << e_cfg_writeback)
+      ,l2_features          : (1 << e_cfg_writeback)
                               | (1 << e_cfg_word_tracking)
 
       ,l2_data_width: 64
       ,l2_fill_width: 64
-      ,l2_slices    : 1
-      ,l2_banks     : 1
-      ,l2_assoc     : 2
-      ,l2_sets      : 4
-      ,l2_block_width: 256
+      ,l2_block_width: 512
 
       ,itlb_els_4k : 16
       ,itlb_els_2m : 1
