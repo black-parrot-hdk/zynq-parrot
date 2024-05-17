@@ -54,17 +54,17 @@ package bp_common_pkg;
     '{cce_type  : e_cce_fsm
       ,ic_y_dim : 1
 
-      ,icache_features      : (1 << e_cfg_enabled) | (1 << e_cfg_coherent)
-                              | (1 << e_cfg_misaligned)
+      ,icache_features      : (1 << e_cfg_enabled) | (1 << e_cfg_misaligned)
+                              | (1 << e_cfg_coherent)
 
       ,dcache_features      : (1 << e_cfg_enabled)
-                              | (1 << e_cfg_coherent)
                               | (1 << e_cfg_writeback)
                               | (1 << e_cfg_lr_sc)
                               | (1 << e_cfg_amo_swap)
                               | (1 << e_cfg_amo_fetch_logic)
                               | (1 << e_cfg_amo_fetch_arithmetic)
-                              | (1 << e_cfg_hit_under_miss)
+                              | (1 << e_cfg_coherent)
+                              //| (1 << e_cfg_hit_under_miss)
 
       ,l2_features          : (1 << e_cfg_enabled) | (1 << e_cfg_writeback)
                               | (1 << e_cfg_word_tracking)
@@ -84,24 +84,23 @@ package bp_common_pkg;
   // multicore design with smaller caches
   localparam bp_proc_param_s bp_multicore_small_zynqparrot_cfg_override_p =
     '{
-      icache_assoc:      4
-      ,icache_sets:       128
+      icache_assoc:        4
+      ,icache_sets:        128
       ,icache_block_width: 256
 
-      ,dcache_assoc:      4
-      ,dcache_sets:       128
+      ,dcache_assoc:       4
+      ,dcache_sets:        128
       ,dcache_block_width: 256
 
-      ,acache_assoc:      4
-      ,acache_sets:       128
+      ,acache_assoc:       4
+      ,acache_sets:        128
       ,acache_block_width: 256
 
       ,bedrock_block_width: 256
 
-      ,l2_features          : (1 << e_cfg_writeback)
-                              | (1 << e_cfg_word_tracking)
-
       ,l2_block_width: 256
+      ,l2_sets      : 4
+      ,l2_assoc     : 2
 
       ,default : "inv"
       };
