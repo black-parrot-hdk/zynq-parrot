@@ -48,66 +48,111 @@ package bp_common_pkg;
                         ,bp_default_cfg_p
                         );
 
-  // multicore design with coherent caches, but otherwise same config
-  // as unicore_zynqparrot
-  localparam bp_proc_param_s bp_multicore_zynqparrot_cfg_override_p =
-    '{cce_type  : e_cce_fsm
+  localparam bp_proc_param_s bp_multicore_small_zynqparrot_cfg_override_p =
+    '{paddr_width: 34
+      ,cce_type : e_cce_fsm
       ,ic_y_dim : 1
 
-      ,icache_features      : (1 << e_cfg_enabled) | (1 << e_cfg_misaligned)
-                              | (1 << e_cfg_coherent)
+      ,icache_fill_width: 64
+      ,icache_assoc:      4
+      ,icache_sets:       128
+      ,icache_block_width: 256
 
-      ,dcache_features      : (1 << e_cfg_enabled)
-                              | (1 << e_cfg_writeback)
-                              | (1 << e_cfg_lr_sc)
-                              | (1 << e_cfg_amo_swap)
-                              | (1 << e_cfg_amo_fetch_logic)
-                              | (1 << e_cfg_amo_fetch_arithmetic)
-                              | (1 << e_cfg_coherent)
-                              //| (1 << e_cfg_hit_under_miss)
+      ,dcache_fill_width: 64
+      ,dcache_assoc:      4
+      ,dcache_sets:       128
+      ,dcache_block_width: 256
 
-      ,l2_features          : (1 << e_cfg_enabled) | (1 << e_cfg_writeback)
-                              | (1 << e_cfg_word_tracking)
+      ,acache_fill_width: 64
+      ,acache_assoc:      4
+      ,acache_sets:       128
+      ,acache_block_width: 256
+
+      ,bedrock_fill_width: 64
+      ,bedrock_block_width: 256
 
       ,coh_noc_flit_width : 64
       ,mem_noc_flit_width : 64
       ,dma_noc_flit_width : 64
 
-      ,default : "inv"
-      };
-  `bp_aviary_derive_cfg(bp_multicore_zynqparrot_cfg_p
-                        ,bp_multicore_zynqparrot_cfg_override_p
-                        ,bp_unicore_zynqparrot_cfg_p
-                        );
+      ,icache_features      : (1 << e_cfg_enabled) | (1 << e_cfg_coherent)
+                              | (1 << e_cfg_misaligned)
+      ,dcache_features      : (1 << e_cfg_enabled)
+                              | (1 << e_cfg_coherent)
+                              | (1 << e_cfg_writeback)
+                              | (1 << e_cfg_lr_sc)
+                              | (1 << e_cfg_amo_swap)
+                              | (1 << e_cfg_amo_fetch_logic)
+                              | (1 << e_cfg_amo_fetch_arithmetic)
+      ,l2_features          : (1 << e_cfg_enabled) | (1 << e_cfg_writeback)
+                              | (1 << e_cfg_word_tracking)
 
-
-  // multicore design with smaller caches
-  localparam bp_proc_param_s bp_multicore_small_zynqparrot_cfg_override_p =
-    '{
-      icache_assoc:        4
-      ,icache_sets:        128
-      ,icache_block_width: 256
-
-      ,dcache_assoc:       4
-      ,dcache_sets:        128
-      ,dcache_block_width: 256
-
-      ,acache_assoc:       4
-      ,acache_sets:        128
-      ,acache_block_width: 256
-
-      ,bedrock_block_width: 256
-
-      ,l2_block_width: 256
-      ,l2_sets      : 4
+      ,l2_data_width: 64
+      ,l2_fill_width: 64
+      ,l2_slices    : 1
+      ,l2_banks     : 1
       ,l2_assoc     : 2
+      ,l2_sets      : 4
+      ,l2_block_width: 256
+
+      ,itlb_els_4k : 16
+      ,itlb_els_2m : 1
+      ,itlb_els_1g : 1
+      ,dtlb_els_4k : 16
+      ,dtlb_els_2m : 4
+      ,dtlb_els_1g : 1
 
       ,default : "inv"
       };
   `bp_aviary_derive_cfg(bp_multicore_small_zynqparrot_cfg_p
                         ,bp_multicore_small_zynqparrot_cfg_override_p
-                        ,bp_multicore_zynqparrot_cfg_p
+                        ,bp_default_cfg_p
                         );
+
+  localparam bp_proc_param_s bp_multicore_zynqparrot_cfg_override_p =
+    '{paddr_width: 34
+      ,cce_type : e_cce_fsm
+      ,ic_y_dim : 1
+
+      ,icache_features      : (1 << e_cfg_enabled) | (1 << e_cfg_coherent)
+                              | (1 << e_cfg_misaligned)
+      ,dcache_features      : (1 << e_cfg_enabled)
+                              | (1 << e_cfg_coherent)
+                              | (1 << e_cfg_writeback)
+                              | (1 << e_cfg_lr_sc)
+                              | (1 << e_cfg_amo_swap)
+                              | (1 << e_cfg_amo_fetch_logic)
+                              | (1 << e_cfg_amo_fetch_arithmetic)
+      ,l2_features          : (1 << e_cfg_enabled) | (1 << e_cfg_writeback)
+                              | (1 << e_cfg_word_tracking)
+
+      ,icache_fill_width: 64
+      ,dcache_fill_width: 64
+      ,acache_fill_width: 64
+
+      ,bedrock_fill_width: 64
+
+      ,coh_noc_flit_width : 64
+      ,mem_noc_flit_width : 64
+      ,dma_noc_flit_width : 64
+
+      ,l2_data_width: 64
+      ,l2_fill_width: 64
+
+      ,itlb_els_4k : 16
+      ,itlb_els_2m : 1
+      ,itlb_els_1g : 1
+      ,dtlb_els_4k : 16
+      ,dtlb_els_2m : 4
+      ,dtlb_els_1g : 1
+
+      ,default : "inv"
+      };
+  `bp_aviary_derive_cfg(bp_multicore_zynqparrot_cfg_p
+                        ,bp_multicore_zynqparrot_cfg_override_p
+                        ,bp_default_cfg_p
+                        );
+
 
   parameter bp_proc_param_s [max_cfgs-1:0] all_cfgs_gp =
   {
