@@ -99,8 +99,9 @@ module bsg_zynq_uart_bridge
   typedef struct packed
   {
     logic [31:0] data;
-    logic [6:0]  addr8to2;
+    logic [5:0]  addr7to2;
     logic        wr_not_rd;
+    logic        port;
   } bsg_uart_pkt_s;
 
   //
@@ -320,7 +321,7 @@ module bsg_zynq_uart_bridge
         e_req_send:
           begin
             gp0_wdata_li = uart_pkt_lo.data;
-            gp0_addr_li = (uart_pkt_lo.addr8to2 << 2'b10);
+            gp0_addr_li = (uart_pkt_lo.addr7to2 << 2'b10);
             gp0_v_li = uart_pkt_v_lo;
             gp0_w_li = uart_pkt_lo.wr_not_rd;
 

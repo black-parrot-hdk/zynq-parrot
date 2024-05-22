@@ -12,7 +12,7 @@ VCS_OPTS += -diag timescale
 VCS_OPTS += -f flist.vcs
 VCS_OPTS += -top $(TB_MODULE)
 VCS_OPTS += -debug_pp
-VCS_OPTS += +vcs+vcdpluson +vcs+vcdplusautoflushon +vpdfilesize+64
+VCS_OPTS += +vcs+vcdpluson +vcs+vcdplusautoflushon
 VCS_OPTS += +vcs+lic+wait
 VCS_OPTS += +incdir+$(COSIM_DIR)/include/vcs
 VCS_OPTS += $(addprefix +define+,$(DEFINES))
@@ -24,6 +24,7 @@ VCS_OPTS += $(BP_SDK_LIB_DIR)/libboost_system.a
 CFLAGS += -DVCS
 CFLAGS += -DHOST_$(call upper,$(HOST))
 CFLAGS += -std=c++14
+CFLAGS += -D_DEFAULT_SOURCE -D_BSD_SOURCE
 CFLAGS += $(addprefix -D,$(DEFINES))
 
 CINCLUDES += -I$(BP_SDK_INSTALL_DIR)/include

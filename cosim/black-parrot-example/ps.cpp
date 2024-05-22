@@ -161,11 +161,8 @@ int ps_main(int argc, char **argv) {
               "increase monotonically  (testing ARM GP1 connections)\n");
 
   for (int q = 0; q < 10; q++) {
-    int z = zpl->shell_read(GP1_CSR_BASE_ADDR + 0x30bff8);
-    // bsg_pr_dbg_ps("ps.cpp: %d%c",z,(q % 8) == 7 ? '\n' : ' ');
-    // read second 32-bits
-    int z2 = zpl->shell_read(GP1_CSR_BASE_ADDR + 0x30bff8 + 4);
-    // bsg_pr_dbg_ps("ps.cpp: %d%c",z2,(q % 8) == 7 ? '\n' : ' ');
+    int z = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
+    bsg_pr_dbg_ps("ps.cpp: %d-%d\n", q, z);
   }
 
   bsg_pr_info("ps.cpp: attempting to read and write mtime reg in BP CFG space "
@@ -257,6 +254,7 @@ int ps_main(int argc, char **argv) {
   bsg_pr_info("ps.cpp: starting watchdog\n");
   // We need some additional toggles for data to propagate through
   btb->idle(50);
+  zpl->start();
 
   bsg_pr_info("ps.cpp: Starting scan thread\n");
   pthread_create(&thread_id, NULL, monitor, NULL);
@@ -271,7 +269,6 @@ int ps_main(int argc, char **argv) {
     if (done_vec.all()) {
       break;
     }
-    zpl->poll();
   }
 
   // Set bsg client1 to 1 (assert WD reset)
@@ -279,10 +276,10 @@ int ps_main(int argc, char **argv) {
   bsg_pr_info("ps.cpp: stopping watchdog\n");
   // We need some additional toggles for data to propagate through
   btb->idle(50);
-
-  unsigned long long mtime_stop = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
+  zpl->stop();
 
   unsigned long long minstret_stop = get_counter_64(zpl, GP0_RD_MINSTRET);
+  unsigned long long mtime_stop = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
   // test delay for reading counter
   unsigned long long counter_data = get_counter_64(zpl, GP0_RD_MINSTRET);
   clock_gettime(CLOCK_MONOTONIC, &end);
@@ -328,7 +325,7 @@ int ps_main(int argc, char **argv) {
   // fail after many allocate/fail cycle. instead we keep a pointer to the dram
   // in a CSR
   // in the accelerator, and if we reload the bitstream, we copy the pointer
-  // back in.s
+  // back in.
 
   if (FREE_DRAM) {
     bsg_pr_info("ps.cpp: freeing DRAM buffer\n");

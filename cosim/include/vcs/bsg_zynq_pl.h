@@ -20,6 +20,7 @@
 #include "bsg_zynq_pl_simulation.h"
 
 extern "C" { void bsg_dpi_next(); }
+extern "C" { int bsg_dpi_time(); }
 
 class bsg_zynq_pl : public bsg_zynq_pl_simulation {
     public:
@@ -40,7 +41,10 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
 
         void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) override {
             bsg_pr_info("  bsg_zynq_pl: Allocated dummy DRAM\n");
-            return (void *)(physical_ptr = (unsigned long *)0xdeadbeef);
+            void *virtual_ptr = (unsigned long *)malloc(len_in_bytes);
+            *physical_ptr = (unsigned long)virtual_ptr;
+
+            return virtual_ptr;
         }
 
         void free_dram(void *virtual_ptr) override {

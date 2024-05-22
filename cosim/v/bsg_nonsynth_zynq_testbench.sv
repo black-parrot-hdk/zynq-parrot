@@ -486,5 +486,10 @@ module bsg_nonsynth_zynq_testbench;
    endtask
 `endif
 
+   export "DPI-C" function bsg_dpi_time;
+   function int bsg_dpi_time();
+     return $time;
+   endfunction
+
 endmodule
 

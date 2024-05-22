@@ -374,7 +374,7 @@ module top_zynq
    // to increment the counters.
    //
    if (cce_type_p != e_cce_uce)
-     assign minstret_lo = blackparrot.processor.m.multicore.cc.y[0].x[0].tile_node.tile_node.tile.core.core_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
+     assign minstret_lo = blackparrot.processor.m.multicore.cc.y[0].x[0].tile_node.tile.core.core_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
    else
      assign minstret_lo = blackparrot.processor.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
 
@@ -697,8 +697,6 @@ module top_zynq
       ,.axi_addr_width_p(bp_axi_addr_width_lp)
       ,.axi_data_width_p(bp_axi_data_width_lp)
       ,.axi_id_width_p(6)
-      ,.axi_size_width_p(3)
-      ,.axi_len_width_p(4)
       ,.axi_core_clk_async_p(0)
       )
    blackparrot
