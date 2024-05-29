@@ -250,8 +250,8 @@ int ps_main(int argc, char **argv) {
   bsg_pr_dbg_ps("ps.cpp: finished nbf load\n");
 
   // Set bsg client1 to 0 (deassert WD reset)
-  btb->set_client(wd_reset_client, 0x0);
-  bsg_pr_info("ps.cpp: starting watchdog\n");
+  btb->set_client(wd_reset_client, 0x1);
+  //bsg_pr_info("ps.cpp: starting watchdog\n");
   // We need some additional toggles for data to propagate through
   btb->idle(50);
   zpl->start();
