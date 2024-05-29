@@ -86,7 +86,6 @@ int ps_main(int argc, char **argv) {
   long mask2 = 0xf;
 
   pthread_t thread_id;
-  long allocated_dram = DRAM_ALLOCATE_SIZE;
 
   int32_t val;
   bsg_pr_info("ps.cpp: reading four base registers\n");
@@ -129,23 +128,24 @@ int ps_main(int argc, char **argv) {
   zpl->shell_write(GP0_RD_CSR_SYS_RESETN, 0x1, 0xF);
 
   unsigned long phys_ptr;
-  volatile int32_t *buf;
+  volatile int *buf;
   data = zpl->shell_read(GP0_RD_CSR_DRAM_INITED);
   if (data == 0) {
     bsg_pr_info(
         "ps.cpp: CSRs do not contain a DRAM base pointer; calling allocate "
         "dram with size %ld\n",
-        allocated_dram);
-    buf = (volatile int32_t *)zpl->allocate_dram(allocated_dram, &phys_ptr);
+        (long)DRAM_ALLOCATE_SIZE);
+    buf = (volatile int*)zpl->allocate_dram(DRAM_ALLOCATE_SIZE, &phys_ptr);
     bsg_pr_info("ps.cpp: received %p (phys = %lx)\n", buf, phys_ptr);
     zpl->shell_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, mask1);
     assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == (int32_t)(phys_ptr)));
     bsg_pr_info("ps.cpp: wrote and verified base register\n");
     zpl->shell_write(GP0_WR_CSR_DRAM_INITED, 0x1, mask2);
     assert(zpl->shell_read(GP0_RD_CSR_DRAM_INITED) == 1);
-  } else
+  } else {
     bsg_pr_info("ps.cpp: reusing dram base pointer %x\n",
                 zpl->shell_read(GP0_RD_CSR_DRAM_BASE));
+  }
 
   int outer = 1024 / 4;
 
@@ -179,11 +179,11 @@ int ps_main(int argc, char **argv) {
 
 #ifdef DRAM_TEST
 
-  long num_times = allocated_dram / 32768;
+  long num_times = DRAM_ALLOCATE_SIZE / 32768;
   bsg_pr_info(
       "ps.cpp: attempting to write L2 %ld times over %ld MB (testing ARM GP1 "
       "and HP0 connections)\n",
-      num_times * outer, (allocated_dram) >> 20);
+      num_times * outer, (long)((DRAM_ALLOCATE_SIZE) >> 20));
   zpl->shell_write(GP1_DRAM_BASE_ADDR, 0x12345678, mask1);
 
   for (int s = 0; s < outer; s++)
@@ -192,7 +192,7 @@ int ps_main(int argc, char **argv) {
                       mask1);
     }
   bsg_pr_info("ps.cpp: finished write L2 %ld times over %ld MB\n",
-              num_times * outer, (allocated_dram) >> 20);
+              num_times * outer, (long)((DRAM_ALLOCATE_SIZE) >> 20));
 
   int mismatches = 0;
   int matches = 0;
@@ -214,7 +214,7 @@ int ps_main(int argc, char **argv) {
   bsg_pr_info(
       "ps.cpp: attempting to read L2 %ld times over %ld MB (testing ARM GP1 "
       "and HP0 connections)\n",
-      num_times * outer, (allocated_dram) >> 20);
+      num_times * outer, (long)((DRAM_ALLOCATE_SIZE) >> 20));
   for (int s = 0; s < outer; s++)
     for (int t = 0; t < num_times; t++)
       if (zpl->shell_read(GP1_DRAM_BASE_ADDR + 32768 * t + s * 4) == 0x1ADACACA + t + s)
@@ -233,7 +233,7 @@ int ps_main(int argc, char **argv) {
   // Must zero DRAM for FPGA Linux boot, because opensbi payload mode
   //   obliterates the section names of the payload (Linux)
   if (ZERO_DRAM) {
-    bsg_pr_info("ps.cpp: Zero-ing DRAM (%d bytes)\n", DRAM_ALLOCATE_SIZE);
+    bsg_pr_info("ps.cpp: Zero-ing DRAM (%d bytes)\n", (int)DRAM_ALLOCATE_SIZE);
     for (int i = 0; i < DRAM_ALLOCATE_SIZE; i+=4) {
       if (i % (1024*1024) == 0) bsg_pr_info("ps.cpp: zero-d %d MB\n", i/(1024*1024));
       zpl->shell_write(gp1_addr_base + i, 0x0, mask1);
@@ -251,7 +251,7 @@ int ps_main(int argc, char **argv) {
 
   // Set bsg client1 to 0 (deassert WD reset)
   btb->set_client(wd_reset_client, 0x1);
-  //bsg_pr_info("ps.cpp: starting watchdog\n");
+  bsg_pr_info("ps.cpp: starting watchdog\n");
   // We need some additional toggles for data to propagate through
   btb->idle(50);
   zpl->start();

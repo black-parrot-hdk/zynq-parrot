@@ -1,7 +1,8 @@
 
+`include "bsg_zynq_pl.vh"
 `include "bsg_defines.sv"
 
-`timescale 1 ns / 1 ps
+`timescale 1ns/1ps
 
 module bsg_zynq_pl_shell #
   (
@@ -136,12 +137,8 @@ module bsg_zynq_pl_shell #
 
    reg [num_regs_ps_to_pl_p-1:0] csr_data_new_r;
 
-   initial
-     begin
-        assert(`BSG_SAFE_CLOG2(read_locs_lp)+ADDR_LSB_lp <= C_S_AXI_ADDR_WIDTH)
-          else
-            $error("read_locs_lp (%d) + ADDR_LSB_lp (%d) ! <= C_S_AXI_ADDR_WIDTH (%d)\n",`BSG_SAFE_CLOG2(read_locs_lp),ADDR_LSB_lp, C_S_AXI_ADDR_WIDTH);
-     end
+   if (`BSG_SAFE_CLOG2(read_locs_lp)+ADDR_LSB_lp > C_S_AXI_ADDR_WIDTH)
+     $error("read_locs_lp (%d) + ADDR_LSB_lp (%d) ! <= C_S_AXI_ADDR_WIDTH (%d)\n",`BSG_SAFE_CLOG2(read_locs_lp),ADDR_LSB_lp, C_S_AXI_ADDR_WIDTH);
 
    wire     slv_reg_rden;
    wire     slv_reg_wren;

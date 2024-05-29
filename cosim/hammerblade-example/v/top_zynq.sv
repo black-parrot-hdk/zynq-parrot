@@ -84,10 +84,10 @@ module top_zynq
    , output wire                                 m00_axi_awvalid
    , input wire                                  m00_axi_awready
    , output wire [5:0]                           m00_axi_awid
-   , output wire [1:0]                           m00_axi_awlock
+   , output wire                                 m00_axi_awlock
    , output wire [3:0]                           m00_axi_awcache
    , output wire [2:0]                           m00_axi_awprot
-   , output wire [3:0]                           m00_axi_awlen
+   , output wire [7:0]                           m00_axi_awlen
    , output wire [2:0]                           m00_axi_awsize
    , output wire [1:0]                           m00_axi_awburst
    , output wire [3:0]                           m00_axi_awqos
@@ -108,10 +108,10 @@ module top_zynq
    , output wire                                 m00_axi_arvalid
    , input wire                                  m00_axi_arready
    , output wire [5:0]                           m00_axi_arid
-   , output wire [1:0]                           m00_axi_arlock
+   , output wire                                 m00_axi_arlock
    , output wire [3:0]                           m00_axi_arcache
    , output wire [2:0]                           m00_axi_arprot
-   , output wire [3:0]                           m00_axi_arlen
+   , output wire [7:0]                           m00_axi_arlen
    , output wire [2:0]                           m00_axi_arsize
    , output wire [1:0]                           m00_axi_arburst
    , output wire [3:0]                           m00_axi_arqos
@@ -318,7 +318,6 @@ module top_zynq
      ,.data_o(reset_r)
      );
 
-  localparam int rev_fifo_els_lp[4:0] = '{2,2,2,2,3};
   bsg_hammerblade
    #(.bp_params_p(bp_params_p)
      ,.scratchpad_els_p(scratchpad_els_gp)
@@ -365,7 +364,6 @@ module top_zynq
      ,.reset_depth_p(reset_depth_gp)
 
      ,.rev_use_credits_p(rev_use_credits_gp)
-     ,.rev_fifo_els_p(rev_fifo_els_lp)
      )
    hammerblade
     (.clk_i(aclk)
@@ -415,8 +413,10 @@ module top_zynq
      ,.x_cord_width_p(bsg_machine_noc_coord_x_width_gp)
      ,.y_cord_width_p(bsg_machine_noc_coord_y_width_gp)
      ,.icache_block_size_in_words_p(bsg_machine_core_icache_line_words_gp)
-     ,.axil_addr_width_p(C_S01_AXI_ADDR_WIDTH)
-     ,.axil_data_width_p(C_S01_AXI_DATA_WIDTH)
+     ,.s_axil_addr_width_p(C_S01_AXI_ADDR_WIDTH)
+     ,.s_axil_data_width_p(C_S01_AXI_DATA_WIDTH)
+     ,.m_axil_addr_width_p(C_M01_AXI_ADDR_WIDTH)
+     ,.m_axil_data_width_p(C_M01_AXI_DATA_WIDTH)
      )
    mc_bridge
     (.clk_i(aclk)
@@ -621,7 +621,7 @@ module top_zynq
         end
     end
 
-  logic [C_M00_AXI_ADDR_WIDTH-1:0] axi_awaddr, axi_araddr;
+  logic [bsg_machine_llcache_addr_width_lp-1:0] axi_awaddr, axi_araddr;
   logic [lg_num_dma_lp-1:0] axi_awaddr_cache_id, axi_araddr_cache_id;
   bsg_cache_to_axi
    #(.addr_width_p(bsg_machine_llcache_addr_width_lp)

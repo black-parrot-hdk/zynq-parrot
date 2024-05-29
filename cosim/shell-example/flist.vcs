@@ -2,7 +2,7 @@
 +incdir+$BASEJUMP_STL_DIR/bsg_misc
 +incdir+$BASEJUMP_STL_DIR/bsg_test
 
-$BASEJUMP_STL_DIR/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp
+$BASEJUMP_STL_DIR/bsg_misc/bsg_defines.sv
 $BASEJUMP_STL_DIR/bsg_dataflow/bsg_fifo_1r1w_small.sv
 $BASEJUMP_STL_DIR/bsg_dataflow/bsg_fifo_1r1w_small_hardened.sv
 $BASEJUMP_STL_DIR/bsg_dataflow/bsg_fifo_1r1w_small_unhardened.sv

@@ -7,10 +7,17 @@ include $(TOP)/Makefile.common
 #############################
 HOST       ?= zynq
 TB_MODULE  ?= bsg_nonsynth_zynq_testbench
-BOARDNAME  ?= pynqz2
-TOP_MODULE ?= top
+BOARDNAME  ?= ultra96v2
 BASENAME   ?= shell
 
 MAIN_PROGRAM ?= $(COSIM_CSRC_DIR)/main.cpp
 HOST_PROGRAM ?= $(CURR_DESIGN_DIR)/ps.cpp
+
+#############################
+# Design Defines
+#############################
+DEFINES += GP0_ENABLE=1
+DEFINES += GP0_ADDR_WIDTH=6 GP0_DATA_WIDTH=32
+DEFINES += ACLK_MHZ=55
+DEFINES += RTCLK_MHZ=8
 

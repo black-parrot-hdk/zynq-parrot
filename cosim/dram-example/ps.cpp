@@ -26,8 +26,7 @@ int ps_main(int argc, char **argv) {
 
   volatile int *buf;
 
-  if (argc == 1)
-    buf = (volatile int *)zpl->allocate_dram(DRAM_ALLOC_SIZE_BYTES, &phys_ptr);
+  buf = (volatile int *)zpl->allocate_dram(DRAM_ALLOC_SIZE_BYTES, &phys_ptr);
 
   // write all of the dram
   for (int i = 0; i < DRAM_ALLOC_SIZE_BYTES / 4; i++)
