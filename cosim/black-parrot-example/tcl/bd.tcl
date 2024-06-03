@@ -48,13 +48,17 @@ proc vivado_create_ip { args } {
     connect_bd_net [get_bd_pins top/tag_data] [get_bd_ports tag_data]
     connect_bd_net [get_bd_pins top/sys_resetn] [get_bd_ports sys_resetn]
 
+    set m00_seg_offset 0x0
     set m00_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_intf_ports m00_axi]]
     set m00_seg_size [expr 1 << ${m00_addr_width}]
-    assign_bd_address -target_address_space top/m00_axi [get_bd_addr_segs m00*] -range ${m00_seg_size}
+    assign_bd_address -target_address_space top/m00_axi [get_bd_addr_segs m00*] -offset ${m00_seg_offset} -range ${m00_seg_size}
 
+    set m01_seg_offset 0x0
     set m01_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_intf_ports m01_axi]]
     set m01_seg_size [expr 1 << ${m01_addr_width}]
-    assign_bd_address -target_address_space top/m01_axi [get_bd_addr_segs m01*] -range ${m01_seg_size}
+    assign_bd_address -target_address_space top/m01_axi [get_bd_addr_segs m01*] -offset ${m01_seg_offset} -range ${m01_seg_size}
+
+    assign_bd_address
 }
 
 proc vivado_ipx_customize { args } {

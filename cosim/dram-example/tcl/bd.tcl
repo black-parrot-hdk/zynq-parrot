@@ -22,11 +22,12 @@ proc vivado_create_ip { args } {
     connect_bd_net [get_bd_pins top/aclk] [get_bd_ports aclk]
     connect_bd_net [get_bd_pins top/aresetn] [get_bd_ports aresetn]
 
-    assign_bd_address
-
+    set m00_seg_offset 0x0
     set m00_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_ports top/m00_axi]]
     set m00_seg_size [expr 1 << ${m00_addr_width}]
-    assign_bd_address -target_address_space top/m00_axi [get_bd_addr_segs m00*] -range ${m00_seg_size}
+    assign_bd_address -target_address_space top/m00_axi [get_bd_addr_segs m00*] -range ${m00_seg_size} -offset ${m00_seg_offset}
+
+    assign_bd_address
 }
 
 proc vivado_ipx_customize { args } {
