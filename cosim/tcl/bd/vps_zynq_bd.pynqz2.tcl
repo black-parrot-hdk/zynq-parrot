@@ -99,9 +99,9 @@ proc vivado_create_ip { args } {
     set_property CONFIG.ASSOCIATED_RESET {aresetn} [get_bd_ports aclk]
 
     # TODO: Deduce the offset
-    assign_bd_address -target_address_space processing_system7_0/Data \
+    assign_bd_address -target_address_space [get_bd_addr_spaces processing_system7_0/Data] \
         [get_bd_addr_segs GP0*] -range 4K -offset 0x40000000 
-    assign_bd_address -target_address_space processing_system7_0/Data \
+    assign_bd_address -target_address_space [get_bd_addr_spaces processing_system7_0/Data] \
         [get_bd_addr_segs GP1*] -range 1G -offset 0x80000000
 
     # Get rid of disabled ports, hope that synthesis is smart

@@ -93,11 +93,12 @@ proc vivado_create_ip { args } {
     connect_bd_net [get_bd_port aresetn] [get_bd_pins smartconnect_2/aresetn]
 
     # TODO: Deduce the offset
-    assign_bd_address -target_address_space zynq_ultra_ps_e_0/Data \
+    assign_bd_address -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] \
         [get_bd_addr_segs GP0*] -range 4K -offset 0x400000000
-    assign_bd_address -target_address_space zynq_ultra_ps_e_0/Data \
+    assign_bd_address -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] \
         [get_bd_addr_segs GP1*] -range 1G -offset 0x500000000
-	assign_bd_address -target_address_space HP0_AXI [get_bd_addr_segs *HP1_DDR*]
+	assign_bd_address -target_address_space [get_bd_addr_spaces HP0_AXI] \
+        [get_bd_addr_segs *HP1_DDR*]
 	exclude_bd_addr_seg [get_bd_addr_segs *HP1_LPS*] -target_address_space [get_bd_addr_spaces HP0_AXI]
 
     # Get rid of disabled ports, hope that synthesis is smart
