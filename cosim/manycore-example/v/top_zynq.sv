@@ -51,10 +51,10 @@ import bsg_tag_pkg::*;
   , output wire                                 m00_axi_awvalid
   , input wire                                  m00_axi_awready
   , output wire [5:0]                           m00_axi_awid
-  , output wire [1:0]                           m00_axi_awlock
+  , output wire                                 m00_axi_awlock
   , output wire [3:0]                           m00_axi_awcache
   , output wire [2:0]                           m00_axi_awprot
-  , output wire [3:0]                           m00_axi_awlen
+  , output wire [7:0]                           m00_axi_awlen
   , output wire [2:0]                           m00_axi_awsize
   , output wire [1:0]                           m00_axi_awburst
   , output wire [3:0]                           m00_axi_awqos
@@ -75,10 +75,10 @@ import bsg_tag_pkg::*;
   , output wire                                 m00_axi_arvalid
   , input wire                                  m00_axi_arready
   , output wire [5:0]                           m00_axi_arid
-  , output wire [1:0]                           m00_axi_arlock
+  , output wire                                 m00_axi_arlock
   , output wire [3:0]                           m00_axi_arcache
   , output wire [2:0]                           m00_axi_arprot
-  , output wire [3:0]                           m00_axi_arlen
+  , output wire [7:0]                           m00_axi_arlen
   , output wire [2:0]                           m00_axi_arsize
   , output wire [1:0]                           m00_axi_arburst
   , output wire [3:0]                           m00_axi_arqos
@@ -501,7 +501,7 @@ import bsg_tag_pkg::*;
         end
     end
 
-  logic [C_M00_AXI_ADDR_WIDTH-1:0] axi_awaddr, axi_araddr;
+  logic [bsg_machine_llcache_addr_width_lp-1:0] axi_awaddr, axi_araddr;
   logic [`BSG_SAFE_CLOG2(num_dma_lp)-1:0] axi_awaddr_cache_id, axi_araddr_cache_id;
   bsg_cache_to_axi
    #(.addr_width_p(bsg_machine_llcache_addr_width_lp)

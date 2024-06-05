@@ -1,7 +1,8 @@
-
++incdir+$BASEJUMP_STL_DIR/bsg_noc
 +incdir+$BASEJUMP_STL_DIR/bsg_tag
 +incdir+$BLACKPARROT_SUB_DIR/manycore/v
-$BASEJUMP_STL_DIR/bsg_axi/bsg_axi_pkg.sv
+$BASEJUMP_STL_DIR/bsg_noc/bsg_noc_pkg.sv
+$BASEJUMP_STL_DIR/bsg_noc/bsg_wormhole_router_pkg.sv
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_master_decentralized.sv
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_bitbang.sv
 $BSG_MANYCORE_DIR/testbenches/common/v/bsg_nonsynth_manycore_tag_master.sv

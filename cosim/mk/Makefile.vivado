@@ -1,15 +1,23 @@
 
 include $(COSIM_MK_DIR)/Makefile.env
 
+export ELAB    ?= 1
+export SYNTH   ?= 1
+export IMPL    ?= 1
+export HANDOFF ?= 1
+export THREADS ?= 8
+
+export VIVADO_RUN ?= export $(DEFINES) && source $(XILINX_SETTINGS) && $(VIVADO)
+
 all:
 	@echo "Rules for Vivado; see $(TOP)/cosim/mk/Makefile.vivado for more:"
 	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.vivado
 
 fpga_report_build_block:
-	-@grep --color "CRITICAL WARNING" vivado.log
-	-@grep --color "ERROR" vivado.log
+	-@grep --color "CRITICAL WARNING:" vivado.log || true
+	-@grep --color "ERROR:" vivado.log || true
 	-@tail -n5 vivado.log
-	-@grep --color "ERROR" `find . -iname "*.log"`
+	-@grep --color "ERROR:" `find . -iname "*.log"` || true
 	-@grep -m 1 -A 3 WNS $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper_timing_summary_routed.rpt
 	-@echo "## See $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper_timing_summary_routed.rpt for timing report."
 
@@ -18,36 +26,20 @@ fpga_report_build_block:
 fpga_build_ip: ip_repo
 ip_repo: $(FLIST) $(BUILD_COLLATERAL)
 	mkdir $@
-	source $(XILINX_SETTINGS) && $(VIVADO) -source $(CURR)/vivado-build-ip.tcl -mode $(VIVADO_MODE)
-	-@grep --color "CRITICAL WARNING" vivado.log
-	-@grep --color "ERROR" vivado.log
+	$(VIVADO_RUN) -source $(CURR)/vivado-build-ip.tcl -mode $(VIVADO_MODE)
+	-@grep --color "CRITICAL WARNING:" vivado.log || true
+	-@grep --color "ERROR:" vivado.log || true
 	-@tail -n5 vivado.log
 
 fpga_build: ip_repo
-	source $(XILINX_SETTINGS) && $(VIVADO) -source $(CURR)/vivado-create-block.$(HOST).$(BOARDNAME).$(VIVADO_VERSION).tcl -mode $(VIVADO_MODE)
+	$(VIVADO_RUN) -source $(CURR)/vivado-build-bd.tcl -mode $(VIVADO_MODE)
 	$(MAKE) fpga_report_build_block
 
-# we are looking for a *_bd_1.bit, *_bd_1_bd.tcl, *_bd_1.hwh
+# we are looking for a *_bd_1.bit, *_bd_1_bd.map, *_bd_1.hwh
 # 
 #
-
 pack_bitstream:
-ifeq ($(VIVADO_VERSION),2019.1)
-	cp $(BASENAME)_bd_proj.srcs/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1*.hwh .
-	cp $(BASENAME)_bd_proj.srcs/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1*.tcl .
-	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.bit $(BASENAME)_bd_1.bit
-endif
-ifeq ($(VIVADO_VERSION),2020.1)
-	cp $(BASENAME)_bd_proj.srcs/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1*.hwh .
-	cp $(BASENAME)_bd_proj.srcs/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1*.tcl .
-	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.bit $(BASENAME)_bd_1.bit
-endif
-ifeq ($(VIVADO_VERSION),2022.1)
-	cp $(BASENAME)_bd_proj.gen/sources_1/bd/$(BASENAME)_bd_1/hw_handoff/$(BASENAME)_bd_1.hwh .
-	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.tcl $(BASENAME)_bd_1_bd.tcl
-	cp $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper.bit $(BASENAME)_bd_1.bit
-endif
-	tar -Jc $(BASENAME)_bd_1* | base64 > ../$(BASENAME)_bd_1.$(HOST).$(BOARDNAME).tar.xz.b64
+	$(TAR) -Jc $(BASENAME)_bd_1* | $(BASE64) > ../$(BASENAME)_bd_1.$(HOST).$(BOARDNAME).tar.xz.b64
 
 open:
 	$(VIVADO) $(BASENAME)_bd_proj.xpr &
@@ -57,6 +49,7 @@ open_ip.%:
 
 clean:
 	rm -rf $(BUILD_COLLATERAL)
+	rm -rf xsim.dir/
 	rm -rf flist*.vcs
 	rm -rf *.fpga
 	rm -rf *.log
@@ -65,5 +58,7 @@ clean:
 	rm -rf *_ip_proj*
 	rm -rf ip_repo
 	rm -rf *_bd_proj*
-	rm -rf *_bd_1.bit *_bd_1.hwh *_bd_1_bd.tcl
+	rm -rf *_bd_1.bit *_bd_1.hwh *_bd_1.tcl *_bd_1.map
+	rm -rf vivado_pid*.str
+	rm -rf NA/
 

@@ -9,5 +9,9 @@ $(FLIST): $(BASE_FLIST)
 	cat $< | envsubst > $@
 	echo "+incdir+$(COSIM_DIR)/include/vivado" >> $@
 
+ifneq ($(BOARDNAME),pynqz2)
+$(error Only PynqZ2 currently supported)
+endif
+
 include $(TOP)/cosim/mk/Makefile.vivado
 

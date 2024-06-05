@@ -41,7 +41,7 @@ module top_zynq
    , input wire                                  rt_clk
    , output logic                                sys_resetn
 
-   , output logic                                tag_clk
+   , output logic                                tag_ck
    , output logic                                tag_data
 
    // Ports of Axi Slave Bus Interface S00_AXI
@@ -109,10 +109,10 @@ module top_zynq
    , output wire                                 m00_axi_awvalid
    , input wire                                  m00_axi_awready
    , output wire [5:0]                           m00_axi_awid
-   , output wire [1:0]                           m00_axi_awlock
+   , output wire                                 m00_axi_awlock
    , output wire [3:0]                           m00_axi_awcache
    , output wire [2:0]                           m00_axi_awprot
-   , output wire [3:0]                           m00_axi_awlen
+   , output wire [7:0]                           m00_axi_awlen
    , output wire [2:0]                           m00_axi_awsize
    , output wire [1:0]                           m00_axi_awburst
    , output wire [3:0]                           m00_axi_awqos
@@ -133,10 +133,10 @@ module top_zynq
    , output wire                                 m00_axi_arvalid
    , input wire                                  m00_axi_arready
    , output wire [5:0]                           m00_axi_arid
-   , output wire [1:0]                           m00_axi_arlock
+   , output wire                                 m00_axi_arlock
    , output wire [3:0]                           m00_axi_arcache
    , output wire [2:0]                           m00_axi_arprot
-   , output wire [3:0]                           m00_axi_arlen
+   , output wire [7:0]                           m00_axi_arlen
    , output wire [2:0]                           m00_axi_arsize
    , output wire [1:0]                           m00_axi_arburst
    , output wire [3:0]                           m00_axi_arqos
@@ -331,7 +331,7 @@ module top_zynq
       ,.tag_clk_r_o(tag_clk_r_lo)
       ,.tag_data_r_o(tag_data_r_lo)
       );
-   assign tag_clk = tag_clk_r_lo;
+   assign tag_ck = tag_clk_r_lo;
    assign tag_data = tag_data_r_lo;
 
    // Tag master and clients for PL

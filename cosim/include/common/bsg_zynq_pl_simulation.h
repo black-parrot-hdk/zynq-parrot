@@ -162,10 +162,6 @@ protected:
             co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
                 axi_hp1->axil_read_helper((s_axil_device *)uart.get(), yield);
             }));
-        } else if (watchdog.get() && watchdog->is_read(addr)) {
-            co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
-                axi_hp1->axil_read_helper((s_axil_device *)watchdog.get(), yield);
-            }));
         } else {
             bsg_pr_err("  bsg_zynq_pl: Unsupported AXI device read at [%x]\n",
                        addr);
@@ -180,10 +176,6 @@ protected:
         } else if (uart.get() && uart->is_write(addr)) {
             co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
                 axi_hp1->axil_write_helper((s_axil_device *)uart.get(), yield);
-            }));
-        } else if (watchdog.get() && watchdog->is_write(addr)) {
-            co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
-                axi_hp1->axil_write_helper((s_axil_device *)watchdog.get(), yield);
             }));
         } else {
             bsg_pr_err("  bsg_zynq_pl: Unsupported AXI device write at [%x]\n",

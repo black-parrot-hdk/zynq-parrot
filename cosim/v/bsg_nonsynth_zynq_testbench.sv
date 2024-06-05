@@ -61,7 +61,7 @@ module bsg_nonsynth_zynq_testbench;
    rt_clk_gen
     (.o(rt_clk));
 
-  logic tag_clk, tag_data, sys_resetn;
+  logic tag_ck, tag_data, sys_resetn;
 
 `ifdef GP0_ENABLE
   logic [C_S00_AXI_ADDR_WIDTH-1:0] s00_axi_awaddr;
@@ -200,10 +200,10 @@ module bsg_nonsynth_zynq_testbench;
   logic                                 m00_axi_awvalid;
   logic                                 m00_axi_awready;
   logic [5:0]                           m00_axi_awid;
-  logic [1:0]                           m00_axi_awlock;
+  logic                                 m00_axi_awlock;
   logic [3:0]                           m00_axi_awcache;
   logic [2:0]                           m00_axi_awprot;
-  logic [3:0]                           m00_axi_awlen;
+  logic [7:0]                           m00_axi_awlen;
   logic [2:0]                           m00_axi_awsize;
   logic [1:0]                           m00_axi_awburst;
   logic [3:0]                           m00_axi_awqos;
@@ -224,10 +224,10 @@ module bsg_nonsynth_zynq_testbench;
   logic                                 m00_axi_arvalid;
   logic                                 m00_axi_arready;
   logic [5:0]                           m00_axi_arid;
-  logic [1:0]                           m00_axi_arlock;
+  logic                                 m00_axi_arlock;
   logic [3:0]                           m00_axi_arcache;
   logic [2:0]                           m00_axi_arprot;
-  logic [3:0]                           m00_axi_arlen;
+  logic [7:0]                           m00_axi_arlen;
   logic [2:0]                           m00_axi_arsize;
   logic [1:0]                           m00_axi_arburst;
   logic [3:0]                           m00_axi_arqos;
@@ -244,7 +244,7 @@ module bsg_nonsynth_zynq_testbench;
     #(.axi_id_width_p(6)
       ,.axi_addr_width_p(C_M00_AXI_ADDR_WIDTH)
       ,.axi_data_width_p(C_M00_AXI_DATA_WIDTH)
-      ,.axi_len_width_p(4)
+      ,.axi_len_width_p(8)
       ,.mem_els_p(2**28) // 256 MB
       ,.init_data_p('0)
     )

@@ -33,22 +33,22 @@ module top_zynq
    , input wire                                  rt_clk
 
    // Ports of Axi Slave Bus Interface S00_AXI
-   , input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
-   , input wire [2 : 0]                          s00_axi_awprot
+   , input wire [C_S00_AXI_ADDR_WIDTH-1:0]       s00_axi_awaddr
+   , input wire [2:0]                            s00_axi_awprot
    , input wire                                  s00_axi_awvalid
    , output wire                                 s00_axi_awready
-   , input wire [C_S00_AXI_DATA_WIDTH-1 : 0]     s00_axi_wdata
-   , input wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s00_axi_wstrb
+   , input wire [C_S00_AXI_DATA_WIDTH-1:0]       s00_axi_wdata
+   , input wire [(C_S00_AXI_DATA_WIDTH/8)-1:0]   s00_axi_wstrb
    , input wire                                  s00_axi_wvalid
    , output wire                                 s00_axi_wready
-   , output wire [1 : 0]                         s00_axi_bresp
+   , output wire [1:0]                           s00_axi_bresp
    , output wire                                 s00_axi_bvalid
    , input wire                                  s00_axi_bready
-   , input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_araddr
-   , input wire [2 : 0]                          s00_axi_arprot
+   , input wire [C_S00_AXI_ADDR_WIDTH-1:0]       s00_axi_araddr
+   , input wire [2:0]                            s00_axi_arprot
    , input wire                                  s00_axi_arvalid
    , output wire                                 s00_axi_arready
-   , output wire [C_S00_AXI_DATA_WIDTH-1 : 0]    s00_axi_rdata
+   , output wire [C_S00_AXI_DATA_WIDTH-1:0]      s00_axi_rdata
    , output wire [1 : 0]                         s00_axi_rresp
    , output wire                                 s00_axi_rvalid
    , input wire                                  s00_axi_rready
@@ -57,10 +57,10 @@ module top_zynq
    , output wire                                 m00_axi_awvalid
    , input wire                                  m00_axi_awready
    , output wire [5:0]                           m00_axi_awid
-   , output wire [1:0]                           m00_axi_awlock
+   , output wire                                 m00_axi_awlock
    , output wire [3:0]                           m00_axi_awcache
    , output wire [2:0]                           m00_axi_awprot
-   , output wire [3:0]                           m00_axi_awlen
+   , output wire [7:0]                           m00_axi_awlen
    , output wire [2:0]                           m00_axi_awsize
    , output wire [1:0]                           m00_axi_awburst
    , output wire [3:0]                           m00_axi_awqos
@@ -81,10 +81,10 @@ module top_zynq
    , output wire                                 m00_axi_arvalid
    , input wire                                  m00_axi_arready
    , output wire [5:0]                           m00_axi_arid
-   , output wire [1:0]                           m00_axi_arlock
+   , output wire                                 m00_axi_arlock
    , output wire [3:0]                           m00_axi_arcache
    , output wire [2:0]                           m00_axi_arprot
-   , output wire [3:0]                           m00_axi_arlen
+   , output wire [7:0]                           m00_axi_arlen
    , output wire [2:0]                           m00_axi_arsize
    , output wire [1:0]                           m00_axi_arburst
    , output wire [3:0]                           m00_axi_arqos

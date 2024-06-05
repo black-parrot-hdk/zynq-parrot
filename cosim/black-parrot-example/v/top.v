@@ -24,7 +24,7 @@ module top
     //   into reset while the tags are still reseting. Unused in this example.
     ,output wire                                 sys_resetn
 
-    ,output wire                                 tag_clk
+    ,output wire                                 tag_ck
     ,output wire                                 tag_data
 
     ,input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
@@ -91,10 +91,10 @@ module top
     ,output wire                                 m00_axi_awvalid
     ,input wire                                  m00_axi_awready
     ,output wire [5:0]                           m00_axi_awid
-    ,output wire [1:0]                           m00_axi_awlock  // 1 bit bsg_cache_to_axi (AXI4); 2 bit (AXI3)
+    ,output wire                                 m00_axi_awlock
     ,output wire [3:0]                           m00_axi_awcache
     ,output wire [2:0]                           m00_axi_awprot
-    ,output wire [3:0]                           m00_axi_awlen   // 8 bits bsg_cache_to_axi
+    ,output wire [7:0]                           m00_axi_awlen
     ,output wire [2:0]                           m00_axi_awsize
     ,output wire [1:0]                           m00_axi_awburst
     ,output wire [3:0]                           m00_axi_awqos
@@ -115,10 +115,10 @@ module top
     ,output wire                                 m00_axi_arvalid
     ,input wire                                  m00_axi_arready
     ,output wire [5:0]                           m00_axi_arid
-    ,output wire [1:0]                           m00_axi_arlock
+    ,output wire                                 m00_axi_arlock
     ,output wire [3:0]                           m00_axi_arcache
     ,output wire [2:0]                           m00_axi_arprot
-    ,output wire [3:0]                           m00_axi_arlen
+    ,output wire [7:0]                           m00_axi_arlen
     ,output wire [2:0]                           m00_axi_arsize
     ,output wire [1:0]                           m00_axi_arburst
     ,output wire [3:0]                           m00_axi_arqos
@@ -169,7 +169,7 @@ module top
       ,.rt_clk         (rt_clk)
       ,.sys_resetn     (sys_resetn)
 
-      ,.tag_clk        (tag_clk)
+      ,.tag_ck         (tag_ck)
       ,.tag_data       (tag_data)
 
       ,.s00_axi_awaddr (s00_axi_awaddr)
