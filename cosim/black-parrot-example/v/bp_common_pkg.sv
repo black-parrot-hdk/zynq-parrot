@@ -54,12 +54,22 @@ package bp_common_pkg;
       ,ic_y_dim : 1
 
       ,icache_fill_width: 64
+      ,icache_block_width: 256
+      ,icache_sets       : 128
+      ,icache_assoc      : 4
 
       ,dcache_fill_width: 64
+      ,dcache_block_width: 256
+      ,dcache_sets       : 128
+      ,dcache_assoc      : 4
 
       ,acache_fill_width: 64
+      ,acache_block_width: 256
+      ,acache_sets       : 128
+      ,acache_assoc      : 4
 
       ,bedrock_fill_width: 64
+      ,bedrock_block_width: 256
 
       ,coh_noc_flit_width : 64
       ,mem_noc_flit_width : 64
@@ -104,6 +114,18 @@ package bp_common_pkg;
       ,cce_type : e_cce_fsm
       ,ic_y_dim : 1
 
+      ,icache_fill_width: 64
+
+      ,dcache_fill_width: 64
+
+      ,acache_fill_width: 64
+
+      ,bedrock_fill_width: 64
+
+      ,coh_noc_flit_width : 64
+      ,mem_noc_flit_width : 64
+      ,dma_noc_flit_width : 64
+
       ,icache_features      : (1 << e_cfg_enabled) | (1 << e_cfg_coherent)
                               | (1 << e_cfg_misaligned)
       ,dcache_features      : (1 << e_cfg_enabled)
@@ -116,18 +138,10 @@ package bp_common_pkg;
       ,l2_features          : (1 << e_cfg_enabled) | (1 << e_cfg_writeback)
                               | (1 << e_cfg_word_tracking)
 
-      ,icache_fill_width: 64
-      ,dcache_fill_width: 64
-      ,acache_fill_width: 64
-
-      ,bedrock_fill_width: 64
-
-      ,coh_noc_flit_width : 64
-      ,mem_noc_flit_width : 64
-      ,dma_noc_flit_width : 64
-
       ,l2_data_width: 64
       ,l2_fill_width: 64
+      ,l2_slices    : 1
+      ,l2_banks     : 1
 
       ,itlb_els_4k : 16
       ,itlb_els_2m : 1
