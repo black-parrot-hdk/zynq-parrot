@@ -6,9 +6,15 @@ include ../Makefile.design
 DROMAJO_COSIM ?= 0
 SKIP_DRAM ?= -DSKIP_DRAM_TESTING
 BP_NCPUS ?= 1
+ZYNQ_PL_DEBUG ?= 0
+ZYNQ_PS_DEBUG ?= 1
 
+ifeq ($(ZYNQ_PL_DEBUG),1)
 CFLAGS += -DZYNQ_PL_DEBUG
+endif
+ifeq ($(ZYNQ_PS_DEBUG),1)
 CFLAGS += -DZYNQ_PS_DEBUG
+endif
 ifeq ($(DROMAJO_COSIM),1)
 CFLAGS += -I$(BP_TOOLS_DIR)/dromajo/include
 CFLAGS += -DDROMAJO_COSIM
