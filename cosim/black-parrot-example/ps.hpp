@@ -10,15 +10,11 @@
 #ifdef COV_EN
 #define GP0_RD_CSR_COV_EN         (GP0_RD_CSR_BOOTROM_ADDR   + 0x4)
 #define GP0_RD_PL2PS_FIFO_0_DATA  (GP0_RD_CSR_COV_EN         + 0x4)
-#define GP0_RD_PL2PS_FIFO_1_DATA  (GP0_RD_PL2PS_FIFO_0_DATA  + 0x4)
-#define GP0_RD_PL2PS_FIFO_0_CTRS  (GP0_RD_PL2PS_FIFO_1_DATA  + 0x4)
-#define GP0_RD_PL2PS_FIFO_1_CTRS  (GP0_RD_PL2PS_FIFO_0_CTRS  + 0x4)
-#define GP0_RD_PS2PL_FIFO_CTRS    (GP0_RD_PL2PS_FIFO_1_CTRS  + 0x4)
 #else
 #define GP0_RD_PL2PS_FIFO_0_DATA  (GP0_RD_CSR_BOOTROM_ADDR   + 0x4)
+#endif
 #define GP0_RD_PL2PS_FIFO_0_CTRS  (GP0_RD_PL2PS_FIFO_0_DATA  + 0x4)
 #define GP0_RD_PS2PL_FIFO_CTRS    (GP0_RD_PL2PS_FIFO_0_CTRS  + 0x4)
-#endif
 #define GP0_RD_REGS               (GP0_RD_PS2PL_FIFO_CTRS    + 0x4)
 #define GP0_RD_MEM_PROF_0         (GP0_RD_REGS)
 #define GP0_RD_MEM_PROF_1         (GP0_RD_MEM_PROF_0         + 0x4)
@@ -42,6 +38,11 @@
 #else
 #define GP0_WR_PS2PL_FIFO_DATA    (GP0_WR_CSR_BOOTROM_ADDR + 0x4)
 #endif
+
+// DMA
+//TODO: infer from map file
+#define DMA_OFFSET 0x10000
+#define GP0_DMA_ADDR (GP0_ADDR_BASE + DMA_OFFSET)
 
 // DRAM
 #define DRAM_BASE_ADDR  0x80000000U

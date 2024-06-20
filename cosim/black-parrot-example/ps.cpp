@@ -16,6 +16,9 @@
 #include <iostream>
 #include <iomanip>
 #include <unordered_set>
+#ifdef ZYNQ
+#include <pynq_api.h>
+#endif
 
 #include "ps.hpp"
 
@@ -42,10 +45,6 @@
 
 #ifndef BP_NCPUS
 #define BP_NCPUS 1
-#endif
-
-#ifdef COV_EN
-std::unordered_set<uint32_t> covs[COV_NUM];
 #endif
 
 // Helper functions
@@ -89,60 +88,122 @@ inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr) {
 }
 
 #ifdef COV_EN
-int idx = 0;
+#define COV_BUF_LEN 1024
+int cov_idx = 0;
+std::unordered_set<uint32_t> covs[COV_NUM];
 
-void cov_drain(bsg_zynq_pl *zpl) {
-  int cnt;
-  uint32_t cov, data;
+inline void cov_proc(uint32_t* p) {
+  int len;
+  bool last = false;
+  bool is_idx = true;
 
-  cnt = zpl->shell_read(GP0_RD_PL2PS_FIFO_1_CTRS);
-  while(cnt != 0) {
-    for(int i = 0; i < cnt; i++) {
-      data = zpl->shell_read(GP0_RD_PL2PS_FIFO_1_DATA);
-      if((data >> 31) & 0x1)
-        idx = (data & 0x7FFFFFFF);
-      else {
-        cov = (data & 0x7FFFFFFF);
-        covs[idx].insert(cov);
-      }
+  while(true) {
+    if(is_idx) {
+      //bsg_pr_info("ps.cpp: header = %x\n", *p);
+      cov_idx = *p & 0xFFFF;
+      len = (*p >> 16) & 0x7FFF;
+      last = (*p >> 31) & 0x1;
+      is_idx = false;
+      p++;
     }
-    cnt = zpl->shell_read(GP0_RD_PL2PS_FIFO_1_CTRS);
+    else {
+      for(int i = 0; i < len; i++) {
+        //bsg_pr_info("ps.cpp: cov = %x\n", *p);
+        covs[cov_idx].insert(*p);
+        p++;
+      }
+      is_idx = true;
+      if(last)
+        break;
+    }
   }
 }
 
-void cov_poll(bsg_zynq_pl *zpl) {
-  uint32_t cov, data;
+#ifdef ZYNQ
+PYNQ_SHARED_MEMORY cov_buff;
+PYNQ_AXI_DMA dma;
 
-  int cnt = zpl->shell_read(GP0_RD_PL2PS_FIFO_1_CTRS);
-  for(int i = 0; i < cnt; i++) {
-    data = zpl->shell_read(GP0_RD_PL2PS_FIFO_1_DATA);
-    if((data >> 31) & 0x1)
-      idx = (data & 0x7FFFFFFF);
-    else {
-      cov = (data & 0x7FFFFFFF);
-      covs[idx].insert(cov);
-    }
+pthread_t cov_id;
+bool cov_run = true;
+
+void* cov_poll(void *vargp) {
+  while(cov_run) {
+    // initiate read transfer and wait for completion
+    PYNQ_readDMA(&dma, &cov_buff, 0, sizeof(uint32_t) * COV_BUF_LEN);
+    PYNQ_waitForDMAComplete(&dma, AXI_DMA_READ);
+
+    // process the packet
+    cov_proc((uint32_t*)cov_buff->pointer);
   }
+  return NULL;
 }
 
 void cov_start(bsg_zynq_pl *zpl) {
+  // allocate CMA buffer and open read DMA
+  bsg_pr_info("ps.cpp: allocating coverage CMA memory\n");
+  PYNQ_allocatedSharedMemory(&cov_buff, sizeof(uint32_t) * COV_BUF_LEN, 0);
+
+  bsg_pr_info("ps.cpp: openning DMA device\n");
+  PYNQ_openDMA(&dma, GP0_DMA_ADDR, true, false);
+
+  // assert coverage collection
+  bsg_pr_info("ps.cpp: Asserting coverage collection enable\n");
+  zpl->shell_write(GP0_WR_CSR_COV_EN, 0x1, 0xf);
+
+  // start coverage polling thread
+  pthread_create(&cov_id, NULL, cov_poll, NULL);
+}
+
+void cov_done(bsg_zynq_pl *zpl) {
+  // stop coverage polling thread
+  cov_run = false;
+  pthread_join(cov_id, NULL);
+
+  // deassert coverage collection
+  bsg_pr_info("ps.cpp: Desserting coverage collection enable\n");
+  zpl->shell_write(GP0_WR_CSR_COV_EN, 0x0, 0xf);
+
+  // close DMA and free CMA buffer
+  PYNQ_closeDMA(&dma);
+  PYNQ_freeSharedMemory(&cov_buff);
+
+  // report covergroup utilization
+  for(int i = 0; i < COV_NUM; i++) {
+    printf("cover-group[%d] size: %d\n", i, covs[i].size());
+  }
+}
+#else
+uint32_t cov_buff[COV_BUF_LEN];
+
+void cov_poll(bsg_zynq_pl *zpl) {
+  // check if a complete DMA packet is available
+  if(zpl->dma_has_read())
+    zpl->dma_read((int32_t *)cov_buff);
+  else
+    return;
+
+  // process the packet
+  //bsg_pr_info("ps.cpp: dma read done\n");
+  cov_proc(cov_buff);
+}
+
+void cov_start(bsg_zynq_pl *zpl) {
+  // assert coverage collection
   bsg_pr_info("ps.cpp: Asserting coverage collection enable\n");
   zpl->shell_write(GP0_WR_CSR_COV_EN, 0x1, 0xf);
 }
 
 void cov_done(bsg_zynq_pl *zpl) {
-  // deassert coverage collection and drain leftover samples
+  // deassert coverage collection
   bsg_pr_info("ps.cpp: Desserting coverage collection enable\n");
   zpl->shell_write(GP0_WR_CSR_COV_EN, 0x0, 0xf);
-  do {
-    cov_drain(zpl);
-  } while(zpl->shell_read(GP0_RD_PL2PS_FIFO_1_CTRS) != 0);
 
   // report covergroup utilization
   for(int i = 0; i < COV_NUM; i++) {
-    printf("cover-group[%d] size: %ld\n", i, covs[i].size());
+    printf("cover-group[%d] size: %d\n", i, covs[i].size());
   }
 }
+#endif
 #endif
 
 void device_poll(bsg_zynq_pl *zpl) {
@@ -162,8 +223,8 @@ void device_poll(bsg_zynq_pl *zpl) {
       break;
     }
 
-#ifdef COV_EN
-    // sample coverage data
+#if defined(COV_EN) && !defined(ZYNQ)
+    // on Zynq coverage polling is done on a seperate thread
     cov_poll(zpl);
 #endif
   }

@@ -12,6 +12,7 @@ module top
     , parameter integer C_M00_AXI_ADDR_WIDTH = 32
     , parameter integer C_M01_AXI_DATA_WIDTH = 32
     , parameter integer C_M01_AXI_ADDR_WIDTH = 32
+    , parameter integer C_M02_AXI_DATA_WIDTH = 32
     , parameter integer __DUMMY = 0
     )
    (
@@ -150,6 +151,12 @@ module top
     ,input wire [1 : 0]                          m01_axi_rresp
     ,input wire                                  m01_axi_rvalid
     ,output wire                                 m01_axi_rready
+
+    ,input wire                                  m02_axis_tready
+    ,output wire                                 m02_axis_tvalid
+    ,output wire [C_M02_AXI_DATA_WIDTH-1 : 0]    m02_axis_tdata
+    ,output wire [(C_M02_AXI_DATA_WIDTH/8)-1:0]  m02_axis_tkeep
+    ,output wire                                 m02_axis_tlast
     );
 
    top_zynq #
@@ -163,6 +170,7 @@ module top
       ,.C_M00_AXI_ADDR_WIDTH(C_M00_AXI_ADDR_WIDTH)
       ,.C_M01_AXI_DATA_WIDTH(C_M01_AXI_DATA_WIDTH)
       ,.C_M01_AXI_ADDR_WIDTH(C_M01_AXI_ADDR_WIDTH)
+      ,.C_M02_AXI_DATA_WIDTH(C_M02_AXI_DATA_WIDTH)
       )
      top_fpga_inst
      (.aclk            (aclk)
@@ -296,6 +304,12 @@ module top
       ,.m01_axi_rresp  (m01_axi_rresp)
       ,.m01_axi_rvalid (m01_axi_rvalid)
       ,.m01_axi_rready (m01_axi_rready)
+
+      ,.m02_axis_tready(m02_axis_tready)
+      ,.m02_axis_tvalid(m02_axis_tvalid)
+      ,.m02_axis_tdata (m02_axis_tdata)
+      ,.m02_axis_tkeep (m02_axis_tkeep)
+      ,.m02_axis_tlast (m02_axis_tlast)
       );
 
 `ifdef DROMAJO_COSIM

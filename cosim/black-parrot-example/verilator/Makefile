@@ -23,6 +23,9 @@ endif
 ifneq ($(COV_EN),0)
 DEFINES += COV_EN=$(COV_EN)
 DEFINES += COV_NUM=$(COV_NUM)
+DEFINES += AXIS_ENABLE=1
+DEFINES += AXIS_DATA_WIDTH=32
+DEFINES += AXIS_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil5
 endif
 DEFINES += GP0_ADDR_BASE=0x400000000U
 DEFINES += GP0_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil0
@@ -68,6 +71,7 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	echo "$(BASEJUMP_STL_DIR)/bsg_misc/bsg_icg_pos.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axil.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_axil_to_dpi.sv" >> $@
+	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_axis_to_dpi.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv" >> $@
 	if [ "$(DROMAJO_COSIM)" = "1" ]; then \
 		echo "$(BLACKPARROT_DIR)/bp_top/test/common/bp_nonsynth_cosim.sv" >> $@; \

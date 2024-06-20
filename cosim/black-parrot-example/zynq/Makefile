@@ -12,6 +12,9 @@ CFLAGS += -DZYNQ_PS_DEBUG
 CFLAGS += -DDRAM_TEST
 CFLAGS += -DFREE_DRAM=1
 CFLAGS += -DZERO_DRAM=1
+ifneq ($(COV_EN),0)
+CFLAGS += -lpynq_api
+endif
 
 SIM_ARGS += $(NBF_FILE)
 

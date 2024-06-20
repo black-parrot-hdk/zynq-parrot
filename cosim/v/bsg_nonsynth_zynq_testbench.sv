@@ -24,9 +24,8 @@ module bsg_nonsynth_zynq_testbench;
   localparam C_M01_AXI_DATA_WIDTH = `HP1_DATA_WIDTH;
   localparam C_M01_AXI_ADDR_WIDTH = `HP1_ADDR_WIDTH;
 `endif
-`ifdef HP2_ENABLE
-  localparam C_M02_AXI_DATA_WIDTH = `HP2_DATA_WIDTH;
-  localparam C_M02_AXI_ADDR_WIDTH = `HP2_ADDR_WIDTH;
+`ifdef AXIS_ENABLE
+  localparam C_M02_AXI_DATA_WIDTH = `AXIS_DATA_WIDTH;
 `endif
 
   localparam aclk_period_lp = 50000;
@@ -355,47 +354,21 @@ module bsg_nonsynth_zynq_testbench;
      );
 `endif
 
-`ifdef HP2_ENABLE
-  logic [C_M02_AXI_ADDR_WIDTH-1:0] m02_axi_awaddr;
-  logic [2:0] m02_axi_awprot;
-  logic m02_axi_awvalid, m02_axi_awready;
-  logic [C_M02_AXI_DATA_WIDTH-1:0] m02_axi_wdata;
-  logic [(C_M02_AXI_DATA_WIDTH/8)-1:0] m02_axi_wstrb;
-  logic m02_axi_wvalid, m02_axi_wready;
-  logic [1:0] m02_axi_bresp;
-  logic m02_axi_bvalid, m02_axi_bready;
-  logic [C_M02_AXI_ADDR_WIDTH-1:0] m02_axi_araddr;
-  logic [2:0] m02_axi_arprot;
-  logic m02_axi_arvalid, m02_axi_arready;
-  logic [C_M02_AXI_DATA_WIDTH-1:0] m02_axi_rdata;
-  logic [1:0] m02_axi_rresp;
-  logic m02_axi_rvalid, m02_axi_rready;
-  bsg_nonsynth_axil_to_dpi
-   #(.addr_width_p(C_M02_AXI_ADDR_WIDTH), .data_width_p(C_M02_AXI_DATA_WIDTH))
+`ifdef AXIS_ENABLE
+  logic m02_axis_tready, m02_axis_tvalid, m02_axis_tlast;
+  logic [C_M02_AXI_DATA_WIDTH-1:0] m02_axis_tdata;
+  logic [(C_M02_AXI_DATA_WIDTH/8)-1:0] m02_axis_tkeep;
+  bsg_nonsynth_axis_to_dpi
+   #(.data_width_p(C_M02_AXI_DATA_WIDTH))
    axil5
     (.aclk_i(aclk)
      ,.aresetn_i(aresetn)
 
-     ,.awaddr_i(m02_axi_awaddr)
-     ,.awprot_i(m02_axi_awprot)
-     ,.awvalid_i(m02_axi_awvalid)
-     ,.awready_o(m02_axi_awready)
-     ,.wdata_i(m02_axi_wdata)
-     ,.wstrb_i(m02_axi_wstrb)
-     ,.wvalid_i(m02_axi_wvalid)
-     ,.wready_o(m02_axi_wready)
-     ,.bresp_o(m02_axi_bresp)
-     ,.bvalid_o(m02_axi_bvalid)
-     ,.bready_i(m02_axi_bready)
-
-     ,.araddr_i(m02_axi_araddr)
-     ,.arprot_i(m02_axi_arprot)
-     ,.arvalid_i(m02_axi_arvalid)
-     ,.arready_o(m02_axi_arready)
-     ,.rdata_o(m02_axi_rdata)
-     ,.rresp_o(m02_axi_rresp)
-     ,.rvalid_o(m02_axi_rvalid)
-     ,.rready_i(m02_axi_rready)
+     ,.tready_o(m02_axis_tready)
+     ,.tvalid_i(m02_axis_tvalid)
+     ,.tdata_i(m02_axis_tdata)
+     ,.tkeep_i(m02_axis_tkeep)
+     ,.tlast_i(m02_axis_tlast)
      );
 `endif
 
@@ -420,9 +393,8 @@ module bsg_nonsynth_zynq_testbench;
      .C_M01_AXI_DATA_WIDTH(C_M01_AXI_DATA_WIDTH),
      .C_M01_AXI_ADDR_WIDTH(C_M01_AXI_ADDR_WIDTH),
 `endif
-`ifdef HP2_ENABLE
+`ifdef AXIS_ENABLE
      .C_M02_AXI_DATA_WIDTH(C_M02_AXI_DATA_WIDTH),
-     .C_M02_AXI_ADDR_WIDTH(C_M02_AXI_ADDR_WIDTH),
 `endif
      .__DUMMY(0)
      )

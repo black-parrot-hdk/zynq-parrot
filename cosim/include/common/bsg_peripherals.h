@@ -158,4 +158,35 @@ public:
     void return_read(int32_t data) { /* Unimp */ }
 };
 
+// Buffer
+class zynq_buffer : public s_axis_device {
+    bool buffer_full = false;
+    std::queue<int32_t> buffer;
+
+public:
+    zynq_buffer() {}
+
+    bool full() override {
+      return buffer_full;
+    }
+
+    void read(int32_t* data) override {
+        int32_t* p = data;
+        do {
+          *p = buffer.front();
+          bsg_pr_dbg_pl("  bsg_zynq_pl: fifo read -> %x\n", *p);
+
+          buffer.pop();
+          p++;
+        } while(!buffer.empty());
+        buffer_full = false;
+    }
+
+    void write(int32_t data, bool last) override {
+        bsg_pr_dbg_pl("  bsg_zynq_pl: fifo write <- %x\n", data);
+        buffer.push(data);
+        buffer_full = last;
+    }
+};
+
 #endif

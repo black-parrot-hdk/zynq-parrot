@@ -36,6 +36,7 @@ module top_zynq
    , parameter integer C_M00_AXI_ADDR_WIDTH   = 32
    , parameter integer C_M01_AXI_DATA_WIDTH   = 32
    , parameter integer C_M01_AXI_ADDR_WIDTH   = 32
+   , parameter integer C_M02_AXI_DATA_WIDTH   = 32
    )
   (input wire                                    aclk
    , input wire                                  aresetn
@@ -169,6 +170,12 @@ module top_zynq
    , input wire [1 : 0]                          m01_axi_rresp
    , input wire                                  m01_axi_rvalid
    , output wire                                 m01_axi_rready
+
+   , input wire                                  m02_axis_tready
+   , output wire                                 m02_axis_tvalid
+   , output wire [C_M02_AXI_DATA_WIDTH-1 : 0]    m02_axis_tdata
+   , output wire [(C_M02_AXI_DATA_WIDTH/8)-1:0]  m02_axis_tkeep
+   , output wire                                 m02_axis_tlast
    );
 
   `define COREPATH blackparrot.processor.u.unicore.unicore_lite.core_minimal
@@ -182,17 +189,13 @@ module top_zynq
  
 `ifdef COV_EN
    localparam num_regs_ps_to_pl_lp  = 6;
-   localparam num_regs_pl_to_ps_lp  = 11;
-
-   localparam num_fifo_ps_to_pl_lp = 1;
-   localparam num_fifo_pl_to_ps_lp = 2;
 `else
    localparam num_regs_ps_to_pl_lp  = 5;
+`endif
    localparam num_regs_pl_to_ps_lp  = 11;
 
    localparam num_fifo_ps_to_pl_lp = 1;
    localparam num_fifo_pl_to_ps_lp = 1;
-`endif
 
    ///////////////////////////////////////////////////////////////////////////////////////
    // csr_data_lo:
@@ -222,7 +225,6 @@ module top_zynq
    // pl_to_ps_fifo:
    //
    // 0: BP host IO access request
-   // 1: covergroup samples
    //
    logic [num_fifo_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] pl_to_ps_fifo_data_li;
    logic [num_fifo_pl_to_ps_lp-1:0]                           pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
@@ -422,8 +424,9 @@ module top_zynq
    (* gated_clock = "yes" *) wire bp_clk;
 
 `ifdef COV_EN
+   logic cov_en_sync_li;
    logic [num_cov_p-1:0] cov_gate_lo;
-   wire gate_lo = (|cov_gate_lo);
+   wire gate_lo = cov_en_sync_li & (|cov_gate_lo);
 `else
    wire gate_lo = 1'b0;
 `endif
@@ -573,9 +576,9 @@ module top_zynq
       ,.s_axil_rvalid_o(spack_axi_rvalid)
       ,.s_axil_rready_i(spack_axi_rready)
 
-      ,.data_o(pl_to_ps_fifo_data_li[0])
-      ,.v_o(pl_to_ps_fifo_v_li[0])
-      ,.ready_i(pl_to_ps_fifo_ready_lo[0])
+      ,.data_o(pl_to_ps_fifo_data_li)
+      ,.v_o(pl_to_ps_fifo_v_li)
+      ,.ready_i(pl_to_ps_fifo_ready_lo)
 
       ,.data_i(ps_to_pl_fifo_data_lo)
       ,.v_i(ps_to_pl_fifo_v_lo)
@@ -870,6 +873,9 @@ module top_zynq
 
 `ifdef COV_EN
    // Coverage
+   localparam cov_width_lp = 32;
+   localparam cam_els_lp = 16;
+
    // reset generation
    logic bp_reset_li, ds_reset_li;
    bsg_sync_sync
@@ -889,34 +895,13 @@ module top_zynq
      );
 
    // coverage valid when enabled
-   logic cov_v_li;
-   logic [num_cov_p-1:0][32-1:0] cov_li;
-   bsg_sync_sync
-    #(.width_p(1))
-    cov_en_bp_bss
-     (.oclk_i(bp_clk)
-     ,.iclk_data_i(cov_en_li)
-     ,.oclk_data_o(cov_v_li)
-     );
-
-   // drain remaining coverage data after stopping coverage collection
-   logic cov_drain_li, cov_en_ds_sync_li;
    bsg_sync_sync
     #(.width_p(1))
     cov_en_ds_bss
      (.oclk_i(ds_clk)
      ,.iclk_data_i(cov_en_li)
-     ,.oclk_data_o(cov_en_ds_sync_li)
+     ,.oclk_data_o(cov_en_sync_li)
      );
-
-   bsg_edge_detect
-    #(.falling_not_rising_p(1))
-    drain_reg
-     (.clk_i(ds_clk)
-      ,.reset_i(ds_reset_li)
-      ,.sig_i(cov_en_ds_sync_li)
-      ,.detect_o(cov_drain_li)
-      );
 
    // pick first covergroup to drain
    logic [`BSG_SAFE_CLOG2(num_cov_p)-1:0] cov_idx_enc_lo;
@@ -930,13 +915,23 @@ module top_zynq
      ,.v_o()
      );
 
+   // count gated covergroups
+   logic [`BSG_SAFE_CLOG2(num_cov_p+1)-1:0] cov_popcnt_lo;
+   bsg_popcount
+    #(.width_p(num_cov_p))
+    popcnt
+     (.i(cov_gate_lo)
+     ,.o(cov_popcnt_lo)
+     );
+
    // covergroup instances
+   logic [num_cov_p-1:0][cov_width_lp-1:0] cov_li;
    logic [num_cov_p-1:0] cov_v_lo, cov_ready_li, cov_idx_v_lo;
-   logic [num_cov_p-1:0][32-1:0] cov_data_lo;
+   logic [num_cov_p-1:0][cov_width_lp-1:0] cov_data_lo;
    for(genvar i = 0; i < num_cov_p; i++) begin: rof
      // random covergroup input for testing
      bsg_lfsr
-      #(.width_p(32))
+      #(.width_p(cov_width_lp))
       i_rand
        (.clk(bp_clk)
        ,.reset_i(bp_reset_li)
@@ -946,8 +941,8 @@ module top_zynq
 
      bsg_cover
       #(.idx_p(i)
-       ,.width_p(32)
-       ,.els_p(16)
+       ,.width_p(cov_width_lp)
+       ,.els_p(cam_els_lp)
        ,.lg_afifo_size_p(3)
        )
       i_cov
@@ -960,11 +955,11 @@ module top_zynq
        ,.axi_clk_i(aclk)
        ,.axi_reset_i(bp_async_reset_li)
 
-       ,.v_i(cov_v_li)
+       ,.v_i(cov_en_sync_li)
        ,.data_i(cov_li[i])
        ,.ready_o()
 
-       ,.drain_i(cov_drain_li)
+       ,.drain_i(1'b0)
        ,.gate_o(cov_gate_lo[i])
 
        ,.ready_i(cov_ready_li[i])
@@ -974,10 +969,46 @@ module top_zynq
        );
    end
 
-   logic cov_afifo_enq_li, cov_afifo_full_lo;
-   logic [32-1:0] cov_afifo_data_li;
+   // coverage stream construction
+   typedef struct packed {
+     logic        last;
+     logic [14:0] len;
+     logic [15:0] idx;
+   } cov_pkt_s;
+
+   logic cov_afifo_enq_li, cov_afifo_last_li, cov_afifo_full_lo;
+   logic cov_afifo_deq_li, cov_afifo_last_lo, cov_afifo_v_lo;
+   logic [32-1:0] cov_afifo_data_li, cov_afifo_data_lo;
+
+   cov_pkt_s cov_pkt_lo;
+   logic [`BSG_SAFE_CLOG2(cam_els_lp)-1:0] cov_pkt_cnt_lo;
+   assign cov_pkt_lo = '{last: (cov_popcnt_lo == 1) ? 1'b1 : 1'b0
+                        ,len: cam_els_lp
+                        ,idx: cov_data_lo[cov_idx_enc_lo]
+                        };
+
    assign cov_afifo_enq_li = ~cov_afifo_full_lo & cov_v_lo[cov_idx_enc_lo];
-   assign cov_afifo_data_li = {cov_idx_v_lo[cov_idx_enc_lo], cov_data_lo[cov_idx_enc_lo][0+:31]};
+   assign cov_afifo_last_li = (cov_popcnt_lo == 1) ? (cov_pkt_cnt_lo == (cam_els_lp - 1)) : 1'b0;
+   assign cov_afifo_data_li = cov_idx_v_lo[cov_idx_enc_lo] ? cov_pkt_lo : cov_data_lo[cov_idx_enc_lo];
+
+   assign cov_afifo_deq_li = m02_axis_tvalid & m02_axis_tready;
+   assign m02_axis_tvalid = cov_afifo_v_lo;
+   assign m02_axis_tdata = cov_afifo_data_lo;
+   assign m02_axis_tkeep = '1;
+   assign m02_axis_tlast = cov_afifo_last_lo;
+
+   bsg_counter_clear_up
+    #(.init_val_p(0)
+     ,.max_val_p(cam_els_lp)
+     )
+    pkt_cnt
+     (.clk_i(ds_clk)
+     ,.reset_i(ds_reset_li)
+     ,.clear_i(cov_afifo_enq_li & cov_idx_v_lo[cov_idx_enc_lo])
+     ,.up_i(cov_afifo_enq_li & ~cov_idx_v_lo[cov_idx_enc_lo])
+     ,.count_o(cov_pkt_cnt_lo)
+     );
+
    bsg_decode_with_v
     #(.num_out_p(num_cov_p))
     cov_demux
@@ -988,22 +1019,22 @@ module top_zynq
 
    bsg_async_fifo
     #(.lg_size_p(3)
-     ,.width_p(32)
+     ,.width_p(cov_width_lp+1)
      )
     cov_afifo
      (.w_clk_i(ds_clk)
      ,.w_reset_i(ds_reset_li)
 
      ,.w_enq_i(cov_afifo_enq_li)
-     ,.w_data_i(cov_afifo_data_li)
+     ,.w_data_i({cov_afifo_last_li, cov_afifo_data_li})
      ,.w_full_o(cov_afifo_full_lo)
 
      ,.r_clk_i(aclk)
      ,.r_reset_i(bp_async_reset_li)
 
-     ,.r_valid_o(pl_to_ps_fifo_v_li[1])
-     ,.r_data_o(pl_to_ps_fifo_data_li[1])
-     ,.r_deq_i(pl_to_ps_fifo_ready_lo[1] & pl_to_ps_fifo_v_li[1])
+     ,.r_valid_o(cov_afifo_v_lo)
+     ,.r_data_o({cov_afifo_last_lo, cov_afifo_data_lo})
+     ,.r_deq_i(cov_afifo_deq_li)
      );
 `endif
 
