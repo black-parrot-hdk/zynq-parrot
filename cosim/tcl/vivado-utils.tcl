@@ -45,9 +45,14 @@ proc vivado_gen_map { proj_hwh proj_map } {
     while {[gets ${f} line] >= 0} {
         if {[string match ${search} ${line}]} {
             regexp -nocase -line -- {BASEVALUE="(.*?)"} ${line} value base
-            regexp -nocase -line -- {([A-Z][A-Z][0-9])_AXI} ${line} value port
-            puts "Found Port ${port}: ${base}"
-            puts -nonewline $m "-D${port}_ADDR_BASE=${base} "
+            if {[regexp -nocase -line -- {SLAVEBUSINTERFACE="([A-Z][A-Z][0-9])_AXI"} ${line} value port]} {
+                puts "Found Output Port ${port}: ${base}"
+                puts -nonewline $m "-D${port}_ADDR_BASE=${base} "
+            }
+            if {[regexp -nocase -line -- {MASTERBUSINTERFACE="([A-Z][A-Z][0-9])_AXI"} ${line} value port]} {
+                puts "Found Input Port ${port}: ${base}"
+                puts -nonewline $m "-D${port}_ADDR_BASE=${base} "
+            }
         }
     }
     close $m

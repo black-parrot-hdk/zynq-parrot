@@ -60,6 +60,7 @@ proc vivado_create_ip { args } {
     connect_bd_intf_net [get_bd_intf_pins vps_0/GP0_AXI] [get_bd_intf_pins top_0/s00_axi]
     connect_bd_intf_net [get_bd_intf_pins vps_0/GP1_AXI] [get_bd_intf_pins top_0/s01_axi]
     connect_bd_intf_net [get_bd_intf_pins vps_0/HP0_AXI] [get_bd_intf_pins top_0/m00_axi]
+    connect_bd_intf_net [get_bd_intf_pins vps_0/HP0_AXIS] [get_bd_intf_pins top_0/m02_axis]
 
     connect_bd_net [get_bd_pins top_0/tag_ck] [get_bd_pins watchdog_0/tag_clk]
     connect_bd_net [get_bd_pins top_0/tag_data] [get_bd_pins watchdog_0/tag_data]

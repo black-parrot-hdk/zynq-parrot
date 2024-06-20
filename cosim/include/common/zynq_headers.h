@@ -193,33 +193,18 @@ static uintptr_t hp1_addr_base = (uintptr_t) HP1_ADDR_BASE;
 #endif
 #endif
 
-#ifndef HP2_ENABLE
-#define HP2_ADDR_WIDTH 0
-#define HP2_DATA_WIDTH 0
-#define HP2_ADDR_BASE 0
-#define HP2_HIER_BASE ""
+#ifndef AXIS_ENABLE
+#define AXIS_DATA_WIDTH 0
+#define AXIS_HIER_BASE ""
 #endif
 
-#ifndef HP2_ADDR_SIZE_BYTES
-#ifndef HP2_ADDR_WIDTH
-#error HP2_ADDR_WIDTH must be defined
-#endif
-#define HP2_ADDR_SIZE_BYTES (1ULL << HP2_ADDR_WIDTH)
-#endif
-static uintptr_t hp2_addr_size_bytes = (uintptr_t) HP2_ADDR_SIZE_BYTES;
-
-#ifndef HP2_ADDR_BASE
-#error HP2_ADDR_BASE must be defined
-#endif
-static uintptr_t hp2_addr_base = (uintptr_t) HP2_ADDR_BASE;
-
-#ifndef HP2_DATA_WIDTH
-#error HP2_DATA_WIDTH must be defined
+#ifndef AXIS_DATA_WIDTH
+#error AXIS_DATA_WIDTH must be defined
 #endif
 
-#ifndef HP2_HIER_BASE
+#ifndef AXIS_HIER_BASE
 #ifdef SIMULATION
-#error HP2_HIER_BASE must be defined
+#error AXIS_HIER_BASE must be defined
 #endif
 #endif
 

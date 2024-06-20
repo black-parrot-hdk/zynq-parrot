@@ -59,11 +59,12 @@ protected:
     std::unique_ptr<axilm<GP2_ADDR_WIDTH, GP2_DATA_WIDTH>> axi_gp2;
     std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH>> axi_hp0;
     std::unique_ptr<axils<HP1_ADDR_WIDTH, HP1_DATA_WIDTH>> axi_hp1;
-    std::unique_ptr<axils<HP2_ADDR_WIDTH, HP2_DATA_WIDTH>> axi_hp2;
+    std::unique_ptr<axiss<AXIS_DATA_WIDTH>> axis;
 
     std::unique_ptr<zynq_uart> uart;
     std::unique_ptr<zynq_scratchpad> scratchpad;
     std::unique_ptr<zynq_watchdog> watchdog;
+    std::unique_ptr<zynq_buffer> buffer;
 
     std::vector<std::unique_ptr<coro_t>> co_list;
 
@@ -105,11 +106,11 @@ protected:
             axi_hp1->reset(yield);
         }));
 #endif
-#ifdef HP2_ENABLE
-        axi_hp2 = std::make_unique<axils<HP2_ADDR_WIDTH, HP2_DATA_WIDTH>>(
-            STRINGIFY(HP2_HIER_BASE));
+#ifdef AXIS_ENABLE
+        axis = std::make_unique<axiss<AXIS_DATA_WIDTH>>(
+            STRINGIFY(AXIS_HIER_BASE));
         co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
-            axi_hp2->reset(yield);
+            axis->reset(yield);
         }));
 #endif
         // Do the reset
@@ -128,12 +129,16 @@ protected:
 #ifdef UART_ENABLE
         uart = std::make_unique<zynq_uart>();
 #endif
+#ifdef AXIS_ENABLE
+        buffer = std::make_unique<zynq_buffer>();
+#endif
     }
 
     void destroy_peripherals() {
         scratchpad.reset();
         watchdog.reset();
         uart.reset();
+        buffer.reset();
     }
 
     void next() {
@@ -180,6 +185,14 @@ protected:
         } else {
             bsg_pr_err("  bsg_zynq_pl: Unsupported AXI device write at [%x]\n",
                        addr);
+        }
+#endif
+#ifdef AXIS_ENABLE
+        if (buffer.get() && axis->axis_has_write((s_axis_device *)buffer.get())) {
+            co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+                axis->axis_write_helper((s_axis_device *)buffer.get(),
+                                          yield);
+            }));
         }
 #endif
     }
@@ -402,6 +415,14 @@ public:
         shell_write(addr + 4, data1, 0xf);
         shell_write(addr + 8, data2, 0xf);
         shell_write(addr + 12, data3, 0xf);
+    }
+
+    virtual bool dma_has_read() {
+        return buffer.get()->full();
+    }
+
+    virtual void dma_read(int32_t* data) {
+        buffer.get()->read(data);
     }
 };
 
