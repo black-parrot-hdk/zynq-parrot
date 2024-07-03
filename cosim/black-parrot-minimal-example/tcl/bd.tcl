@@ -16,8 +16,8 @@ proc vivado_create_ip { args } {
     create_bd_port -dir I -type clk -freq_hz ${aclk_freq_hz} aclk
     create_bd_port -dir I -type clk -freq_hz ${rtclk_freq_hz} rt_clk
     create_bd_port -dir I -type rst aresetn
-    make_bd_intf_pins_external [get_bd_intf_pins top/s00_axi] -name "s00_axi"
-    make_bd_intf_pins_external [get_bd_intf_pins top/m00_axi] -name "m00_axi"
+    make_bd_intf_pins_external [get_bd_intf_pins -hier s00_axi] -name "s00_axi"
+    make_bd_intf_pins_external [get_bd_intf_pins -hier m00_axi] -name "m00_axi"
     set_property CONFIG.ASSOCIATED_BUSIF {s00_axi:m00_axi} [get_bd_ports aclk]
     set_property CONFIG.ASSOCIATED_RESET {aresetn} [get_bd_ports aclk]
     set_property CONFIG.PROTOCOL {AXI4LITE} [get_bd_intf_ports s00_axi]
@@ -28,7 +28,7 @@ proc vivado_create_ip { args } {
     connect_bd_net [get_bd_pins top/aresetn] [get_bd_ports aresetn]
 
     set m00_seg_offset 0x0
-    set m00_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_ports top/m00_axi]]
+    set m00_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_intf_ports m00_axi]]
     set m00_seg_size [expr 1 << ${m00_addr_width}]
     assign_bd_address -target_address_space [get_bd_addr_spaces top/m00_axi] [get_bd_addr_segs m00*] -range ${m00_seg_size} -offset ${m00_seg_offset}
 

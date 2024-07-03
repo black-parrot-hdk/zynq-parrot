@@ -33,7 +33,7 @@ set gp0_addr_width [vivado_env_default GP0_ADDR_WIDTH 32]
 set gp1_enable     [vivado_env_default GP1_ENABLE 0]
 set gp1_data_width [vivado_env_default GP1_DATA_WIDTH 32]
 set gp1_addr_width [vivado_env_default GP1_ADDR_WIDTH 32]
-set hp0_enable     [vivado_env_default HP0_ENABLE 0]
+set hp0_enable     [vivado_env_default HP0_ENABLE 1]
 set hp0_data_width [vivado_env_default HP0_DATA_WIDTH 32]
 set hp0_addr_width [vivado_env_default HP0_ADDR_WIDTH 32]
 

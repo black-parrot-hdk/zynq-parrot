@@ -1,16 +1,14 @@
 # need to set the shell so that source works
 export SHELL := /bin/bash
 
-# Set up cad tools if using a non-bsg_cadenv environment
-export BSG_CADENV_DIR ?= $(BP_TOOLS_DIR)/bsg_cadenv
--include $(BSG_CADENV_DIR)/cadenv.mk
-
 export CURR_DESIGN_DIR       ?= $(CURR)/..
 export CURR_VSRC_DIR         ?= $(CURR_DESIGN_DIR)/v
 export CURR_CSRC_DIR         ?= $(CURR_DESIGN_DIR)/src
 export CURR_INCLUDE_DIR      ?= $(CURR_DESIGN_DIR)/include
 export CURR_TCL_DIR          ?= $(CURR_DESIGN_DIR)/tcl
 export CURR_XDC_DIR          ?= $(CURR_DESIGN_DIR)/xdc
+
+export IMPORT_DIR            ?= $(TOP)/import
 
 export COSIM_DIR             ?= $(TOP)/cosim
 export COSIM_MK_DIR          ?= $(COSIM_DIR)/mk
@@ -20,13 +18,29 @@ export COSIM_INCLUDE_DIR     ?= $(COSIM_DIR)/include
 export COSIM_PY_DIR          ?= $(COSIM_DIR)/py
 export COSIM_TCL_DIR         ?= $(COSIM_DIR)/tcl
 export COSIM_XDC_DIR         ?= $(COSIM_DIR)/xdc
-export COSIM_IMPORT_DIR      ?= $(COSIM_DIR)/import
+export COSIM_IMPORT_DIR      ?= $(IMPORT_DIR)
+export COSIM_INSTALL_DIR     ?= $(COSIM_DIR)/install
+export COSIM_WORK_DIR        ?= $(COSIM_INSTALL_DIR)/work
+
+export SOFTWARE_DIR          ?= $(TOP)/software
+export SOFTWARE_MK_DIR       ?= $(SOFTWARE_DIR)/mk
+export SOFTWARE_VSRC_DIR     ?= $(SOFTWARE_DIR)/v
+export SOFTWARE_CSRC_DIR     ?= $(SOFTWARE_DIR)/src
+export SOFTWARE_INCLUDE_DIR  ?= $(SOFTWARE_DIR)/include
+export SOFTWARE_PY_DIR       ?= $(SOFTWARE_DIR)/py
+export SOFTWARE_TCL_DIR      ?= $(SOFTWARE_DIR)/tcl
+export SOFTWARE_XDC_DIR      ?= $(SOFTWARE_DIR)/xdc
+export SOFTWARE_IMPORT_DIR   ?= $(IMPORT_DIR)
+export SOFTWARE_INSTALL_DIR  ?= $(SOFTWARE_DIR)/install
+export SOFTWARE_WORK_DIR     ?= $(SOFTWARE_INSTALL_DIR)/work
 
 export BASEJUMP_STL_DIR      ?= $(COSIM_IMPORT_DIR)/basejump_stl
 
 export BLACKPARROT_DIR       ?= $(COSIM_IMPORT_DIR)/black-parrot
 export BLACKPARROT_TOOLS_DIR ?= $(COSIM_IMPORT_DIR)/black-parrot-tools
 export BLACKPARROT_SUB_DIR   ?= $(COSIM_IMPORT_DIR)/black-parrot-subsystems
+export BLACKPARROT_SDK_DIR   ?= $(SOFTWARE_IMPORT_DIR)/black-parrot-sdk
+export PLATFORM              ?= zynqparrot
 export BP_FE_DIR             ?= $(BLACKPARROT_DIR)/bp_fe
 export BP_COMMON_DIR         ?= $(BLACKPARROT_DIR)/bp_common
 export BP_BE_DIR             ?= $(BLACKPARROT_DIR)/bp_be
@@ -37,8 +51,11 @@ export BP_BASEJUMP_STL_DIR   ?= $(BP_EXTERNAL_DIR)/basejump_stl
 export HARDFLOAT_DIR         ?= $(BP_EXTERNAL_DIR)/HardFloat
 # Override to zynq-parrot version
 export BP_TOOLS_DIR          ?= $(BLACKPARROT_TOOLS_DIR)
+export BP_SDK_DIR            ?= $(BLACKPARROT_SDK_DIR)
+export BP_SDK_INSTALL_DIR    ?= $(BP_SDK_DIR)/install
+export BP_SDK_LIB_DIR        ?= $(BP_SDK_INSTALL_DIR)/lib
 
-export BSG_MANYCORE_DIR          ?= $(COSIM_DIR)/import/bsg_manycore
+export BSG_MANYCORE_DIR          ?= $(COSIM_IMPORT_DIR)/bsg_manycore
 export BSG_MANYCORE_SOFTWARE_DIR ?= $(BSG_MANYCORE_DIR)/software
 export BSG_REPLICANT_DIR         ?= $(SOFTWARE_IMPORT_DIR)/bsg_replicant
 export BSG_MANYCORE_RTL_DIR      ?= $(BSG_MANYCORE_DIR)/v
@@ -47,15 +64,6 @@ export IGNORE_CADENV 			 ?= 1
 else
 export CAD_DIR                   ?= $(BSG_CADENV_DIR)
 endif
-
-export SOFTWARE_DIR          ?= $(TOP)/software
-export SOFTWARE_IMPORT_DIR   ?= $(SOFTWARE_DIR)/import
-export BLACKPARROT_SDK_DIR   ?= $(SOFTWARE_IMPORT_DIR)/black-parrot-sdk
-# Override to zynq-parrot version
-export BP_SDK_DIR            ?= $(BLACKPARROT_SDK_DIR)
-export BP_SDK_INSTALL_DIR    ?= $(BP_SDK_DIR)/install
-export BP_SDK_LIB_DIR        ?= $(BP_SDK_INSTALL_DIR)/lib
-export PLATFORM              ?= zynqparrot
 
 # TODO: Check verilator version
 ifeq ($(shell /usr/bin/arch),armv7l)
@@ -70,6 +78,7 @@ export ARM=0
 export VERILATOR ?= verilator
 endif
 export VIVADO    ?= vivado
+export PETALINUX ?= petalinux
 export VCS       ?= vcs
 export _DVE      ?= dve
 export XRUN      ?= xrun
@@ -77,9 +86,8 @@ export XMSIM     ?= xmsim
 export SIMVISION ?= simvision
 export GCC       ?= g++
 export PYTHON    ?= PYTHONPATH=$(COSIM_PY_DIR) python
-
-export PYTHON2         ?= PYTHONPATH=$(COSIM_PY_DIR) python2
-export PYTHON3         ?= PYTHONPATH=$(COSIM_PY_DIR) python3
+export PYTHON2   ?= PYTHONPATH=$(COSIM_PY_DIR) python2
+export PYTHON3   ?= PYTHONPATH=$(COSIM_PY_DIR) python3
 
 export TR       ?= tr
 export SED      ?= sed

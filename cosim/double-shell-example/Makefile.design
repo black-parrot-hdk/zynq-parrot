@@ -1,13 +1,12 @@
 TOP  := $(shell git rev-parse --show-toplevel)
 CURR := $(shell pwd)
 include $(TOP)/Makefile.common
+include $(TOP)/Makefile.config
 
 #############################
 # Design Settings
 #############################
-HOST       ?= zynq
 TB_MODULE  ?= bsg_nonsynth_zynq_testbench
-BOARDNAME  ?= pynqz2
 BASENAME   ?= double_shell
 
 MAIN_PROGRAM ?= $(COSIM_CSRC_DIR)/main.cpp

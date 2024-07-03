@@ -245,7 +245,7 @@ int ps_main(int argc, char **argv) {
   clock_gettime(CLOCK_MONOTONIC, &start);
   unsigned long long minstret_start = get_counter_64(zpl, GP0_RD_MINSTRET);
   unsigned long long mtime_start = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
-  bsg_pr_dbg_ps("ps.cpp: finished nbf load\n");
+  bsg_pr_info("ps.cpp: finished nbf load\n");
 
   // Set bsg client1 to 0 (deassert WD reset)
   btb->set_client(wd_reset_client, 0x1);
