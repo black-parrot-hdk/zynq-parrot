@@ -980,15 +980,19 @@ module top_zynq
    logic cov_afifo_deq_li, cov_afifo_last_lo, cov_afifo_v_lo;
    logic [32-1:0] cov_afifo_data_li, cov_afifo_data_lo;
 
+   localparam max_pkt_cnt_lp = (256 / (cam_els_lp + 1));
+   logic [`BSG_SAFE_CLOG2(max_pkt_cnt_lp)-1:0] cov_pkt_cnt_lo;
+   logic [`BSG_SAFE_CLOG2(cam_els_lp)-1:0] cov_beat_cnt_lo;
+
    cov_pkt_s cov_pkt_lo;
-   logic [`BSG_SAFE_CLOG2(cam_els_lp)-1:0] cov_pkt_cnt_lo;
-   assign cov_pkt_lo = '{last: (cov_popcnt_lo == 1) ? 1'b1 : 1'b0
+   wire last_pkt_li = (cov_pkt_cnt_lo == (max_pkt_cnt_lp - 1)) | (cov_popcnt_lo == 1);
+   assign cov_pkt_lo = '{last: last_pkt_li
                         ,len: cam_els_lp
                         ,idx: cov_data_lo[cov_idx_enc_lo]
                         };
 
    assign cov_afifo_enq_li = ~cov_afifo_full_lo & cov_v_lo[cov_idx_enc_lo];
-   assign cov_afifo_last_li = (cov_popcnt_lo == 1) ? (cov_pkt_cnt_lo == (cam_els_lp - 1)) : 1'b0;
+   assign cov_afifo_last_li = last_pkt_li ? (cov_beat_cnt_lo == (cam_els_lp - 1)) : 1'b0;
    assign cov_afifo_data_li = cov_idx_v_lo[cov_idx_enc_lo] ? cov_pkt_lo : cov_data_lo[cov_idx_enc_lo];
 
    assign cov_afifo_deq_li = m02_axis_tvalid & m02_axis_tready;
@@ -999,14 +1003,26 @@ module top_zynq
 
    bsg_counter_clear_up
     #(.init_val_p(0)
-     ,.max_val_p(cam_els_lp)
+     ,.max_val_p(max_pkt_cnt_lp)
      )
     pkt_cnt
      (.clk_i(ds_clk)
      ,.reset_i(ds_reset_li)
+     ,.clear_i(cov_afifo_enq_li & cov_afifo_last_li)
+     ,.up_i(cov_afifo_enq_li & (cov_beat_cnt_lo == (cam_els_lp - 1)) & ~cov_afifo_last_li)
+     ,.count_o(cov_pkt_cnt_lo)
+     );
+
+   bsg_counter_clear_up
+    #(.init_val_p(0)
+     ,.max_val_p(cam_els_lp)
+     )
+    beat_cnt
+     (.clk_i(ds_clk)
+     ,.reset_i(ds_reset_li)
      ,.clear_i(cov_afifo_enq_li & cov_idx_v_lo[cov_idx_enc_lo])
      ,.up_i(cov_afifo_enq_li & ~cov_idx_v_lo[cov_idx_enc_lo])
-     ,.count_o(cov_pkt_cnt_lo)
+     ,.count_o(cov_beat_cnt_lo)
      );
 
    bsg_decode_with_v
