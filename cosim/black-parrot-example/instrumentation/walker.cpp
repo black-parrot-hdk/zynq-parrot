@@ -22,6 +22,8 @@
 #include <uhdm/vpi_uhdm.h>
 #include <uhdm/ExprEval.h>
 
+
+
 void walker_warn(std::string s) {
   std::cout << "WARN: " << s << std::endl;
 }
@@ -153,7 +155,7 @@ void print_csvs(std::string fileName = "") {
 
 void print_unordered_set(std::unordered_set<std::pair<std::string, int>, PairHash> &map, bool std = false, std::string fileName = "") {
   std::ofstream file;
-  file.open(fileName, std::ios_base::app);
+  file.open(fileName, std::ios_base::out);
   if(file) {
     for (const auto& item : map) {
       if(std)
@@ -168,7 +170,7 @@ void print_unordered_set(std::unordered_set<std::pair<std::string, int>, PairHas
 void print_list(std::unordered_map<std::string, std::unordered_set<std::string>> &map, bool f = false, std::string fileName = "", bool std = false) {
   std::ofstream file;
   if(f)
-    file.open(fileName, std::ios_base::app);
+    file.open(fileName, std::ios_base::out);
 
   for (const auto& pair : map) {
     if(std) std::cout << pair.first << ": " << std::endl;
@@ -268,7 +270,8 @@ struct data_structure {
     net_submodOut; // search with net, gives submodOut
   std::multimap <std::string, std::string>          submodIn_net;
   // multimap because submodIn can be driven by an operation of nets
-  std::multimap <std::string, std::string>          net2driver;
+  //std::multimap <std::string, std::string>          net2driver;
+  std::unordered_map<std::string, std::unordered_set<std::string>> net2driver;
   std::unordered_map<std::string, std::unordered_set<std::string>> net2sel; // net to select signal (implies net is a muxOutput)
   std::list <std::string>                           moduleInputs;
   std::list <std::string>                           regs;
@@ -291,8 +294,11 @@ void print_ds(std::string fileName, data_structure& ds) {
   for (auto const& i : ds.submodIn_net)
     file << i.first << " <> " << i.second << std::endl;
 
-  for (auto const& i : ds.net2driver)
-    file << i.first << " := " << i.second << std::endl;
+  for (auto const& i : ds.net2driver) {
+    file << i.first << " ??\n";
+    for (auto const& el : i.second)
+      file << "\t" << el << std::endl;
+  }
 
   for (auto const& i : ds.net2sel) {
     file << i.first << " ??\n";
@@ -426,12 +432,9 @@ void parse_module(vpiHandle module, vpiHandle p_in, bool genScope = false, std::
   // parse always blocks
   if(vpiHandle proc_blks = vpi_iterate(vpiProcess, module)) {
     while(vpiHandle a = vpi_scan(proc_blks)) {
-      // TODO look for any generate for blocks and parse them too
       global_always_ff_flag = (vpi_get(vpiAlwaysType, a) == 3 || vpi_get(vpiAlwaysType, a) == 1);
-      std::cout << "\n\n\nParsing always block | Type: " << 
-        (global_always_ff_flag ? "Procedural" : "Continuous") << std::endl;
-      std::cout << "File: " << std::string(vpi_get_str(vpiFile, a)) <<
-        ":" << std::to_string(vpi_get(vpiLineNo, a)) << std::endl;
+      std::cout << "\n\n\nParsing always block | Type: " << (global_always_ff_flag ? "Procedural" : "Continuous") << std::endl;
+      std::cout << "File: " << std::string(vpi_get_str(vpiFile, a)) << ":" << std::to_string(vpi_get(vpiLineNo, a)) << std::endl;
       parseAlways(a, ds);
       assert(ds.running_cond_str.size() == 0);
       vpi_release_handle(a);
@@ -440,7 +443,6 @@ void parse_module(vpiHandle module, vpiHandle p_in, bool genScope = false, std::
 
   // genScopeArrays (if/for blocks outside of always blocks)
   if(vpiHandle ga = vpi_iterate(vpiGenScopeArray, module)) {
-    // TODO there are related scopes for if-else (check vpi_user.h)
     while (vpiHandle h = vpi_scan(ga)) {
       std::cout << "Iterating genScopeArray\n";
       vpiHandle g = vpi_iterate(vpiGenScope, h);
@@ -466,9 +468,11 @@ void parse_module(vpiHandle module, vpiHandle p_in, bool genScope = false, std::
     module_ds_map[name].modSubmodMap.insert(ds.modSubmodMap.begin(), ds.modSubmodMap.end());  // multimap
     module_ds_map[name].net_submodOut.insert(ds.net_submodOut.begin(), ds.net_submodOut.end()); // unordered_map
     module_ds_map[name].submodIn_net.insert(ds.submodIn_net.begin(), ds.submodIn_net.end()); // multimap
-    module_ds_map[name].net2driver.insert(ds.net2driver.begin(), ds.net2driver.end()); //multimap
     module_ds_map[name].moduleInputs.insert(module_ds_map[name].moduleInputs.end(), ds.moduleInputs.begin(), ds.moduleInputs.end()); //list
     module_ds_map[name].regs.insert(module_ds_map[name].regs.end(), ds.regs.begin(), ds.regs.end()); //list
+    for(auto const& k : ds.net2driver)
+      for(auto const& v : k.second)
+        module_ds_map[name].net2driver[k.first].insert(v);
     for(auto const& k : ds.net2sel)
       for(auto const& v : k.second)
         module_ds_map[name].net2sel[k.first].insert(v);
@@ -478,8 +482,7 @@ void parse_module(vpiHandle module, vpiHandle p_in, bool genScope = false, std::
 }
 
 void parseAlways(vpiHandle always, data_structure &ds) {
-  std::cout << "Node type: "
-    << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)always)->type) << std::endl;
+  std::cout << "Node type: " << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)always)->type) << std::endl;
   switch(((const uhdm_handle *)always)->type) {
     case UHDM::uhdmalways : {
       // always necessarily has a statement
@@ -495,7 +498,7 @@ void parseAlways(vpiHandle always, data_structure &ds) {
        \_named_begin:         recurse()
        \_event_control:       recurse()
        \_for_stmt:            recurse()
-       \_assignment:          visitAssign        TODO: vpiBlocking
+       \_assignment:          visitAssign 
        \_case_stmt:           visitCase
        \_if_stmt:             visitIfElse
        \_if_else:             visitIfElse
@@ -536,25 +539,38 @@ void parseAlways(vpiHandle always, data_structure &ds) {
       break;
     }
     case UHDM::uhdmcase_stmt: {
-      // TODO precision for running condition str
       bool constOnly;
+      std::list <std::string> cond_str;
       if(vpiHandle c = vpi_handle(vpiCondition, always)) {
-        std::list <std::string> cond_str = visitExpr(c, true, constOnly);
-        if(!constOnly)
-          ds.running_cond_str.push_front(cond_str.front());
+        cond_str = visitExpr(c, true, constOnly);
       } else
-        std::cout << "No condition found in case_stmt\n";
+        walker_error("No condition found in case_stmt");
 
       std::cout << "Finding case_items\n";
       if(vpiHandle items = vpi_iterate(vpiCaseItem, always)) {
         while(vpiHandle item = vpi_scan(items)) {
+          bool rcs_active; // running_cond_str active
+          std::cout << "Case item processing\n";
+          if(vpiHandle expr = vpi_handle(vpiExpr, item)) {
+            std::list <std::string> match;
+            if(((const uhdm_handle *)expr)->type == UHDM::uhdmoperation) {
+              std::tie(rcs_active, match) = visitOperation(expr); // rcs used dummily
+            } else {
+              match = visitExpr(expr, true, rcs_active); // rcs used dummily
+            }
+            if(!constOnly) {
+              ds.running_cond_str.push_front(" ( " + cond_str.front() + " == " + match.front() + " ) ");
+              rcs_active = true;
+            }
+            else rcs_active = false;
+          }
+
           // will usually be an assignment
-          // MAJOR TODO equate this to running_cond_str
           parseAlways(item, ds);
+          if(rcs_active)
+            ds.running_cond_str.pop_front();
         }
       }
-      if(!constOnly)
-        ds.running_cond_str.pop_front();
       break;
     }
     case UHDM::uhdmfor_stmt: {
@@ -573,7 +589,7 @@ void parseAlways(vpiHandle always, data_structure &ds) {
       }
 
       if(vpiHandle stmt = vpi_handle(vpiStmt, always)) {
-        for(int i = 0; i <= limit; i++) { //TODO clean later
+        for(int i = 0; i <= limit; i++) {
           std::cout << "Running iteration:  " << itr << " : " << i  << std::endl;
           running_const.insert({itr, i});
           parseAlways(stmt, ds);
@@ -626,8 +642,7 @@ void parseAssigns(vpiHandle assign,
     bool isProcedural
     ) {
   // if LHS is like a[i], or {a,...} what to do?
-  std::cout << "\nWalking " << (isProcedural ? "Procedural" : "Cont.") << 
-    " assignment | " << vpi_get_str(vpiFile, assign) << ":" << vpi_get(vpiLineNo, assign) << std::endl;
+  std::cout << "\nWalking " << (isProcedural ? "Procedural" : "Cont.") <<  " assignment | " << vpi_get_str(vpiFile, assign) << ":" << vpi_get(vpiLineNo, assign) << std::endl;
   if(vpiHandle rhs = vpi_handle(vpiRhs, assign)) {
     /* In BlackParrot (at least), RHS in an assignment can only be:
      * Type: bit_select
@@ -640,8 +655,7 @@ void parseAssigns(vpiHandle assign,
      * Type: operation           
      */
     UHDM::UHDM_OBJECT_TYPE rhs_type = (UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)rhs)->type;
-    std::cout << "Walking RHS | Type: "
-      << UHDM::UhdmName(rhs_type) << std::endl;
+    std::cout << "Walking RHS | Type: " << UHDM::UhdmName(rhs_type) << std::endl;
 
     std::unordered_set<std::string> rhsOps;
     printOperandsInExpr(rhs, &rhsOps, false); // updates rhsOperands
@@ -694,7 +708,7 @@ void parseAssigns(vpiHandle assign,
       }
 
       for (const auto& lhsEl : lhsStr) {
-        // TODO we are potentially misrepresenting relationships for various lhs operands in case of operation on lhs
+        // mionor TODO we are potentially misrepresenting relationships for various lhs operands in case of operation on lhs
 
         // insert into regs
         if(isProcedural) {
@@ -729,7 +743,7 @@ void parseAssigns(vpiHandle assign,
             // no need to add select_signals as drivers
             continue;
           } else {
-            ds.net2driver.insert({lhsEl, rhsStr});
+            ds.net2driver[lhsEl].insert(rhsStr);
             std::cout << lhsEl << (isProcedural ? " <- " : " <= ") << rhsStr << std::endl;
           }
         }
@@ -915,12 +929,11 @@ std::map <std::string, std::string> blacklist = {
 };
 
 bool findDriver (data_structure &ds, std::string net) {
-  auto driver = ds.net2driver.equal_range(net);
-  return driver.first == driver.second;
+  return ds.net2driver.find(net) != ds.net2driver.end();
 }
 bool findSource (data_structure &ds, std::string net) {
   auto source = ds.net_submodOut.find(net);
-  return source == ds.net_submodOut.end();
+  return source != ds.net_submodOut.end();
 }
 bool findIfInput(data_structure &ds, std::string net) {
   return std::find(ds.moduleInputs.begin(), ds.moduleInputs.end(), net) != ds.moduleInputs.end();
@@ -950,8 +963,12 @@ std::vector<std::string> findMatchingStrings(const data_structure &ds, const std
 
   for (const auto &pair : ds.net2driver) {
     if (matchesPattern(pair.first, prefix)) {
-      std::cout << indent << "\tMatching driver for: " << pair.first << " <- " << pair.second << std::endl;
-      matchingValues.push_back(pair.second);
+      std::cout << indent << "\tMatching driver for: " << pair.first << std::endl;
+      std::cout << indent << "\tCandidates:\n";
+      for (const auto& i : pair.second) {
+        std::cout << indent << "\t\t" << i << std::endl;
+        matchingValues.push_back(i);
+      }
     }
   }
 
@@ -997,7 +1014,6 @@ void traverse(std::string pnet,
   bool noSupermod = true;
 
   // iterators for different ds
-  auto driver = ds.net2driver.equal_range(net);
   auto source = ds.net_submodOut.find(net);
 
   // check if blacklisted module
@@ -1054,29 +1070,28 @@ void traverse(std::string pnet,
     }
   }
 
-  // TODO you can have a wire with a bit assigned directly and the other bits from submod
-
   // find the assignment where net is lhs 
   //   and recurse into each of the operands
-  if(driver.first == driver.second) {
+  if(ds.net2driver.find(net) == ds.net2driver.end()) {
     std::cout << indent << "Net has no registered driver\n";
   }
   else {
     noDriver = false;
     std::cout << indent << "Driver candidates:\n";
-    for (auto it = driver.first; it != driver.second; ++it)
-      std::cout << indent << "[d]: " << it->second << std::endl;
-    for (auto it = driver.first; it != driver.second; ++it) {
-      // driver.first == driver.second when key not found
+    for (auto const it : ds.net2driver[net]) {
+      std::cout << indent << "[d]: " << it << std::endl;
+    }
+
+    for (auto const it : ds.net2driver[net]) {
       auto findReg = std::find(ds.regs.begin(), ds.regs.end(), net);
       bool isReg = findReg != ds.regs.end();
       if(isReg) {
         // increment depth
-        std::cout << indent << "Reg driver = " << it->second << std::endl;
-        traverse(it->second, inst, depth + 1, visited, covs, indent + "| ");
+        std::cout << indent << "Reg driver = " << it << std::endl;
+        traverse(it, inst, depth + 1, visited, covs, indent + "| ");
       } else {
-        std::cout << indent << "Wire driver = " << it->second << std::endl;
-        traverse(it->second, inst, depth, visited, covs, indent + "| ");
+        std::cout << indent << "Wire driver = " << it << std::endl;
+        traverse(it, inst, depth, visited, covs, indent + "| ");
       }
     }
     visited.erase(net);
@@ -1095,7 +1110,6 @@ void traverse(std::string pnet,
     assert(source->first == net);
     std::cout << indent << "Source = " << std::get<0>(source->second) << std::endl;
 
-    // TODO what about "output reg"? // check with an example dff
     //char *inst_name = getPenultimateWord(source->second);
     //std::string inst_name = std::get<1>(source->second);
     //std::cout << indent << "Net's source is from module: " << inst_name << std::endl;
@@ -1152,7 +1166,6 @@ void traverse(std::string pnet,
   // if not found in either net2driver or net_submodOut do nothing and returrn
   if (noSource && noDriver && noSupermod) {
     // Debug why source or driver couldn't be found
-    // MAJOR TODO constants -- remove them in printOperandsInExpr
 
     // struct fix: 
     // first find net.* or net[*]
@@ -1468,7 +1481,6 @@ std::list <std::string> visitExpr(vpiHandle h, bool retainConsts, bool& constOnl
       break;
     }
     case UHDM::uhdmsys_func_call : {
-      // TODO check implementation
       std::string fname = vpi_get_str(vpiName, h);
       if(retainConsts) {
         std::string tmp = fname + "(";
@@ -1507,7 +1519,6 @@ std::list <std::string> visitExpr(vpiHandle h, bool retainConsts, bool& constOnl
   return out;
 }
 
-//TODO check again
 std::string visithier_path(vpiHandle soph) {
   std::string out = "";
   std::cout << "Walking hierarchical path\n";
@@ -1516,8 +1527,7 @@ std::string visithier_path(vpiHandle soph) {
     bool first = true;
     while(vpiHandle itx = vpi_scan(it)) {
       bool bitsel = ((const uhdm_handle *)itx)->type == UHDM::uhdmbit_select;
-      std::cout << "Found ref object; type: " << 
-        UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)itx)->type) << std::endl;
+      std::cout << "Found ref object; type: " << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)itx)->type) << std::endl;
 
       if(!first)
         out += ".";
@@ -1706,7 +1716,6 @@ std::tuple <bool, std::list <std::string>> visitOperation(vpiHandle h) {
           std::string tmp = (visitExpr(oph, true, conly)).front(); // true because we want to retain or resolve consts
           out += tmp;
           constantsOnly &= conly;
-          // TODO -- perhaps have visitExpr return if it's a constOnly
           //if(vpiHandle actual = vpi_handle(vpiActual, oph))
           //  if(((const uhdm_handle *)actual)->type != UHDM::uhdmparameter &&
           //      ((const uhdm_handle *)actual)->type != UHDM::uhdmconstant)
@@ -1740,7 +1749,6 @@ std::tuple <bool, std::list <std::string>> visitOperation(vpiHandle h) {
           std::string tmp = (visitExpr(oph, true, conly)).front();
           out += tmp;
           constantsOnly &= conly;
-          // TODO same as above
           //if(vpiHandle actual = vpi_handle(vpiActual, oph))
           //  if(((const uhdm_handle *)actual)->type != UHDM::uhdmparameter &&
           //      ((const uhdm_handle *)actual)->type != UHDM::uhdmconstant)
@@ -1769,8 +1777,7 @@ std::tuple <bool, std::list <std::string>> visitOperation(vpiHandle h) {
     current.push_front(out);
 
   } else {
-    std::cout << "Couldn't iterate on operands! Iterator type: " << 
-      UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)ops)->type) << std::endl;
+    std::cout << "Couldn't iterate on operands! Iterator type: " <<  UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)ops)->type) << std::endl;
   }
 
   vpi_release_handle(ops);
@@ -1875,8 +1882,7 @@ void findMuxesInOperation(vpiHandle h, std::list <std::string> &buffer) {
   } else {
     if(vpiHandle operands = vpi_iterate(vpiOperand, h)) {
       while(vpiHandle operand = vpi_scan(operands)) {
-        std::cout << "Walking operand | Type: "
-          << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((uhdm_handle *)operand)->type) << std::endl;
+        std::cout << "Walking operand | Type: " << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((uhdm_handle *)operand)->type) << std::endl;
         if(((uhdm_handle *)operand)->type == UHDM::uhdmoperation) {
           std::cout << "\nOperand is an operation; recursing" << std::endl;
           findMuxesInOperation(operand, buffer);
@@ -1892,8 +1898,7 @@ void findMuxesInOperation(vpiHandle h, std::list <std::string> &buffer) {
 void printOperandsInExpr(vpiHandle h, std::unordered_set<std::string> *out, bool print=false) {
   assert(vpi_get(vpiType, h) == vpiExpr);
   UHDM::UHDM_OBJECT_TYPE h_type = (UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)h)->type;
-  std::cout << "printOperandsInExpr | Type: "
-    << UHDM::UhdmName(h_type) << std::endl;
+  std::cout << "printOperandsInExpr | Type: " << UHDM::UhdmName(h_type) << std::endl;
   switch(((const uhdm_handle *)h)->type) {
     case UHDM::uhdmoperation :  {
       if(vpiHandle i = vpi_iterate(vpiOperand, h))
@@ -2145,25 +2150,25 @@ void printOperandsInExpr(vpiHandle h, std::unordered_set<std::string> *out, bool
 //  return;
 //}
 
-void printRecursiveDependents(std::string ref, std::unordered_set<std::string> *out, bool print=false) {
-  if (dependenciesStr.find(ref) != dependenciesStr.end()) {
-    std::unordered_set <std::string> deps = dependenciesStr[ref];
-    for (auto const& it: deps) {
-      std::cout << "\t\t<< " << it << std::endl;
-      printRecursiveDependents(it, out);
-    }
-    out->insert(deps.begin(), deps.end());
-  } else
-    std::cout << "\t\tDependents not found for: " << ref << std::endl;
-
-  out->insert(ref);
-
-  if(print)
-    for (auto const& it: *out)
-      std::cout << "\t\tSo, final list of dependents: " << it << std::endl;
-  return;
-}
-
+//void printRecursiveDependents(std::string ref, std::unordered_set<std::string> *out, bool print=false) {
+//  if (dependenciesStr.find(ref) != dependenciesStr.end()) {
+//    std::unordered_set <std::string> deps = dependenciesStr[ref];
+//    for (auto const& it: deps) {
+//      std::cout << "\t\t<< " << it << std::endl;
+//      printRecursiveDependents(it, out);
+//    }
+//    out->insert(deps.begin(), deps.end());
+//  } else
+//    std::cout << "\t\tDependents not found for: " << ref << std::endl;
+//
+//  out->insert(ref);
+//
+//  if(print)
+//    for (auto const& it: *out)
+//      std::cout << "\t\tSo, final list of dependents: " << it << std::endl;
+//  return;
+//}
+//
 // takes in an operation and produces a list of strings
 void visitTernary(vpiHandle h, std::list<std::string> &current) {
   //std::list <std::unordered_set <std::string>> csv; // has to be a list to preserve hierarchical parental order, for progressive coverage
@@ -2171,9 +2176,7 @@ void visitTernary(vpiHandle h, std::list<std::string> &current) {
   bool first = true;
   if(vpiHandle i = vpi_iterate(vpiOperand, h)) {
     while (vpiHandle op = vpi_scan(i)) {
-      std::cout << "Walking " 
-        << (first ? "condition" : "second/third") << " operand | Type: " 
-        << ((const uhdm_handle *)op)->type << std::endl;
+      std::cout << "Walking "  << (first ? "condition" : "second/third") << " operand | Type: "  << ((const uhdm_handle *)op)->type << std::endl;
 
       switch(((const uhdm_handle *)op)->type) {
         case UHDM::uhdmoperation :
@@ -2186,7 +2189,7 @@ void visitTernary(vpiHandle h, std::list<std::string> &current) {
               std::list <std::string> out;
               bool k;
               std::tie(k, out) = visitOperation(op);
-              // MAJOR TODO  based on k, return a string (of the choice made in the tern)
+              // minor TODO  based on k, return a string (of the choice made in the tern)
               current.insert(current.end(), out.begin(), out.end());
 
               // this is for progressive coverage
@@ -2309,7 +2312,7 @@ int evalExpr(vpiHandle h, bool& found) {
 
 std::string evalOperation(vpiHandle h) {
   //Some supported evaluatable operations we support
-  std::cout <<"In evalOperation | type: " << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)h)->type) << std::endl;;
+  std::cout <<"In evalOperation | type: " << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)h)->type) << std::endl;
   int result;
   int ops[3];
   int *op = ops;
@@ -2576,9 +2579,8 @@ void visitTopModules(vpiHandle ti) {
         std::string file = "";
         if (const char* s = vpi_get_str(vpiFile, mh))
           file = s;
-        std::cout << "Walking module: " + defName + objectName + "\n";// +
-        ", file:" + file +
-          ", line:" + std::to_string(vpi_get(vpiLineNo, mh)) + "\n";
+        std::cout << "Walking module: " + defName + objectName + "\n";// + 
+        std::cout << "\t File: " + file + ", line:" + std::to_string(vpi_get(vpiLineNo, mh)) + "\n";
 
         // Params
         //std::cout << "****************************************\n";
@@ -2696,7 +2698,7 @@ void visitTopModules(vpiHandle ti) {
               }
             }
           }
-          std::cout << "END OF PRECISION_COVERAGE\n";
+          std::cout << "*** End of precision coverage ***\n";
           std::cout << "Precision coverage dump:\n";
           print_unordered_set(covs, true, outputDir / "cp.csv");
         }
@@ -2733,8 +2735,7 @@ void visitTopModules(vpiHandle ti) {
         nTernaries.push_back(0);//ternaries.size() - numTernaries);
         nIfs.push_back(ifs.size() - numIfs);
         nCases.push_back(cases.size() - numCases);
-        std::cout << "Block: " << defName + objectName << " | numTernaries: " << ternaries.size() - numTernaries
-          << " | numCases: " << cases.size() - numCases << " | numIfs: " << ifs.size() - numIfs << std::endl; 
+        std::cout << "Block: " << defName + objectName << " | numTernaries: " << ternaries.size() - numTernaries << " | numCases: " << cases.size() - numCases << " | numIfs: " << ifs.size() - numIfs << std::endl; 
         numTernaries = ternaries.size();
         numIfs       = ifs.size();
         numCases     = cases.size();
@@ -2844,9 +2845,7 @@ int main(int argc, const char** argv) {
     // of the design Flat non-elaborated module/interface/packages/classes list
     // contains ports/nets/statements (No ranges or sizes here, see elaborated
     // section below)
-    std::cout <<
-      "Design name (VPI): " + std::string(vpi_get_str(vpiName, the_design)) +
-      "\n";
+    std::cout << "Design name (VPI): " + std::string(vpi_get_str(vpiName, the_design)) + "\n";
     // Flat Module list:
     std::cout << "Module List:\n";
     //      topmodule -- instance scope
@@ -2861,26 +2860,26 @@ int main(int argc, const char** argv) {
   } else std::cout << "No design found!\n";
 
 
-  std::cout << "\n\n\n*** Printing all conditions ***\n\n\n";
-  print_list(all, true, outputDir / "all.sigs");
-  std::cout << "\n\n\n*** Printing case conditions ***\n\n\n";
-  print_list(cases, true, outputDir / "case.sigs");
-  std::cout << "\n\n\n*** Printing if/if-else conditions ***\n\n\n";
-  print_list(ifs, true, outputDir / "if.sigs");
-  std::cout << "\n\n\n*** Printing ternary conditions ***\n\n\n";
-  print_list(ternaries, true, outputDir / "tern.sigs");
-  std::cout << "\n\n\n*** Printing regSet ***\n\n\n";
-  print_list(regSet, true, outputDir / "all.regs");
-  std::cout << "\n\n\n*** Printing wireSet ***\n\n\n";
-  print_list(wireSet, true, outputDir / "all.wires");
-  //std::cout << "\n\n\n*** Printing Precise CoverPoints ***\n\n\n";
-  //print_list(outputDir / "precision.sigs");
-  std::cout << "\n\n\n*** Printing CSV ***\n\n\n";
-  print_csvs(outputDir / "tern.csv");
-  std::cout << "\n\n\n*** Printing Dependencies ***\n\n\n";
-  print_list(dependenciesStr, true, outputDir / "all.deps");
+  //std::cout << "\n\n\n*** Printing all conditions ***\n\n\n";
+  //print_list(all, true, outputDir / "all.sigs");
+  //std::cout << "\n\n\n*** Printing case conditions ***\n\n\n";
+  //print_list(cases, true, outputDir / "case.sigs");
+  //std::cout << "\n\n\n*** Printing if/if-else conditions ***\n\n\n";
+  //print_list(ifs, true, outputDir / "if.sigs");
+  //std::cout << "\n\n\n*** Printing ternary conditions ***\n\n\n";
+  //print_list(ternaries, true, outputDir / "tern.sigs");
+  //std::cout << "\n\n\n*** Printing regSet ***\n\n\n";
+  //print_list(regSet, true, outputDir / "all.regs");
+  //std::cout << "\n\n\n*** Printing wireSet ***\n\n\n";
+  //print_list(wireSet, true, outputDir / "all.wires");
+  ////std::cout << "\n\n\n*** Printing Precise CoverPoints ***\n\n\n";
+  ////print_list(outputDir / "precision.sigs");
+  //std::cout << "\n\n\n*** Printing CSV ***\n\n\n";
+  //print_csvs(outputDir / "tern.csv");
+  //std::cout << "\n\n\n*** Printing Dependencies ***\n\n\n";
+  //print_list(dependenciesStr, true, outputDir / "all.deps");
 
-  std::cout << "\n\n\n*** Printing variables ***\n\n\n";
+  //std::cout << "\n\n\n*** Printing variables ***\n\n\n";
   //std::ofstream file;
   //file.open("../surelog.run/all.nets", std::ios_base::out);
   //for (auto const &i: nets) {
