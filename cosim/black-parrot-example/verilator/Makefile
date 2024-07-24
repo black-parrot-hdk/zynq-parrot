@@ -1,5 +1,4 @@
 include ../Makefile.design
-include ../Makefile.cov
 
 #############################
 # Accelerator Software Settings
@@ -96,5 +95,5 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 		cp $(ELF_FILE) prog.elf; \
 	fi
 
+include ../Makefile.cov
 include $(TOP)/cosim/mk/Makefile.verilator
-
