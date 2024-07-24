@@ -944,6 +944,7 @@ module top_zynq
        ,.width_p(cov_width_lp)
        ,.els_p(cam_els_lp)
        ,.lg_afifo_size_p(3)
+       ,.debug_p(1)
        )
       i_cov
        (.core_clk_i(bp_clk)

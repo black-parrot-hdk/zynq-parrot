@@ -6,6 +6,7 @@ module bsg_cover
   ,parameter `BSG_INV_PARAM(width_p)
   ,parameter `BSG_INV_PARAM(els_p)
   ,parameter `BSG_INV_PARAM(lg_afifo_size_p)
+  ,parameter `BSG_INV_PARAM(debug_p)
 
   ,localparam lg_els_lp = `BSG_SAFE_CLOG2(els_p)
   )
@@ -156,6 +157,23 @@ module bsg_cover
     ,.addr_o(cam_idx_enc_lo)
     ,.v_o()
     );
+
+   // synopsys translate_off
+   if(debug_p) begin: debug
+     integer file;
+     string fname;
+     initial begin
+       fname = $sformatf("%0d.ctrace", idx_p);
+       file = $fopen(fname, "w");
+     end
+
+     always_ff @(negedge core_clk_i) begin
+       if(~core_reset_i & v_i & ready_o) begin
+         $fwrite(file, "%x\n", data_i);
+       end
+     end
+   end
+   // synopsys translate_on
 
 endmodule
 
