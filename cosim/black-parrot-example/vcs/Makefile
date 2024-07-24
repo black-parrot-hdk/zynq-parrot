@@ -4,14 +4,12 @@ include ../Makefile.design
 # Accelerator Software Settings
 #############################
 DROMAJO_COSIM ?= 0
-SKIP_DRAM ?= -DSKIP_DRAM_TESTING
 BP_NCPUS ?= 1
 
 ZYNQ_PL_DEBUG ?= 0
 ZYNQ_PS_DEBUG ?= 1
 
 CFLAGS += -DBP_NCPUS=$(BP_NCPUS)
-CFLAGS += $(SKIP_DRAM)
 
 # PL Debug
 ifeq ($(ZYNQ_PL_DEBUG),1)

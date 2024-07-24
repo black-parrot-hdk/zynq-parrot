@@ -4,14 +4,12 @@ include ../Makefile.design
 # Accelerator Software Settings
 #############################
 DROMAJO_COSIM ?= 0
-SKIP_DRAM ?= -DSKIP_DRAM_TESTING
 BP_NCPUS ?= 1
 
 #CFLAGS += -DZYNQ_PL_DEBUG
 CFLAGS += -DZYNQ_PS_DEBUG
 CFLAGS += -I$(BP_TOOLS_DIR)/dromajo/include
 CFLAGS += -DBP_NCPUS=$(BP_NCPUS)
-CFLAGS += $(SKIP_DRAM)
 
 DEFINES += GP0_ADDR_BASE=0x40000000U
 DEFINES += GP0_HIER_BASE=bsg_nonsynth_zynq_testbench.axil0
