@@ -3,16 +3,38 @@ include ../Makefile.design
 #############################
 # Accelerator Software Settings
 #############################
-
 DROMAJO_COSIM ?= 0
 SKIP_DRAM ?= -DSKIP_DRAM_TESTING
 BP_NCPUS ?= 1
 
-#CFLAGS += -DZYNQ_PL_DEBUG
-CFLAGS += -DZYNQ_PS_DEBUG
-CFLAGS += -I$(BP_TOOLS_DIR)/dromajo/include
+ZYNQ_PL_DEBUG ?= 0
+ZYNQ_PS_DEBUG ?= 1
+
 CFLAGS += -DBP_NCPUS=$(BP_NCPUS)
 CFLAGS += $(SKIP_DRAM)
+
+# PL Debug
+ifeq ($(ZYNQ_PL_DEBUG),1)
+CFLAGS += -DZYNQ_PL_DEBUG
+endif
+# PS Debug
+ifeq ($(ZYNQ_PS_DEBUG),1)
+CFLAGS += -DZYNQ_PS_DEBUG
+endif
+# Cosim
+ifeq ($(DROMAJO_COSIM),1)
+CFLAGS += -I$(BP_TOOLS_DIR)/dromajo/include
+CFLAGS += -DDROMAJO_COSIM
+VV_OPTS += -LDFLAGS "-lpthread"
+endif
+# DRAM Test
+ifneq ($(DRAM_TEST),)
+CFLAGS += -DDRAM_TEST
+endif
+# Zero DRAM
+ifneq ($(ZERO_DRAM),)
+CFLAGS += -DZERO_DRAM
+endif
 
 DEFINES += GP0_ADDR_BASE=0x40000000U
 DEFINES += GP0_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil0
@@ -63,6 +85,8 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 		echo "+define+DROMAJO_COSIM" >> $@; \
 		cp $(ELF_FILE) prog.elf; \
 	fi
+
+bootrom: $(CURR_VSRC_DIR)/bsg_bootrom.v
 
 include $(TOP)/cosim/mk/Makefile.verilator
 

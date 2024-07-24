@@ -323,17 +323,18 @@ module top
         ,.freeze_i(calculator.pipe_sys.csr.cfg_bus_cast_i.freeze)
 
         // We hardcode these for now, integrate more cosim features later
-        ,.num_core_i(1'b1)
+        ,.num_core_i(num_core_p)
         ,.cosim_en_i(1'b1)
         ,.amo_en_i(1'b1)
         ,.trace_en_i('0)
         ,.checkpoint_i('0)
-        ,.mhartid_i('0)
+        ,.mhartid_i(calculator.pipe_sys.csr.cfg_bus_cast_i.core_id)
         ,.config_file_i('0)
         ,.instr_cap_i(0)
         ,.memsize_i(256)
+        ,.finish_i('0)
 
-        ,.decode_i(calculator.reservation_n.decode)
+        ,.decode_i(calculator.dispatch_pkt_cast_i.decode)
 
         ,.is_debug_mode_i(calculator.pipe_sys.csr.is_debug_mode)
         ,.commit_pkt_i(calculator.commit_pkt_cast_o)
@@ -351,9 +352,8 @@ module top
         ,.frd_addr_i(scheduler.fwb_pkt_cast_i.rd_addr)
         ,.frd_data_i(scheduler.fwb_pkt_cast_i.rd_data)
 
-        ,.cache_req_ready_and_i(calculator.pipe_mem.dcache.cache_req_ready_and_i)
-        ,.cache_req_v_i(calculator.pipe_mem.dcache.cache_req_v_o)
-        ,.cache_req_complete_i(calculator.pipe_mem.dcache.cache_req_complete_i)
+        ,.cache_req_yumi_i(calculator.pipe_mem.dcache.cache_req_yumi_i)
+        ,.cache_req_complete_i(calculator.pipe_mem.dcache.complete_recv)
         ,.cache_req_nonblocking_i(calculator.pipe_mem.dcache.nonblocking_req)
 
         ,.cosim_clk_i(top.cosim_clk)
