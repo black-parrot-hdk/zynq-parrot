@@ -5,7 +5,7 @@
 INSTRUMENTATION_DIR = $(CURR)/../instrumentation
 SURELOG_RUN_DIR     = $(abspath ../surelog.run)
 WALKER              = walker
-SURELOG_TOP_MODULE  = bp_unicore
+SURELOG_TOP_MODULE  = bp_be_pipe_fma
 TOGGLE_ONLY        ?= 1
 S_FLIST            ?= $(SURELOG_RUN_DIR)/flist
 
@@ -52,6 +52,7 @@ SURELOG_OPTS += -mp 12
 SURELOG_OPTS += -nobuiltin
 SURELOG_OPTS += --top-module $(SURELOG_TOP_MODULE)
 SURELOG_OPTS += -f $(S_FLIST)
+SURELOG_OPTS += -std=c++11
 SURELOG_OPTS += -o $(SURELOG_RUN_DIR)
 SURELOG      ?= $(BLACKPARROT_TOOLS_DIR)/Surelog/build/bin/$(WALKER)
 
