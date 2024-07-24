@@ -27,10 +27,6 @@
 #define ZERO_DRAM 0
 #endif
 
-#ifndef DRAM_TEST
-#define DRAM_TEST 0
-#endif
-
 #ifndef DRAM_ALLOCATE_SIZE_MB
 #define DRAM_ALLOCATE_SIZE_MB 128
 #endif
