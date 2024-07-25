@@ -89,30 +89,74 @@ inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr) {
 
 #ifdef COV_EN
 #define COV_BUF_LEN 1024
-int cov_idx = 0;
-std::unordered_set<uint32_t> covs[COV_NUM];
+struct covBits {
+  int N;
+  uint32_t* arr;
+
+  covBits(int N): N(N) {
+    arr = new uint32_t[N];
+  }
+
+  void set(int i, uint32_t x) {
+    this->arr[i] = x;
+  }
+
+  bool operator==(const covBits& c) const {
+    if(this->N != c.N)
+      return false;
+
+    for(int i = 0; i < this->N; i++)
+      if(this->arr[i] != c.arr[i])
+        return false;
+    return true;
+  }
+
+  struct Hash
+  {
+    size_t operator()(const covBits& c) const {
+      size_t NHash = std::hash<int>()(c.N);
+      size_t arrHash = std::hash<uint32_t*>()(c.arr) << 1;
+      return NHash ^ arrHash;
+    }
+  };
+};
+
+ostream& operator<<(ostream& os, const covBits& c) {
+    for(int i = 0; i < c.N; i++)
+      os << std::hex << c.arr[i] << std::dec;
+    return os;
+}
+
+int cov_id = 0;
+std::unordered_set<covBits, covBits::Hash> covs[COV_NUM];
 
 inline void cov_proc(uint32_t* p) {
-  int len;
+  int len, els;
   bool last = false;
-  bool is_idx = true;
+  bool is_id = true;
 
   while(true) {
-    if(is_idx) {
+    if(is_id) {
       //bsg_pr_info("ps.cpp: header = %x\n", *p);
-      cov_idx = *p & 0xFFFF;
-      len = (*p >> 16) & 0x7FFF;
-      last = (*p >> 31) & 0x1;
-      is_idx = false;
+      cov_id = *p & 0xFF;
+      els = (*p >> 8) & 0xFF;
+      len = (*p >> 16) & 0xFF;
+      last = (*p >> 24) & 0x1;
+      is_id = false;
       p++;
     }
     else {
-      for(int i = 0; i < len; i++) {
-        //bsg_pr_info("ps.cpp: cov = %x\n", *p);
-        covs[cov_idx].insert(*p);
-        p++;
+      for(int i = 0; i < els; i++) {
+        covBits cov = covBits(len);
+        for(int j = 0; j < len; j++) {
+          //bsg_pr_info("ps.cpp: *p = %x\n", *p);
+          cov.set(j, *p);
+          p++;
+        }
+        //cout << "ps.cpp: cov = " << cov << endl;
+        covs[cov_id].insert(cov);
       }
-      is_idx = true;
+      is_id = true;
       if(last)
         break;
     }

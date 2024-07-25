@@ -873,7 +873,12 @@ module top_zynq
 
 `ifdef COV_EN
    // Coverage
-   localparam cov_width_lp = 32;
+   localparam max_pkt_cnt_lp = (256 / (cam_els_lp + 1));
+   localparam cov_id_width_lp = 8;
+   localparam cov_els_width_lp = 8;
+   localparam cov_len_width_lp = 8;
+
+   localparam cov_width_lp = 64;
    localparam cam_els_lp = 16;
 
    // reset generation
@@ -904,14 +909,14 @@ module top_zynq
      );
 
    // pick first covergroup to drain
-   logic [`BSG_SAFE_CLOG2(num_cov_p)-1:0] cov_idx_enc_lo;
+   logic [`BSG_SAFE_CLOG2(num_cov_p)-1:0] cov_way_lo;
    bsg_priority_encode
     #(.width_p(num_cov_p)
      ,.lo_to_hi_p(1)
      )
     enc
      (.i(cov_gate_lo)
-     ,.addr_o(cov_idx_enc_lo)
+     ,.addr_o(cov_way_lo)
      ,.v_o()
      );
 
@@ -926,8 +931,12 @@ module top_zynq
 
    // covergroup instances
    logic [num_cov_p-1:0][cov_width_lp-1:0] cov_li;
-   logic [num_cov_p-1:0] cov_v_lo, cov_ready_li, cov_idx_v_lo;
-   logic [num_cov_p-1:0][cov_width_lp-1:0] cov_data_lo;
+   logic [num_cov_p-1:0] cov_v_lo, cov_ready_li, cov_id_v_lo;
+   logic [num_cov_p-1:0][C_M02_AXI_DATA_WIDTH-1:0] cov_data_lo;
+   logic [num_cov_p-1:0][cov_id_width_lp-1:0] cov_id_lo;
+   logic [num_cov_p-1:0][cov_els_width_lp-1:0] cov_els_lo;
+   logic [num_cov_p-1:0][cov_len_width_lp-1:0] cov_len_lo;
+
    for(genvar i = 0; i < num_cov_p; i++) begin: rof
      // random covergroup input for testing
      bsg_lfsr
@@ -940,9 +949,13 @@ module top_zynq
        );
 
      bsg_cover
-      #(.idx_p(i)
+      #(.id_p(i)
        ,.width_p(cov_width_lp)
        ,.els_p(cam_els_lp)
+       ,.out_width_p(C_M02_AXI_DATA_WIDTH)
+       ,.id_width_p(cov_id_width_lp)
+       ,.len_width_p(cov_len_width_lp)
+       ,.els_width_p(cov_els_width_lp)
        ,.lg_afifo_size_p(3)
        ,.debug_p(1)
        )
@@ -963,38 +976,44 @@ module top_zynq
        ,.drain_i(1'b0)
        ,.gate_o(cov_gate_lo[i])
 
+       ,.id_v_o(cov_id_v_lo[i])
+       ,.id_o(cov_id_lo[i])
+       ,.els_o(cov_els_lo[i])
+       ,.len_o(cov_len_lo[i])
+
        ,.ready_i(cov_ready_li[i])
        ,.v_o(cov_v_lo[i])
-       ,.idx_v_o(cov_idx_v_lo[i])
        ,.data_o(cov_data_lo[i])
        );
    end
 
    // coverage stream construction
    typedef struct packed {
-     logic        last;
-     logic [14:0] len;
-     logic [15:0] idx;
+     logic last;
+     logic [cov_len_width_lp-1:0] len;
+     logic [cov_len_width_lp-1:0] els;
+     logic [cov_id_width_lp-1:0] id;
    } cov_pkt_s;
 
    logic cov_afifo_enq_li, cov_afifo_last_li, cov_afifo_full_lo;
    logic cov_afifo_deq_li, cov_afifo_last_lo, cov_afifo_v_lo;
-   logic [32-1:0] cov_afifo_data_li, cov_afifo_data_lo;
+   logic [C_M02_AXI_DATA_WIDTH-1:0] cov_afifo_data_li, cov_afifo_data_lo;
 
-   localparam max_pkt_cnt_lp = (256 / (cam_els_lp + 1));
    logic [`BSG_SAFE_CLOG2(max_pkt_cnt_lp)-1:0] cov_pkt_cnt_lo;
-   logic [`BSG_SAFE_CLOG2(cam_els_lp)-1:0] cov_beat_cnt_lo;
+   logic [(cov_len_width_lp + cov_els_width_lp)-1:0] cov_limit_lo;
 
    cov_pkt_s cov_pkt_lo;
-   wire last_pkt_li = (cov_pkt_cnt_lo == (max_pkt_cnt_lp - 1)) | (cov_popcnt_lo == 1);
+   logic last_beat_li, last_pkt_li;
+   assign last_pkt_li = (cov_pkt_cnt_lo == (max_pkt_cnt_lp - 1)) | (cov_popcnt_lo == 1);
    assign cov_pkt_lo = '{last: last_pkt_li
-                        ,len: cam_els_lp
-                        ,idx: cov_data_lo[cov_idx_enc_lo]
+                        ,len: cov_len_lo[cov_way_lo]
+                        ,els: cov_els_lo[cov_way_lo]
+                        ,id: cov_id_lo[cov_way_lo]
                         };
 
-   assign cov_afifo_enq_li = ~cov_afifo_full_lo & cov_v_lo[cov_idx_enc_lo];
-   assign cov_afifo_last_li = last_pkt_li ? (cov_beat_cnt_lo == (cam_els_lp - 1)) : 1'b0;
-   assign cov_afifo_data_li = cov_idx_v_lo[cov_idx_enc_lo] ? cov_pkt_lo : cov_data_lo[cov_idx_enc_lo];
+   assign cov_afifo_enq_li = ~cov_afifo_full_lo & (cov_v_lo[cov_way_lo] | cov_id_v_lo[cov_way_lo]);
+   assign cov_afifo_data_li = cov_id_v_lo[cov_way_lo] ? cov_pkt_lo : cov_data_lo[cov_way_lo];
+   assign cov_afifo_last_li = last_pkt_li & last_beat_li;
 
    assign cov_afifo_deq_li = m02_axis_tvalid & m02_axis_tready;
    assign m02_axis_tvalid = cov_afifo_v_lo;
@@ -1009,34 +1028,43 @@ module top_zynq
     pkt_cnt
      (.clk_i(ds_clk)
      ,.reset_i(ds_reset_li)
-     ,.clear_i(cov_afifo_enq_li & cov_afifo_last_li)
-     ,.up_i(cov_afifo_enq_li & (cov_beat_cnt_lo == (cam_els_lp - 1)) & ~cov_afifo_last_li)
+     ,.clear_i(cov_afifo_enq_li & last_beat_li & last_pkt_li)
+     ,.up_i(cov_afifo_enq_li & last_beat_li & ~last_pkt_li)
      ,.count_o(cov_pkt_cnt_lo)
      );
 
-   bsg_counter_clear_up
-    #(.init_val_p(0)
-     ,.max_val_p(cam_els_lp)
-     )
+   bsg_dff_reset_en
+    #(.width_p(cov_len_width_lp + cov_els_width_lp))
+    cov_limit_reg
+     (.clk_i(ds_clk)
+     ,.reset_i(ds_reset_li)
+     ,.en_i(cov_afifo_enq_li & cov_id_v_lo[cov_way_lo])
+     ,.data_i(cov_pkt_lo.els << cov_pkt_lo.len)
+     ,.data_o(cov_limit_lo)
+     );
+
+   bsg_counter_dynamic_limit_en
+    #(.width_p(cov_len_width_lp + cov_els_width_lp))
     beat_cnt
      (.clk_i(ds_clk)
      ,.reset_i(ds_reset_li)
-     ,.clear_i(cov_afifo_enq_li & cov_idx_v_lo[cov_idx_enc_lo])
-     ,.up_i(cov_afifo_enq_li & ~cov_idx_v_lo[cov_idx_enc_lo])
-     ,.count_o(cov_beat_cnt_lo)
+     ,.limit_i(cov_limit_lo)
+     ,.en_i(cov_afifo_enq_li & ~cov_id_v_lo[cov_way_lo])
+     ,.counter_o()
+     ,.overflowed_o(last_beat_li)
      );
 
    bsg_decode_with_v
     #(.num_out_p(num_cov_p))
     cov_demux
-     (.i(cov_idx_enc_lo)
+     (.i(cov_way_lo)
      ,.v_i(~cov_afifo_full_lo)
      ,.o(cov_ready_li)
      );
 
    bsg_async_fifo
     #(.lg_size_p(3)
-     ,.width_p(cov_width_lp+1)
+     ,.width_p(C_M02_AXI_DATA_WIDTH+1)
      )
     cov_afifo
      (.w_clk_i(ds_clk)

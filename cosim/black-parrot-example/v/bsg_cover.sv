@@ -2,9 +2,13 @@
 `include "bsg_defines.sv"
 
 module bsg_cover
- #(parameter `BSG_INV_PARAM(idx_p)
+ #(parameter `BSG_INV_PARAM(id_p)
   ,parameter `BSG_INV_PARAM(width_p)
   ,parameter `BSG_INV_PARAM(els_p)
+  ,parameter `BSG_INV_PARAM(out_width_p)
+  ,parameter `BSG_INV_PARAM(id_width_p)
+  ,parameter `BSG_INV_PARAM(els_width_p)
+  ,parameter `BSG_INV_PARAM(len_width_p)
   ,parameter `BSG_INV_PARAM(lg_afifo_size_p)
   ,parameter `BSG_INV_PARAM(debug_p)
 
@@ -28,13 +32,18 @@ module bsg_cover
   ,input drain_i
   ,output logic gate_o
 
+  ,output logic id_v_o
+  ,output logic [id_width_p-1:0] id_o
+  ,output logic [els_width_p-1:0] els_o
+  ,output logic [len_width_p-1:0] len_o
+
   ,input ready_i
   ,output logic v_o
-  ,output logic idx_v_o
-  ,output logic [width_p-1:0] data_o
+  ,output logic [out_width_p-1:0] data_o
   );
 
   // signal definition
+  localparam piso_div_lp = `BSG_CDIV(width_p, out_width_p);
   enum logic [1:0] {FILL, IDX, DRAIN} state_r, state_n;
 
   logic in_full_lo, v_lo, deq_li;
@@ -49,6 +58,9 @@ module bsg_cover
   logic cam_idx_v_lo;
   logic [els_p-1:0] cam_encoh_li, cam_idx_oh_lo;
   logic [lg_els_lp-1:0] cam_idx_enc_lo;
+
+  logic piso_v_li, piso_ready_and_lo;
+  logic [(out_width_p*piso_div_lp)-1:0] piso_data_li;
 
   // cross into ungated and downsampled domain
   // TODO: maybe replace with dff output & gate_i
@@ -84,7 +96,7 @@ module bsg_cover
   assign cam_w_v_li = (state_r == FILL)
                       ? ({els_p{deq_li & ~(|cam_r_match_lo)}} & cam_idx_oh_lo)
                       : (state_r == DRAIN)
-                        ? ({els_p{v_o & ready_i}} & cam_idx_oh_lo)
+                        ? ({els_p{piso_v_li & piso_ready_and_lo}} & cam_idx_oh_lo)
                         : '0;
   assign cam_set_not_clear_li = (state_r == DRAIN) ? 1'b0 : 1'b1;
   assign cam_w_tag_li = data_lo;
@@ -92,9 +104,13 @@ module bsg_cover
   assign cam_snoop_addr_li = cam_idx_enc_lo;
 
   // output module index first and then start outputting coverage data
-  assign v_o     = (state_r == IDX) | ((state_r == DRAIN) & cam_idx_v_lo);
-  assign idx_v_o = (state_r == IDX);
-  assign data_o  = (state_r == IDX) ? (width_p)'(idx_p) : cam_snoop_tag_lo;
+  assign id_v_o = (state_r == IDX);
+  assign id_o = (id_width_p)'(id_p);
+  assign els_o = (els_width_p)'(els_p);
+  assign len_o = (len_width_p)'(piso_div_lp);
+
+  assign piso_v_li = (state_r == DRAIN) & cam_idx_v_lo;
+  assign piso_data_li = {(out_width_p)'(0), cam_snoop_tag_lo};
 
   // count the unique coverage data written/drained into/from the CAM
   // gate the core clock when:
@@ -105,8 +121,8 @@ module bsg_cover
   always_comb begin
     case(state_r)
       FILL  : state_n = (drain_i | cam_w_v_li[els_p-1]) ? IDX : FILL;
-      IDX   : state_n = (v_o & ready_i) ? DRAIN : IDX;
-      DRAIN : state_n = ((v_o & ready_i & cam_w_v_li[els_p-1]) | ~cam_idx_v_lo) ? FILL : DRAIN;
+      IDX   : state_n = (id_v_o & ready_i) ? DRAIN : IDX;
+      DRAIN : state_n = ((piso_v_li & piso_ready_and_lo & cam_w_v_li[els_p-1]) | ~cam_idx_v_lo) ? FILL : DRAIN;
       default: state_n = FILL;
     endcase
   end
@@ -158,12 +174,37 @@ module bsg_cover
     ,.v_o()
     );
 
+   if(width_p <= out_width_p) begin: pass
+     assign v_o = piso_v_li;
+     assign data_o = piso_data_li;
+     assign piso_ready_and_lo = ready_i;
+   end
+   else begin: piso
+     bsg_parallel_in_serial_out_passthrough
+      #(.width_p(out_width_p)
+       ,.els_p(piso_div_lp)
+       ,.hi_to_lo_p(1)
+       )
+      piso
+       (.clk_i(ds_clk_i)
+       ,.reset_i(ds_reset_i)
+
+       ,.v_i(piso_v_li)
+       ,.data_i(piso_data_li)
+       ,.ready_and_o(piso_ready_and_lo)
+
+       ,.v_o(v_o)
+       ,.data_o(data_o)
+       ,.ready_and_i(ready_i)
+       );
+   end
+
    // synopsys translate_off
    if(debug_p) begin: debug
      integer file;
      string fname;
      initial begin
-       fname = $sformatf("%0d.ctrace", idx_p);
+       fname = $sformatf("%0d.ctrace", id_p);
        file = $fopen(fname, "w");
      end
 
