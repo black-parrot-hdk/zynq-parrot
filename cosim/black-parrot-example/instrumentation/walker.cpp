@@ -25,7 +25,7 @@
 #define DEBUG_PRINT 0
 
 #if DEBUG_PRINT
-#define debug(x) std::cout << x << std::endl
+#define debug(x) std::cout << x;
 #else
 #define debug(x)
 #endif
@@ -164,8 +164,9 @@ void print_unordered_set(std::unordered_set<std::pair<std::string, int>, PairHas
   file.open(fileName, std::ios_base::out);
   if(file) {
     for (const auto& item : map) {
-      if(std)
+      if(std) {
         debug(item.first << " @depth= " << item.second << std::endl);
+      }
 
       file << item.first << ", " << item.second << std::endl;
     }
@@ -179,10 +180,10 @@ void print_list(std::unordered_map<std::string, std::unordered_set<std::string>>
     file.open(fileName, std::ios_base::out);
 
   for (const auto& pair : map) {
-    if(std) debug(pair.first << ": " << std::endl);
+    if(std) { debug(pair.first << ": " << std::endl); }
     if(f) file << pair.first << ": " << std::endl;;
     for (const std::string& item : pair.second) {
-      if(std) debug("\t" << item << std::endl);
+      if(std) { debug("\t" << item << std::endl); }
       if(f) file << "\t" << item << std::endl;
     }
   }
@@ -200,7 +201,7 @@ void print_list(std::unordered_set<std::string> &list, bool f = false, std::stri
 
   for (auto const &i: list) {
     if(std)
-      debug(i << std::endl);
+      { debug(i << std::endl); }
     if(f)
       file << i << std::endl;
   }
@@ -218,7 +219,7 @@ void print_list(std::list<std::string> &list, bool f = false, std::string fileNa
 
   for (auto const &i: list) {
     if(std)
-      debug(i << std::endl);
+      { debug(i << std::endl); }
     if(f)
       file << i << std::endl;
   }
@@ -276,7 +277,6 @@ struct data_structure {
     net_submodOut; // search with net, gives submodOut
   std::multimap <std::string, std::string>          submodIn_net;
   // multimap because submodIn can be driven by an operation of nets
-  //std::multimap <std::string, std::string>          net2driver;
   std::unordered_map<std::string, std::unordered_set<std::string>> net2driver;
   std::unordered_map<std::string, std::unordered_set<std::string>> net2sel; // net to select signal (implies net is a muxOutput)
   std::list <std::string>                           moduleInputs;
@@ -301,7 +301,7 @@ void print_ds(std::string fileName, data_structure& ds) {
     file << i.first << " <> " << i.second << std::endl;
 
   for (auto const& i : ds.net2driver) {
-    file << i.first << " ??\n";
+    file << i.first << " <-\n";
     for (auto const& el : i.second)
       file << "\t" << el << std::endl;
   }
@@ -381,12 +381,12 @@ void parse_module(vpiHandle module, vpiHandle p_in, bool genScope = false, std::
         params.insert({vpi_get_str(vpiFullName, p), value.value.integer});
       }
     }
-  } else debug("No params found in current module\n");
+  } else { debug("No params found in current module\n"); }
 
   if(vpiHandle pai = vpi_iterate(vpiParamAssign, module)) {
     debug("Found paramAssign\n");
     visitParamAssignment(pai);
-  } else debug("No paramAssign found in current module\n");
+  } else { debug("No paramAssign found in current module\n"); }
 
   //debug("\nFinal list of params:\n");
   //std::map<std::string, int>::iterator pitr;
@@ -408,8 +408,9 @@ void parse_module(vpiHandle module, vpiHandle p_in, bool genScope = false, std::
 
   debug("Module-Submodule map:\n"); 
   debug(name << std::endl);
-  for (auto const &s : ds.modSubmodMap)
+  for (auto const &s : ds.modSubmodMap) {
     debug("\\_" << s.second << std::endl);
+  }
 
   // save module inputs
   if(vpiHandle ports = vpi_iterate(vpiPort, module)) {
@@ -467,10 +468,10 @@ void parse_module(vpiHandle module, vpiHandle p_in, bool genScope = false, std::
   // save the data structure in the map
   // for gen scope arrays, associate ds with parent module instance
   if(module_ds_map.find(name) == module_ds_map.end()) {
-    debug("Inserting freshly into module_ds_map\n");
+    debug("Inserting freshly into module_ds_map[" << name << "]\n");
     module_ds_map.insert({name, ds});
   } else {
-    debug("Appending into each ds in module_ds_map individually\n");
+    debug("Appending into each ds in module_ds_map[" << name << "] individually\n");
     module_ds_map[name].modSubmodMap.insert(ds.modSubmodMap.begin(), ds.modSubmodMap.end());  // multimap
     module_ds_map[name].net_submodOut.insert(ds.net_submodOut.begin(), ds.net_submodOut.end()); // unordered_map
     module_ds_map[name].submodIn_net.insert(ds.submodIn_net.begin(), ds.submodIn_net.end()); // multimap
@@ -479,6 +480,7 @@ void parse_module(vpiHandle module, vpiHandle p_in, bool genScope = false, std::
     for(auto const& k : ds.net2driver)
       for(auto const& v : k.second)
         module_ds_map[name].net2driver[k.first].insert(v);
+
     for(auto const& k : ds.net2sel)
       for(auto const& v : k.second)
         module_ds_map[name].net2sel[k.first].insert(v);
@@ -618,7 +620,7 @@ void parseAlways(vpiHandle always, data_structure &ds) {
           parseAlways(s, ds);
         }
       } else
-        debug("Stmt not found; UNKNOWN_NODE\n");
+        { debug("Stmt not found; UNKNOWN_NODE\n"); }
     }
   }
 
@@ -1012,7 +1014,7 @@ void traverse(std::string pnet,
     visited.insert(net);
   }
 
-  debug(indent << "Parsing: " << net << " | depth=" << depth << " | inst: "<< name << std::endl);
+  std::cout << indent << "Parsing: " << net << " | depth=" << depth << " | inst: "<< name << std::endl;
 
   // assume we have nothing
   bool noDriver = true;
@@ -1053,7 +1055,7 @@ void traverse(std::string pnet,
               //std::string new_indent = indent.substr(0, indent.length() - 2);
               traverse(super_in.second, supermodule, depth, visited, covs, indent + "| ");
             } else
-              debug(indent << "This is the select input, ignoring\n");
+              { debug(indent << "This is the select input, ignoring\n"); }
           }
         }
       }
@@ -1152,8 +1154,9 @@ void traverse(std::string pnet,
           return;
         }
         debug(indent << "Supermodule net candidates:\n");
-        for (auto it = range.first; it != range.second; ++it)
+        for (auto it = range.first; it != range.second; ++it) {
           debug(indent << "[sup]: " << it->second << std::endl);
+        }
         for (auto it = range.first; it != range.second; ++it) {
           debug(indent << "Traversing into supermodule\n");
           //std::string new_indent = indent.substr(0, indent.length() - 2);
@@ -1196,6 +1199,7 @@ void traverse(std::string pnet,
     std::string check_net = net;
     while(true) {
       bool r = removeLastWordOrSel(check_net, new_net, new_psel);
+      debug(indent << "Finding match for: " << check_net << std::endl);
       if(r && new_net != name) {
         if((findDriver(ds, new_net) || findSource(ds, new_net) || findIfInput(ds, new_net))) {
           // dealing with either a struct or part/bitsel here
@@ -1266,6 +1270,13 @@ void traverse(std::string pnet,
 std::string visitbit_sel(vpiHandle h) {
   std::string out = "";
   debug("Walking bit select\n");
+  if(vpiHandle par = vpi_handle(vpiParent, h)) {
+    bool constOnly;
+    out += visitExpr(par, true, constOnly).front();
+  } else {
+    walker_error("Parent to bit_select not found\n");
+  }
+  /* change by anoop -- last minute -- reverify if works for all
   if(const char *s = vpi_get_str(vpiFullName, h)) {
     out += s;
     debug("FullName at bit_sel: " << s << std::endl);
@@ -1278,6 +1289,7 @@ std::string visitbit_sel(vpiHandle h) {
       out += visitExpr(par, true, constOnly).front();
     }
   }
+  */
   out += "[";
   vpiHandle ind = vpi_handle(vpiIndex, h);
   if(ind) {
@@ -1306,7 +1318,7 @@ std::string visitindexed_part_sel(vpiHandle h) {
   debug("Walking indexed part select\n");
   vpiHandle par = vpi_handle(vpiParent, h);
   bool constOnly;
-  if(!par) debug("Couldn't find parent\n");
+  if(!par)  {debug("Couldn't find parent\n"); }
   else out += visitExpr(par, true, constOnly).front();
   out += "[";
   if(vpiHandle b = vpi_handle(vpiBaseExpr, h)) {
@@ -1337,7 +1349,7 @@ std::string visitvar_sel(vpiHandle h) {
       out += "]";
     }
     vpi_release_handle(indh);
-  } else debug("Indices not found" << std::endl);
+  } else { debug("Indices not found" << std::endl); }
   return out;
 }
 
@@ -1346,20 +1358,20 @@ std::string visitpart_sel(vpiHandle h) {
   debug("Walking part select\n");
   vpiHandle par = vpi_handle(vpiParent, h);
   bool constOnly;
-  if(!par) debug("Couldn't find parent\n");
+  if(!par) { debug("Couldn't find parent\n"); }
   else out += visitExpr(par, true, constOnly).front();
   out += "[";
   vpiHandle lrh = vpi_handle(vpiLeftRange, h);
   if(lrh) {
     out += evalOperation(lrh);
   }
-  else debug("Left range not found); type: " << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)(((const uhdm_handle *)lrh)->type)) << std::endl);
+  else { debug("Left range not found); type: " << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)(((const uhdm_handle *)lrh)->type)) << std::endl); }
   out += ":";
   vpiHandle rrh = vpi_handle(vpiRightRange, h);
   if(rrh) {
     out += evalOperation(rrh);
   }
-  else debug("Right range not found); type: " << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)(((const uhdm_handle *)rrh)->type)) << std::endl);
+  else { debug("Right range not found); type: " << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)(((const uhdm_handle *)rrh)->type)) << std::endl); }
   out += "]";
   vpi_release_handle(rrh);
   vpi_release_handle(lrh);
@@ -1582,7 +1594,7 @@ std::string visithier_path(vpiHandle soph) {
       first = false;
       debug("Extracted at this point: " << out << std::endl);
     }
-  } else debug("Couldn't iterate through member actuals\n");
+  } else { debug("Couldn't iterate through member actuals\n"); }
   return out;
 }
 
@@ -1775,7 +1787,7 @@ std::tuple <bool, std::list <std::string>> visitOperation(vpiHandle h) {
       out += " }";
 
     if(constantsOnly) 
-      debug("Operation is constants-only: " << out << std::endl);
+      { debug("Operation is constants-only: " << out << std::endl); }
     debug("Inserting Operation\n");
     current.push_front(out);
 
@@ -1941,7 +1953,7 @@ void printOperandsInExpr(vpiHandle h, std::unordered_set<std::string> *out, bool
   if(print) {
     debug("Operands in given expression:" << std::endl);
     for (auto const& ops: *out)
-      debug("\t" << ops << std::endl);
+      { debug("\t" << ops << std::endl); }
   }
   return;
 }
@@ -2256,7 +2268,7 @@ void visitTernary(vpiHandle h, std::list<std::string> &current) {
     }
     vpi_release_handle(i);
   } else
-    debug("Couldn't iterate through operands" << std::endl);
+    { debug("Couldn't iterate through operands" << std::endl); }
 
   debug("Saving ternaries...\n");
   print_list(current);
@@ -2277,7 +2289,7 @@ int evalExpr(vpiHandle h, bool& found) {
       debug(c << " was found to be " << range->second << std::endl);
       found = true;
       return range->second;
-    } else debug("Not found in running_const\n");
+    } else { debug("Not found in running_const\n"); }
   }
 
   if(char *c = vpi_get_str(vpiFullName, h)) {
@@ -2288,7 +2300,7 @@ int evalExpr(vpiHandle h, bool& found) {
       debug(c << " was found to be " << range->second << std::endl);
       found = true;
       return range->second;
-    } else debug("Not found in param\n");
+    } else { debug("Not found in param\n"); }
   }
 
   if(vpiHandle actual = vpi_handle(vpiActual, h)) {
@@ -2524,7 +2536,7 @@ void visitParamAssignment(vpiHandle p) {
             debug("\t\tFound const assignment: " << std::to_string(value.value.integer) << std::endl);
             params.insert(std::pair<std::string, int>(name, value.value.integer));
           } else
-            debug("Unable to resolve constant\n");
+            { debug("Unable to resolve constant\n"); }
           break;
         } 
         case UHDM::uhdmparameter: {
@@ -2539,11 +2551,13 @@ void visitParamAssignment(vpiHandle p) {
           }
           break;
         }
-        case UHDM::uhdmoperation: 
+        case UHDM::uhdmoperation:  {
           debug("Unexpected operation in parameter assignment\n");
-        default:
+        }
+        default: {
           debug("Didn't find a constant of param in param assignment\n");
           break;
+        }
       }
       vpi_release_handle(r);
     } else {
@@ -2729,7 +2743,7 @@ void visitTopModules(vpiHandle ti) {
         debug("**** STATS FOR THE MODULE ****\n");
         debug("\nFound " << muxOutput.size() << " mux outputs in current module:\n");
         for (auto const& it : muxOutput)
-          debug("\t>> " << it.first << std::endl);
+          { debug("\t>> " << it.first << std::endl); }
 
         muxOutput.clear();
 
@@ -2859,8 +2873,8 @@ int main(int argc, const char** argv) {
       debug("Walking uhdmtopModules\n");
       // The walk
       visitTopModules(ti);
-    } else debug("No uhdmtopModules found!\n");
-  } else debug("No design found!\n");
+    } else { debug("No uhdmtopModules found!\n"); }
+  } else { debug("No design found!\n"); }
 
 
   //debug("\n\n\n*** Printing all conditions ***\n\n\n");
@@ -2903,7 +2917,7 @@ int main(int argc, const char** argv) {
   //file.close();
 
 
-  debug("\n\n\n*** Parsing Complete!!! ***\n\n\n");
+  std::cout << "\n\n\n*** Parsing Complete!!! ***\n\n\n";
 
 
   // Do not delete these objects until you are done with UHDM
