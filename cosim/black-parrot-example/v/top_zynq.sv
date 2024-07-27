@@ -878,8 +878,8 @@ module top_zynq
    localparam cov_els_width_lp = 8;
    localparam cov_len_width_lp = 8;
 
-   localparam cov_width_lp = 64;
-   localparam cam_els_lp = 16;
+   localparam cov_width_lp = 7;
+   localparam cam_els_lp = 32;
 
    // reset generation
    logic bp_reset_li, ds_reset_li;
@@ -931,6 +931,7 @@ module top_zynq
 
    // covergroup instances
    logic [num_cov_p-1:0][cov_width_lp-1:0] cov_li;
+   logic [num_cov_p-1:0][cov_width_lp-1:0] cov_aligned_li;
    logic [num_cov_p-1:0] cov_v_lo, cov_ready_li, cov_id_v_lo;
    logic [num_cov_p-1:0][C_M02_AXI_DATA_WIDTH-1:0] cov_data_lo;
    logic [num_cov_p-1:0][cov_id_width_lp-1:0] cov_id_lo;
@@ -938,14 +939,28 @@ module top_zynq
    logic [num_cov_p-1:0][cov_len_width_lp-1:0] cov_len_lo;
 
    for(genvar i = 0; i < num_cov_p; i++) begin: rof
-     // random covergroup input for testing
-     bsg_lfsr
-      #(.width_p(cov_width_lp))
-      i_rand
-       (.clk(bp_clk)
-       ,.reset_i(bp_reset_li)
-       ,.yumi_i(1'b1)
-       ,.o(cov_li[i])
+     assign cov_li[i] = {`COREPATH.be.calculator.pipe_int_early_data_v_lo, //3
+                         `COREPATH.be.calculator.pipe_sys_data_v_lo, //3
+                         `COREPATH.be.calculator.pipe_mem_early_data_v_lo, //2
+                         `COREPATH.be.calculator.pipe_aux_data_v_lo, //2
+                         `COREPATH.be.calculator.pipe_mem_final_data_v_lo, //1
+                         `COREPATH.be.calculator.pipe_mul_data_v_lo, //1
+                         `COREPATH.be.calculator.pipe_fma_data_v_lo //0
+                        };
+     bsg_cover_realign
+      #(.id_p(i)
+       ,.num_p(cov_width_lp)
+       ,.num_chain_p(4)
+       ,.chain_offset_arr_p({4'd5, 4'd3, 4'd1 ,4'd0})
+       ,.chain_depth_arr_p({4'd3, 4'd2, 4'd1, 4'd0})
+       ,.step_p(4)
+       ,.debug_p(1)
+       )
+      realign
+       (.clk_i(bp_clk)
+       ,.v_i(cov_en_sync_li)
+       ,.data_i(cov_li[i])
+       ,.data_o(cov_aligned_li[i])
        );
 
      bsg_cover
@@ -970,7 +985,7 @@ module top_zynq
        ,.axi_reset_i(bp_async_reset_li)
 
        ,.v_i(cov_en_sync_li)
-       ,.data_i(cov_li[i])
+       ,.data_i(cov_aligned_li[i])
        ,.ready_o()
 
        ,.drain_i(1'b0)

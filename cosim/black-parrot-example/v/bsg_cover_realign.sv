@@ -2,13 +2,16 @@
 `include "bsg_defines.sv"
 
 module bsg_cover_realign
- #(parameter `BSG_INV_PARAM(num_p)
+ #(parameter `BSG_INV_PARAM(id_p)
+  ,parameter `BSG_INV_PARAM(num_p)
   ,parameter `BSG_INV_PARAM(num_chain_p)
   ,parameter `BSG_INV_PARAM(chain_offset_arr_p)
   ,parameter `BSG_INV_PARAM(chain_depth_arr_p)
   ,parameter `BSG_INV_PARAM(step_p)
+  ,parameter `BSG_INV_PARAM(debug_p)
   )
   (input clk_i
+  ,input v_i
   ,input [num_p-1:0] data_i
   ,output logic [num_p-1:0] data_o
   );
@@ -33,6 +36,23 @@ module bsg_cover_realign
 
     assign data_o[msb_idx_lp : lsb_idx_lp] = chain_data_lo;
   end
+
+   // synopsys translate_off
+   if(debug_p) begin: debug
+     integer file;
+     string fname;
+     initial begin
+       fname = $sformatf("%0d.noalign.ctrace", id_p);
+       file = $fopen(fname, "w");
+     end
+
+     always_ff @(negedge clk_i) begin
+       if(v_i) begin
+         $fwrite(file, "%x\n", data_i);
+       end
+     end
+   end
+   // synopsys translate_on
 
 endmodule
 

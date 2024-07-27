@@ -10,7 +10,7 @@ BP_NCPUS ?= 1
 
 # Coverage
 COV_EN ?= 1
-COV_NUM ?= 4
+COV_NUM ?= 1
 
 #CFLAGS += -DDRAM_TEST
 #CFLAGS += -DZYNQ_PL_DEBUG
