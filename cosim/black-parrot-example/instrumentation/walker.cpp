@@ -33,7 +33,7 @@ using namespace std;
 #endif
 
 void walker_warn(string s) {
-  cout << "WARN: " << s << endl;
+  debug("WARN: " << s << endl);
 }
 
 void walker_error(string s) {
@@ -64,23 +64,8 @@ int evalExpr(vpiHandle, bool&);
 bool saveVariables = true; 
 bool expand = true;
 bool global_always_ff_flag = false;
-// struct defines
-// keeps track current conditional block's condition expr for iterative inserts
-struct currentCond_s {
-  bool v;
-  string cond;
-} currentCond = {false, ""};
-
-// discovered variables
-struct vars {
-  int width[4];     // malloc will be slower, expensive; supports upto 4 dimensional arrays
-  int dims;         // for multi dimension arrays
-  string name;
-  string type; //reg/wire
-};
 
 // global data structures
-list <vars> nets, netsCurrent; // for storing nets discovered
 list <unordered_set <string>> csvs;
 list <string> all, ternaries, cases, ifs;  // for storing specific control expressions (see definition in main README.md)
 list <int> nTernaries, nCases, nIfs; // incremental numbers for dbg
@@ -115,27 +100,6 @@ struct PairHash {
     }
 };
 
-// unordered_map : not ordered, but lookups are faster
-// unordered_map : fast insertion, duplicates are ignored
-
-// Custom hash function for tuple<int, string>
-//struct TupleHash {
-//  size_t operator()(const tuple<int, string>& t) const {
-//    auto h1 = hash<int>{}(get<0>(t));
-//    auto h2 = hash<string>{}(get<1>(t));
-//    return h1 ^ (h2 << 1); // Combine the two hash values
-//  }
-//};
-//
-//// Custom equality function for tuple<int, string> (optional)
-//struct TupleEqual {
-//  bool operator()(const tuple<int, string>& t1, const tuple<int, string>& t2) const {
-//    return get<0>(t1) == get<0>(t2) && get<1>(t1) == get<1>(t2);
-//  }
-//};
-//// for precise coverage
-//unordered_set<tuple<int, string>, TupleHash, TupleEqual> covs;
-
 filesystem::path outputDir;
 
 
@@ -145,22 +109,8 @@ static string_view ltrim(string_view str, char c) {
   if (pos != string_view::npos) str = str.substr(pos + 1);
   return str;
 }
-// prints out discovered control expressions to file or stdout
-void print_csvs(string fileName = "") {
-  ofstream file;
-  file.open(fileName, ios_base::out);
-  for (auto const &csv : csvs) {
-    for (auto j = csv.begin(); j != csv.end(); ++j) {
-      file << *j;
-      if (next(j) != csv.end()) {
-        file << " , ";
-      }
-    }
-    file << endl;
-  }
-  file.close();
-}
 
+// prints out discovered control expressions to file or stdout
 void print_unordered_set(unordered_set<pair<string, int>, PairHash> &map, bool std = false, string fileName = "") {
   ofstream file;
   file.open(fileName, ios_base::out);
@@ -556,31 +506,42 @@ void parseAlways(vpiHandle always, data_structure &ds) {
       } else
         walker_error("No condition found in case_stmt");
 
+      ds.running_cond_str.push_front(cond_str.front());
       debug("Finding case_items\n");
       if(vpiHandle items = vpi_iterate(vpiCaseItem, always)) {
         while(vpiHandle item = vpi_scan(items)) {
-          bool rcs_active; // running_cond_str active
+          bool rcs_active = false, dummy; // running_cond_str active
           debug("Case item processing\n");
-          if(vpiHandle expr = vpi_handle(vpiExpr, item)) {
-            list <string> match;
-            if(((const uhdm_handle *)expr)->type == UHDM::uhdmoperation) {
-              tie(rcs_active, match) = visitOperation(expr); // rcs used dummily
-            } else {
-              match = visitExpr(expr, true, rcs_active); // rcs used dummily
-            }
-            if(!constOnly) {
-              ds.running_cond_str.push_front(" ( " + cond_str.front() + " == " + match.front() + " ) ");
-              rcs_active = true;
-            }
-            else rcs_active = false;
-          }
+          // the below is for (case_cond == case_item_expr)
+          // MAJOR TODO -- like running_cond_str, create a running_case_str which shouldn't be running, but rather a single compare expression 
+          //if(vpiHandle exprs = vpi_iterate(vpiExpr, item)) {
+          //  while(vpiHandle expr = vpi_scan(exprs)) {
+          //    debug("Case item expression found\n");
+          //    list <string> match;
+          //    if(((const uhdm_handle *)expr)->type == UHDM::uhdmoperation) {
+          //      tie(dummy, match) = visitOperation(expr); // rcs used dummily
+          //    } else {
+          //      match = visitExpr(expr, true, dummy); // rcs used dummily
+          //    }
+          //    if(!constOnly && !rcs_active) { 
+          //      // the && ! is because when using fall through case-items, the running condition string will be wrong
+          //      ds.running_cond_str.push_front(" ( " + cond_str.front() + " == " + match.front() + " ) ");
+          //      debug("Case item expression added\n");
+          //      rcs_active = true;
+          //    }
+          //    else rcs_active = false;
+          //  }
+          //}
 
           // will usually be an assignment
+          debug("running_cond_str: " << (!ds.running_cond_str.empty() ? ds.running_cond_str.front() : "NIL"));
           parseAlways(item, ds);
-          if(rcs_active)
-            ds.running_cond_str.pop_front();
+          //if(rcs_active)
+          //  ds.running_cond_str.pop_front();
         }
       }
+      // remove this if you're changing case-cond representation
+      ds.running_cond_str.pop_front();
       break;
     }
     case UHDM::uhdmfor_stmt: {
@@ -642,7 +603,7 @@ string compose_running_str(string s, data_structure &ds) {
   else return s;
 
   if(!s.empty())
-    result + " & " + s;
+    result += " & " + s;
 
   return result;
 }
@@ -732,17 +693,18 @@ void parseAssigns(vpiHandle assign,
           if(!select_sigs.empty()) {
             for(auto const& sel : select_sigs) {
               // TODO choose between carrying the AND of nested signals or just individual signals
-              debug("Composing running string " << sel << endl);
+              debug("Composing running string with sel: " << sel << endl);
               string running_cond = compose_running_str(sel, ds);
+              debug("Composed running string " << running_cond << endl);
               ds.net2sel[lhsEl].insert(running_cond);
               debug(lhsEl << " ?? " << running_cond << endl);
             }
           } // else debug("LHS is not muxOutput\n");
-        } //else debug("Not found operation in assigment\n");
-
-        // insert into net2sel if inside if/case statements
-        if(!ds.running_cond_str.empty()) {
+        } 
+        // insert into net2sel if inside if/case statements regardless of rhs being an expr
+        else if(!ds.running_cond_str.empty()) {
           // this signals the assignment is inside an if/case condition
+          debug("Composed running string not because tern\n");
           ds.net2sel[lhsEl].insert(compose_running_str("", ds));
         }
 
@@ -815,15 +777,17 @@ void mapNetsToIO(vpiHandle submodule,
             //  walker_warn("HighConn none of the above?");
             bool constOnly;
             list tmp = visitExpr(high_conn, true, constOnly);
-            if(!constOnly) {
-              if(!tmp.empty()) {
-                if(vpi_get(vpiDirection, p) == 2) {
-                  ds.net_submodOut.insert({tmp.front(), make_tuple(low_conn_name, submodule)});
-                  debug("MappingOut: " << tmp.front() << " <> " << low_conn_name << endl);
-                } else {
-                  ds.submodIn_net.insert({low_conn_name, tmp.front()}); // can be a multimap
-                  debug("MappingIn: " << low_conn_name << " <> " << tmp.front()  << endl);
-                }
+            string hc = tmp.front();
+            if(constOnly)
+              hc = "IGNORED";
+
+            if(!tmp.empty()) {
+              if(vpi_get(vpiDirection, p) == 2) {
+                ds.net_submodOut.insert({hc, make_tuple(low_conn_name, submodule)});
+                debug("MappingOut: " << hc << " <> " << low_conn_name << endl);
+              } else {
+                ds.submodIn_net.insert({low_conn_name, hc}); // can be a multimap
+                debug("MappingIn: " << low_conn_name << " <> " << hc  << endl);
               }
             }
           }
@@ -935,7 +899,8 @@ map <string, string> blacklist = {
   {"work@bsg_muxi2_gatestack", "i2"},
   {"work@bsg_mux_one_hot",     "sel_one_hot_i"},
   {"work@bsg_mux_segmented",   "sel_i"},
-  {"work@bsg_mux",             "sel_i"}
+  {"work@bsg_mux",             "sel_i"},
+  {"work@bsg_scan",            ""}
 };
 
 bool findDriver (data_structure &ds, string net) {
@@ -985,6 +950,8 @@ vector<string> findMatchingStrings(const data_structure &ds, const string &prefi
   return matchingValues;
 }
 
+unordered_set<string> global_visited;
+
 void traverse(string pnet, 
     //string psel,
     vpiHandle inst, int depth, unordered_set<string> &visited, unordered_set<pair<string, int>, PairHash> &covs, string indent = "") {
@@ -1008,15 +975,27 @@ void traverse(string pnet,
     return;
   } // if not topmodule, handled within source-finding routine
 
+  if(net == "IGNORED") {
+    debug(indent << "Constant found; ignoring\n");
+    return;
+  }
+
   // if already traversed as a parent, return, otherwise also save to visited
   if(visited.find(net) != visited.end()) {
-    debug(indent << "\tPreviously traversed\n");
+    debug(indent << "\tPreviously traversed within same subtree\n");
     return;
   } else {
     visited.insert(net);
   }
 
-  cout << indent << "Parsing: " << net << " | depth=" << depth << " | inst: "<< name << endl;
+  if(global_visited.find(net + "," + to_string(depth)) != global_visited.end()) {
+    debug(indent << "\tPreviously traversed at same depth\n");
+    return;
+  } else {
+    global_visited.insert(net+ "," + to_string(depth));
+  }
+
+  debug(indent << "Parsing: " << net << " | depth=" << depth << " | inst: "<< name << endl);
 
   // assume we have nothing
   bool noDriver = true;
@@ -1056,8 +1035,9 @@ void traverse(string pnet,
               debug(indent << "Not a select input, traversing\n");
               //string new_indent = indent.substr(0, indent.length() - 2);
               traverse(super_in.second, supermodule, depth, visited, covs, indent + "| ");
-            } else
-              { debug(indent << "This is the select input, ignoring\n"); }
+            } else { 
+              debug(indent << "This is the select input, ignoring\n"); 
+            }
           }
         }
       }
@@ -1150,7 +1130,8 @@ void traverse(string pnet,
         data_structure ds_par = module_ds_map[pname];
         auto range = ds_par.submodIn_net.equal_range(net);
         if(range.first == range.second) {
-          walker_error("Supermodule net corresponding to input not found!");
+          debug("Supermodule " << pname << " net corresponding to input " << net << " not found!");
+          walker_error("Supermodule net not found!");
         }
         debug(indent << "Supermodule net candidates:\n");
         for (auto it = range.first; it != range.second; ++it) {
@@ -1215,9 +1196,7 @@ void traverse(string pnet,
         }
       } else {
         walker_warn(indent + "DEBUG this node: " + net);
-        visited.erase(net);
-        debug(indent << "Exiting\n");
-        return;
+        break;
       }
     }
   }
@@ -1334,16 +1313,20 @@ string visitindexed_part_sel(vpiHandle h) {
   return out;
 }
 
+// MAJOR TODO -- var_select doesn't have actual,
+// so var_sel declared outside, but assigned inside a genBlk will have the genBlk in its path
+// which is wrong
 string visitvar_sel(vpiHandle h) {
   string out = "";
   debug("Walking var select\n");
-  out += vpi_get_str(vpiFullName, h);
+  out += vpi_get_str(vpiName, h);
 
   bool constOnly;
   if(vpiHandle indh = vpi_iterate(vpiIndex, h)) {
     while(vpiHandle ind = vpi_scan(indh)) {
       out += "[";
-      out += (visitExpr(ind, true, constOnly)).front();
+      out += "0";
+      // out += (visitExpr(ind, true, constOnly)).front(); // MAJOR TODO recent Surelog commit fixes this
       out += "]";
     }
     vpi_release_handle(indh);
@@ -1424,6 +1407,7 @@ list <string> visitExpr(vpiHandle h, bool retainConsts, bool& constOnly) {
 
       } else {
         debug("Ignoring\n");
+        out.push_back("IGNORED");
       }
       break;
     }
@@ -1519,7 +1503,7 @@ list <string> visitExpr(vpiHandle h, bool retainConsts, bool& constOnly) {
     }
     case UHDM::uhdmtagged_pattern : {
       vpiHandle pat = vpi_handle(vpiPattern, h);
-      list <string> tmp = visitExpr(pat, retainConsts, constOnly);
+      out = visitExpr(pat, retainConsts, constOnly);
       break;
     }
     default :
@@ -1528,6 +1512,9 @@ list <string> visitExpr(vpiHandle h, bool retainConsts, bool& constOnly) {
       else walker_error("UNKNOWN node at leaf; type: " +
           UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)h)->type));
       break;
+  }
+  if(out.size() > 1) {
+    walker_error("visitExpr gave multiple elelments\n");
   }
   return out;
 }
@@ -1913,7 +1900,7 @@ void printOperandsInExpr(vpiHandle h, unordered_set<string> *out, bool print=fal
   UHDM::UHDM_OBJECT_TYPE h_type = (UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)h)->type;
   debug("printOperandsInExpr | Type: " << UHDM::UhdmName(h_type) << endl);
   switch(((const uhdm_handle *)h)->type) {
-    case UHDM::uhdmoperation :  {
+    case UHDM::uhdmoperation :  { // need this despite having visitExpr 
       if(vpiHandle i = vpi_iterate(vpiOperand, h))
         while (vpiHandle op = vpi_scan(i))
           if(vpiHandle actual_op = vpi_handle(vpiActual, op)) 
@@ -2316,7 +2303,11 @@ int evalExpr(vpiHandle h, bool& found) {
       } else
         return stoi(string(tmp));
     }
-    else walker_error("Actual doesn't exists, no decompile");
+    else {
+      //walker_error("Actual doesn't exists, no decompile"); // MAJOR TODO happens when parsing pipe_mem 
+      // "~/zynq-farm/zynq-parrot/cosim/import/black-parrot/bp_common/src/v/bp_tlb.sv" +211
+      return 0;
+    }
   }
 
   walker_error("Unable to resolve consant");
@@ -2704,10 +2695,10 @@ void visitTopModules(vpiHandle ti) {
               char *portName = vpi_get_str(vpiName, p);
               // ports have no fullName (perhaps because these are just pins?)
               if(portName) {
-                debug("Found output port " << portName << "; traversing...\n");
+                cout << "Found output port " << portName << "; traversing...\n";
                 vpiHandle lowConn = vpi_handle(vpiLowConn, p);
                 string low_conn_full_name = vpi_get_str(vpiFullName, lowConn);
-                debug("Traverse function start:\n");
+                cout << "Traverse function start:\n";
 
                 traverse(low_conn_full_name, mh, 0, parents, covs, "");
               }
@@ -2733,8 +2724,6 @@ void visitTopModules(vpiHandle ti) {
         //debug("Done with ports\n");
 
         // Accumulate variables:
-        nets.insert(nets.end(), netsCurrent.begin(), netsCurrent.end());
-        netsCurrent.clear();
         paramsAll.insert(params.begin(), params.end());
         params.clear();
 
