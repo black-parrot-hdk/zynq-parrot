@@ -39,7 +39,7 @@ def create_arrays(sorted_numbers):
 
 def cov_head(i, l, depths, offsets):
   return f"\
-  wire [{l}-1:0] cov_{i}_lo;
+  wire [{l}-1:0] cov_{i}_lo; \n\
   bsg_cover_realign \n\
     #(.num_p              ({args.groupsize}) \n\
      ,.num_chain_p        ({l}) \n\
@@ -50,7 +50,7 @@ def cov_head(i, l, depths, offsets):
     (.clk_i            (bp_clk) \n\
     ,.data_i           ({{\n"
 
-def cov_tail(i):
+def cov_tail(i, l):
   return f"\
       }}) \n\
     ,.data_o           (cov_{i}_lo) \n\
@@ -58,9 +58,9 @@ def cov_tail(i):
   (* keep_hierarchy = \"false\" *) \n\
   bsg_cover \n\
     #(.id_p            ({i}) \n\
-     ,.width_p         ({args.groupsize}) \n\
+     ,.width_p         ({l}) \n\
      ,.els_p           (16) \n\
-     ,.out_width_p     ({args.groupsize}) \n\
+     ,.out_width_p     (C_M02_AXI_DATA_WIDTH) \n\
      ,.id_width_p      (8) \n\
      ,.els_width_p     (8) \n\
      ,.len_width_p     (8) \n\
@@ -140,6 +140,6 @@ with open(args.output, 'w') as f:
       cpos = group_lines[k].rfind(',')
       f.write(f'\t\t\t\t{comma}' + group_lines[k][0:cpos] + "\n")
       comma = ','
-    f.write(cov_tail(gid))
+    f.write(cov_tail(gid, l))
 
   f.close()
