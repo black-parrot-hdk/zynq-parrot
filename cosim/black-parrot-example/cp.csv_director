@@ -1,0 +1,34 @@
+(work@bp_be_director.fe_cmd_fifo.ft.reset_i), 0
+(work@bp_be_director.fe_cmd_fifo.ft.enq_i |  work@bp_be_director.fe_cmd_fifo.ft.deq_i) & (work@bp_be_director.fe_cmd_fifo.ft.reset_i), 0
+work@bp_be_director.fe_cmd_fifo.ft.wptr.add_i, 1
+work@bp_be_director.fe_cmd_fifo.ft.rptr.add_i, 1
+work@bp_be_director.fe_cmd_fifo.ft.rptr.add_i, 2
+(work@bp_be_director.fe_cmd_fifo.ft.reset_i), 1
+work@bp_be_director.state_r & work@bp_be_director.clear_iss_o, 1
+work@bp_be_director.state_r & work@bp_be_director.cmd_empty_r_lo, 1
+(work@bp_be_director.npc_reg.dff.en_i) & (work@bp_be_director.npc_reg.dff.reset_i), 0
+(work@bp_be_director.reset_i), 0
+work@bp_be_director.commit_pkt_cast_i.npc_w_v, 0
+work@bp_be_director.fe_cmd_fifo.ft.wptr.add_i, 2
+(work@bp_be_director.commit_pkt_cast_i.sfence) & (work@bp_be_director.commit_pkt_cast_i.itlb_fill_v) & (work@bp_be_director.commit_pkt_cast_i.resume), 1
+work@bp_be_director.state_r & work@bp_be_director.commit_pkt_cast_i.wfi, 1
+work@bp_be_director.br_pkt_cast_i.bspec, 0
+work@bp_be_director.state_r & work@bp_be_director.freeze_li, 1
+work@bp_be_director.state_r & work@bp_be_director.commit_pkt_cast_i.fencei, 1
+(work@bp_be_director.commit_pkt_cast_i.exception |  work@bp_be_director.commit_pkt_cast_i._interrupt) & (work@bp_be_director.commit_pkt_cast_i.eret) & (work@bp_be_director.commit_pkt_cast_i.icache_miss) & (work@bp_be_director.commit_pkt_cast_i.fencei) & (work@bp_be_director.commit_pkt_cast_i.wfi) & (work@bp_be_director.commit_pkt_cast_i.csrw) & (work@bp_be_director.commit_pkt_cast_i.sfence) & (work@bp_be_director.commit_pkt_cast_i.itlb_fill_v) & (work@bp_be_director.commit_pkt_cast_i.resume), 1
+(work@bp_be_director.fe_cmd_fifo.ft.rptr.reset_i), 1
+work@bp_be_director.state_r & work@bp_be_director.commit_pkt_cast_i.resume |  work@bp_be_director.fe_cmd_nonattaboy_v, 1
+(work@bp_be_director.fe_cmd_fifo.ft.wptr.reset_i), 1
+(work@bp_be_director.fe_cmd_fifo.ft.wptr.reset_i), 0
+(work@bp_be_director.fe_cmd_fifo.ft.rptr.reset_i), 0
+(work@bp_be_director.fe_cmd_fifo.ft.enq_i |  work@bp_be_director.fe_cmd_fifo.ft.deq_i) & (work@bp_be_director.fe_cmd_fifo.ft.reset_i), 1
+(work@bp_be_director.commit_pkt_cast_i.icache_miss) & (work@bp_be_director.commit_pkt_cast_i.fencei) & (work@bp_be_director.commit_pkt_cast_i.wfi) & (work@bp_be_director.commit_pkt_cast_i.csrw) & (work@bp_be_director.commit_pkt_cast_i.sfence) & (work@bp_be_director.commit_pkt_cast_i.itlb_fill_v) & (work@bp_be_director.commit_pkt_cast_i.resume) & 1 &  work@bp_be_director.commit_pkt_cast_i.partial, 1
+(work@bp_be_director.commit_pkt_cast_i.fencei) & (work@bp_be_director.commit_pkt_cast_i.wfi) & (work@bp_be_director.commit_pkt_cast_i.csrw) & (work@bp_be_director.commit_pkt_cast_i.sfence) & (work@bp_be_director.commit_pkt_cast_i.itlb_fill_v) & (work@bp_be_director.commit_pkt_cast_i.resume), 1
+(work@bp_be_director.npc_mismatch_v) & (work@bp_be_director.commit_pkt_cast_i.exception |  work@bp_be_director.commit_pkt_cast_i._interrupt) & (work@bp_be_director.commit_pkt_cast_i.eret) & (work@bp_be_director.commit_pkt_cast_i.icache_miss) & (work@bp_be_director.commit_pkt_cast_i.fencei) & (work@bp_be_director.commit_pkt_cast_i.wfi) & (work@bp_be_director.commit_pkt_cast_i.csrw) & (work@bp_be_director.commit_pkt_cast_i.sfence) & (work@bp_be_director.commit_pkt_cast_i.itlb_fill_v) & (work@bp_be_director.commit_pkt_cast_i.resume), 1
+(work@bp_be_director.commit_pkt_cast_i.wfi) & (work@bp_be_director.commit_pkt_cast_i.csrw) & (work@bp_be_director.commit_pkt_cast_i.sfence) & (work@bp_be_director.commit_pkt_cast_i.itlb_fill_v) & (work@bp_be_director.commit_pkt_cast_i.resume), 1
+(work@bp_be_director.commit_pkt_cast_i.csrw) & (work@bp_be_director.commit_pkt_cast_i.sfence) & (work@bp_be_director.commit_pkt_cast_i.itlb_fill_v) & (work@bp_be_director.commit_pkt_cast_i.resume), 1
+(work@bp_be_director.npc_match_v &  work@bp_be_director.last_instr_was_branch) & (work@bp_be_director.npc_mismatch_v) & (work@bp_be_director.commit_pkt_cast_i.exception |  work@bp_be_director.commit_pkt_cast_i._interrupt) & (work@bp_be_director.commit_pkt_cast_i.eret) & (work@bp_be_director.commit_pkt_cast_i.icache_miss) & (work@bp_be_director.commit_pkt_cast_i.fencei) & (work@bp_be_director.commit_pkt_cast_i.wfi) & (work@bp_be_director.commit_pkt_cast_i.csrw) & (work@bp_be_director.commit_pkt_cast_i.sfence) & (work@bp_be_director.commit_pkt_cast_i.itlb_fill_v) & (work@bp_be_director.commit_pkt_cast_i.resume), 1
+(work@bp_be_director.commit_pkt_cast_i.eret) & (work@bp_be_director.commit_pkt_cast_i.icache_miss) & (work@bp_be_director.commit_pkt_cast_i.fencei) & (work@bp_be_director.commit_pkt_cast_i.wfi) & (work@bp_be_director.commit_pkt_cast_i.csrw) & (work@bp_be_director.commit_pkt_cast_i.sfence) & (work@bp_be_director.commit_pkt_cast_i.itlb_fill_v) & (work@bp_be_director.commit_pkt_cast_i.resume), 1
+(work@bp_be_director.commit_pkt_cast_i.itlb_fill_v) & (work@bp_be_director.commit_pkt_cast_i.resume) & 1 &  work@bp_be_director.commit_pkt_cast_i.partial, 1
+work@bp_be_director.npc_reg.en_i, 0
+(work@bp_be_director.commit_pkt_cast_i.resume) & work@bp_be_director.is_freeze, 1

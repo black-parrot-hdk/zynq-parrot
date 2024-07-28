@@ -24,7 +24,7 @@
 
 using namespace std;
 
-#define DEBUG_PRINT 0
+#define DEBUG_PRINT 1
 
 #if DEBUG_PRINT
 #define debug(x) cout << x;
@@ -553,7 +553,8 @@ void parseAlways(vpiHandle always, data_structure &ds) {
           vpiHandle lhs = vpi_scan(ops);
           itr = vpi_get_str(vpiName, lhs);
           vpiHandle rhs = vpi_scan(ops);
-          debug("Param: " <<  vpi_get_str(vpiName, rhs) << endl);
+          bool dummy;
+          debug("Param: " <<  visitExpr(rhs, true, dummy).front() << endl);
           limit = stoi(evalOperation(rhs));
           debug("Condition for ForLoop: " << itr << " : " <<  limit << endl);
         }
@@ -1084,9 +1085,9 @@ void traverse(string pnet,
         traverse(it, inst, depth, visited, covs, indent + "| ");
       }
     }
-    visited.erase(net);
-    debug(indent << "Exiting\n");
-    return;
+    //visited.erase(net);
+    //debug(indent << "Exiting\n");
+    //return;
   }
 
   // or a module instance where net is the output pin, 
@@ -1112,9 +1113,9 @@ void traverse(string pnet,
       parse_module(submodule, inst);
       debug(indent << "Traversing with submodule handle\n");
       traverse(get<0>(source->second), submodule, depth, visited, covs, indent + "| ");
-      visited.erase(net);
-      debug(indent << "Exiting\n");
-      return;
+      //visited.erase(net);
+      //debug(indent << "Exiting\n");
+      //return;
     } else
       walker_error("Submodule handle not found");
   }
@@ -1142,9 +1143,9 @@ void traverse(string pnet,
           //string new_indent = indent.substr(0, indent.length() - 2);
           traverse(it->second, ds.parent, depth, visited, covs, indent + "| ");
         }
-        visited.erase(net);
-        debug(indent << "Exiting\n");
-        return;
+        //visited.erase(net);
+        //debug(indent << "Exiting\n");
+        //return;
       } else walker_error( "Unable to determine name of supermodule");
     } else walker_error("Parent of current module not found!");
   } else {
@@ -1152,24 +1153,24 @@ void traverse(string pnet,
     debug(indent << "Net has no supermodule source\n");
   }
 
+  // struct fix: 
+  // first find net.* or net[*]
+  debug(indent << "Finding matches for " << net << ".* or [*]" << endl);
+  vector <string> matches = findMatchingStrings(ds, net, indent);
+  if(!matches.empty()) {
+    for(auto const& el : matches) {
+      traverse(el,
+          //psel,
+          inst, depth, visited, covs, indent + "| ");
+    }
+    visited.erase(net);
+    debug(indent << "Exiting\n");
+    return;
+  }
+
   // if not found in either net2driver or net_submodOut do nothing and returrn
   if (noSource && noDriver && noSupermod) {
     // Debug why source or driver couldn't be found
-
-    // struct fix: 
-    // first find net.* or net[*]
-    debug(indent << "Finding matches for " << net << ".* or [*]" << endl);
-    vector <string> matches = findMatchingStrings(ds, net, indent);
-    if(!matches.empty()) {
-      for(auto const& el : matches) {
-        traverse(el,
-            //psel,
-            inst, depth, visited, covs, indent + "| ");
-      }
-      visited.erase(net);
-      debug(indent << "Exiting\n");
-      return;
-    }
 
     // struct fix:
     // else try left shifting
@@ -2335,8 +2336,9 @@ string evalOperation(vpiHandle h) {
             break;
           default:
             *op = evalExpr(oph, found);
-            if(!found)
-              walker_error("Did not really evaluate the function, check `found`");
+            if(!found) {
+              //walker_error("Did not really evaluate the function, check `found`");
+            }
             op++;
             break;
         }
@@ -2728,11 +2730,11 @@ void visitTopModules(vpiHandle ti) {
         params.clear();
 
         debug("**** STATS FOR THE MODULE ****\n");
-        debug("\nFound " << muxOutput.size() << " mux outputs in current module:\n");
-        for (auto const& it : muxOutput)
-          { debug("\t>> " << it.first << endl); }
+        //debug("\nFound " << muxOutput.size() << " mux outputs in current module:\n");
+        //for (auto const& it : muxOutput)
+        //  { debug("\t>> " << it.first << endl); }
 
-        muxOutput.clear();
+        //muxOutput.clear();
 
         //Statistics:
         static int numTernaries, numIfs, numCases;

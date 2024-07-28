@@ -19,17 +19,35 @@ parser.add_argument("-g", "--groupsize",\
 args = parser.parse_args()
 #print(args)
 
-def cov_head(i):
+def get_depths(lines):
+  return [int(line.rstrip('\n').split(',')[-1]) for line in lines]
+
+def sort_lines(lines):
+  line_tuples = [(line.rstrip('\n'), int(line.rstrip('\n').split(',')[-1])) for line in lines]
+  sorted_lines = sorted(line_tuples, key=lambda x: x[1])
+  sorted_lines = [line[0] for line in sorted_lines]
+  return sorted_lines
+
+def create_arrays(sorted_numbers):
+  index_dict = {}
+  for index, number in enumerate(sorted_numbers):
+    if number not in index_dict:
+      index_dict[number] = index
+  # convert the dictionary to a list of lists
+  result = [[number, index_dict[number]] for number in index_dict]
+  return result
+
+def cov_head(i, l, depths, offsets):
   return f"\
   bsg_cover_realign \n\
     #(.num_p              ({args.groupsize}) \n\
-     ,.num_chain_p        () \n\
-     ,.chain_offset_arr_p () \n\
-     ,.chain_depth_arr_p  () \n\
+     ,.num_chain_p        ({l}) \n\
+     ,.chain_offset_arr_p ({ostr}) \n\
+     ,.chain_depth_arr_p  ({dstr}) \n\
      ,.step_p             () \n\
    realign_{i}\n\
     (.clk_i            (bp_clk) \n\
-    ,.data_i           ({{"
+    ,.data_i           ({{\n"
 
 def cov_tail(i):
   return f"\
@@ -41,7 +59,7 @@ def cov_tail(i):
     #(.id_p            ({i}) \n\
      ,.width_p         ({args.groupsize}) \n\
      ,.els_p           (16) \n\
-     ,.out_width_p     () \n\
+     ,.out_width_p     ({args.groupsize}) \n\
      ,.id_width_p      (8) \n\
      ,.els_width_p     (8) \n\
      ,.len_width_p     (8) \n\
@@ -68,24 +86,50 @@ def cov_tail(i):
     ,.data_o           (cov_data_lo[{i}]) \n\
     );\n\n"
 
+
 file = open(args.sigfile, 'r')
 lines = file.readlines()
 file.close()
 
+# sort lines according to depth
+#sorted_lines = sort_lines(lines)
+#lines = sorted_lines
+
+#print(lines)
+
 from math import ceil
 with open(args.output, 'w') as f:
   for group_id in range(ceil(len(lines)/args.groupsize)):
-    # realigner
-    
+    # collect the lines
+    unsorted_group_lines = lines[group_id*args.groupsize:(group_id+1)*args.groupsize]
+    group_lines = sort_lines(unsorted_group_lines)
+    indices = create_arrays(get_depths(group_lines))
+    print(indices)
+    offsets = [col[0] for col in indices]
+    depths = [col[1] for col in indices]
+
+    l = len(offsets)
+    ostr = "'{"
+    for i in offsets:
+      ostr += str(i) + ", "
+    ostr = ostr[:-2] + "}"
+    #print(ostr)
+
+    dstr = "'{"
+    for i in depths:
+      dstr += str(i) + ", "
+    dstr = dstr[:-2] + "}"
+    #print(dstr)
 
     # bsg_cover
-    f.write(cov_head(group_id))
+    f.write(cov_head(group_id, l, ostr, dstr))
     comma = ' '
-    for k in range(group_id * args.groupsize, min(len(lines), (group_id+1) * args.groupsize)):
-      f.write(f'\t\t\t\t{comma}' + lines[k])
+    for k in range(group_id * args.groupsize, min(len(group_lines), (group_id+1) * args.groupsize)):
+      cpos = group_lines[k].rfind(',')
+      f.write(f'\t\t\t\t{comma}' + group_lines[k][0:cpos] + "\n")
       comma = ','
     f.write(cov_tail(group_id))
 
   f.close()
 
-print('Number of covergroups:', int(len(lines)/args.groupsize))
+print('Number of covergroups:', ceil(len(lines)/args.groupsize))

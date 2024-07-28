@@ -1,0 +1,66 @@
+work@bp_be_pipe_aux.fp_box.in64_rec.clz.pe0.a.nw1.scan., 1
+((work@bp_be_pipe_aux.fp_box.in64_rec.clz.pe0.b.i -  1) &  work@bp_be_pipe_aux.fp_box.in64_rec.clz.pe0.b.i) == 2132941336, 1
+work@bp_be_pipe_aux.fp_box.in32_rec.clz.pe0.a.nw1.scan., 1
+((work@bp_be_pipe_aux.fp_box.in32_rec.clz.pe0.b.i -  1) &  work@bp_be_pipe_aux.fp_box.in32_rec.clz.pe0.b.i) == 2132941328, 1
+work@bp_be_pipe_aux.invbox_frs2, 1
+( !  work@bp_be_pipe_aux.i2f.roundRawToOut.in_isZero) && ( !  work@bp_be_pipe_aux.i2f.roundRawToOut.common_totalUnderflow), 1
+work@bp_be_pipe_aux.fp_box.in64_rec.isZeroExpIn, 1
+work@bp_be_pipe_aux.i2f.roundRawToOut.isNaNOut, 1
+work@bp_be_pipe_aux.rebox.round_mixed.recover.isNaN, 1
+work@bp_be_pipe_aux.f2dw.sign, 1
+(( ~  work@bp_be_pipe_aux.frs1_raw.is_nan) &  work@bp_be_pipe_aux.frs2_raw.is_nan) & (work@bp_be_pipe_aux.frs1_raw.is_nan &  ( ~  work@bp_be_pipe_aux.frs2_raw.is_nan)) & (work@bp_be_pipe_aux.frs1_raw.is_nan &  work@bp_be_pipe_aux.frs2_raw.is_nan), 1
+work@bp_be_pipe_aux.rebox.round_mixed.recover.isInf, 1
+(( !  work@bp_be_pipe_aux.rebox.round_mixed.round32.isNaNOut) && ( !  work@bp_be_pipe_aux.rebox.round_mixed.round32.in_isZero)) && ( !  work@bp_be_pipe_aux.rebox.round_mixed.round32.common_totalUnderflow), 1
+(( !  work@bp_be_pipe_aux.i2f.roundRawToOut.isNaNOut) && ( !  work@bp_be_pipe_aux.i2f.roundRawToOut.in_isZero)) && ( !  work@bp_be_pipe_aux.i2f.roundRawToOut.common_totalUnderflow), 1
+(work@bp_be_pipe_aux.feq_lo) & (( ~  work@bp_be_pipe_aux.frs1_raw.is_nan) &  work@bp_be_pipe_aux.frs2_raw.is_nan) & (work@bp_be_pipe_aux.frs1_raw.is_nan &  ( ~  work@bp_be_pipe_aux.frs2_raw.is_nan)) & (work@bp_be_pipe_aux.frs1_raw.is_nan &  work@bp_be_pipe_aux.frs2_raw.is_nan) & work@bp_be_pipe_aux.is_fmin_li ^  work@bp_be_pipe_aux.frs1_raw.sign, 1
+work@bp_be_pipe_aux.rebox.round_mixed.round64.doShiftSigDown1, 1
+work@bp_be_pipe_aux.rebox.round_mixed.round32.pegMinNonzeroMagOut, 1
+work@bp_be_pipe_aux.decode.fu_op, 1
+work@bp_be_pipe_aux.rebox.round_mixed.round32.isNaNOut, 1
+work@bp_be_pipe_aux.rebox.round_mixed.round64.in_isZero || work@bp_be_pipe_aux.rebox.round_mixed.round64.common_totalUnderflow, 1
+work@bp_be_pipe_aux.rebox.tag_i == 2132938896, 1
+work@bp_be_pipe_aux.f2w.invalidExc || work@bp_be_pipe_aux.f2w.common_overflow, 1
+work@bp_be_pipe_aux.rebox.round_mixed.recover.isZero, 1
+work@bp_be_pipe_aux.f2dw.roundIncr ^  work@bp_be_pipe_aux.f2dw.sign, 1
+work@bp_be_pipe_aux.f2dw.magGeOne, 1
+work@bp_be_pipe_aux.i2f.roundRawToOut.doShiftSigDown1, 1
+work@bp_be_pipe_aux.decode.fmove_v, 1
+work@bp_be_pipe_aux.i2f.iNToRawFN.sign, 1
+work@bp_be_pipe_aux.rebox.tag_i == 2132938904, 1
+work@bp_be_pipe_aux.instr.t.fmatype.rm == 2132938016, 1
+work@bp_be_pipe_aux.fp_box.encode_as_sp, 1
+( !  work@bp_be_pipe_aux.rebox.round_mixed.round32.in_isZero) && ( !  work@bp_be_pipe_aux.rebox.round_mixed.round32.common_totalUnderflow), 1
+work@bp_be_pipe_aux.f2dw.invalidExc || work@bp_be_pipe_aux.f2dw.common_overflow, 1
+work@bp_be_pipe_aux.f2w.sign, 1
+(work@bp_be_pipe_aux.frs1_raw.is_nan &  ( ~  work@bp_be_pipe_aux.frs2_raw.is_nan)) & (work@bp_be_pipe_aux.frs1_raw.is_nan &  work@bp_be_pipe_aux.frs2_raw.is_nan), 1
+work@bp_be_pipe_aux.rebox.round_mixed.round64.isNaNOut, 1
+work@bp_be_pipe_aux.rebox.round_mixed.round32.notNaN_isInfOut, 1
+(work@bp_be_pipe_aux.feq_lo) & (( ~  work@bp_be_pipe_aux.frs1_raw.is_nan) &  work@bp_be_pipe_aux.frs2_raw.is_nan) & (work@bp_be_pipe_aux.frs1_raw.is_nan &  ( ~  work@bp_be_pipe_aux.frs2_raw.is_nan)) & (work@bp_be_pipe_aux.frs1_raw.is_nan &  work@bp_be_pipe_aux.frs2_raw.is_nan) & work@bp_be_pipe_aux.is_fmax_li ^  work@bp_be_pipe_aux.flt_lo, 1
+work@bp_be_pipe_aux.opw_v, 1
+(work@bp_be_pipe_aux.frs1_raw.is_nan &  work@bp_be_pipe_aux.frs2_raw.is_nan), 1
+work@bp_be_pipe_aux.int_box.tag_i, 1
+work@bp_be_pipe_aux.i2f.iNToRawFN.clz.pe0.a.nw1.scan., 1
+work@bp_be_pipe_aux.i2f.roundRawToOut.genblk2.roundIncr, 1
+1, 1
+((work@bp_be_pipe_aux.i2f.iNToRawFN.clz.pe0.b.i -  1) &  work@bp_be_pipe_aux.i2f.iNToRawFN.clz.pe0.b.i) == 2132939232, 1
+work@bp_be_pipe_aux.i2f.roundRawToOut.notNaN_isInfOut, 1
+work@bp_be_pipe_aux.i2f.roundRawToOut.in_isZero || work@bp_be_pipe_aux.i2f.roundRawToOut.common_totalUnderflow, 1
+work@bp_be_pipe_aux.fp_box.in32_rec.isZeroExpIn, 1
+work@bp_be_pipe_aux.decode.irf_w_v, 1
+work@bp_be_pipe_aux.i2f.roundRawToOut.pegMaxFiniteMagOut, 1
+work@bp_be_pipe_aux.rebox.round_mixed.round32.genblk2.roundIncr, 1
+0, 1
+work@bp_be_pipe_aux.f2w.magGeOne, 1
+work@bp_be_pipe_aux.rebox.round_mixed.round32.doShiftSigDown1, 1
+work@bp_be_pipe_aux.f2w.roundIncr ^  work@bp_be_pipe_aux.f2w.sign, 1
+work@bp_be_pipe_aux.rebox.round_mixed.round32.pegMaxFiniteMagOut, 1
+work@bp_be_pipe_aux.i2f.roundRawToOut.pegMinNonzeroMagOut, 1
+work@bp_be_pipe_aux.rebox.round_mixed.round32.in_isZero || work@bp_be_pipe_aux.rebox.round_mixed.round32.common_totalUnderflow, 1
+( !  work@bp_be_pipe_aux.rebox.round_mixed.round64.in_isZero) && ( !  work@bp_be_pipe_aux.rebox.round_mixed.round64.common_totalUnderflow), 1
+(( !  work@bp_be_pipe_aux.rebox.round_mixed.round64.isNaNOut) && ( !  work@bp_be_pipe_aux.rebox.round_mixed.round64.in_isZero)) && ( !  work@bp_be_pipe_aux.rebox.round_mixed.round64.common_totalUnderflow), 1
+work@bp_be_pipe_aux.rebox.round_mixed.round64.genblk2.roundIncr, 1
+work@bp_be_pipe_aux.rebox.round_mixed.round64.pegMinNonzeroMagOut, 1
+work@bp_be_pipe_aux.rebox.round_mixed.round64.pegMaxFiniteMagOut, 1
+work@bp_be_pipe_aux.rebox.round_mixed.round64.notNaN_isInfOut, 1
+work@bp_be_pipe_aux.fp_box.special, 1
+work@bp_be_pipe_aux.invbox_frs1, 1
