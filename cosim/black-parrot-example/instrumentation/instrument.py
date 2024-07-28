@@ -45,7 +45,7 @@ def cov_head(i, gsize, l, depths, offsets):
      ,.num_chain_p        ({l}) \n\
      ,.chain_offset_arr_p ({ostr}) \n\
      ,.chain_depth_arr_p  ({dstr}) \n\
-     ,.step_p             (8) \n\
+     ,.step_p             (10)) \n\
    realign_{i}\n\
     (.clk_i            (bp_clk) \n\
     ,.data_i           ({{\n"
@@ -123,15 +123,15 @@ with open(args.output, 'w') as f:
     depths.reverse()
 
     l = len(offsets)
-    ostr = "'{"
+    ostr = "{"
     for i in offsets:
-      ostr += "8'h" + str(i) + ", "
+      ostr += "10'd" + str(i) + ", "
     ostr = ostr[:-2] + "}"
     print('offset str', ostr)
 
-    dstr = "'{"
+    dstr = "{"
     for i in depths:
-      dstr += "8'h" + str(i) + ", "
+      dstr += "10'd" + str(i) + ", "
     dstr = dstr[:-2] + "}"
     print('depth str', dstr)
 
