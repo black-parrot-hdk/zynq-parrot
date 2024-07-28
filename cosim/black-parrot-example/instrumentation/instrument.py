@@ -39,12 +39,13 @@ def create_arrays(sorted_numbers):
 
 def cov_head(i, l, depths, offsets):
   return f"\
+  wire [{l}-1:0] cov_{i}_lo;
   bsg_cover_realign \n\
     #(.num_p              ({args.groupsize}) \n\
      ,.num_chain_p        ({l}) \n\
      ,.chain_offset_arr_p ({ostr}) \n\
      ,.chain_depth_arr_p  ({dstr}) \n\
-     ,.step_p             () \n\
+     ,.step_p             (8) \n\
    realign_{i}\n\
     (.clk_i            (bp_clk) \n\
     ,.data_i           ({{\n"

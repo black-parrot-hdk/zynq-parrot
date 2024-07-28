@@ -5,7 +5,7 @@
 INSTRUMENTATION_DIR = $(CURR)/../instrumentation
 SURELOG_RUN_DIR     = $(abspath ../surelog.run)
 WALKER              = walker
-SURELOG_TOP_MODULE  = bp_be_dcache
+SURELOG_TOP_MODULE  = bp_be_top
 TOGGLE_ONLY        ?= 1
 S_FLIST            ?= $(SURELOG_RUN_DIR)/flist
 

@@ -1,79 +1,79 @@
-work@bp_be_scheduler.ptw.level_r >  1, 0
-work@bp_be_scheduler.int_regfile.bypass[1].fwd_rs_r, 0
-work@bp_be_scheduler.int_regfile.bypass[1].fwd_rs_r, 1
-work@bp_be_scheduler.int_regfile.bypass[1].zero_rs_r, 1
-work@bp_be_scheduler.int_regfile.bypass[1].replace_rs, 1
-work@bp_be_scheduler.int_regfile.bypass[0].fwd_rs_r, 0
-work@bp_be_scheduler.int_regfile.bypass[0].fwd_rs_r, 1
-work@bp_be_scheduler.int_regfile.bypass[1].zero_rs_r, 0
-work@bp_be_scheduler.ptw.walk_start, 0
-work@bp_be_scheduler.issue_queue.c1.expander.cinstr_i & work@bp_be_scheduler.issue_queue.c1.expander.imm, 1
-work@bp_be_scheduler.int_regfile.bypass[0].zero_rs_r, 0
-work@bp_be_scheduler.ptw.walk_done, 0
-work@bp_be_scheduler.issue_queue.upper, 1
-work@bp_be_scheduler.fp_regfile.bypass[2].replace_rs, 1
-work@bp_be_scheduler.issue_queue.deq_v_i, 2
-work@bp_be_scheduler.issue_queue.deq_skip_i, 2
-work@bp_be_scheduler.issue_queue.bypass_preissue, 1
-(work@bp_be_scheduler.ptw.miss_reg.en_i), 0
-work@bp_be_scheduler.issue_queue.clr, 2
-work@bp_be_scheduler.ptw.state_r & work@bp_be_scheduler.ptw.walk_ready, 1
-(work@bp_be_scheduler.issue_queue.cptr.reset_i), 1
-work@bp_be_scheduler.issue_queue.c1.expander.cinstr_i & work@bp_be_scheduler.issue_queue.c1.expander.cinstr_i[11:7], 1
-work@bp_be_scheduler.fp_regfile.bypass[1].zero_rs_r, 1
-work@bp_be_scheduler.issue_queue.deq_skip_i, 1
-work@bp_be_scheduler.issue_queue.instr_decoder.instr[31+:12] & work@bp_be_scheduler.issue_queue.instr_decoder.instr & work@bp_be_scheduler.issue_queue.instr_decoder.instr.opcode, 0
-work@bp_be_scheduler.issue_queue.read_v_i, 1
-work@bp_be_scheduler.ptw.state_r, 1
-work@bp_be_scheduler.fp_regfile.bypass[2].fwd_rs_r, 0
-work@bp_be_scheduler.issue_queue.c1.upper_n, 1
-work@bp_be_scheduler.ptw.state_r & work@bp_be_scheduler.ptw.walk_done, 1
-(work@bp_be_scheduler.issue_queue.issue_reg.en_i) & (work@bp_be_scheduler.issue_queue.issue_reg.reset_i), 0
-(work@bp_be_scheduler.int_regfile.bypass[1].rs_data_reg.en_i), 0
-work@bp_be_scheduler.ptw.state_r & work@bp_be_scheduler.ptw.walk_start, 1
-work@bp_be_scheduler.ptw.state_r & work@bp_be_scheduler.ptw.walk_send, 1
-work@bp_be_scheduler.ptw.state_r & work@bp_be_scheduler.ptw.walk_replay, 1
-work@bp_be_scheduler.issue_queue.ack, 1
-(work@bp_be_scheduler.fp_regfile.bypass[0].rs_data_reg.en_i), 0
-work@bp_be_scheduler.issue_queue.clr, 1
-(work@bp_be_scheduler.ptw.reset_i), 0
-work@bp_be_scheduler.ptw_v_lo, 0
-work@bp_be_scheduler.issue_queue.instr_decoder.instr.opcode, 0
-work@bp_be_scheduler.issue_queue.instr_decoder.instr & work@bp_be_scheduler.issue_queue.instr_decoder.instr.opcode, 0
-work@bp_be_scheduler.issue_queue.deq_v_i, 1
-(work@bp_be_scheduler.issue_queue.wptr.reset_i), 0
-work@bp_be_scheduler.ptw.walk_en, 0
-work@bp_be_scheduler.writeback_v, 0
-(work@bp_be_scheduler.issue_queue.rptr.reset_i), 0
-work@bp_be_scheduler.issue_queue.preissue_compressed, 1
-work@bp_be_scheduler.fp_regfile.bypass[1].zero_rs_r, 0
-work@bp_be_scheduler.issue_queue.c1.expander.cinstr_i, 1
-work@bp_be_scheduler.fp_regfile.bypass[2].zero_rs_r, 1
-work@bp_be_scheduler.int_regfile.bypass[0].zero_rs_r, 1
-work@bp_be_scheduler.issue_queue.upper, 0
-work@bp_be_scheduler.fp_regfile.bypass[0].fwd_rs_r, 0
-work@bp_be_scheduler.issue_queue.instr_decoder.instr, 0
-(work@bp_be_scheduler.issue_queue.cptr.reset_i), 0
-work@bp_be_scheduler.issue_queue.roll, 1
-(work@bp_be_scheduler.ptw.walk_reg.en_i), 0
-work@bp_be_scheduler.int_regfile.bypass[0].replace_rs, 1
-work@bp_be_scheduler.issue_queue.instr_decoder.instr, 1
-work@bp_be_scheduler.ptw.level_r >  0, 0
-work@bp_be_scheduler.ptw.walk_start, 1
-work@bp_be_scheduler.fp_regfile.bypass[1].fwd_rs_r, 1
-work@bp_be_scheduler.issue_queue.instr_decoder.instr.opcode, 1
-work@bp_be_scheduler.issue_queue.read_skip_i, 1
-work@bp_be_scheduler.issue_queue.instr_decoder.instr & work@bp_be_scheduler.issue_queue.instr_decoder.instr.opcode, 1
-work@bp_be_scheduler.fp_regfile.bypass[1].replace_rs, 1
-work@bp_be_scheduler.fp_regfile.bypass[0].replace_rs, 1
-work@bp_be_scheduler.fp_regfile.bypass[0].zero_rs_r, 1
-work@bp_be_scheduler.fp_regfile.bypass[1].fwd_rs_r, 0
-(work@bp_be_scheduler.fp_regfile.bypass[2].rs_data_reg.en_i), 0
-work@bp_be_scheduler.fp_regfile.bypass[0].fwd_rs_r, 1
-(work@bp_be_scheduler.int_regfile.bypass[0].rs_data_reg.en_i), 0
-work@bp_be_scheduler.issue_pkt_cast_o.partial, 0
-work@bp_be_scheduler.fp_regfile.bypass[0].zero_rs_r, 0
-work@bp_be_scheduler.fp_regfile.bypass[2].fwd_rs_r, 1
-work@bp_be_scheduler.fp_regfile.bypass[2].zero_rs_r, 0
-work@bp_be_scheduler.ptw.level_r >  2, 0
-(work@bp_be_scheduler.fp_regfile.bypass[1].rs_data_reg.en_i), 0
+`COREPATH.be.scheduler.ptw.level_r >  1, 0
+`COREPATH.be.scheduler.int_regfile.bypass[1].fwd_rs_r, 0
+`COREPATH.be.scheduler.int_regfile.bypass[1].fwd_rs_r, 1
+`COREPATH.be.scheduler.int_regfile.bypass[1].zero_rs_r, 1
+`COREPATH.be.scheduler.int_regfile.bypass[1].replace_rs, 1
+`COREPATH.be.scheduler.int_regfile.bypass[0].fwd_rs_r, 0
+`COREPATH.be.scheduler.int_regfile.bypass[0].fwd_rs_r, 1
+`COREPATH.be.scheduler.int_regfile.bypass[1].zero_rs_r, 0
+`COREPATH.be.scheduler.ptw.walk_start, 0
+`COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i & `COREPATH.be.scheduler.issue_queue.c1.expander.imm, 1
+`COREPATH.be.scheduler.int_regfile.bypass[0].zero_rs_r, 0
+`COREPATH.be.scheduler.ptw.walk_done, 0
+`COREPATH.be.scheduler.issue_queue.upper, 1
+`COREPATH.be.scheduler.fp_regfile.bypass[2].replace_rs, 1
+`COREPATH.be.scheduler.issue_queue.deq_v_i, 2
+`COREPATH.be.scheduler.issue_queue.deq_skip_i, 2
+`COREPATH.be.scheduler.issue_queue.bypass_preissue, 1
+(`COREPATH.be.scheduler.ptw.miss_reg.en_i), 0
+`COREPATH.be.scheduler.issue_queue.clr, 2
+`COREPATH.be.scheduler.ptw.state_r & `COREPATH.be.scheduler.ptw.walk_ready, 1
+(`COREPATH.be.scheduler.issue_queue.cptr.reset_i), 1
+`COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i & `COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i[11:7], 1
+`COREPATH.be.scheduler.fp_regfile.bypass[1].zero_rs_r, 1
+`COREPATH.be.scheduler.issue_queue.deq_skip_i, 1
+`COREPATH.be.scheduler.issue_queue.instr_decoder.instr[31+:12] & `COREPATH.be.scheduler.issue_queue.instr_decoder.instr & `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode, 0
+`COREPATH.be.scheduler.issue_queue.read_v_i, 1
+`COREPATH.be.scheduler.ptw.state_r, 1
+`COREPATH.be.scheduler.fp_regfile.bypass[2].fwd_rs_r, 0
+`COREPATH.be.scheduler.issue_queue.c1.upper_n, 1
+`COREPATH.be.scheduler.ptw.state_r & `COREPATH.be.scheduler.ptw.walk_done, 1
+(`COREPATH.be.scheduler.issue_queue.issue_reg.en_i) & (`COREPATH.be.scheduler.issue_queue.issue_reg.reset_i), 0
+(`COREPATH.be.scheduler.int_regfile.bypass[1].rs_data_reg.en_i), 0
+`COREPATH.be.scheduler.ptw.state_r & `COREPATH.be.scheduler.ptw.walk_start, 1
+`COREPATH.be.scheduler.ptw.state_r & `COREPATH.be.scheduler.ptw.walk_send, 1
+`COREPATH.be.scheduler.ptw.state_r & `COREPATH.be.scheduler.ptw.walk_replay, 1
+`COREPATH.be.scheduler.issue_queue.ack, 1
+(`COREPATH.be.scheduler.fp_regfile.bypass[0].rs_data_reg.en_i), 0
+`COREPATH.be.scheduler.issue_queue.clr, 1
+(`COREPATH.be.scheduler.ptw.reset_i), 0
+`COREPATH.be.scheduler.ptw_v_lo, 0
+`COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode, 0
+`COREPATH.be.scheduler.issue_queue.instr_decoder.instr & `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode, 0
+`COREPATH.be.scheduler.issue_queue.deq_v_i, 1
+(`COREPATH.be.scheduler.issue_queue.wptr.reset_i), 0
+`COREPATH.be.scheduler.ptw.walk_en, 0
+`COREPATH.be.scheduler.writeback_v, 0
+(`COREPATH.be.scheduler.issue_queue.rptr.reset_i), 0
+`COREPATH.be.scheduler.issue_queue.preissue_compressed, 1
+`COREPATH.be.scheduler.fp_regfile.bypass[1].zero_rs_r, 0
+`COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i, 1
+`COREPATH.be.scheduler.fp_regfile.bypass[2].zero_rs_r, 1
+`COREPATH.be.scheduler.int_regfile.bypass[0].zero_rs_r, 1
+`COREPATH.be.scheduler.issue_queue.upper, 0
+`COREPATH.be.scheduler.fp_regfile.bypass[0].fwd_rs_r, 0
+`COREPATH.be.scheduler.issue_queue.instr_decoder.instr, 0
+(`COREPATH.be.scheduler.issue_queue.cptr.reset_i), 0
+`COREPATH.be.scheduler.issue_queue.roll, 1
+(`COREPATH.be.scheduler.ptw.walk_reg.en_i), 0
+`COREPATH.be.scheduler.int_regfile.bypass[0].replace_rs, 1
+`COREPATH.be.scheduler.issue_queue.instr_decoder.instr, 1
+`COREPATH.be.scheduler.ptw.level_r >  0, 0
+`COREPATH.be.scheduler.ptw.walk_start, 1
+`COREPATH.be.scheduler.fp_regfile.bypass[1].fwd_rs_r, 1
+`COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode, 1
+`COREPATH.be.scheduler.issue_queue.read_skip_i, 1
+`COREPATH.be.scheduler.issue_queue.instr_decoder.instr & `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode, 1
+`COREPATH.be.scheduler.fp_regfile.bypass[1].replace_rs, 1
+`COREPATH.be.scheduler.fp_regfile.bypass[0].replace_rs, 1
+`COREPATH.be.scheduler.fp_regfile.bypass[0].zero_rs_r, 1
+`COREPATH.be.scheduler.fp_regfile.bypass[1].fwd_rs_r, 0
+(`COREPATH.be.scheduler.fp_regfile.bypass[2].rs_data_reg.en_i), 0
+`COREPATH.be.scheduler.fp_regfile.bypass[0].fwd_rs_r, 1
+(`COREPATH.be.scheduler.int_regfile.bypass[0].rs_data_reg.en_i), 0
+`COREPATH.be.scheduler.issue_pkt_cast_o.partial, 0
+`COREPATH.be.scheduler.fp_regfile.bypass[0].zero_rs_r, 0
+`COREPATH.be.scheduler.fp_regfile.bypass[2].fwd_rs_r, 1
+`COREPATH.be.scheduler.fp_regfile.bypass[2].zero_rs_r, 0
+`COREPATH.be.scheduler.ptw.level_r >  2, 0
+(`COREPATH.be.scheduler.fp_regfile.bypass[1].rs_data_reg.en_i), 0

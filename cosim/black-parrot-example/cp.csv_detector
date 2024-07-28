@@ -1,3 +1,1 @@
-(work@bp_be_detector.fp_scoreboard.scoreboard_reg.reset_i), 0
-(work@bp_be_detector.int_scoreboard.scoreboard_reg.reset_i), 0
-work@bp_be_detector.dispatch_pkt_cast_i.v, 0
+`COREPATH.be.detector.dispatch_pkt_cast_i.v, 0
