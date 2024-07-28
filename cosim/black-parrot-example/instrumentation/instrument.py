@@ -86,10 +86,19 @@ def cov_tail(i):
     ,.data_o           (cov_data_lo[{i}]) \n\
     );\n\n"
 
-
 file = open(args.sigfile, 'r')
-lines = file.readlines()
+files = file.readlines()
 file.close()
+
+import os 
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
+lines=[]
+for f in files:
+  fname = dir_path + '/../' + f
+  file = open(fname[:-1], 'r')
+  lines.append(file.readlines())
+  file.close()
 
 # sort lines according to depth
 #sorted_lines = sort_lines(lines)
@@ -99,37 +108,37 @@ file.close()
 
 from math import ceil
 with open(args.output, 'w') as f:
-  for group_id in range(ceil(len(lines)/args.groupsize)):
+  for gid in range(len(lines)):
+    gsize = len(lines[gid])
+    print('group size = ', gsize, gid)
     # collect the lines
-    unsorted_group_lines = lines[group_id*args.groupsize:(group_id+1)*args.groupsize]
+    unsorted_group_lines = lines[gid]
     group_lines = sort_lines(unsorted_group_lines)
     indices = create_arrays(get_depths(group_lines))
-    print(indices)
-    offsets = [col[0] for col in indices]
-    depths = [col[1] for col in indices]
+    #print(indices)
+    offsets = [col[1] for col in indices]
+    depths = [col[0] for col in indices]
 
     l = len(offsets)
     ostr = "'{"
     for i in offsets:
       ostr += str(i) + ", "
     ostr = ostr[:-2] + "}"
-    #print(ostr)
+    print('offset str', ostr)
 
     dstr = "'{"
     for i in depths:
       dstr += str(i) + ", "
     dstr = dstr[:-2] + "}"
-    #print(dstr)
+    print('depth str', dstr)
 
     # bsg_cover
-    f.write(cov_head(group_id, l, ostr, dstr))
+    f.write(cov_head(gid, l, ostr, dstr))
     comma = ' '
-    for k in range(group_id * args.groupsize, min(len(group_lines), (group_id+1) * args.groupsize)):
+    for k in range(gsize):
       cpos = group_lines[k].rfind(',')
       f.write(f'\t\t\t\t{comma}' + group_lines[k][0:cpos] + "\n")
       comma = ','
-    f.write(cov_tail(group_id))
+    f.write(cov_tail(gid))
 
   f.close()
-
-print('Number of covergroups:', ceil(len(lines)/args.groupsize))

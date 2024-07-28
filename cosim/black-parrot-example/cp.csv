@@ -1,0 +1,10 @@
+cp.csv_bp_be_scheduler
+cp.csv_dcache
+cp.csv_detector
+cp.csv_director
+cp.csv_pipe_aux
+cp.csv_pipe_fma
+cp.csv_pipe_int
+cp.csv_pipe_long
+cp.csv_pipe_mem
+cp.csv_pipe_sys

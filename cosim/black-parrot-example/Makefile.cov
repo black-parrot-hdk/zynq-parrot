@@ -5,7 +5,7 @@
 INSTRUMENTATION_DIR = $(CURR)/../instrumentation
 SURELOG_RUN_DIR     = $(abspath ../surelog.run)
 WALKER              = walker
-SURELOG_TOP_MODULE  = bp_be_pipe_mem
+SURELOG_TOP_MODULE  = bp_be_dcache
 TOGGLE_ONLY        ?= 1
 S_FLIST            ?= $(SURELOG_RUN_DIR)/flist
 
@@ -105,11 +105,11 @@ CONTROL_SIGS:=$(subst sigs,fsigs,$(shell ls $(SURELOG_RUN_DIR)/*.sigs))
 collect_sigs: $(CONTROL_SIGS)
 	cat $(CONTROL_SIGS) | sort -u > all.fsigs
 
-INSTRUMENTATION_OPTS +=  -s $(INSTRUMENTATION_DIR)/../cp.csv_pipe_long
+INSTRUMENTATION_OPTS +=  -s $(INSTRUMENTATION_DIR)/../cp.csv
 INSTRUMENTATION_OPTS +=  -o $(INSTRUMENTATION_DIR)/macro
 INSTRUMENTATION_OPTS +=  -n $(shell cat all.fsigs | wc -l)
 ifeq ($(TOGGLE_ONLY),1)
-INSTRUMENTATION_OPTS +=  -g 32
+INSTRUMENTATION_OPTS +=  -g 1024
 else
 INSTRUMENTATION_OPTS +=  -g 10
 endif
