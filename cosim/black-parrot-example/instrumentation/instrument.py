@@ -37,11 +37,11 @@ def create_arrays(sorted_numbers):
   result = [[number, index_dict[number]] for number in index_dict]
   return result
 
-def cov_head(i, l, depths, offsets):
+def cov_head(i, gsize, l, depths, offsets):
   return f"\
-  wire [{l}-1:0] cov_{i}_lo; \n\
+  wire [{gsize}-1:0] cov_{i}_lo; \n\
   bsg_cover_realign \n\
-    #(.num_p              ({args.groupsize}) \n\
+    #(.num_p              ({gsize}) \n\
      ,.num_chain_p        ({l}) \n\
      ,.chain_offset_arr_p ({ostr}) \n\
      ,.chain_depth_arr_p  ({dstr}) \n\
@@ -50,7 +50,7 @@ def cov_head(i, l, depths, offsets):
     (.clk_i            (bp_clk) \n\
     ,.data_i           ({{\n"
 
-def cov_tail(i, l):
+def cov_tail(i, gsize):
   return f"\
       }}) \n\
     ,.data_o           (cov_{i}_lo) \n\
@@ -58,7 +58,7 @@ def cov_tail(i, l):
   (* keep_hierarchy = \"false\" *) \n\
   bsg_cover \n\
     #(.id_p            ({i}) \n\
-     ,.width_p         ({l}) \n\
+     ,.width_p         ({gsize}) \n\
      ,.els_p           (16) \n\
      ,.out_width_p     (C_M02_AXI_DATA_WIDTH) \n\
      ,.id_width_p      (8) \n\
@@ -78,10 +78,10 @@ def cov_tail(i, l):
     ,.ready_o          () \n\
     ,.drain_i          (cov_drain_li) \n\
     ,.gate_o           (cov_gate_lo[{i}]) \n\
-    ,.idx_v_o          () \n\
-    ,.idx_o            () \n\
-    ,.els_o            () \n\
-    ,.len_o            () \n\
+    ,.id_v_o           (cov_id_v_o[{i}]) \n\
+    ,.id_o             (cov_id_o[{i}]) \n\
+    ,.els_o            (cov_els_o[{i}]) \n\
+    ,.len_o            (cov_len_o[{i}]) \n\
     ,.ready_i          (cov_ready_li[{i}]) \n\
     ,.v_o              (cov_v_lo[{i}]) \n\
     ,.data_o           (cov_data_lo[{i}]) \n\
@@ -119,27 +119,29 @@ with open(args.output, 'w') as f:
     #print(indices)
     offsets = [col[1] for col in indices]
     depths = [col[0] for col in indices]
+    offsets.reverse()
+    depths.reverse()
 
     l = len(offsets)
     ostr = "'{"
     for i in offsets:
-      ostr += str(i) + ", "
+      ostr += "8'h" + str(i) + ", "
     ostr = ostr[:-2] + "}"
     print('offset str', ostr)
 
     dstr = "'{"
     for i in depths:
-      dstr += str(i) + ", "
+      dstr += "8'h" + str(i) + ", "
     dstr = dstr[:-2] + "}"
     print('depth str', dstr)
 
     # bsg_cover
-    f.write(cov_head(gid, l, ostr, dstr))
+    f.write(cov_head(gid, gsize, l, ostr, dstr))
     comma = ' '
     for k in range(gsize):
       cpos = group_lines[k].rfind(',')
-      f.write(f'\t\t\t\t{comma}' + group_lines[k][0:cpos] + "\n")
+      f.write(f'\t\t\t\t{comma} ( ' + group_lines[k][0:cpos] + " )\n")
       comma = ','
-    f.write(cov_tail(gid, l))
+    f.write(cov_tail(gid, gsize))
 
   f.close()
