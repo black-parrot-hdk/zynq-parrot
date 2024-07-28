@@ -1,19 +1,19 @@
-`COREPATH.be.pipe_int.btaken_o, 0
-`COREPATH.be.pipe_int.decode.compressed, 0
-`COREPATH.be.pipe_int.bclzh.pe0.a.nw1.scan., 0
-((`COREPATH.be.pipe_int.bclzh.pe0.b.i -  1) &  `COREPATH.be.pipe_int.bclzh.pe0.b.i) == -2001240496, 0
-`COREPATH.be.pipe_int.bclzl.pe0.a.nw1.scan., 0
-`COREPATH.be.pipe_int.decode.fu_op, 0
-`COREPATH.be.pipe_int.opw_v, 0
-`COREPATH.be.pipe_int.decode.src2_sel, 0
-`COREPATH.be.pipe_int.decode.fu_op & `COREPATH.be.pipe_int.comp_result, 0
+`COREPATH.be.calculator.pipe_int.btaken_o, 0
+`COREPATH.be.calculator.pipe_int.decode.compressed, 0
+`COREPATH.be.calculator.pipe_int.bclzh.pe0.a.nw1.scan., 0
+((`COREPATH.be.calculator.pipe_int.bclzh.pe0.b.i -  1) &  `COREPATH.be.calculator.pipe_int.bclzh.pe0.b.i) == -2001240496, 0
+`COREPATH.be.calculator.pipe_int.bclzl.pe0.a.nw1.scan., 0
+`COREPATH.be.calculator.pipe_int.decode.fu_op, 0
+`COREPATH.be.calculator.pipe_int.opw_v, 0
+`COREPATH.be.calculator.pipe_int.decode.src2_sel, 0
+`COREPATH.be.calculator.pipe_int.decode.fu_op & `COREPATH.be.calculator.pipe_int.comp_result, 0
 (64 -  39) >  0, 0
-`COREPATH.be.pipe_int.decode.j_v |  `COREPATH.be.pipe_int.decode.jr_v, 0
-`COREPATH.be.pipe_int.decode.src2_sel & `COREPATH.be.pipe_int.decode.irs2_r_v, 0
-`COREPATH.be.pipe_int.box.tag_i, 0
-((`COREPATH.be.pipe_int.bclzl.pe0.b.i -  1) &  `COREPATH.be.pipe_int.bclzl.pe0.b.i) == -2001240504, 0
-`COREPATH.be.pipe_int.decode.jr_v, 0
-`COREPATH.be.pipe_int.decode.irs2_r_v, 0
-`COREPATH.be.pipe_int.decode.src1_sel & `COREPATH.be.pipe_int.decode.irs1_r_v, 0
- !  `COREPATH.be.pipe_int.clzh[5], 0
-`COREPATH.be.pipe_int.decode.src1_sel, 0
+`COREPATH.be.calculator.pipe_int.decode.j_v |  `COREPATH.be.calculator.pipe_int.decode.jr_v, 0
+`COREPATH.be.calculator.pipe_int.decode.src2_sel & `COREPATH.be.calculator.pipe_int.decode.irs2_r_v, 0
+`COREPATH.be.calculator.pipe_int.box.tag_i, 0
+((`COREPATH.be.calculator.pipe_int.bclzl.pe0.b.i -  1) &  `COREPATH.be.calculator.pipe_int.bclzl.pe0.b.i) == -2001240504, 0
+`COREPATH.be.calculator.pipe_int.decode.jr_v, 0
+`COREPATH.be.calculator.pipe_int.decode.irs2_r_v, 0
+`COREPATH.be.calculator.pipe_int.decode.src1_sel & `COREPATH.be.calculator.pipe_int.decode.irs1_r_v, 0
+ !  `COREPATH.be.calculator.pipe_int.clzh[5], 0
+`COREPATH.be.calculator.pipe_int.decode.src1_sel, 0
