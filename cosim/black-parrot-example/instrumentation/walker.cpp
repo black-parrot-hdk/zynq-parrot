@@ -501,47 +501,70 @@ void parseAlways(vpiHandle always, data_structure &ds) {
     case UHDM::uhdmcase_stmt: {
       bool constOnly;
       list <string> cond_str;
+      int width;
       if(vpiHandle c = vpi_handle(vpiCondition, always)) {
         cond_str = visitExpr(c, true, constOnly);
+        std::cout << "Fetching width of condition\n";
+        UHDM::any* op_obj = (UHDM::any *)(((uhdm_handle *)c)->object);
+        UHDM::ExprEval k;
+        bool inv;
+        if(op_obj) {
+          std::cout << "UhdmType: " << op_obj->UhdmType() << std::endl;
+          width = k.size(op_obj, inv, op_obj, op_obj, false, false);
+          std::cout << "Width: " << width << " | inv: " << inv << std::endl;
+        }
       } else
         walker_error("No condition found in case_stmt");
 
-      ds.running_cond_str.push_front(cond_str.front());
+      //if(width != 0 && width <8) // this ignores "instr" (32b) and const case conditions.
+      //  ds.running_cond_str.push_front("/*CASE[" + to_string(width) + "]*/ " + cond_str.front());
+
       debug("Finding case_items\n");
+      list <string> matches;
       if(vpiHandle items = vpi_iterate(vpiCaseItem, always)) {
         while(vpiHandle item = vpi_scan(items)) {
-          bool rcs_active = false, dummy; // running_cond_str active
           debug("Case item processing\n");
           // the below is for (case_cond == case_item_expr)
           // MAJOR TODO -- like running_cond_str, create a running_case_str which shouldn't be running, but rather a single compare expression 
-          //if(vpiHandle exprs = vpi_iterate(vpiExpr, item)) {
-          //  while(vpiHandle expr = vpi_scan(exprs)) {
-          //    debug("Case item expression found\n");
-          //    list <string> match;
-          //    if(((const uhdm_handle *)expr)->type == UHDM::uhdmoperation) {
-          //      tie(dummy, match) = visitOperation(expr); // rcs used dummily
-          //    } else {
-          //      match = visitExpr(expr, true, dummy); // rcs used dummily
-          //    }
-          //    if(!constOnly && !rcs_active) { 
-          //      // the && ! is because when using fall through case-items, the running condition string will be wrong
-          //      ds.running_cond_str.push_front(" ( " + cond_str.front() + " == " + match.front() + " ) ");
-          //      debug("Case item expression added\n");
-          //      rcs_active = true;
-          //    }
-          //    else rcs_active = false;
-          //  }
-          //}
+          if(vpiHandle exprs = vpi_iterate(vpiExpr, item)) {
+            while(vpiHandle expr = vpi_scan(exprs)) {
+              debug("Case item expression found\n");
+              list <string> match;
+              bool dummy;
+              if(((const uhdm_handle *)expr)->type == UHDM::uhdmoperation) {
+                tie(dummy, match) = visitOperation(expr); // rcs used dummily
+              } else {
+                match = visitExpr(expr, true, dummy); // rcs used dummily
+              }
+              if(!constOnly) {
+                // the && ! is because when using fall through case-items, the running condition string will be wrong
+                matches.push_front(match.front());
+                debug("Case item expression added\n");
+              }
+            }
+          }
+          string equation;
+          bool cond_active;
+          while(!matches.empty()) {
+            equation += " ( ";
+            equation += cond_str.front();
+            equation += " == ";
+            equation += matches.back();
+            matches.pop_back();
+            equation += ")";
+            if(!matches.empty())
+              equation += " || ";
+            cond_active = true;
+          }
+          ds.running_cond_str.push_front(equation);
 
           // will usually be an assignment
           debug("running_cond_str: " << (!ds.running_cond_str.empty() ? ds.running_cond_str.front() : "NIL"));
           parseAlways(item, ds);
-          //if(rcs_active)
-          //  ds.running_cond_str.pop_front();
+          if(cond_active)
+            ds.running_cond_str.pop_front();
         }
       }
-      // remove this if you're changing case-cond representation
-      ds.running_cond_str.pop_front();
       break;
     }
     case UHDM::uhdmfor_stmt: {
