@@ -1,0 +1,3 @@
+(`COREPATH.be.detector.fp_scoreboard.scoreboard_reg.reset_i), 0
+(`COREPATH.be.detector.int_scoreboard.scoreboard_reg.reset_i), 0
+`COREPATH.be.detector.dispatch_pkt_cast_i.v, 0

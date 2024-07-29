@@ -1,0 +1,56 @@
+(`COREPATH.fe.icache.tag_mem.synth.nz.llr.dff_bypass.dff.en_i), 0
+`COREPATH.fe.icache.tag_mem.synth.nz.llr.dff_bypass.en_i, 0
+((`COREPATH.fe.icache.pe_invalid.b.i -  1) &  `COREPATH.fe.icache.pe_invalid.b.i) == 42040680, 0
+((`COREPATH.fe.icache.hit_index_encoder.i -  1) &  `COREPATH.fe.icache.hit_index_encoder.i) == 42040600, 1
+(`COREPATH.fe.icache.stat_mem.synth.nz.llr.dff_bypass.dff.en_i), 0
+`COREPATH.fe.icache.stat_mem.synth.nz.llr.dff_bypass.en_i, 0
+`COREPATH.fe.icache.lru_encoder.lru.rank[2].nz.mux.sel_i, 0
+`COREPATH.fe.icache.data_mem_pkt_cast_i.opcode == 2, 0
+`COREPATH.fe.icache.metadata_hit_r, 0
+`COREPATH.fe.icache.invalid_exist_tv, 0
+(`COREPATH.fe.icache.paddr_reg.en_i), 0
+(`COREPATH.fe.icache.tag_mem_last_read_reg.reset_i), 1
+`COREPATH.fe.icache.data_mem_pkt_cast_i.opcode == 2, 1
+`COREPATH.fe.icache.pe_invalid.a.nw1.scan., 0
+(`COREPATH.fe.icache.data_mems[7].data_mem.synth.nz.llr.dff_bypass.dff.en_i), 1
+`COREPATH.fe.icache.critical_recv, 1
+`COREPATH.fe.icache.data_mems[7].data_mem.synth.nz.llr.dff_bypass.en_i, 1
+`COREPATH.fe.icache.uncached_req, 0
+(`COREPATH.fe.icache.data_mems[5].data_mem.synth.nz.llr.dff_bypass.dff.en_i), 1
+, 1
+`COREPATH.fe.icache.scan_i, 1
+`COREPATH.fe.icache.cached_req, 0
+ ( `COREPATH.fe.icache.state_r == 1) & `COREPATH.fe.icache.complete_recv, 1
+(`COREPATH.fe.icache.tv_stage_reg.en_i) & (`COREPATH.fe.icache.tv_stage_reg.reset_i), 1
+0, 1
+(`COREPATH.fe.icache.data_mems[1].data_mem.synth.nz.llr.dff_bypass.dff.en_i), 1
+ ( `COREPATH.fe.icache.state_r == 0) & `COREPATH.fe.icache.cache_req_yumi_i, 1
+(`COREPATH.fe.icache.tl_stage_reg.en_i) & (`COREPATH.fe.icache.tl_stage_reg.reset_i), 1
+(`COREPATH.fe.icache.tv_stage_reg.en_i) & (`COREPATH.fe.icache.tv_stage_reg.reset_i), 0
+ ( `COREPATH.fe.icache.state_r == 1) & `COREPATH.fe.icache.complete_recv, 2
+ ( `COREPATH.fe.icache.state_r == 0) & `COREPATH.fe.icache.cache_req_yumi_i, 2
+(`COREPATH.fe.icache.reset_i), 1
+(`COREPATH.fe.icache.v_tl_reg.en_i) & (`COREPATH.fe.icache.v_tl_reg.reset_i), 1
+`COREPATH.fe.icache.data_mems[3].data_mem.synth.nz.llr.dff_bypass.en_i, 1
+, 2
+(`COREPATH.fe.icache.v_tv_reg.en_i) & (`COREPATH.fe.icache.v_tv_reg.reset_i), 0
+(`COREPATH.fe.icache.tag_mem_last_read_reg.reset_i), 0
+(`COREPATH.fe.icache.cache_req_v_reg.reset_i), 0
+`COREPATH.fe.icache.word_select_mux.sel_i, 0
+`COREPATH.fe.icache.data_set_select_mux.sel_one_hot_i, 0
+`COREPATH.fe.icache.data_mems[4].data_mem.synth.nz.llr.dff_bypass.en_i, 1
+(`COREPATH.fe.icache.reset_i), 0
+`COREPATH.fe.icache.hit_mux.sel_i, 1
+(`COREPATH.fe.icache.v_tl_reg.en_i) & (`COREPATH.fe.icache.v_tl_reg.reset_i), 0
+(`COREPATH.fe.icache.data_mems[0].data_mem.synth.nz.llr.dff_bypass.dff.en_i), 1
+`COREPATH.fe.icache.data_mems[2].data_mem.synth.nz.llr.dff_bypass.en_i, 1
+(`COREPATH.fe.icache.v_tv_reg.en_i) & (`COREPATH.fe.icache.v_tv_reg.reset_i), 1
+`COREPATH.fe.icache.data_mems[0].data_mem.synth.nz.llr.dff_bypass.en_i, 1
+`COREPATH.fe.icache.data_mems[1].data_mem.synth.nz.llr.dff_bypass.en_i, 1
+(`COREPATH.fe.icache.data_mems[2].data_mem.synth.nz.llr.dff_bypass.dff.en_i), 1
+(`COREPATH.fe.icache.data_mems[3].data_mem.synth.nz.llr.dff_bypass.dff.en_i), 1
+(`COREPATH.fe.icache.data_mems[4].data_mem.synth.nz.llr.dff_bypass.dff.en_i), 1
+`COREPATH.fe.icache.data_mems[6].data_mem.synth.nz.llr.dff_bypass.en_i, 1
+(`COREPATH.fe.icache.data_mems[6].data_mem.synth.nz.llr.dff_bypass.dff.en_i), 1
+`COREPATH.fe.icache.lru_encoder.lru.rank[1].nz.mux.sel_i, 0
+`COREPATH.fe.icache.data_mems[5].data_mem.synth.nz.llr.dff_bypass.en_i, 1
