@@ -909,15 +909,37 @@ module top_zynq
      );
 
    // pick first covergroup to drain
-   logic [`BSG_SAFE_CLOG2(num_cov_p)-1:0] cov_way_lo;
+   logic cov_lock_r;
+   logic [`BSG_SAFE_CLOG2(num_cov_p)-1:0] cov_way_lo, cov_way_li, cov_way_r;
+   assign cov_way_lo = cov_lock_r ? cov_way_r : cov_way_li;
    bsg_priority_encode
     #(.width_p(num_cov_p)
      ,.lo_to_hi_p(1)
      )
     enc
      (.i(cov_gate_lo)
-     ,.addr_o(cov_way_lo)
+     ,.addr_o(cov_way_li)
      ,.v_o()
+     );
+
+   bsg_dff_reset_en
+    #(.width_p(`BSG_SAFE_CLOG2(num_cov_p)))
+    cov_way_reg
+     (.clk_i(ds_clk)
+     ,.reset_i(ds_reset_li)
+     ,.en_i(cov_afifo_enq_li & cov_id_v_lo[cov_way_lo])
+     ,.data_i(cov_way_li)
+     ,.data_o(cov_way_r)
+     );
+
+   bsg_dff_reset_set_clear
+    #(.width_p(1))
+    cov_lock_reg
+     (.clk_i(ds_clk)
+     ,.reset_i(ds_reset_li)
+     ,.clear_i(cov_afifo_enq_li & last_beat_li)
+     ,.set_i(cov_afifo_enq_li & cov_id_v_lo[cov_way_lo])
+     ,.data_o(cov_lock_r)
      );
 
    // count gated covergroups
@@ -995,7 +1017,7 @@ module top_zynq
    typedef struct packed {
      logic last;
      logic [cov_len_width_lp-1:0] len;
-     logic [cov_len_width_lp-1:0] els;
+     logic [cov_els_width_lp-1:0] els;
      logic [cov_id_width_lp-1:0] id;
    } cov_pkt_s;
 
@@ -1043,7 +1065,7 @@ module top_zynq
      (.clk_i(ds_clk)
      ,.reset_i(ds_reset_li)
      ,.en_i(cov_afifo_enq_li & cov_id_v_lo[cov_way_lo])
-     ,.data_i(cov_pkt_lo.els << cov_pkt_lo.len)
+     ,.data_i(cov_pkt_lo.els * cov_pkt_lo.len)
      ,.data_o(cov_limit_lo)
      );
 
