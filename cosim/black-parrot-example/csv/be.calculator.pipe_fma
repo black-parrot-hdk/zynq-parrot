@@ -1,0 +1,51 @@
+work@bp_be_pipe_fma.rebox.round_mixed.round64.notNaN_isInfOut, 3
+work@bp_be_pipe_fma.rebox.round_mixed.round64.pegMinNonzeroMagOut, 3
+work@bp_be_pipe_fma.rebox.round_mixed.round64.genblk2.roundIncr, 3
+( !  work@bp_be_pipe_fma.rebox.round_mixed.round64.in_isZero) && ( !  work@bp_be_pipe_fma.rebox.round_mixed.round64.common_totalUnderflow), 3
+work@bp_be_pipe_fma.rebox.round_mixed.round32.notNaN_isInfOut, 3
+work@bp_be_pipe_fma.rebox.round_mixed.round32.pegMaxFiniteMagOut, 3
+work@bp_be_pipe_fma.rebox.round_mixed.round64.in_isZero || work@bp_be_pipe_fma.rebox.round_mixed.round64.common_totalUnderflow, 3
+work@bp_be_pipe_fma.fma.mulAddToRaw_postMul.doSubMags, 3
+work@bp_be_pipe_fma.rebox.tag_i == 152630504, 3
+work@bp_be_pipe_fma.rebox.round_mixed.round64.isNaNOut, 3
+work@bp_be_pipe_fma.fma.mulAddToRaw_postMul.CIsDominant, 3
+work@bp_be_pipe_fma.fma.mulAddToRaw_postMul.clz.pe0.a.nw1.scan., 3
+work@bp_be_pipe_fma.fma.mulAddToRaw_postMul.mulAddResult[106], 3
+work@bp_be_pipe_fma.rebox.round_mixed.round64.doShiftSigDown1, 3
+work@bp_be_pipe_fma.fma.mulAddToRaw_postMul.notCDom_signSigSum, 3
+work@bp_be_pipe_fma.fma.mulAddToRaw_preMul.CIsDominant, 3
+work@bp_be_pipe_fma.rebox.round_mixed.round32.pegMinNonzeroMagOut, 3
+work@bp_be_pipe_fma.fma.mulAddToRaw_preMul.doSubMags, 2
+(work@bp_be_pipe_fma.is_fmsub_li |  work@bp_be_pipe_fma.is_fsub_li) & ((work@bp_be_pipe_fma.is_fmadd_li |  work@bp_be_pipe_fma.is_fadd_li) |  work@bp_be_pipe_fma.is_fmul_li), 2
+work@bp_be_pipe_fma.fma.mulAddToRaw_postMul.notCDom_completeCancellation, 3
+work@bp_be_pipe_fma.rebox.round_mixed.recover.isZero, 3
+(work@bp_be_pipe_fma.is_fnmadd_li) & (work@bp_be_pipe_fma.is_fnmsub_li) & (work@bp_be_pipe_fma.is_fmsub_li |  work@bp_be_pipe_fma.is_fsub_li) & ((work@bp_be_pipe_fma.is_fmadd_li |  work@bp_be_pipe_fma.is_fadd_li) |  work@bp_be_pipe_fma.is_fmul_li), 2
+0, 3
+((work@bp_be_pipe_fma.is_fmadd_li |  work@bp_be_pipe_fma.is_fadd_li) |  work@bp_be_pipe_fma.is_fmul_li), 2
+work@bp_be_pipe_fma.fma.mulAddToRaw_preMul.op[2], 2
+work@bp_be_pipe_fma.decode.irs2_r_v, 2
+(( !  work@bp_be_pipe_fma.rebox.round_mixed.round64.isNaNOut) && ( !  work@bp_be_pipe_fma.rebox.round_mixed.round64.in_isZero)) && ( !  work@bp_be_pipe_fma.rebox.round_mixed.round64.common_totalUnderflow), 3
+ ( work@bp_be_pipe_fma.imul_box.tag_i == 152630168), 2
+work@bp_be_pipe_fma.decode.irs1_r_v, 2
+work@bp_be_pipe_fma.negate_sign, 2
+ ( work@bp_be_pipe_fma.imul_box.tag_i == 152630184), 2
+work@bp_be_pipe_fma.is_faddsub_li, 2
+(work@bp_be_pipe_fma.is_fnmsub_li) & (work@bp_be_pipe_fma.is_fmsub_li |  work@bp_be_pipe_fma.is_fsub_li) & ((work@bp_be_pipe_fma.is_fmadd_li |  work@bp_be_pipe_fma.is_fadd_li) |  work@bp_be_pipe_fma.is_fmul_li), 2
+work@bp_be_pipe_fma.rebox.round_mixed.round32.in_isZero || work@bp_be_pipe_fma.rebox.round_mixed.round32.common_totalUnderflow, 3
+ ( work@bp_be_pipe_fma.imul_box.tag_i == 152630176), 2
+( !  work@bp_be_pipe_fma.rebox.round_mixed.round32.in_isZero) && ( !  work@bp_be_pipe_fma.rebox.round_mixed.round32.common_totalUnderflow), 3
+work@bp_be_pipe_fma.fma.mulAddToRaw_preMul.isMinCAlign, 2
+work@bp_be_pipe_fma.rebox.tag_i == 152630496, 3
+, 2
+work@bp_be_pipe_fma.is_fmul_li, 2
+work@bp_be_pipe_fma.rebox.round_mixed.round32.genblk2.roundIncr, 3
+((work@bp_be_pipe_fma.fma.mulAddToRaw_postMul.clz.pe0.b.i -  1) &  work@bp_be_pipe_fma.fma.mulAddToRaw_postMul.clz.pe0.b.i) == 152630512, 3
+work@bp_be_pipe_fma.fma.mulAddToRaw_preMul.posNatCAlignDist <  (162 -  1), 2
+work@bp_be_pipe_fma.instr.t.fmatype.rm == 152629872, 3
+work@bp_be_pipe_fma.rebox.round_mixed.recover.isNaN, 3
+work@bp_be_pipe_fma.rebox.round_mixed.round32.isNaNOut, 3
+(( !  work@bp_be_pipe_fma.rebox.round_mixed.round32.isNaNOut) && ( !  work@bp_be_pipe_fma.rebox.round_mixed.round32.in_isZero)) && ( !  work@bp_be_pipe_fma.rebox.round_mixed.round32.common_totalUnderflow), 3
+work@bp_be_pipe_fma.rebox.round_mixed.recover.isInf, 3
+work@bp_be_pipe_fma.rebox.round_mixed.round32.doShiftSigDown1, 3
+work@bp_be_pipe_fma.rebox.round_mixed.round64.pegMaxFiniteMagOut, 3
+work@bp_be_pipe_fma.fma.mulAddToRaw_preMul.doSubMags, 3

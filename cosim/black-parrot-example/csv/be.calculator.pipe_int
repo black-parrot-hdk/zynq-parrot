@@ -1,0 +1,27 @@
+work@bp_be_pipe_int.btaken_o, 0
+work@bp_be_pipe_int.decode.compressed, 0
+ ( work@bp_be_pipe_int.decode.fu_op == 718081272) ||  ( work@bp_be_pipe_int.decode.fu_op == 718081280), 0
+((work@bp_be_pipe_int.bclzh.pe0.b.i -  1) &  work@bp_be_pipe_int.bclzh.pe0.b.i) == 718081800, 0
+work@bp_be_pipe_int.bclzl.pe0.a.nw1.scan., 0
+((work@bp_be_pipe_int.bclzl.pe0.b.i -  1) &  work@bp_be_pipe_int.bclzl.pe0.b.i) == 718081792, 0
+ !  work@bp_be_pipe_int.clzh[5], 0
+(64 -  39) >  0, 0
+ ( work@bp_be_pipe_int.decode.src1_sel == 718081232), 0
+ ( work@bp_be_pipe_int.decode.src1_sel == 718081200) & work@bp_be_pipe_int.decode.irs1_r_v, 0
+work@bp_be_pipe_int.opw_v, 0
+ ( work@bp_be_pipe_int.decode.fu_op == 718081320) ||  ( work@bp_be_pipe_int.decode.fu_op == 718081328), 0
+ ( work@bp_be_pipe_int.decode.fu_op == 718081344), 0
+, 0
+work@bp_be_pipe_int.decode.j_v |  work@bp_be_pipe_int.decode.jr_v, 0
+ ( work@bp_be_pipe_int.box.tag_i == 718081776), 0
+work@bp_be_pipe_int.bclzh.pe0.a.nw1.scan., 0
+ ( work@bp_be_pipe_int.decode.fu_op == 718081376), 0
+ ( work@bp_be_pipe_int.box.tag_i == 718081760), 0
+ ( work@bp_be_pipe_int.decode.fu_op == 718081432), 0
+ ( work@bp_be_pipe_int.box.tag_i == 718081768), 0
+ ( work@bp_be_pipe_int.decode.fu_op == 718081384), 0
+ ( work@bp_be_pipe_int.decode.fu_op == 718081424), 0
+ ( work@bp_be_pipe_int.decode.fu_op == 718081392) ||  ( work@bp_be_pipe_int.decode.fu_op == 718081400) ||  ( work@bp_be_pipe_int.decode.fu_op == 718081408) ||  ( work@bp_be_pipe_int.decode.fu_op == 718081416) & work@bp_be_pipe_int.comp_result, 0
+work@bp_be_pipe_int.decode.jr_v, 0
+work@bp_be_pipe_int.decode.irs2_r_v, 0
+ ( work@bp_be_pipe_int.decode.src2_sel == 718081240) & work@bp_be_pipe_int.decode.irs2_r_v, 0
