@@ -1,5 +1,3 @@
-`COREPATH.be.calculator.pipe_sys.csr.s_interrupt_enc.a.nw1.scan., 0
-`COREPATH.be.calculator.pipe_sys.csr.m_interrupt_enc.a.nw1.scan., 0
 ((`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.exception._interrupt &  `COREPATH.be.calculator.pipe_sys.csr.d_interrupt_icode_v_li) &  `COREPATH.be.calculator.pipe_sys.csr.dgie) & (`COREPATH.be.calculator.pipe_sys.csr.is_debug_mode) & (64 -  $bits(`COREPATH.be.calculator.pipe_sys.csr.apc_r)) >  0, 2
 (`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.special.dbreak) & ((`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.exception._interrupt &  `COREPATH.be.calculator.pipe_sys.csr.d_interrupt_icode_v_li) &  `COREPATH.be.calculator.pipe_sys.csr.dgie) & (`COREPATH.be.calculator.pipe_sys.csr.is_debug_mode) & (64 -  $bits(`COREPATH.be.calculator.pipe_sys.csr.apc_r)) >  0, 2
 (`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.queue_v &  `COREPATH.be.calculator.pipe_sys.csr.dcsr_lo.step) & (`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.special.dbreak) & ((`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.exception._interrupt &  `COREPATH.be.calculator.pipe_sys.csr.d_interrupt_icode_v_li) &  `COREPATH.be.calculator.pipe_sys.csr.dgie) & (`COREPATH.be.calculator.pipe_sys.csr.is_debug_mode) & (64 -  $bits(`COREPATH.be.calculator.pipe_sys.csr.core_npc)) >  0, 2
@@ -70,7 +68,6 @@
 (`COREPATH.be.calculator.pipe_sys.csr.sepc_reg.reset_i), 1
 (`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.special.sret) & `COREPATH.be.calculator.pipe_sys.csr.priv_mode_n <  1444886368, 1
 (62 -  $bits(`COREPATH.be.calculator.pipe_sys.csr.stvec_r.word_addr)) >  0, 2
-`COREPATH.be.calculator.pipe_sys.csr.s_interrupt_enc.a.nw1.scan., 1
 (`COREPATH.be.calculator.pipe_sys.csr.mtval_reg.reset_i), 0
 (`COREPATH.be.calculator.pipe_sys.csr.apc_reg.reset_i), 1
 `COREPATH.be.calculator.pipe_sys.instret_li, 2
@@ -91,13 +88,11 @@
 (`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.special.mret) & `COREPATH.be.calculator.pipe_sys.csr.priv_mode_n <  1444886360, 3
 (`COREPATH.be.calculator.pipe_sys.csr.mstatus_reg.reset_i), 2
 (`COREPATH.be.calculator.pipe_sys.csr.is_debug_mode) & (`COREPATH.be.calculator.pipe_sys.csr.exception_ecode_v_li) & (`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.exception._interrupt), 0
-`COREPATH.be.calculator.pipe_sys.csr.m_interrupt_enc.a.nw1.scan., 1
 ((`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.exception._interrupt &  `COREPATH.be.calculator.pipe_sys.csr.d_interrupt_icode_v_li) &  `COREPATH.be.calculator.pipe_sys.csr.dgie) & (`COREPATH.be.calculator.pipe_sys.csr.is_debug_mode), 3
 `COREPATH.be.calculator.pipe_sys.csr.commit_pkt_cast_o.eret, 2
 `COREPATH.be.calculator.pipe_sys.csr.is_debug_mode, 2
 ((`COREPATH.be.calculator.pipe_sys.csr.mcause_exception_enc.b.i -  1) &  `COREPATH.be.calculator.pipe_sys.csr.mcause_exception_enc.b.i) == 1444888440, 1
 (`COREPATH.be.calculator.pipe_sys.csr.medeleg_lo[`COREPATH.be.calculator.pipe_sys.csr.exception_ecode_li] &  ( ~  `COREPATH.be.calculator.pipe_sys.csr.is_m_mode)) & (`COREPATH.be.calculator.pipe_sys.csr.is_debug_mode) & (`COREPATH.be.calculator.pipe_sys.csr.exception_ecode_v_li) & (`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.exception._interrupt) & (64 -  $bits(`COREPATH.be.calculator.pipe_sys.csr.apc_r)) >  0, 3
-`COREPATH.be.calculator.pipe_sys.csr.mcause_exception_enc.a.nw1.scan., 1
 (`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.special.dbreak) & ((`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.exception._interrupt &  `COREPATH.be.calculator.pipe_sys.csr.d_interrupt_icode_v_li) &  `COREPATH.be.calculator.pipe_sys.csr.dgie) & (`COREPATH.be.calculator.pipe_sys.csr.is_debug_mode) & (64 -  $bits(`COREPATH.be.calculator.pipe_sys.csr.apc_r)) >  0, 3
 (`COREPATH.be.calculator.pipe_sys.csr.mtvec_reg.reset_i), 1
 (`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.special.dret), 2

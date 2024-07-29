@@ -55,15 +55,14 @@ def cov_tail(i, gsize):
       }}) \n\
     ,.data_o           (cov_{i}_lo) \n\
     );\n\n\
-  (* keep_hierarchy = \"false\" *) \n\
   bsg_cover \n\
     #(.id_p            ({i}) \n\
      ,.width_p         ({gsize}) \n\
-     ,.els_p           (16) \n\
+     ,.els_p           (cam_els_lp) \n\
      ,.out_width_p     (C_M02_AXI_DATA_WIDTH) \n\
-     ,.id_width_p      (8) \n\
-     ,.els_width_p     (8) \n\
-     ,.len_width_p     (8) \n\
+     ,.id_width_p      (cov_id_width_lp) \n\
+     ,.els_width_p     (cov_len_width_lp) \n\
+     ,.len_width_p     (cov_els_width_lp) \n\
      ,.lg_afifo_size_p (3) \n\
      ,.debug_p(0)) \n\
    cover_{i}\n\
@@ -73,15 +72,15 @@ def cov_tail(i, gsize):
     ,.ds_reset_i       (ds_reset_li) \n\
     ,.axi_clk_i        (aclk) \n\
     ,.axi_reset_i      (bp_async_reset_li) \n\
-    ,.v_i              (cov_v_li) \n\
+    ,.v_i              (cov_en_sync_li) \n\
     ,.data_i           (cov_{i}_lo) \n\
     ,.ready_o          () \n\
-    ,.drain_i          (cov_drain_li) \n\
+    ,.drain_i          (1'b0) \n\
     ,.gate_o           (cov_gate_lo[{i}]) \n\
-    ,.id_v_o           (cov_id_v_o[{i}]) \n\
-    ,.id_o             (cov_id_o[{i}]) \n\
-    ,.els_o            (cov_els_o[{i}]) \n\
-    ,.len_o            (cov_len_o[{i}]) \n\
+    ,.id_v_o           (cov_id_v_lo[{i}]) \n\
+    ,.id_o             (cov_id_lo[{i}]) \n\
+    ,.els_o            (cov_els_lo[{i}]) \n\
+    ,.len_o            (cov_len_lo[{i}]) \n\
     ,.ready_i          (cov_ready_li[{i}]) \n\
     ,.v_o              (cov_v_lo[{i}]) \n\
     ,.data_o           (cov_data_lo[{i}]) \n\

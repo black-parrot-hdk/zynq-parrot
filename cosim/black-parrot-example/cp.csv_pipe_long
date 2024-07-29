@@ -12,7 +12,7 @@
 (`COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.inValid || ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.idle)) & ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.nReset), 3
 `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.sigX_N_mux.sel_one_hot_i, 4
 (`COREPATH.be.calculator.pipe_long.idiv.opA_reg.en_i), 2
-(`COREPATH.be.calculator.pipe_long.imulh.gets_high_part_r) & ((`COREPATH.be.calculator.pipe_long.imulh.curr_state_r == 3) && work@bsg_imul_iterative.opB_r[0]) & ((`COREPATH.be.calculator.pipe_long.imulh.curr_state_r == 4) && `COREPATH.be.calculator.pipe_long.imulh.need_neg_result_r) & (`COREPATH.be.calculator.pipe_long.imulh.latch_input) & (`COREPATH.be.calculator.pipe_long.imulh.reset_i), 0
+(`COREPATH.be.calculator.pipe_long.imulh.gets_high_part_r) & ((`COREPATH.be.calculator.pipe_long.imulh.curr_state_r == 3) && `COREPATH.be.calculator.pipe_long.imulh.opB_r[0]) & ((`COREPATH.be.calculator.pipe_long.imulh.curr_state_r == 4) && `COREPATH.be.calculator.pipe_long.imulh.need_neg_result_r) & (`COREPATH.be.calculator.pipe_long.imulh.latch_input) & (`COREPATH.be.calculator.pipe_long.imulh.reset_i), 0
 `COREPATH.be.calculator.pipe_long.idiv.muxA.sel_one_hot_i, 1
 `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.oddSqrt_S, 2
 (`COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.inValid || ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.idle)) & ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.nReset), 2
@@ -24,16 +24,16 @@
 `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.sqrtOp_Z, 1
 `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.newBit2, 1
 (`COREPATH.be.calculator.pipe_long.idiv.opA_reg.en_i), 4
-`COREPATH.be.calculator.pipe_long.idiv.genblk2.muxC.sel_one_hot_i, 3
+`COREPATH.be.calculator.pipe_long.idiv.genblk1.muxC.sel_one_hot_i, 3
 `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.inReady, 2
 `COREPATH.be.calculator.pipe_long.rebox.round_mixed.round64.notNaN_isInfOut, 0
 (`COREPATH.be.calculator.pipe_long.idiv.req_reg.en_i), 5
 `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.sqrtOp_Z, 3
 `COREPATH.be.calculator.pipe_long.rebox.round_mixed.round64.pegMinNonzeroMagOut, 0
-`COREPATH.be.calculator.pipe_long.idiv.genblk2.muxC.sel_one_hot_i, 1
+`COREPATH.be.calculator.pipe_long.idiv.genblk1.muxC.sel_one_hot_i, 1
 (`COREPATH.be.calculator.pipe_long.idiv.control.yumi_i), 1
 ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.nReset), 1
-`COREPATH.be.calculator.pipe_long.idiv.genblk2.muxC.sel_one_hot_i, 2
+`COREPATH.be.calculator.pipe_long.idiv.genblk1.muxC.sel_one_hot_i, 2
 0, 0
 (`COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.entering_normalCase || (`COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.cycleNum >  2)) & ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.nReset), 3
 (`COREPATH.be.calculator.pipe_long.idiv.opC_reg.en_i), 2
@@ -42,7 +42,7 @@
 `COREPATH.be.calculator.pipe_long.idiv.muxA.sel_one_hot_i, 2
 (`COREPATH.be.calculator.pipe_long.idiv.opB_reg.en_i), 2
 `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.newBit1, 3
-`COREPATH.be.calculator.pipe_long.idiv.genblk2.muxB.sel_one_hot_i, 5
+`COREPATH.be.calculator.pipe_long.idiv.genblk1.muxB.sel_one_hot_i, 5
 ((`COREPATH.be.calculator.pipe_long.imulh.curr_state_r == 2) && `COREPATH.be.calculator.pipe_long.imulh.signed_opB_r) & (`COREPATH.be.calculator.pipe_long.imulh.curr_state_r == 3) & (`COREPATH.be.calculator.pipe_long.imulh.latch_input) & (`COREPATH.be.calculator.pipe_long.imulh.reset_i), 1
 ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.nReset), 2
 (`COREPATH.be.calculator.pipe_long.idiv.control.reset_i), 0
@@ -68,7 +68,7 @@
 `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.trialTerm_mux.sel_one_hot_i, 3
 (`COREPATH.be.calculator.pipe_long.idiv.opA_reg.en_i), 0
 (`COREPATH.be.calculator.pipe_long.idiv.control.neg_ld), 3
-`COREPATH.be.calculator.pipe_long.idiv.genblk2.muxC.sel_one_hot_i, 4
+`COREPATH.be.calculator.pipe_long.idiv.genblk1.muxC.sel_one_hot_i, 4
 `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.newBit2, 2
 (`COREPATH.be.calculator.pipe_long.idiv.opB_reg.en_i), 4
 `COREPATH.be.calculator.pipe_long.idiv.muxA.sel_one_hot_i, 4
@@ -85,11 +85,11 @@
 `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.newBit2, 3
 (`COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.entering_normalCase || (( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.inReady) && (`COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.newBit1 |  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.newBit2))) & ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.nReset), 3
 (`COREPATH.be.calculator.pipe_long.idiv.control.calc_done), 1
-`COREPATH.be.calculator.pipe_long.idiv.genblk2.muxC.sel_one_hot_i, 5
+`COREPATH.be.calculator.pipe_long.idiv.genblk1.muxC.sel_one_hot_i, 5
 (`COREPATH.be.calculator.pipe_long.idiv.opC_reg.en_i), 3
-`COREPATH.be.calculator.pipe_long.idiv.genblk2.muxB.sel_one_hot_i, 4
+`COREPATH.be.calculator.pipe_long.idiv.genblk1.muxB.sel_one_hot_i, 4
 `COREPATH.be.calculator.pipe_long.idiv.control.zero_divisor_i |  ( !  `COREPATH.be.calculator.pipe_long.idiv.control.q_neg_r), 1
-`COREPATH.be.calculator.pipe_long.idiv.genblk2.muxB.sel_one_hot_i, 3
+`COREPATH.be.calculator.pipe_long.idiv.genblk1.muxB.sel_one_hot_i, 3
 (`COREPATH.be.calculator.pipe_long.idiv.opB_reg.en_i), 3
 `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.newBit1, 2
 (`COREPATH.be.calculator.pipe_long.idiv.req_reg.en_i), 2
@@ -111,7 +111,7 @@
 (`COREPATH.be.calculator.pipe_long.idiv.opC_reg.en_i), 4
 ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.nReset), 4
 (( !  `COREPATH.be.calculator.pipe_long.rebox.round_mixed.round32.isNaNOut) && ( !  `COREPATH.be.calculator.pipe_long.rebox.round_mixed.round32.in_isZero)) && ( !  `COREPATH.be.calculator.pipe_long.rebox.round_mixed.round32.common_totalUnderflow), 0
-(`COREPATH.be.calculator.pipe_long.imulh.gets_high_part_r) & ((`COREPATH.be.calculator.pipe_long.imulh.curr_state_r == 3) && ( !  work@bsg_imul_iterative.opB_r[0])) & ((`COREPATH.be.calculator.pipe_long.imulh.curr_state_r == 3) && work@bsg_imul_iterative.opB_r[0]) & ((`COREPATH.be.calculator.pipe_long.imulh.curr_state_r == 4) && `COREPATH.be.calculator.pipe_long.imulh.need_neg_result_r) & (`COREPATH.be.calculator.pipe_long.imulh.latch_input) & (`COREPATH.be.calculator.pipe_long.imulh.reset_i), 0
+(`COREPATH.be.calculator.pipe_long.imulh.gets_high_part_r) & ((`COREPATH.be.calculator.pipe_long.imulh.curr_state_r == 3) && ( !  `COREPATH.be.calculator.pipe_long.imulh.opB_r[0])) & ((`COREPATH.be.calculator.pipe_long.imulh.curr_state_r == 3) && `COREPATH.be.calculator.pipe_long.imulh.opB_r[0]) & ((`COREPATH.be.calculator.pipe_long.imulh.curr_state_r == 4) && `COREPATH.be.calculator.pipe_long.imulh.need_neg_result_r) & (`COREPATH.be.calculator.pipe_long.imulh.latch_input) & (`COREPATH.be.calculator.pipe_long.imulh.reset_i), 0
 (`COREPATH.be.calculator.pipe_long.imulh.gets_high_part_r && ( !  `COREPATH.be.calculator.pipe_long.imulh.all_sh_lsb_zero_r)) & ((`COREPATH.be.calculator.pipe_long.imulh.curr_state_r == 4) && `COREPATH.be.calculator.pipe_long.imulh.need_neg_result_r) & (`COREPATH.be.calculator.pipe_long.imulh.latch_input) & (`COREPATH.be.calculator.pipe_long.imulh.reset_i), 0
 (`COREPATH.be.calculator.pipe_long.imulh.latch_input) & (`COREPATH.be.calculator.pipe_long.imulh.reset_i), 0
 `COREPATH.be.calculator.pipe_long.imulh.curr_state_r == 4, 1
@@ -121,7 +121,7 @@
 `COREPATH.be.calculator.pipe_long.rebox.round_mixed.round32.in_isZero || `COREPATH.be.calculator.pipe_long.rebox.round_mixed.round32.common_totalUnderflow, 0
 (`COREPATH.be.calculator.pipe_long.idiv.req_reg.en_i), 3
 `COREPATH.be.calculator.pipe_long.imulh.curr_state_r == 1, 1
-`COREPATH.be.calculator.pipe_long.idiv.genblk2.muxB.sel_one_hot_i, 2
+`COREPATH.be.calculator.pipe_long.idiv.genblk1.muxB.sel_one_hot_i, 2
 (`COREPATH.be.calculator.pipe_long.imulh.curr_state_r == 3) & (`COREPATH.be.calculator.pipe_long.imulh.latch_input) & (`COREPATH.be.calculator.pipe_long.imulh.reset_i), 1
 `COREPATH.be.calculator.pipe_long.imulh.adder_neg_op, 1
 `COREPATH.be.calculator.pipe_long.rebox.round_mixed.round32.pegMinNonzeroMagOut, 0

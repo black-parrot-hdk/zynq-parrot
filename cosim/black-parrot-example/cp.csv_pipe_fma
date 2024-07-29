@@ -11,7 +11,6 @@
 `COREPATH.be.calculator.pipe_fma.decode.irs1_r_v, 2
 `COREPATH.be.calculator.pipe_fma.decode.irs2_r_v, 2
 `COREPATH.be.calculator.pipe_fma.fma.mulAddToRaw_postMul.CIsDominant, 3
-`COREPATH.be.calculator.pipe_fma.fma.mulAddToRaw_postMul.clz.pe0.a.nw1.scan., 3
 `COREPATH.be.calculator.pipe_fma.fma.mulAddToRaw_postMul.doSubMags, 3
 `COREPATH.be.calculator.pipe_fma.fma.mulAddToRaw_postMul.mulAddResult[106], 3
 `COREPATH.be.calculator.pipe_fma.fma.mulAddToRaw_postMul.notCDom_completeCancellation, 3
