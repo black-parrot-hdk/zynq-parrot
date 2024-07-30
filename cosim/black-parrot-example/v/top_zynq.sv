@@ -355,14 +355,23 @@ module top_zynq
    bsg_counter_clear_up
     #(.max_val_p((65)'(2**64-1)), .init_val_p(0))
     cycle_cnt
-     (.clk_i(aclk)
-     ,.reset_i(~aresetn)
+     (.clk_i(ds_clk)
+     ,.reset_i(ds_reset_li)
      ,.clear_i(`COREPATH.be.calculator.pipe_sys.csr.cfg_bus_cast_i.freeze)
      ,.up_i(1'b1)
      ,.count_o(cycle_lo)
      );
 
-   assign mcycle_lo = `COREPATH.be.calculator.pipe_sys.csr.mcycle_lo;
+   bsg_counter_clear_up
+    #(.max_val_p((65)'(2**64-1)), .init_val_p(0))
+    mcycle_cnt
+     (.clk_i(bp_clk)
+     ,.reset_i(bp_reset_li)
+     ,.clear_i(`COREPATH.be.calculator.pipe_sys.csr.cfg_bus_cast_i.freeze)
+     ,.up_i(1'b1)
+     ,.count_o(mcycle_lo)
+     );
+
    assign minstret_lo = `COREPATH.be.calculator.pipe_sys.csr.minstret_lo;
 
    assign csr_data_li[0+:4] = mem_profiler_r;
