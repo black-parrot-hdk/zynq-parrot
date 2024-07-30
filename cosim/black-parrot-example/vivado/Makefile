@@ -32,7 +32,7 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	sed -i "/bsg_icg_pos.sv/d" $@
 	sed -i "/test_bsg_clock_params.sv/d" $@
 	# Fixing recursive instantiation bug in vivado 2022.2
-	sed    "s/BSG_INV_PARAM(width_p)/width_p = 1/" $(BASEJUMP_STL_DIR)/bsg_misc/bsg_popcount.sv >> bsg_popcount.sv
+	sed    "s/\`BSG_INV_PARAM(width_p)/width_p = 1/" $(BASEJUMP_STL_DIR)/bsg_misc/bsg_popcount.sv > bsg_popcount.sv
 	sed -i "/bsg_popcount.sv/d" $@
 	echo bsg_popcount.sv >> $@
 
