@@ -61,4 +61,5 @@ clean:
 	rm -rf *_bd_1.bit *_bd_1.hwh *_bd_1.tcl *_bd_1.map
 	rm -rf vivado_pid*.str
 	rm -rf NA/
+	rm -f *.sv
 
