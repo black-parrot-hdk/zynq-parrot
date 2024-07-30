@@ -1,27 +1,17 @@
-(`COREPATH.be.director.fe_cmd_fifo.ft.reset_i), 0
-(`COREPATH.be.director.fe_cmd_fifo.ft.enq_i |  `COREPATH.be.director.fe_cmd_fifo.ft.deq_i) & (`COREPATH.be.director.fe_cmd_fifo.ft.reset_i), 0
 `COREPATH.be.director.fe_cmd_fifo.ft.wptr.add_i, 1
 `COREPATH.be.director.fe_cmd_fifo.ft.rptr.add_i, 1
 `COREPATH.be.director.fe_cmd_fifo.ft.rptr.add_i, 2
  ( `COREPATH.be.director.state_r == 0) ||  ( `COREPATH.be.director.state_r == 1) ||  ( `COREPATH.be.director.state_r == 4) ||  ( `COREPATH.be.director.state_r == 3) ||  ( `COREPATH.be.director.state_r == 2) & `COREPATH.be.director.commit_pkt_cast_i.wfi, 1
  ( `COREPATH.be.director.state_r == 0) ||  ( `COREPATH.be.director.state_r == 1) ||  ( `COREPATH.be.director.state_r == 4) ||  ( `COREPATH.be.director.state_r == 3) ||  ( `COREPATH.be.director.state_r == 2) & `COREPATH.be.director.commit_pkt_cast_i.fencei, 1
-(`COREPATH.be.director.fe_cmd_fifo.ft.reset_i), 1
 (`COREPATH.be.director.commit_pkt_cast_i.wfi) & (`COREPATH.be.director.commit_pkt_cast_i.csrw) & (`COREPATH.be.director.commit_pkt_cast_i.sfence) & (`COREPATH.be.director.commit_pkt_cast_i.itlb_fill_v) & (`COREPATH.be.director.commit_pkt_cast_i.resume), 1
  ( `COREPATH.be.director.state_r == 0) ||  ( `COREPATH.be.director.state_r == 1) ||  ( `COREPATH.be.director.state_r == 4) ||  ( `COREPATH.be.director.state_r == 3) ||  ( `COREPATH.be.director.state_r == 2) & `COREPATH.be.director.freeze_li, 1
 (`COREPATH.be.director.npc_mismatch_v) & (`COREPATH.be.director.commit_pkt_cast_i.exception |  `COREPATH.be.director.commit_pkt_cast_i._interrupt) & (`COREPATH.be.director.commit_pkt_cast_i.eret) & (`COREPATH.be.director.commit_pkt_cast_i.icache_miss) & (`COREPATH.be.director.commit_pkt_cast_i.fencei) & (`COREPATH.be.director.commit_pkt_cast_i.wfi) & (`COREPATH.be.director.commit_pkt_cast_i.csrw) & (`COREPATH.be.director.commit_pkt_cast_i.sfence) & (`COREPATH.be.director.commit_pkt_cast_i.itlb_fill_v) & (`COREPATH.be.director.commit_pkt_cast_i.resume), 1
-(`COREPATH.be.director.npc_reg.dff.en_i) & (`COREPATH.be.director.npc_reg.dff.reset_i), 0
 `COREPATH.be.director.commit_pkt_cast_i.npc_w_v, 0
 `COREPATH.be.director.fe_cmd_fifo.ft.wptr.add_i, 2
-(`COREPATH.be.director.reset_i), 0
  ( `COREPATH.be.director.state_r == 0) ||  ( `COREPATH.be.director.state_r == 1) ||  ( `COREPATH.be.director.state_r == 4) ||  ( `COREPATH.be.director.state_r == 3) ||  ( `COREPATH.be.director.state_r == 2) & `COREPATH.be.director.clear_iss_o, 1
 `COREPATH.be.director.br_pkt_cast_i.bspec, 0
  & `COREPATH.be.director.cmd_empty_r_lo, 1
 (`COREPATH.be.director.commit_pkt_cast_i.exception |  `COREPATH.be.director.commit_pkt_cast_i._interrupt) & (`COREPATH.be.director.commit_pkt_cast_i.eret) & (`COREPATH.be.director.commit_pkt_cast_i.icache_miss) & (`COREPATH.be.director.commit_pkt_cast_i.fencei) & (`COREPATH.be.director.commit_pkt_cast_i.wfi) & (`COREPATH.be.director.commit_pkt_cast_i.csrw) & (`COREPATH.be.director.commit_pkt_cast_i.sfence) & (`COREPATH.be.director.commit_pkt_cast_i.itlb_fill_v) & (`COREPATH.be.director.commit_pkt_cast_i.resume), 1
-(`COREPATH.be.director.fe_cmd_fifo.ft.rptr.reset_i), 1
-(`COREPATH.be.director.fe_cmd_fifo.ft.wptr.reset_i), 1
-(`COREPATH.be.director.fe_cmd_fifo.ft.wptr.reset_i), 0
-(`COREPATH.be.director.fe_cmd_fifo.ft.rptr.reset_i), 0
-(`COREPATH.be.director.fe_cmd_fifo.ft.enq_i |  `COREPATH.be.director.fe_cmd_fifo.ft.deq_i) & (`COREPATH.be.director.fe_cmd_fifo.ft.reset_i), 1
 (`COREPATH.be.director.commit_pkt_cast_i.icache_miss) & (`COREPATH.be.director.commit_pkt_cast_i.fencei) & (`COREPATH.be.director.commit_pkt_cast_i.wfi) & (`COREPATH.be.director.commit_pkt_cast_i.csrw) & (`COREPATH.be.director.commit_pkt_cast_i.sfence) & (`COREPATH.be.director.commit_pkt_cast_i.itlb_fill_v) & (`COREPATH.be.director.commit_pkt_cast_i.resume) & 1 &  `COREPATH.be.director.commit_pkt_cast_i.partial, 1
 (`COREPATH.be.director.commit_pkt_cast_i.fencei) & (`COREPATH.be.director.commit_pkt_cast_i.wfi) & (`COREPATH.be.director.commit_pkt_cast_i.csrw) & (`COREPATH.be.director.commit_pkt_cast_i.sfence) & (`COREPATH.be.director.commit_pkt_cast_i.itlb_fill_v) & (`COREPATH.be.director.commit_pkt_cast_i.resume), 1
  ( `COREPATH.be.director.state_r == 0) ||  ( `COREPATH.be.director.state_r == 1) ||  ( `COREPATH.be.director.state_r == 4) ||  ( `COREPATH.be.director.state_r == 3) ||  ( `COREPATH.be.director.state_r == 2) & `COREPATH.be.director.commit_pkt_cast_i.resume |  `COREPATH.be.director.fe_cmd_nonattaboy_v, 1

@@ -79,7 +79,6 @@
 (`COREPATH.be.director.commit_pkt_cast_i.sfence) & (`COREPATH.be.director.commit_pkt_cast_i.itlb_fill_v) & (`COREPATH.be.director.commit_pkt_cast_i.resume), 1
 (`COREPATH.be.director.commit_pkt_cast_i.wfi) & (`COREPATH.be.director.commit_pkt_cast_i.csrw) & (`COREPATH.be.director.commit_pkt_cast_i.sfence) & (`COREPATH.be.director.commit_pkt_cast_i.itlb_fill_v) & (`COREPATH.be.director.commit_pkt_cast_i.resume), 1
 (`COREPATH.be.director.commit_pkt_cast_i.exception |  `COREPATH.be.director.commit_pkt_cast_i._interrupt) & (`COREPATH.be.director.commit_pkt_cast_i.eret) & (`COREPATH.be.director.commit_pkt_cast_i.icache_miss) & (`COREPATH.be.director.commit_pkt_cast_i.fencei) & (`COREPATH.be.director.commit_pkt_cast_i.wfi) & (`COREPATH.be.director.commit_pkt_cast_i.csrw) & (`COREPATH.be.director.commit_pkt_cast_i.sfence) & (`COREPATH.be.director.commit_pkt_cast_i.itlb_fill_v) & (`COREPATH.be.director.commit_pkt_cast_i.resume), 1
-`COREPATH.be.calculator.pipe_mem.dcache.pe_invalid.a.nw1.scan., 0
 (`COREPATH.be.director.npc_match_v &  `COREPATH.be.director.last_instr_was_branch) & (`COREPATH.be.director.npc_mismatch_v) & (`COREPATH.be.director.commit_pkt_cast_i.exception |  `COREPATH.be.director.commit_pkt_cast_i._interrupt) & (`COREPATH.be.director.commit_pkt_cast_i.eret) & (`COREPATH.be.director.commit_pkt_cast_i.icache_miss) & (`COREPATH.be.director.commit_pkt_cast_i.fencei) & (`COREPATH.be.director.commit_pkt_cast_i.wfi) & (`COREPATH.be.director.commit_pkt_cast_i.csrw) & (`COREPATH.be.director.commit_pkt_cast_i.sfence) & (`COREPATH.be.director.commit_pkt_cast_i.itlb_fill_v) & (`COREPATH.be.director.commit_pkt_cast_i.resume), 1
 (`COREPATH.be.director.commit_pkt_cast_i.eret) & (`COREPATH.be.director.commit_pkt_cast_i.icache_miss) & (`COREPATH.be.director.commit_pkt_cast_i.fencei) & (`COREPATH.be.director.commit_pkt_cast_i.wfi) & (`COREPATH.be.director.commit_pkt_cast_i.csrw) & (`COREPATH.be.director.commit_pkt_cast_i.sfence) & (`COREPATH.be.director.commit_pkt_cast_i.itlb_fill_v) & (`COREPATH.be.director.commit_pkt_cast_i.resume), 1
 (`COREPATH.be.director.fe_cmd_fifo.ft.enq_i |  `COREPATH.be.director.fe_cmd_fifo.ft.deq_i) & (`COREPATH.be.director.fe_cmd_fifo.ft.reset_i), 1
@@ -195,7 +194,6 @@
 `COREPATH.be.scheduler.ptw.walk_start, 5
 (`COREPATH.be.scheduler.ptw.walk_reg.en_i), 4
 `COREPATH.be.calculator.pipe_long.rebox.tag_i == -1889184192, 4
-, 1
 `COREPATH.be.calculator.pipe_long.rebox.round_mixed.round64.doShiftSigDown1, 4
 (`COREPATH.be.scheduler.fp_regfile.bypass[0].rs_data_reg.en_i), 4
 (( !  `COREPATH.be.calculator.pipe_long.rebox.round_mixed.round64.isNaNOut) && ( !  `COREPATH.be.calculator.pipe_long.rebox.round_mixed.round64.in_isZero)) && ( !  `COREPATH.be.calculator.pipe_long.rebox.round_mixed.round64.common_totalUnderflow), 4
@@ -217,7 +215,6 @@
 (`COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.entering_normalCase || (`COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.cycleNum >  2)) & ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.nReset) & `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.inReady || `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.skipCycle2, 5
 (`COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.entering_normalCase || (`COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.cycleNum >  2)) & ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.nReset) & `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.newBit1, 5
 (`COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.entering_normalCase || (`COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.cycleNum >  2)) & ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.nReset) & `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.newBit2, 5
-`COREPATH.be.calculator.pipe_sys.csr.m_interrupt_enc.a.nw1.scan., 4
 `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.inReady, 5
 `COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.special.sret, 1
 `COREPATH.be.calculator.pipe_long.rebox.round_mixed.round64.pegMinNonzeroMagOut, 4
@@ -291,7 +288,6 @@
 (`COREPATH.be.calculator.pipe_mem.dcache.d[7].data_mem.synth.nz.bk[0].mem_1rw_sync.synth.nz.llr.dff_bypass.dff.en_i), 6
 `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.newBit1, 7
 (`COREPATH.be.scheduler.ptw.miss_reg.en_i), 4
-, 9
 (`COREPATH.be.calculator.pipe_mem.dcache.l1_lrsc.load_reserved_addr.en_i), 10
 `COREPATH.be.scheduler.issue_queue.deq_v_i, 7
 (`COREPATH.be.calculator.pipe_mem.dcache.mshr_reg.en_i), 10
@@ -301,7 +297,6 @@
 `COREPATH.be.calculator.reservation_reg.frs3_unbox.special, 3
 `COREPATH.be.scheduler.ptw.level_r >  0, 4
  ( `COREPATH.be.calculator.pipe_long.idiv.control.state == 3), 6
-, 10
 (`COREPATH.be.calculator.pipe_mem.dcache.wbuf.num_els_counter.reset_i), 10
 ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.nReset), 5
 (`COREPATH.be.calculator.pipe_sys.csr.is_debug_mode), 13
@@ -322,7 +317,6 @@
 (`COREPATH.be.calculator.pipe_sys.csr.debug_mode_reg.reset_i), 12
 (`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.special.dret), 14
 `COREPATH.be.calculator.pipe_mem.dcache.d[1].data_mem.synth.nz.bk[4].mem_1rw_sync.synth.nz.llr.dff_bypass.en_i, 6
-, 13
 (`COREPATH.be.calculator.pipe_mem.dmmu.tlb.mem_array_1g.mem_reg.en_i), 13
 (`COREPATH.be.calculator.pipe_mem.dcache.d[7].data_mem.synth.nz.bk[2].mem_1rw_sync.synth.nz.llr.dff_bypass.dff.en_i), 6
 `COREPATH.be.calculator.pipe_mem.dcache.d[5].data_mem.synth.nz.bk[4].mem_1rw_sync.synth.nz.llr.dff_bypass.en_i, 6
@@ -343,7 +337,6 @@
 (`COREPATH.be.calculator.pipe_mem.dcache.mshr_reg.en_i), 12
 `COREPATH.be.calculator.pipe_int_early.decode.jr_v, 4
 (`COREPATH.be.calculator.pipe_mem.dcache.reset_i), 12
-, 6
 (`COREPATH.be.calculator.pipe_mem.dcache.d[7].data_mem.synth.nz.bk[6].mem_1rw_sync.synth.nz.llr.dff_bypass.dff.en_i), 6
 (`COREPATH.be.calculator.pipe_mem.dcache.d[1].data_mem.synth.nz.bk[3].mem_1rw_sync.synth.nz.llr.dff_bypass.dff.en_i), 6
 (`COREPATH.be.calculator.pipe_mem.dmmu.tlb.tag_array_4k.nz.tag_array[1].v_reg.en_i) & (`COREPATH.be.calculator.pipe_mem.dmmu.tlb.tag_array_4k.nz.tag_array[1].v_reg.reset_i), 6
@@ -352,7 +345,6 @@
 `COREPATH.be.scheduler.issue_queue.deq_v_i, 6
 `COREPATH.be.calculator.pipe_mem.dcache.dword_mux.sel_i, 8
 (`COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.inValid || ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.idle)) & ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.nReset) & `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.entering_normalCase, 4
-, 7
 (`COREPATH.be.calculator.pipe_sys.csr.priv_mode_reg.reset_i), 12
 (`COREPATH.be.calculator.pipe_mem.dmmu.tlb.tag_array_1g.nz.tag_array[0].v_reg.en_i) & (`COREPATH.be.calculator.pipe_mem.dmmu.tlb.tag_array_1g.nz.tag_array[0].v_reg.reset_i), 8
 `COREPATH.be.calculator.pipe_mem.dcache.d[5].data_mem.synth.nz.bk[0].mem_1rw_sync.synth.nz.llr.dff_bypass.en_i, 6
@@ -414,7 +406,6 @@
 (`COREPATH.be.calculator.pipe_mem.dcache.d[5].data_mem.synth.nz.bk[2].mem_1rw_sync.synth.nz.llr.dff_bypass.dff.en_i), 6
 `COREPATH.be.calculator.pipe_mem.dcache.d[6].data_mem.synth.nz.bk[2].mem_1rw_sync.synth.nz.llr.dff_bypass.en_i, 6
  ( {`COREPATH.be.calculator.pipe_sys.csr.csr_w_v_li ,  `COREPATH.be.calculator.pipe_sys.csr.csr_addr_li } == {-1561307512 ,  -1561307504 }), 8
-, 12
  ( `COREPATH.be.director.state_r == 0) ||  ( `COREPATH.be.director.state_r == 1) ||  ( `COREPATH.be.director.state_r == 4) ||  ( `COREPATH.be.director.state_r == 3) ||  ( `COREPATH.be.director.state_r == 2) & `COREPATH.be.director.clear_iss_o, 1
 (`COREPATH.be.calculator.pipe_mem.dmmu.tlb.tag_array_4k.nz.tag_array[6].tag_r_reg.en_i), 6
 (`COREPATH.be.calculator.pipe_mem.dcache.d[3].data_mem.synth.nz.bk[1].mem_1rw_sync.synth.nz.llr.dff_bypass.dff.en_i), 6
@@ -444,7 +435,6 @@
  ( `COREPATH.be.calculator.pipe_mem.dcache.pkt_decoder.pkt_cast_i.opcode == -1628502592) ||  ( `COREPATH.be.calculator.pipe_mem.dcache.pkt_decoder.pkt_cast_i.opcode == -1628502584) ||  ( `COREPATH.be.calculator.pipe_mem.dcache.pkt_decoder.pkt_cast_i.opcode == -1628502576) ||  ( `COREPATH.be.calculator.pipe_mem.dcache.pkt_decoder.pkt_cast_i.opcode == -1628502568) ||  ( `COREPATH.be.calculator.pipe_mem.dcache.pkt_decoder.pkt_cast_i.opcode == -1628502560) ||  ( `COREPATH.be.calculator.pipe_mem.dcache.pkt_decoder.pkt_cast_i.opcode == -1628502552) ||  ( `COREPATH.be.calculator.pipe_mem.dcache.pkt_decoder.pkt_cast_i.opcode == -1628502544) ||  ( `COREPATH.be.calculator.pipe_mem.dcache.pkt_decoder.pkt_cast_i.opcode == -1628502536) ||  ( `COREPATH.be.calculator.pipe_mem.dcache.pkt_decoder.pkt_cast_i.opcode == -1628502528) ||  ( `COREPATH.be.calculator.pipe_mem.dcache.pkt_decoder.pkt_cast_i.opcode == -1628502520) ||  ( `COREPATH.be.calculator.pipe_mem.dcache.pkt_decoder.pkt_cast_i.opcode == -1628502512) ||  ( `COREPATH.be.calculator.pipe_mem.dcache.pkt_decoder.pkt_cast_i.opcode == -1628502504) ||  ( `COREPATH.be.calculator.pipe_mem.dcache.pkt_decoder.pkt_cast_i.opcode == -1628502496) ||  ( `COREPATH.be.calculator.pipe_mem.dcache.pkt_decoder.pkt_cast_i.opcode == -1628502488) ||  ( `COREPATH.be.calculator.pipe_mem.dcache.pkt_decoder.pkt_cast_i.opcode == -1628502480) ||  ( `COREPATH.be.calculator.pipe_mem.dcache.pkt_decoder.pkt_cast_i.opcode == -1628502472), 12
 `COREPATH.be.calculator.pipe_mem.dcache.d[4].data_mem.synth.nz.bk[0].mem_1rw_sync.synth.nz.llr.dff_bypass.en_i, 0
 (`COREPATH.be.calculator.pipe_mem.dcache.d[7].data_mem.synth.nz.bk[7].mem_1rw_sync.synth.nz.llr.dff_bypass.dff.en_i), 0
-`COREPATH.be.calculator.pipe_sys.csr.s_interrupt_enc.a.nw1.scan., 4
 `COREPATH.be.calculator.pipe_mem.dmmu.entry_reg.bypass.data_reg.en_i, 6
 (`COREPATH.be.calculator.pipe_mem.dmmu.tlb.tag_array_4k.nz.tag_array[0].tag_r_reg.en_i), 6
 (`COREPATH.be.calculator.pipe_mem.dcache.d[6].data_mem.synth.nz.bk[3].mem_1rw_sync.synth.nz.llr.dff_bypass.dff.en_i), 6
@@ -506,7 +496,6 @@
 (`COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.inValid || ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.idle)) & ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.nReset) &  !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.idle, 4
 (`COREPATH.be.calculator.pipe_mem.dcache.wbuf.wbuf_entry1_reg.en_i), 6
 `COREPATH.be.calculator.pipe_mem.dmmu.tlb.one_hot_sel_low.sel_one_hot_i, 7
-, 8
 `COREPATH.be.scheduler.issue_queue.clr, 7
  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == -1926027776) &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == -1813194992), 5
 (`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.queue_v &  `COREPATH.be.calculator.pipe_sys.csr.dcsr_lo.step) & (`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.special.dbreak) & ((`COREPATH.be.calculator.pipe_sys.csr.retire_pkt_cast_i.exception._interrupt &  `COREPATH.be.calculator.pipe_sys.csr.d_interrupt_icode_v_li) &  `COREPATH.be.calculator.pipe_sys.csr.dgie) & (`COREPATH.be.calculator.pipe_sys.csr.is_debug_mode), 2
@@ -689,7 +678,6 @@
 (`COREPATH.be.calculator.pipe_mem.dcache.d[0].data_mem.synth.nz.bk[3].mem_1rw_sync.synth.nz.llr.dff_bypass.dff.en_i), 6
 (`COREPATH.be.calculator.pipe_mem.dcache.d[7].data_mem.synth.nz.bk[6].mem_1rw_sync.synth.nz.llr.dff_bypass.dff.en_i), 0
 `COREPATH.be.calculator.pipe_mem.dcache.d[7].data_mem.synth.nz.bk[1].mem_1rw_sync.synth.nz.llr.dff_bypass.en_i, 6
-, 4
 `COREPATH.be.scheduler.ptw.walk_en, 4
 `COREPATH.be.scheduler.issue_queue.c1.upper_n, 6
 `COREPATH.be.scheduler.int_regfile.bypass[1].replace_rs, 5
@@ -702,9 +690,7 @@
 `COREPATH.be.calculator.pipe_mem.dcache.d[2].data_mem.synth.nz.bk[5].mem_1rw_sync.synth.nz.llr.dff_bypass.en_i, 0
 `COREPATH.be.calculator.pipe_mem.fp_box.special, 5
 (`COREPATH.be.calculator.pipe_mem.dcache.d[2].data_mem.synth.nz.bk[4].mem_1rw_sync.synth.nz.llr.dff_bypass.dff.en_i), 6
-`COREPATH.be.calculator.pipe_mem.fp_box.in64_rec.clz.pe0.a.nw1.scan., 5
 `COREPATH.be.calculator.reservation_reg.frs2_unbox.out_dp_rec.isNaN || `COREPATH.be.calculator.reservation_reg.frs2_unbox.out_dp_rec.isInf, 3
-, 5
  ( `COREPATH.be.calculator.pipe_mem.int_box.tag_i == -1628498848), 5
  ( `COREPATH.be.calculator.pipe_mem.int_box.tag_i == -1628498864), 5
 (`COREPATH.be.calculator.pipe_long.imulh.reset_i), 4
@@ -825,8 +811,6 @@
  ( `COREPATH.be.director.state_r == 0) ||  ( `COREPATH.be.director.state_r == 1) ||  ( `COREPATH.be.director.state_r == 4) ||  ( `COREPATH.be.director.state_r == 3) ||  ( `COREPATH.be.director.state_r == 2) & `COREPATH.be.director.commit_pkt_cast_i.resume |  `COREPATH.be.director.fe_cmd_nonattaboy_v, 1
 (`COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.entering_normalCase && ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.sqrtOp)) & ( !  `COREPATH.be.calculator.pipe_long.fdiv.divSqrtTwoBitPerIter.divSqrtRecFNToRaw.nReset), 6
 `COREPATH.be.calculator.pipe_long.rebox.round_mixed.round64.genblk2.roundIncr, 4
-`COREPATH.be.calculator.late_wb_arb.enc.nw1.scan., 5
-`COREPATH.be.calculator.pipe_mem.fp_box.in32_rec.clz.pe0.a.nw1.scan., 5
  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == -1725171280) &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == -1813194960), 5
 (`COREPATH.be.scheduler.issue_queue.wptr.reset_i), 5
  ( {`COREPATH.be.calculator.pipe_sys.csr.csr_w_v_li ,  `COREPATH.be.calculator.pipe_sys.csr.csr_addr_li } == {-1561307352 ,  -1561307344 }), 3

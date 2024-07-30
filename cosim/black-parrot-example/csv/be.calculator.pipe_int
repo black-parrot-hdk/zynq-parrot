@@ -1,27 +1,24 @@
-`COREPATH.be.calculator.pipe_int.btaken_o, 0
-`COREPATH.be.calculator.pipe_int.decode.compressed, 0
- ( `COREPATH.be.calculator.pipe_int.decode.fu_op == 718081272) ||  ( `COREPATH.be.calculator.pipe_int.decode.fu_op == 718081280), 0
-((`COREPATH.be.calculator.pipe_int.bclzh.pe0.b.i -  1) &  `COREPATH.be.calculator.pipe_int.bclzh.pe0.b.i) == 718081800, 0
-`COREPATH.be.calculator.pipe_int.bclzl.pe0.a.nw1.scan., 0
-((`COREPATH.be.calculator.pipe_int.bclzl.pe0.b.i -  1) &  `COREPATH.be.calculator.pipe_int.bclzl.pe0.b.i) == 718081792, 0
- !  `COREPATH.be.calculator.pipe_int.clzh[5], 0
+`COREPATH.be.calculator.pipe_int_early.btaken_o, 0
+`COREPATH.be.calculator.pipe_int_early.decode.compressed, 0
+ ( `COREPATH.be.calculator.pipe_int_early.decode.fu_op == 718081272) ||  ( `COREPATH.be.calculator.pipe_int_early.decode.fu_op == 718081280), 0
+((`COREPATH.be.calculator.pipe_int_early.bclzh.pe0.b.i -  1) &  `COREPATH.be.calculator.pipe_int_early.bclzh.pe0.b.i) == 718081800, 0
+((`COREPATH.be.calculator.pipe_int_early.bclzl.pe0.b.i -  1) &  `COREPATH.be.calculator.pipe_int_early.bclzl.pe0.b.i) == 718081792, 0
+ !  `COREPATH.be.calculator.pipe_int_early.clzh[5], 0
 (64 -  39) >  0, 0
- ( `COREPATH.be.calculator.pipe_int.decode.src1_sel == 718081232), 0
- ( `COREPATH.be.calculator.pipe_int.decode.src1_sel == 718081200) & `COREPATH.be.calculator.pipe_int.decode.irs1_r_v, 0
-`COREPATH.be.calculator.pipe_int.opw_v, 0
- ( `COREPATH.be.calculator.pipe_int.decode.fu_op == 718081320) ||  ( `COREPATH.be.calculator.pipe_int.decode.fu_op == 718081328), 0
- ( `COREPATH.be.calculator.pipe_int.decode.fu_op == 718081344), 0
-, 0
-`COREPATH.be.calculator.pipe_int.decode.j_v |  `COREPATH.be.calculator.pipe_int.decode.jr_v, 0
- ( `COREPATH.be.calculator.pipe_int.box.tag_i == 718081776), 0
-`COREPATH.be.calculator.pipe_int.bclzh.pe0.a.nw1.scan., 0
- ( `COREPATH.be.calculator.pipe_int.decode.fu_op == 718081376), 0
- ( `COREPATH.be.calculator.pipe_int.box.tag_i == 718081760), 0
- ( `COREPATH.be.calculator.pipe_int.decode.fu_op == 718081432), 0
- ( `COREPATH.be.calculator.pipe_int.box.tag_i == 718081768), 0
- ( `COREPATH.be.calculator.pipe_int.decode.fu_op == 718081384), 0
- ( `COREPATH.be.calculator.pipe_int.decode.fu_op == 718081424), 0
- ( `COREPATH.be.calculator.pipe_int.decode.fu_op == 718081392) ||  ( `COREPATH.be.calculator.pipe_int.decode.fu_op == 718081400) ||  ( `COREPATH.be.calculator.pipe_int.decode.fu_op == 718081408) ||  ( `COREPATH.be.calculator.pipe_int.decode.fu_op == 718081416) & `COREPATH.be.calculator.pipe_int.comp_result, 0
-`COREPATH.be.calculator.pipe_int.decode.jr_v, 0
-`COREPATH.be.calculator.pipe_int.decode.irs2_r_v, 0
- ( `COREPATH.be.calculator.pipe_int.decode.src2_sel == 718081240) & `COREPATH.be.calculator.pipe_int.decode.irs2_r_v, 0
+ ( `COREPATH.be.calculator.pipe_int_early.decode.src1_sel == 718081232), 0
+ ( `COREPATH.be.calculator.pipe_int_early.decode.src1_sel == 718081200) & `COREPATH.be.calculator.pipe_int_early.decode.irs1_r_v, 0
+`COREPATH.be.calculator.pipe_int_early.opw_v, 0
+ ( `COREPATH.be.calculator.pipe_int_early.decode.fu_op == 718081320) ||  ( `COREPATH.be.calculator.pipe_int_early.decode.fu_op == 718081328), 0
+ ( `COREPATH.be.calculator.pipe_int_early.decode.fu_op == 718081344), 0
+`COREPATH.be.calculator.pipe_int_early.decode.j_v |  `COREPATH.be.calculator.pipe_int_early.decode.jr_v, 0
+ ( `COREPATH.be.calculator.pipe_int_early.box.tag_i == 718081776), 0
+ ( `COREPATH.be.calculator.pipe_int_early.decode.fu_op == 718081376), 0
+ ( `COREPATH.be.calculator.pipe_int_early.box.tag_i == 718081760), 0
+ ( `COREPATH.be.calculator.pipe_int_early.decode.fu_op == 718081432), 0
+ ( `COREPATH.be.calculator.pipe_int_early.box.tag_i == 718081768), 0
+ ( `COREPATH.be.calculator.pipe_int_early.decode.fu_op == 718081384), 0
+ ( `COREPATH.be.calculator.pipe_int_early.decode.fu_op == 718081424), 0
+ ( `COREPATH.be.calculator.pipe_int_early.decode.fu_op == 718081392) ||  ( `COREPATH.be.calculator.pipe_int_early.decode.fu_op == 718081400) ||  ( `COREPATH.be.calculator.pipe_int_early.decode.fu_op == 718081408) ||  ( `COREPATH.be.calculator.pipe_int_early.decode.fu_op == 718081416) & `COREPATH.be.calculator.pipe_int_early.comp_result, 0
+`COREPATH.be.calculator.pipe_int_early.decode.jr_v, 0
+`COREPATH.be.calculator.pipe_int_early.decode.irs2_r_v, 0
+ ( `COREPATH.be.calculator.pipe_int_early.decode.src2_sel == 718081240) & `COREPATH.be.calculator.pipe_int_early.decode.irs2_r_v, 0
