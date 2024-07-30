@@ -1,0 +1,41 @@
+(`COREPATH.fe.pc_gen.if2_stage_reg.en_i) & (`COREPATH.fe.pc_gen.if2_stage_reg.reset_i), 0
+, 2
+ ( `COREPATH.fe.pc_gen.bht.state_r == 2), 2
+ ( `COREPATH.fe.pc_gen.bht.state_r == 1) & `COREPATH.fe.pc_gen.bht.finished_init, 2
+(`COREPATH.fe.pc_gen.bht.reset_i), 1
+(`COREPATH.fe.pc_gen.bht.init_counter.reset_i), 0
+(`COREPATH.fe.pc_gen.fetch_instr_v_i), 0
+`COREPATH.fe.pc_gen.redirect_br_v_i, 0
+`COREPATH.fe.pc_gen.metadata_if1.site_br &  ( ~  `COREPATH.fe.pc_gen.ovr_o), 0
+(`COREPATH.fe.pc_gen.redirect_v_i), 0
+(`COREPATH.fe.pc_gen.ovr_o) & (`COREPATH.fe.pc_gen.redirect_v_i) & `COREPATH.fe.pc_gen.ovr_ret, 0
+(`COREPATH.fe.pc_gen.if1_stage_reg.en_i) & (`COREPATH.fe.pc_gen.if1_stage_reg.reset_i), 0
+(`COREPATH.fe.pc_gen.ovr_o) & (`COREPATH.fe.pc_gen.redirect_v_i) & `COREPATH.fe.pc_gen.ovr_btaken |  `COREPATH.fe.pc_gen.ovr_jmp, 0
+ ( `COREPATH.fe.pc_gen.bht.state_r == 2), 1
+`COREPATH.fe.pc_gen.fetch_instr_scan.chigh, 0
+(`COREPATH.fe.pc_gen.ovr_o) & (`COREPATH.fe.pc_gen.redirect_v_i) & `COREPATH.fe.pc_gen.btb_taken, 0
+(`COREPATH.fe.pc_gen.ghist_reg.en_i) & (`COREPATH.fe.pc_gen.ghist_reg.reset_i), 1
+`COREPATH.fe.pc_gen.bht.is_clear, 0
+ ( `COREPATH.fe.pc_gen.btb.state_r == 2), 1
+ ( `COREPATH.fe.pc_gen.btb.state_r == 1) & `COREPATH.fe.pc_gen.btb.finished_init, 1
+, 1
+(`COREPATH.fe.pc_gen.ghist_reg.en_i) & (`COREPATH.fe.pc_gen.ghist_reg.reset_i), 0
+ ( `COREPATH.fe.pc_gen.bht.state_r == 1) & `COREPATH.fe.pc_gen.bht.finished_init, 1
+(`COREPATH.fe.pc_gen.redirect_v_i), 1
+`COREPATH.fe.pc_gen.fetch_linear_i &  ( ~  `COREPATH.fe.pc_gen.fetch_instr_v_i), 1
+(`COREPATH.fe.pc_gen.bht.reset_i), 0
+(`COREPATH.fe.pc_gen.pc_if2_reg.en_i) & (`COREPATH.fe.pc_gen.pc_if2_reg.reset_i), 0
+(`COREPATH.fe.pc_gen.ras.ptr_reg.reset_i), 1
+(`COREPATH.fe.pc_gen.btb.tag_mem.ram.enb), 0
+`COREPATH.fe.pc_gen.fetch_scan_i, 1
+(`COREPATH.fe.pc_gen.ovr_o) & (`COREPATH.fe.pc_gen.redirect_v_i), 1
+`COREPATH.fe.pc_gen.metadata_if1.site_br &  ( ~  `COREPATH.fe.pc_gen.ovr_o), 2
+(`COREPATH.fe.pc_gen.btb.tag_reg.en_i) & (`COREPATH.fe.pc_gen.btb.tag_reg.reset_i), 1
+`COREPATH.fe.pc_gen.ras.restore_i, 2
+`COREPATH.fe.pc_gen.ras.return_i, 2
+`COREPATH.fe.pc_gen.ras.call_i, 2
+`COREPATH.fe.pc_gen.redirect_br_v_i, 2
+(`COREPATH.fe.pc_gen.fetch_instr_v_i), 2
+(`COREPATH.fe.pc_gen.bht.bht_mem.ram.enb), 1
+(`COREPATH.fe.pc_gen.btb.reset_i), 0
+(`COREPATH.fe.pc_gen.btb.tag_mem.ram.enb), 1
