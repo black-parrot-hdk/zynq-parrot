@@ -2,7 +2,7 @@ include ../Makefile.design
 
 # Coverage
 COV_EN ?= 1
-COV_NUM ?= 4
+COV_NUM ?= 11
 
 #############################
 # Accelerator Software Settings
@@ -10,8 +10,8 @@ COV_NUM ?= 4
 #CFLAGS += -DZYNQ_PL_DEBUG
 CFLAGS += -DZYNQ_PS_DEBUG
 CFLAGS += -DDRAM_TEST
-CFLAGS += -DFREE_DRAM=1
-CFLAGS += -DZERO_DRAM=1
+#CFLAGS += -DFREE_DRAM=1
+#CFLAGS += -DZERO_DRAM=1
 ifneq ($(COV_EN),0)
 CFLAGS += -lpynq_api
 endif

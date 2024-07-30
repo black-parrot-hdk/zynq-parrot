@@ -873,7 +873,6 @@ module top_zynq
 
 `ifdef COV_EN
    // Coverage
-   localparam max_pkt_cnt_lp = (256 / (cam_els_lp + 1));
    localparam cov_id_width_lp = 8;
    localparam cov_els_width_lp = 8;
    localparam cov_len_width_lp = 8;
@@ -908,52 +907,9 @@ module top_zynq
      ,.oclk_data_o(cov_en_sync_li)
      );
 
-   // pick first covergroup to drain
-   logic cov_lock_r;
-   logic [`BSG_SAFE_CLOG2(num_cov_p)-1:0] cov_way_lo, cov_way_li, cov_way_r;
-   assign cov_way_lo = cov_lock_r ? cov_way_r : cov_way_li;
-   bsg_priority_encode
-    #(.width_p(num_cov_p)
-     ,.lo_to_hi_p(1)
-     )
-    enc
-     (.i(cov_gate_lo)
-     ,.addr_o(cov_way_li)
-     ,.v_o()
-     );
-
-   bsg_dff_reset_en
-    #(.width_p(`BSG_SAFE_CLOG2(num_cov_p)))
-    cov_way_reg
-     (.clk_i(ds_clk)
-     ,.reset_i(ds_reset_li)
-     ,.en_i(cov_afifo_enq_li & cov_id_v_lo[cov_way_lo])
-     ,.data_i(cov_way_li)
-     ,.data_o(cov_way_r)
-     );
-
-   bsg_dff_reset_set_clear
-    #(.width_p(1))
-    cov_lock_reg
-     (.clk_i(ds_clk)
-     ,.reset_i(ds_reset_li)
-     ,.clear_i(cov_afifo_enq_li & last_beat_li)
-     ,.set_i(cov_afifo_enq_li & cov_id_v_lo[cov_way_lo])
-     ,.data_o(cov_lock_r)
-     );
-
-   // count gated covergroups
-   logic [`BSG_SAFE_CLOG2(num_cov_p+1)-1:0] cov_popcnt_lo;
-   bsg_popcount
-    #(.width_p(num_cov_p))
-    popcnt
-     (.i(cov_gate_lo)
-     ,.o(cov_popcnt_lo)
-     );
-
    // covergroup instances
    logic [num_cov_p-1:0][cov_width_lp-1:0] cov_li;
-   logic [num_cov_p-1:0] cov_v_lo, cov_ready_li, cov_id_v_lo;
+   logic [num_cov_p-1:0] cov_v_lo, cov_ready_li, cov_id_v_lo, cov_last_lo;
    logic [num_cov_p-1:0][C_M02_AXI_DATA_WIDTH-1:0] cov_data_lo;
    logic [num_cov_p-1:0][cov_id_width_lp-1:0] cov_id_lo;
    logic [num_cov_p-1:0][cov_els_width_lp-1:0] cov_els_lo;
@@ -1006,6 +962,7 @@ module top_zynq
 
        ,.ready_i(cov_ready_li[i])
        ,.v_o(cov_v_lo[i])
+       ,.v_o(cov_last_lo[i])
        ,.data_o(cov_data_lo[i])
        );
    end
@@ -1015,31 +972,68 @@ module top_zynq
 
    // coverage stream construction
    typedef struct packed {
-     logic last;
      logic [cov_len_width_lp-1:0] len;
      logic [cov_els_width_lp-1:0] els;
      logic [cov_id_width_lp-1:0] id;
    } cov_pkt_s;
+   cov_pkt_s cov_pkt_lo;
+
+   logic axis_packer_v_li, axis_packer_ready_lo, axis_packer_last_li;
+   logic axis_packer_v_lo, axis_packer_ready_li, axis_packer_last_lo;
+   logic [C_M02_AXI_DATA_WIDTH-1:0] axis_packer_data_li;
+   logic [C_M02_AXI_DATA_WIDTH-1:0] axis_packer_data_lo;
 
    logic cov_afifo_enq_li, cov_afifo_last_li, cov_afifo_full_lo;
    logic cov_afifo_deq_li, cov_afifo_last_lo, cov_afifo_v_lo;
    logic [C_M02_AXI_DATA_WIDTH-1:0] cov_afifo_data_li, cov_afifo_data_lo;
 
-   logic [`BSG_SAFE_CLOG2(max_pkt_cnt_lp)-1:0] cov_pkt_cnt_lo;
-   logic [(cov_len_width_lp + cov_els_width_lp)-1:0] cov_limit_lo;
+   // pick first covergroup to drain
+   logic cov_lock_r;
+   logic [`BSG_SAFE_CLOG2(num_cov_p)-1:0] cov_way_lo, cov_way_li, cov_way_r;
+   assign cov_way_lo = cov_lock_r ? cov_way_r : cov_way_li;
+   bsg_priority_encode
+    #(.width_p(num_cov_p)
+     ,.lo_to_hi_p(1)
+     )
+    enc
+     (.i(cov_gate_lo)
+     ,.addr_o(cov_way_li)
+     ,.v_o()
+     );
 
-   cov_pkt_s cov_pkt_lo;
-   logic last_beat_li, last_pkt_li;
-   assign last_pkt_li = (cov_pkt_cnt_lo == (max_pkt_cnt_lp - 1)) | (cov_popcnt_lo == 1);
-   assign cov_pkt_lo = '{last: last_pkt_li
-                        ,len: cov_len_lo[cov_way_lo]
+   bsg_dff_reset_en
+    #(.width_p(`BSG_SAFE_CLOG2(num_cov_p)))
+    cov_way_reg
+     (.clk_i(ds_clk)
+     ,.reset_i(ds_reset_li)
+     ,.en_i(axis_packer_v_li & axis_packer_ready_lo & cov_id_v_lo[cov_way_lo])
+     ,.data_i(cov_way_li)
+     ,.data_o(cov_way_r)
+     );
+
+   bsg_dff_reset_set_clear
+    #(.width_p(1))
+    cov_lock_reg
+     (.clk_i(ds_clk)
+     ,.reset_i(ds_reset_li)
+     ,.clear_i(axis_packer_v_li & axis_packer_ready_lo & axis_packer_last_li)
+     ,.set_i(axis_packer_v_li & axis_packer_ready_lo & cov_id_v_lo[cov_way_lo])
+     ,.data_o(cov_lock_r)
+     );
+
+   assign cov_pkt_lo = '{len: cov_len_lo[cov_way_lo]
                         ,els: cov_els_lo[cov_way_lo]
                         ,id: cov_id_lo[cov_way_lo]
                         };
 
-   assign cov_afifo_enq_li = ~cov_afifo_full_lo & (cov_v_lo[cov_way_lo] | cov_id_v_lo[cov_way_lo]);
-   assign cov_afifo_data_li = cov_id_v_lo[cov_way_lo] ? cov_pkt_lo : cov_data_lo[cov_way_lo];
-   assign cov_afifo_last_li = last_pkt_li & last_beat_li;
+   assign axis_packer_v_li = cov_v_lo[cov_way_lo] | cov_id_v_lo[cov_way_lo];
+   assign axis_packer_last_li = cov_id_v_lo[cov_way_lo] ? 1'b0 : cov_last_lo[cov_way_lo];
+   assign axis_packer_data_li = cov_id_v_lo[cov_way_lo] ? cov_pkt_lo : cov_data_lo[cov_way_lo];
+
+   assign axis_packer_ready_li = ~cov_afifo_full_lo;
+   assign cov_afifo_enq_li = axis_packer_v_lo & axis_packer_ready_li;
+   assign cov_afifo_data_li = axis_packer_data_lo;
+   assign cov_afifo_last_li = axis_packer_last_lo;
 
    assign cov_afifo_deq_li = m02_axis_tvalid & m02_axis_tready;
    assign m02_axis_tvalid = cov_afifo_v_lo;
@@ -1047,44 +1041,30 @@ module top_zynq
    assign m02_axis_tkeep = '1;
    assign m02_axis_tlast = cov_afifo_last_lo;
 
-   bsg_counter_clear_up
-    #(.init_val_p(0)
-     ,.max_val_p(max_pkt_cnt_lp)
+   bsg_axi_stream_packer
+    #(.width_p(C_M02_AXI_DATA_WIDTH)
+     ,.max_len_p(256)
      )
-    pkt_cnt
+    axis_packer
      (.clk_i(ds_clk)
      ,.reset_i(ds_reset_li)
-     ,.clear_i(cov_afifo_enq_li & last_beat_li & last_pkt_li)
-     ,.up_i(cov_afifo_enq_li & last_beat_li & ~last_pkt_li)
-     ,.count_o(cov_pkt_cnt_lo)
-     );
 
-   bsg_dff_reset_en
-    #(.width_p(cov_len_width_lp + cov_els_width_lp))
-    cov_limit_reg
-     (.clk_i(ds_clk)
-     ,.reset_i(ds_reset_li)
-     ,.en_i(cov_afifo_enq_li & cov_id_v_lo[cov_way_lo])
-     ,.data_i(cov_pkt_lo.els * cov_pkt_lo.len)
-     ,.data_o(cov_limit_lo)
-     );
+     ,.v_i(axis_packer_v_li)
+     ,.last_i(axis_packer_last_li)
+     ,.data_i(axis_packer_data_li)
+     ,.ready_o(axis_packer_ready_lo)
 
-   bsg_counter_dynamic_limit_en
-    #(.width_p(cov_len_width_lp + cov_els_width_lp))
-    beat_cnt
-     (.clk_i(ds_clk)
-     ,.reset_i(ds_reset_li)
-     ,.limit_i(cov_limit_lo)
-     ,.en_i(cov_afifo_enq_li & ~cov_id_v_lo[cov_way_lo])
-     ,.counter_o()
-     ,.overflowed_o(last_beat_li)
+     ,.v_o(axis_packer_v_lo)
+     ,.last_o(axis_packer_last_lo)
+     ,.data_o(axis_packer_data_lo)
+     ,.ready_i(axis_packer_ready_li)
      );
 
    bsg_decode_with_v
     #(.num_out_p(num_cov_p))
     cov_demux
      (.i(cov_way_lo)
-     ,.v_i(~cov_afifo_full_lo)
+     ,.v_i(axis_packer_ready_lo)
      ,.o(cov_ready_li)
      );
 

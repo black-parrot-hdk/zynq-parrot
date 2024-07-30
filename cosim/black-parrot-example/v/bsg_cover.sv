@@ -39,6 +39,7 @@ module bsg_cover
 
   ,input ready_i
   ,output logic v_o
+  ,output logic last_o
   ,output logic [out_width_p-1:0] data_o
   );
 
@@ -59,7 +60,7 @@ module bsg_cover
   logic [els_p-1:0] cam_encoh_li, cam_idx_oh_lo;
   logic [lg_els_lp-1:0] cam_idx_enc_lo;
 
-  logic piso_v_li, piso_ready_and_lo;
+  logic piso_v_li, piso_ready_and_lo, piso_last_li;
   logic [(out_width_p*piso_div_lp)-1:0] piso_data_li;
 
   // cross into ungated and downsampled domain
@@ -111,6 +112,7 @@ module bsg_cover
 
   assign piso_v_li = (state_r == DRAIN) & cam_idx_v_lo;
   assign piso_data_li = {(out_width_p)'(0), cam_snoop_tag_lo};
+  assign piso_last_li = (state_r == DRAIN) & (state_n == FILL);
 
   // count the unique coverage data written/drained into/from the CAM
   // gate the core clock when:
@@ -177,9 +179,11 @@ module bsg_cover
    if(width_p <= out_width_p) begin: pass
      assign v_o = piso_v_li;
      assign data_o = piso_data_li;
+     assign last_o = piso_last_li;
      assign piso_ready_and_lo = ready_i;
    end
    else begin: piso
+     assign last_o = piso_ready_and_lo & piso_last_li;
      bsg_parallel_in_serial_out_passthrough
       #(.width_p(out_width_p)
        ,.els_p(piso_div_lp)
@@ -212,6 +216,11 @@ module bsg_cover
        if(~core_reset_i & v_i & ready_o) begin
          $fwrite(file, "%x\n", data_i);
        end
+     end
+
+     always_ff @(negedge ds_clk_i) begin
+       assert(((els_p * width_p) / out_width_p) <= 256);
+         else $error("CAM too big for a single transaction: %0d\n", id_p);
      end
    end
    // synopsys translate_on

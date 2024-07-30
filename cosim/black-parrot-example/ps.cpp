@@ -127,38 +127,59 @@ ostream& operator<<(ostream& os, const covBits& c) {
     return os;
 }
 
-int cov_id = 0;
+
+struct covProcState {
+  bool is_header;
+  int id;
+  int len;
+  int els;
+  int els_cnt;
+  int len_cnt;
+  covBits* curr_cov;
+
+  covProcState() {
+    is_header = true;
+  }
+};
+
+covProcState covState;
 std::unordered_set<covBits, covBits::Hash> covs[COV_NUM];
 
 inline void cov_proc(uint32_t* p) {
-  int len, els;
-  bool last = false;
-  bool is_id = true;
-
   while(true) {
-    if(is_id) {
+    if(covState.is_header) {
+      if(*p == 0xdeadbeef)
+        return;
+
       //bsg_pr_info("ps.cpp: header = %x\n", *p);
-      cov_id = *p & 0xFF;
-      els = (*p >> 8) & 0xFF;
-      len = (*p >> 16) & 0xFF;
-      last = (*p >> 24) & 0x1;
-      is_id = false;
+      covState.id = *p & 0xFF;
+      covState.els = (*p >> 8) & 0xFF;
+      covState.len = (*p >> 16) & 0xFF;
+      covState.is_header = false;
+      covState.els_cnt = 0;
+      covState.len_cnt = 0;
       p++;
     }
     else {
-      for(int i = 0; i < els; i++) {
-        covBits cov = covBits(len);
-        for(int j = 0; j < len; j++) {
-          //bsg_pr_info("ps.cpp: *p = %x\n", *p);
-          cov.set(j, *p);
+      while(covState.els_cnt < covState.els) {
+        while(covState.len_cnt < covState.len) {
+          //bsg_pr_info("ps.cpp: data = %x\n", *p);
+          if(*p == 0xdeadbeef)
+            return;
+
+          if(covState.len_cnt == 0)
+            covState.curr_cov = new covBits(covState.len);
+
+          covState.curr_cov->set(covState.len_cnt, *p);
+          covState.len_cnt++;
           p++;
         }
-        //cout << "ps.cpp: cov = " << cov << endl;
-        covs[cov_id].insert(cov);
+        //cout << "ps.cpp: cov = " << *covState.curr_cov << endl;
+        covs[covState.id].insert(*covState.curr_cov);
+        covState.len_cnt = 0;
+        covState.els_cnt++;
       }
-      is_id = true;
-      if(last)
-        break;
+      covState.is_header = true;
     }
   }
 }
@@ -167,7 +188,7 @@ inline void cov_proc(uint32_t* p) {
 PYNQ_SHARED_MEMORY cov_buff;
 PYNQ_AXI_DMA dma;
 
-pthread_t cov_id;
+pthread_t cov_pid;
 bool cov_run = true;
 
 void* cov_poll(void *vargp) {
@@ -177,7 +198,7 @@ void* cov_poll(void *vargp) {
     PYNQ_waitForDMAComplete(&dma, AXI_DMA_READ);
 
     // process the packet
-    cov_proc((uint32_t*)cov_buff->pointer);
+    cov_proc((uint32_t*)cov_buff.pointer);
   }
   return NULL;
 }
@@ -195,13 +216,13 @@ void cov_start(bsg_zynq_pl *zpl) {
   zpl->shell_write(GP0_WR_CSR_COV_EN, 0x1, 0xf);
 
   // start coverage polling thread
-  pthread_create(&cov_id, NULL, cov_poll, NULL);
+  pthread_create(&cov_pid, NULL, cov_poll, NULL);
 }
 
 void cov_done(bsg_zynq_pl *zpl) {
   // stop coverage polling thread
   cov_run = false;
-  pthread_join(cov_id, NULL);
+  pthread_join(cov_pid, NULL);
 
   // deassert coverage collection
   bsg_pr_info("ps.cpp: Desserting coverage collection enable\n");
@@ -516,7 +537,7 @@ int ps_main(int argc, char **argv) {
               zpl->shell_read(GP0_RD_MEM_PROF_2),
               zpl->shell_read(GP0_RD_MEM_PROF_1),
               zpl->shell_read(GP0_RD_MEM_PROF_0));
-
+  btb->idle(500000);
   // in general we do not want to free the dram; the Xilinx allocator has a
   // tendency to
   // fail after many allocate/fail cycle. instead we keep a pointer to the dram

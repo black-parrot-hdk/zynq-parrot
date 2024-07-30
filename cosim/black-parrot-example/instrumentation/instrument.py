@@ -83,6 +83,7 @@ def cov_tail(i, gsize):
     ,.len_o            (cov_len_lo[{i}]) \n\
     ,.ready_i          (cov_ready_li[{i}]) \n\
     ,.v_o              (cov_v_lo[{i}]) \n\
+    ,.last_o           (cov_last_lo[{i}]) \n\
     ,.data_o           (cov_data_lo[{i}]) \n\
     );\n\n"
 
