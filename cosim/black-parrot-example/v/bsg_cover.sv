@@ -1,6 +1,7 @@
 
 `include "bsg_defines.sv"
 
+(* keep_hierarchy = "yes" *)
 module bsg_cover
  #(parameter `BSG_INV_PARAM(id_p)
   ,parameter `BSG_INV_PARAM(width_p)

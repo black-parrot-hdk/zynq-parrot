@@ -1,6 +1,7 @@
 
 `include "bsg_defines.sv"
 
+(* keep_hierarchy = "yes" *)
 module bsg_cover_realign
  #(parameter `BSG_INV_PARAM(num_p)
   ,parameter `BSG_INV_PARAM(num_chain_p)
