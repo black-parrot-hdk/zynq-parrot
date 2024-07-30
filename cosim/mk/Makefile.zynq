@@ -69,4 +69,5 @@ clean:
 	rm -rf *.elf
 	rm -rf $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.hwh $(BASENAME)_bd_1_bd.tcl
 	rm -rf $(BUILD_COLLATERAL) $(SIM_COLLATERAL)
+	rm -f build.log run.log
 

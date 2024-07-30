@@ -77,7 +77,6 @@ VPATH := $(wildcard $(BLACKPARROT_SDK_DIR)/prog/*)
 PROG ?= hello_world
 NBF_FILE ?= $(PROG).nbf
 ELF_FILE ?= $(PROG).riscv
-RUN_COLLATERAL = $(NBF_FILE) $(ELF_FILE)
 
 prog: $(NBF_FILE) $(ELF_FILE)
 
