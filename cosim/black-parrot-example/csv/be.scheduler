@@ -24,24 +24,17 @@
 `COREPATH.be.scheduler.ptw.walk_en, 0
 `COREPATH.be.scheduler.writeback_v, 0
 `COREPATH.be.scheduler.int_regfile.bypass[1].fwd_rs_r, 0
- ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {217156208 ,  (5  { ({217156216 }) }) ,  (5  { ({217156224 }) }) ,  217156232 ,  (5  { ({217156240 }) }) ,  217156248 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {217156256 ,  (5  { ({217156264 }) }) ,  (5  { ({217156272 }) }) ,  217156280 ,  (5  { ({217156288 }) }) ,  217156296 }), 1
 `COREPATH.be.scheduler.int_regfile.bypass[0].zero_rs_r, 0
 `COREPATH.be.scheduler.ptw.walk_done, 0
 `COREPATH.be.scheduler.issue_queue.upper, 1
  &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 215848288) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 215848296), 0
-, 1
 `COREPATH.be.scheduler.ptw.level_r >  2, 0
 (`COREPATH.be.scheduler.fp_regfile.bypass[1].rs_data_reg.en_i), 0
  &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 217156032), 0
 `COREPATH.be.scheduler.int_regfile.bypass[0].replace_rs, 1
- ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr[31+:12] == {264441200 }) &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217153936 }) }) ,  (5  { ({217153944 }) }) ,  217153952 ,  (5  { ({217153960 }) }) ,  217153968 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217153976 }) }) ,  (5  { ({217153984 }) }) ,  217153992 ,  (5  { ({217154000 }) }) ,  217154008 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217154016 }) }) ,  (5  { ({217154024 }) }) ,  217154032 ,  (5  { ({217154040 }) }) ,  217154048 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217154056 }) }) ,  (5  { ({217154064 }) }) ,  217154072 ,  (5  { ({217154080 }) }) ,  217154088 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217154096 }) }) ,  (5  { ({217154104 }) }) ,  217154112 ,  (5  { ({217154120 }) }) ,  217154128 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217154136 }) }) ,  (5  { ({217154144 }) }) ,  217154152 ,  (5  { ({217154160 }) }) ,  217154168 }) &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 217153928), 0
 `COREPATH.be.scheduler.issue_queue.deq_v_i, 2
- ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {217156400 ,  (5  { ({217156408 }) }) ,  (5  { ({217156416 }) }) ,  217156424 ,  (5  { ({217156432 }) }) ,  217156440 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {217156448 ,  (5  { ({217156456 }) }) ,  (5  { ({217156464 }) }) ,  217156472 ,  (5  { ({217156480 }) }) ,  217156488 }), 1
-(`COREPATH.be.scheduler.issue_queue.cptr.reset_i), 1
  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == 264176528) &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 217153928), 0
-(`COREPATH.be.scheduler.issue_queue.wptr.reset_i), 0
 `COREPATH.be.scheduler.issue_queue.deq_v_i, 1
- ( `COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i == {217159464 ,  (1  { ({217159472 }) }) ,  (5  { ({217159480 }) }) ,  (5  { ({217159488 }) }) ,  217159496 }) ||  ( `COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i == 250774400) ||  ( `COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i == {217159504 ,  (8  { ({217159512 }) }) ,  (3  { ({217159520 }) }) ,  217159528 }) & `COREPATH.be.scheduler.issue_queue.c1.expander.imm, 1
 `COREPATH.be.scheduler.issue_queue.deq_skip_i, 1
  &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 217153896), 0
  ( `COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i == 250738432), 1
@@ -53,17 +46,13 @@
  &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 215850368), 0
  ( `COREPATH.be.scheduler.ptw.state_r == 0) & `COREPATH.be.scheduler.ptw.walk_start, 1
  ( `COREPATH.be.scheduler.ptw.state_r == 1) & `COREPATH.be.scheduler.ptw.walk_ready, 1
-, 0
 (`COREPATH.be.scheduler.int_regfile.bypass[0].rs_data_reg.en_i), 0
 `COREPATH.be.scheduler.issue_pkt_cast_o.partial, 0
 `COREPATH.be.scheduler.fp_regfile.bypass[0].zero_rs_r, 0
  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == 264174576) &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 217153928), 0
- ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {217156304 ,  (5  { ({217156312 }) }) ,  (5  { ({217156320 }) }) ,  217156328 ,  (5  { ({217156336 }) }) ,  217156344 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {217156352 ,  (5  { ({217156360 }) }) ,  (5  { ({217156368 }) }) ,  217156376 ,  (5  { ({217156384 }) }) ,  217156392 }), 0
 `COREPATH.be.scheduler.issue_queue.read_v_i, 1
  ( `COREPATH.be.scheduler.ptw.state_r == 3) & `COREPATH.be.scheduler.ptw.walk_replay, 1
  &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 217153928), 0
-(`COREPATH.be.scheduler.issue_queue.cptr.reset_i), 0
- ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {217156400 ,  (5  { ({217156408 }) }) ,  (5  { ({217156416 }) }) ,  217156424 ,  (5  { ({217156432 }) }) ,  217156440 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {217156448 ,  (5  { ({217156456 }) }) ,  (5  { ({217156464 }) }) ,  217156472 ,  (5  { ({217156480 }) }) ,  217156488 }), 0
 `COREPATH.be.scheduler.issue_queue.clr, 2
  ( `COREPATH.be.scheduler.ptw.state_r == 2) & `COREPATH.be.scheduler.ptw.walk_send, 1
 `COREPATH.be.scheduler.ptw.level_r >  1, 0
@@ -71,27 +60,19 @@
  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == 264176864) &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 217153896), 0
  &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 219520568) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 219520576), 0
 `COREPATH.be.scheduler.issue_queue.preissue_compressed, 1
-(`COREPATH.be.scheduler.issue_queue.rptr.reset_i), 0
- ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {217156208 ,  (5  { ({217156216 }) }) ,  (5  { ({217156224 }) }) ,  217156232 ,  (5  { ({217156240 }) }) ,  217156248 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {217156256 ,  (5  { ({217156264 }) }) ,  (5  { ({217156272 }) }) ,  217156280 ,  (5  { ({217156288 }) }) ,  217156296 }), 0
 (`COREPATH.be.scheduler.fp_regfile.bypass[0].rs_data_reg.en_i), 0
-(`COREPATH.be.scheduler.ptw.reset_i), 0
 `COREPATH.be.scheduler.issue_queue.clr, 1
-(`COREPATH.be.scheduler.issue_queue.issue_reg.en_i) & (`COREPATH.be.scheduler.issue_queue.issue_reg.reset_i), 0
 `COREPATH.be.scheduler.issue_queue.ack, 1
 `COREPATH.be.scheduler.issue_queue.read_skip_i, 1
- ( `COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i == {217159384 ,  (1  { ({217159392 }) }) ,  (5  { ({217159400 }) }) ,  (5  { ({217159408 }) }) ,  217159416 }) ||  ( `COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i == {217159424 ,  (1  { ({217159432 }) }) ,  (5  { ({217159440 }) }) ,  (5  { ({217159448 }) }) ,  217159456 }) & `COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i[11:7], 1
  &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 217153608), 0
  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == 264170736) &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 217153896), 0
  &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 215850952), 0
  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == 264176480) &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 217153896), 1
  &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 217153808), 0
  &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 215850664), 0
- ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217153936 }) }) ,  (5  { ({217153944 }) }) ,  217153952 ,  (5  { ({217153960 }) }) ,  217153968 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217153976 }) }) ,  (5  { ({217153984 }) }) ,  217153992 ,  (5  { ({217154000 }) }) ,  217154008 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217154016 }) }) ,  (5  { ({217154024 }) }) ,  217154032 ,  (5  { ({217154040 }) }) ,  217154048 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217154056 }) }) ,  (5  { ({217154064 }) }) ,  217154072 ,  (5  { ({217154080 }) }) ,  217154088 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217154096 }) }) ,  (5  { ({217154104 }) }) ,  217154112 ,  (5  { ({217154120 }) }) ,  217154128 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217154136 }) }) ,  (5  { ({217154144 }) }) ,  217154152 ,  (5  { ({217154160 }) }) ,  217154168 }) &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 217153928), 0
 `COREPATH.be.scheduler.issue_queue.c1.upper_n, 1
- ( `COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i == {278206176 ,  217156816 }) ||  ( `COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i == {217156824 ,  (1  { ({217156832 }) }) ,  (5  { ({217156840 }) }) ,  (5  { ({217156848 }) }) ,  217156856 }) ||  ( `COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i == {217156864 ,  (1  { ({217156872 }) }) ,  (5  { ({217156880 }) }) ,  (5  { ({217156888 }) }) ,  217156896 }) ||  ( `COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i == {217156904 ,  (1  { ({217156912 }) }) ,  (5  { ({217156920 }) }) ,  (5  { ({217156928 }) }) ,  217156936 }) ||  ( `COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i == 250727840) ||  ( `COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i == {217156944 ,  (1  { ({217156952 }) }) ,  (5  { ({217156960 }) }) ,  (5  { ({217156968 }) }) ,  217156976 }), 1
 `COREPATH.be.scheduler.int_regfile.bypass[0].zero_rs_r, 1
  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == 264176384) &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 217153896), 0
- ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr[31+:12] == {264441168 }) &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217153936 }) }) ,  (5  { ({217153944 }) }) ,  217153952 ,  (5  { ({217153960 }) }) ,  217153968 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217153976 }) }) ,  (5  { ({217153984 }) }) ,  217153992 ,  (5  { ({217154000 }) }) ,  217154008 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217154016 }) }) ,  (5  { ({217154024 }) }) ,  217154032 ,  (5  { ({217154040 }) }) ,  217154048 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217154056 }) }) ,  (5  { ({217154064 }) }) ,  217154072 ,  (5  { ({217154080 }) }) ,  217154088 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217154096 }) }) ,  (5  { ({217154104 }) }) ,  217154112 ,  (5  { ({217154120 }) }) ,  217154128 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {(12  { ({217154136 }) }) ,  (5  { ({217154144 }) }) ,  217154152 ,  (5  { ({217154160 }) }) ,  217154168 }) &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 217153928), 0
 `COREPATH.be.scheduler.issue_queue.upper, 0
  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == 264176480) &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 217153896), 0
 `COREPATH.be.scheduler.issue_queue.roll, 1
@@ -99,5 +80,4 @@
 `COREPATH.be.scheduler.ptw.level_r >  0, 0
  ( `COREPATH.be.scheduler.issue_queue.c1.expander.cinstr_i == 250739616), 1
 `COREPATH.be.scheduler.ptw.walk_start, 1
- ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {217156304 ,  (5  { ({217156312 }) }) ,  (5  { ({217156320 }) }) ,  217156328 ,  (5  { ({217156336 }) }) ,  217156344 }) ||  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == {217156352 ,  (5  { ({217156360 }) }) ,  (5  { ({217156368 }) }) ,  217156376 ,  (5  { ({217156384 }) }) ,  217156392 }), 1
  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr == 264174576) &  ( `COREPATH.be.scheduler.issue_queue.instr_decoder.instr.opcode == 217153928), 1

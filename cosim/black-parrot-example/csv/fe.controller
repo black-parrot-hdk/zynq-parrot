@@ -8,5 +8,4 @@
  ( `COREPATH.fe.controller.state_r == 1) ||  ( `COREPATH.fe.controller.state_r == 2) & `COREPATH.fe.controller.wait_v |  `COREPATH.fe.controller.icache_fence_v, 1
  ( `COREPATH.fe.controller.state_r == 1) ||  ( `COREPATH.fe.controller.state_r == 2) & `COREPATH.fe.controller.if1_we_o, 1
  ( `COREPATH.fe.controller.state_r == 3) & `COREPATH.fe.controller.if1_we_o, 1
-(`COREPATH.fe.controller.reset_i), 0
  ( `COREPATH.fe.controller.state_r == 3), 0
