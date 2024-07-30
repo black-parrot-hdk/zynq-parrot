@@ -1,6 +1,8 @@
 +incdir+$CURR_VSRC_DIR
 +incdir+$BASEJUMP_STL_DIR/bsg_tag
 $BASEJUMP_STL_DIR/bsg_misc/bsg_mux2_gatestack.sv
+$BASEJUMP_STL_DIR/bsg_misc/bsg_array_reverse.sv
+$BASEJUMP_STL_DIR/bsg_misc/bsg_counter_dynamic_limit_en.sv
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_pkg.sv
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_master_decentralized.sv
 $BASEJUMP_STL_DIR/bsg_tag/bsg_tag_client.sv

@@ -14,7 +14,7 @@ RAND_COV ?= 0
 ifeq ($(RAND_COV),1)
 COV_NUM ?= 4
 else
-COV_NUM := 36
+COV_NUM ?= 11
 endif
 
 #CFLAGS += -DDRAM_TEST
