@@ -3,8 +3,9 @@ include ../Makefile.design
 #############################
 # Accelerator Software Settings
 #############################
-#CFLAGS += -DZYNQ_PL_DEBUG
-CFLAGS += -DZYNQ_PS_DEBUG
+ZYNQ_PL_DEBUG ?= 0
+ZYNQ_PS_DEBUG ?= 1
+
 CFLAGS += -DDRAM_TEST
 CFLAGS += -DFREE_DRAM=1
 CFLAGS += -DZERO_DRAM=1

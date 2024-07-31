@@ -11,14 +11,6 @@ ZYNQ_PS_DEBUG ?= 1
 
 CFLAGS += -DBP_NCPUS=$(BP_NCPUS)
 
-# PL Debug
-ifeq ($(ZYNQ_PL_DEBUG),1)
-CFLAGS += -DZYNQ_PL_DEBUG
-endif
-# PS Debug
-ifeq ($(ZYNQ_PS_DEBUG),1)
-CFLAGS += -DZYNQ_PS_DEBUG
-endif
 # Cosim
 ifeq ($(DROMAJO_COSIM),1)
 CFLAGS += -I$(BP_TOOLS_DIR)/dromajo/include

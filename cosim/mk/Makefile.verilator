@@ -14,6 +14,14 @@ CFLAGS += -DVERILATOR
 CFLAGS += -DHOST_$(call upper,$(HOST))
 CFLAGS += $(addprefix -D,$(DEFINES))
 CFLAGS += -std=c++14
+# PL Debug
+ifeq ($(ZYNQ_PL_DEBUG),1)
+CFLAGS += -DZYNQ_PL_DEBUG
+endif
+# PS Debug
+ifeq ($(ZYNQ_PS_DEBUG),1)
+CFLAGS += -DZYNQ_PS_DEBUG
+endif
 
 LDFLAGS += -L$(BP_SDK_INSTALL_DIR)/lib
 LDFLAGS += -lboost_coroutine -lboost_context -lboost_system
