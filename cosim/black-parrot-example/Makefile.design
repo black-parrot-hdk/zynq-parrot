@@ -57,6 +57,8 @@ $(CURR_VSRC_DIR)/bsg_bootrom.v: $(CURR_VSRC_DIR)/bsg_bootrom.rom
 
 BUILD_COLLATERAL  = $(CURR_VSRC_DIR)/bsg_blackparrot_pkg.sv
 BUILD_COLLATERAL += $(CURR_VSRC_DIR)/bsg_bootrom.v
+BUILD_COLLATERAL += $(CURR_VSRC_DIR)/bsg_bootrom.rom
+BUILD_COLLATERAL += $(CURR_VSRC_DIR)/bsg_bootrom.bin
 
 #############################
 # Run Collateral
@@ -65,13 +67,16 @@ NBF_NCPUS ?= 1
 
 VPATH := $(wildcard $(BLACKPARROT_SDK_DIR)/prog/*)
 %.nbf: %.riscv
+	cp $< $(CURR)/
 	$(RISCV_OBJCOPY) -O verilog $< $*.mem
 	$(SED) -i "s/@8/@0/g" $*.mem
 	$(PYTHON) $(BP_COMMON_DIR)/software/py/nbf.py \
 		--debug --skip_zeros --config --mem $*.mem --ncpus $(NBF_NCPUS) > $@
 	rm $*.mem
 
-NBF_FILE ?= hello_world.nbf
-ELF_FILE ?= hello_world.riscv
-RUN_COLLATERAL = $(NBF_FILE)
+PROG ?= hello_world
+NBF_FILE ?= $(PROG).nbf
+ELF_FILE ?= $(PROG).riscv
+
+prog: $(NBF_FILE) $(ELF_FILE)
 

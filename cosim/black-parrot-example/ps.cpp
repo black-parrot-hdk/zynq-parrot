@@ -229,7 +229,6 @@ int ps_main(int argc, char **argv) {
 
 #endif // DRAM_TEST
 
-#ifdef ZYNQ
   // Must zero DRAM for FPGA Linux boot, because opensbi payload mode
   //   obliterates the section names of the payload (Linux)
   if (ZERO_DRAM) {
@@ -239,7 +238,6 @@ int ps_main(int argc, char **argv) {
       zpl->shell_write(gp1_addr_base + i, 0x0, mask1);
     }
   }
-#endif
 
   bsg_pr_info("ps.cpp: beginning nbf load\n");
   nbf_load(zpl, argv[1]);

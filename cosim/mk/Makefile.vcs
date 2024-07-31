@@ -26,6 +26,14 @@ CFLAGS += -DHOST_$(call upper,$(HOST))
 CFLAGS += -std=c++14
 CFLAGS += -D_DEFAULT_SOURCE -D_BSD_SOURCE
 CFLAGS += $(addprefix -D,$(DEFINES))
+# PL Debug
+ifeq ($(ZYNQ_PL_DEBUG),1)
+CFLAGS += -DZYNQ_PL_DEBUG
+endif
+# PS Debug
+ifeq ($(ZYNQ_PS_DEBUG),1)
+CFLAGS += -DZYNQ_PS_DEBUG
+endif
 
 CINCLUDES += -I$(BP_SDK_INSTALL_DIR)/include
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common

@@ -15,6 +15,14 @@ CFLAGS += -lcma -lpthread
 CFLAGS += -std=c++14
 CFLAGS += $(shell cat $(BASENAME)_bd_1.map)
 CFLAGS += -DGP2_ADDR_BASE=0 -DHP1_ADDR_BASE=0
+# PL Debug
+ifeq ($(ZYNQ_PL_DEBUG),1)
+CFLAGS += -DZYNQ_PL_DEBUG
+endif
+# PS Debug
+ifeq ($(ZYNQ_PS_DEBUG),1)
+CFLAGS += -DZYNQ_PS_DEBUG
+endif
 
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/zynq
@@ -69,4 +77,5 @@ clean:
 	rm -rf *.elf
 	rm -rf $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.hwh $(BASENAME)_bd_1_bd.tcl
 	rm -rf $(BUILD_COLLATERAL) $(SIM_COLLATERAL)
+	rm -f build.log run.log
 

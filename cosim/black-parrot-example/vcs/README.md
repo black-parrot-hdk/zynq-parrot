@@ -21,3 +21,11 @@ that can be easily re-implemented to run on the actual PS system
 - Makefile: you need to set a number of parameters, like the base address of your accelerator (from the IPI tool)
 
 Tested with Verilator 4.202 2021-04-24 and GTKWave Analyzer v3.3.86 
+
+## Example commands
+
+```
+make clean bootrom prog [PROG=<program name>]
+make simv run [PROG=<program name>] [DROMAJO_COSIM=1] [ZYNQ_PL_DEBUG=1] [ZYNQ_PS_DEBUG=1] [DRAM_TEST=1] [ZERO_DRAM=1]
+```
+

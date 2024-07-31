@@ -45,4 +45,6 @@ boost/
 bsg_bootrom.*
 NA/
 xrun.key
+prog.elf
+*.trace
 
