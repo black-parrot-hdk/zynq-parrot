@@ -9,7 +9,7 @@ prep: checkout
 	# BlackParrot
 	$(MAKE) -C $(BLACKPARROT_DIR) libs
 	$(MAKE) -C $(BLACKPARROT_TOOLS_DIR) tools
-	$(MAKE) -C $(BLACKPARROT_SDK_DIR) sdk PLATFORM=zynqparrot
+	$(MAKE) -C $(BLACKPARROT_SDK_DIR) sdk PLATFORM=$(PLATFORM)
 	$(MAKE) -C $(BLACKPARROT_SDK_DIR) prog
 
 prep_bsg: prep
