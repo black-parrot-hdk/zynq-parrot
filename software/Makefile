@@ -11,25 +11,29 @@ TARGET_NAME ?=
 ifeq ($(TARGET_NAME),x86)
 TARGET_CC        ?= x86_64-linux-gnu
 TARGET_TEMPLATE  ?= zynq
-TARGET_SDK       ?= $(SOFTWARE_WORK_DIR)/x86
+TARGET_SDK       ?= $(SOFTWARE_INSTALL_DIR)/$(TARGET_NAME)
+TARGET_WORK      ?= $(SOFTWARE_WORK_DIR)/$(TARGET_NAME)
 # These files aren't used for native compilation, but we
 #   stub them out to reuse the makefile targets
-TARGET_PROJ      ?= $(SOFTWARE_WORK_DIR)/dummy.proj
-TARGET_XSA       ?= $(SOFTWARE_WORK_DIR)/dummy.xsa
-TARGET_TCL       ?= $(SOFTWARE_WORK_DIR)/dummy.tcl
+TARGET_PROJ      ?= $(TARGET_WORK)/dummy.proj
+TARGET_XSA       ?= $(TARGET_WORK)/dummy.xsa
+TARGET_TCL       ?= $(TARGET_WORK)/dummy.tcl
 TARGET_ENV       ?= $(TARGET_SDK)/dummy.environment-setup-x86
 
 TARGET_VERILATOR ?= $(TARGET_SDK)/bin/verilator
 
 dummy.%:
+	mkdir -p $(TARGET_WORK)
+	mkdir -p $(TARGET_SDK)
 	touch $@
 
 else ifeq ($(TARGET_NAME),pynqz2)
 TARGET_CC        ?= arm-xilinx-linux-gnueabi
 TARGET_TEMPLATE  ?= zynq
+TARGET_WORK      ?= $(PYNQZ2_WORK)
 TARGET_SDK       ?= $(PYNQZ2_SDK)
 TARGET_PROJ      ?= $(TARGET_NAME)_proj
-TARGET_XSA       ?= $(SOFTWARE_WORK_DIR)/$(TARGET_NAME)_basic.xsa
+TARGET_XSA       ?= $(TARGET_WORK)/$(TARGET_NAME)_basic.xsa
 TARGET_TCL       ?= $(SOFTWARE_TCL_DIR)/vivado-gen-xsa-$(TARGET_NAME).tcl
 TARGET_ENV       ?= $(PYNQZ2_ENV)
 
@@ -37,9 +41,10 @@ TARGET_VERILATOR ?= $(TARGET_SDK)/bin/verilator
 else ifeq ($(TARGET_NAME),ultra96v2)
 TARGET_CC        ?= aarch64-xilinx-linux-gnueabi
 TARGET_TEMPLATE  ?= zynqMP
+TARGET_WORK      ?= $(ULTRA96V2_WORK)
 TARGET_SDK       ?= $(ULTRA96V2_SDK)
 TARGET_PROJ      ?= $(TARGET_NAME)_proj
-TARGET_XSA       ?= $(SOFTWARE_WORK_DIR)/$(TARGET_NAME)_basic.xsa
+TARGET_XSA       ?= $(TARGET_WORK)/$(TARGET_NAME)_basic.xsa
 TARGET_TCL       ?= $(SOFTWARE_TCL_DIR)/vivado-gen-xsa-$(TARGET_NAME).tcl
 TARGET_ENV       ?= $(ULTRA96V2_ENV)
 
