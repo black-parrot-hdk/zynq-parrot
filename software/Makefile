@@ -50,13 +50,13 @@ dummy.%:
 HOST_CC ?= x86_64-linux-gnu
 %/bin/verilator: $(TARGET_ENV)
 	mkdir -p $(TARGET_SDK)
-	cd $(SOFTWARE_IMPORT_DIR)/verilator; \
+	cd $(BLACKPARROT_TOOLS_DIR)/verilator; \
 		autoconf; ./configure \
 		--target=$(TARGET_CC) \
 		--host=$(HOST_CC) \
 		--build=$(HOST_CC) \
 		--prefix=$(TARGET_SDK)
-	cd $(SOFTWARE_IMPORT_DIR)/verilator; \
+	cd $(BLACKPARROT_TOOLS_DIR)/verilator; \
 		source $(TARGET_ENV) && $(MAKE) && $(MAKE) install
 
 environment-setup-%: $(TARGET_XSA)
