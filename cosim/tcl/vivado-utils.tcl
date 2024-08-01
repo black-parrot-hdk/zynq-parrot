@@ -83,6 +83,7 @@ proc vivado_elab_wrap { do_elab proj_bd } {
 
 proc vivado_synth_wrap { do_synth threads } {
     if {${do_synth}} {
+        # Uncomment for faster TTR with worse QoR
         #set_property strategy Flow_RuntimeOptimized [get_runs synth_1]
         set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY rebuilt [get_runs synth_1]
         set_property STEPS.SYNTH_DESIGN.ARGS.RETIMING true [get_runs synth_1]
@@ -94,6 +95,7 @@ proc vivado_synth_wrap { do_synth threads } {
 
 proc vivado_impl_wrap { do_impl threads } {
     if {${do_impl}} {
+        # Uncomment for faster TTR with worse QoR
         #set_property strategy Flow_RuntimeOptimized [get_runs impl_1]
         launch_runs impl_1 -to_step write_bitstream -jobs ${threads}
         wait_on_run impl_1
