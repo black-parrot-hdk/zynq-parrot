@@ -7,8 +7,6 @@ export IMPL    ?= 1
 export HANDOFF ?= 1
 export THREADS ?= 8
 
-export VIVADO_RUN ?= export $(DEFINES) && source $(XILINX_SETTINGS) && $(VIVADO)
-
 all:
 	@echo "Rules for Vivado; see $(TOP)/cosim/mk/Makefile.vivado for more:"
 	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.vivado
@@ -26,13 +24,13 @@ fpga_report_build_block:
 fpga_build_ip: ip_repo
 ip_repo: $(FLIST) $(BUILD_COLLATERAL)
 	mkdir $@
-	$(VIVADO_RUN) -source $(CURR)/vivado-build-ip.tcl -mode $(VIVADO_MODE)
+	$(VIVADO_RUN) -source $(CURR)/vivado-build-ip.tcl
 	-@grep --color "CRITICAL WARNING:" vivado.log || true
 	-@grep --color "ERROR:" vivado.log || true
 	-@tail -n5 vivado.log
 
 fpga_build: ip_repo
-	$(VIVADO_RUN) -source $(CURR)/vivado-build-bd.tcl -mode $(VIVADO_MODE)
+	$(VIVADO_RUN) -source $(CURR)/vivado-build-bd.tcl
 	$(MAKE) fpga_report_build_block
 
 # we are looking for a *_bd_1.bit, *_bd_1_bd.map, *_bd_1.hwh

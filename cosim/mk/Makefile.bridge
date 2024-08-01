@@ -28,7 +28,7 @@ unpack_bitstream:
 	$(BASE64) -d ../$(BASENAME)_bd_1.$(HOST).$(BOARDNAME).tar.xz.b64 | $(TAR) xvJ
 
 program_fpga:
-	source $(XILINX_SETTINGS) && $(VIVADO) -source $(COSIM_TCL_DIR)/program_fpga.tcl -mode $(VIVADO_MODE)
+	$(VIVADO_RUN) -source $(COSIM_TCL_DIR)/program_fpga.tcl
 
 clean:
 	rm -rf $(EXE) $(BUILD_COLLATERAL) $(SIM_COLLATERAL)

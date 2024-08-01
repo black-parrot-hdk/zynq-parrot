@@ -7,9 +7,8 @@ BASE_FLIST ?= $(abspath ../flist.vcs)
 BP_FLIST ?= $(abspath flist.blackparrot.vcs)
 FLIST ?= $(abspath flist.vcs)
 
-$(BP_FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs
-	cp $^ $@
-	sed -i "s/BASEJUMP_STL_DIR/BP_BASEJUMP_STL_DIR/g" $@
+$(BP_FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs $(BASE_FLIST)
+	cat $^ | sed "s/BASEJUMP_STL_DIR/BP_BASEJUMP_STL_DIR/g" | envsubst > $@
 	sed -i "/bp_common_pkg.sv/d" $@
 	sed -i "1i $(CURR_VSRC_DIR)/bp_common_pkg.sv" $@
 

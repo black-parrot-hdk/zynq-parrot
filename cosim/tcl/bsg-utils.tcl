@@ -9,6 +9,7 @@ proc bsg_blss_constraints { blss_inst cdc_delay } {
         set dest_cell  [get_cells $path/hard_sync_int1_r_reg[$index]]
         # max delay between launch flop and sync_1 flop
         set_max_delay -from $source_cell -to $dest_cell -datapath_only $cdc_delay
+	set_false_path -to [get_pins -of_object $source_cell]
     }
 }
 
