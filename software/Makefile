@@ -5,18 +5,24 @@ include $(TOP)/Makefile.config
 
 include $(TOP)/software/mk/Makefile.env
 
+.DEFAULT_GOAL := all
 TARGET_NAME ?=
 
 ifeq ($(TARGET_NAME),x86)
 TARGET_CC        ?= x86_64-linux-gnu
 TARGET_TEMPLATE  ?= zynq
 TARGET_SDK       ?= $(SOFTWARE_WORK_DIR)/x86
+# These files aren't used for native compilation, but we
+#   stub them out to reuse the makefile targets
 TARGET_PROJ      ?= $(SOFTWARE_WORK_DIR)/dummy.proj
 TARGET_XSA       ?= $(SOFTWARE_WORK_DIR)/dummy.xsa
 TARGET_TCL       ?= $(SOFTWARE_WORK_DIR)/dummy.tcl
 TARGET_ENV       ?= $(TARGET_SDK)/dummy.environment-setup-x86
 
 TARGET_VERILATOR ?= $(TARGET_SDK)/bin/verilator
+
+dummy.%:
+	touch $@
 
 else ifeq ($(TARGET_NAME),pynqz2)
 TARGET_CC        ?= arm-xilinx-linux-gnueabi
@@ -42,12 +48,10 @@ else
 $(error Unknown TARGET_NAME $(TARGET_NAME) for software)
 endif
 
-all: $(TARGET_VERILATOR)
-
-dummy.%:
-	touch $@
+all: verilator
 
 HOST_CC ?= x86_64-linux-gnu
+verilator: $(TARGET_VERILATOR)
 %/bin/verilator: $(TARGET_ENV)
 	mkdir -p $(TARGET_SDK)
 	cd $(BLACKPARROT_TOOLS_DIR)/verilator; \
@@ -59,6 +63,7 @@ HOST_CC ?= x86_64-linux-gnu
 	cd $(BLACKPARROT_TOOLS_DIR)/verilator; \
 		source $(TARGET_ENV) && $(MAKE) && $(MAKE) install
 
+environment-setup: $(TARGET_ENV)
 environment-setup-%: $(TARGET_XSA)
 	mkdir -p $(@D)
 	cd $(<D); \
@@ -72,11 +77,14 @@ environment-setup-%: $(TARGET_XSA)
 	cd $(<D)/$(TARGET_PROJ); \
 		mv images/linux/sdk/environment-setup-* $@
 
+xsa: $(TARGET_XSA)
 %.xsa:
 	mkdir -p $(@D)
 	cd $(@D); \
 		$(VIVADO_RUN) -source $(TARGET_TCL)
 
 clean:
-	rm -rf $(SOFTWARE_WORK_DIR)
+	rm -rf $(TARGET_XSA)
+	rm -rf $(TARGET_ENV)
+	rm -rf $(SOFTWARE_INSTALL_DIR)/$(TARGET_NAME)
 
