@@ -21,6 +21,7 @@
 
 #include "bsg_argparse.h"
 #include "bsg_axil.h"
+#include "bsg_axis.h"
 #include "bsg_printing.h"
 #include "bsg_nonsynth_dpi_gpio.hpp"
 #include "bsg_peripherals.h"
@@ -60,6 +61,12 @@ protected:
     std::unique_ptr<saxil<HP0_ADDR_WIDTH, HP0_DATA_WIDTH>> axi_hp0;
     std::unique_ptr<saxil<HP1_ADDR_WIDTH, HP1_DATA_WIDTH>> axi_hp1;
     std::unique_ptr<saxil<HP2_ADDR_WIDTH, HP2_DATA_WIDTH>> axi_hp2;
+    std::unique_ptr<maxis<MP0_DATA_WIDTH>> axi_mp0;
+    std::unique_ptr<maxis<MP1_DATA_WIDTH>> axi_mp1;
+    std::unique_ptr<maxis<MP2_DATA_WIDTH>> axi_mp2;
+    std::unique_ptr<saxis<SP0_DATA_WIDTH>> axi_sp0;
+    std::unique_ptr<saxis<SP1_DATA_WIDTH>> axi_sp1;
+    std::unique_ptr<saxis<SP2_DATA_WIDTH>> axi_sp2;
 
     std::unique_ptr<zynq_uart> uart;
     std::unique_ptr<zynq_scratchpad> scratchpad;
@@ -110,6 +117,48 @@ protected:
             STRINGIFY(HP2_HIER_BASE));
         co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
             axi_hp2->reset(yield);
+        }));
+#endif
+#ifdef MP0_ENABLE
+        axi_mp0 = std::make_unique<maxis<MP0_DATA_WIDTH>>(
+            STRINGIFY(MP0_HIER_BASE));
+        co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+            axi_mp0->reset(yield);
+        }));
+#endif
+#ifdef MP1_ENABLE
+        axi_mp1 = std::make_unique<maxis<MP1_DATA_WIDTH>>(
+            STRINGIFY(MP1_HIER_BASE));
+        co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+            axi_mp1->reset(yield);
+        }));
+#endif
+#ifdef MP2_ENABLE
+        axi_mp2 = std::make_unique<maxis<MP2_DATA_WIDTH>>(
+            STRINGIFY(MP2_HIER_BASE));
+        co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+            axi_mp2->reset(yield);
+        }));
+#endif
+#ifdef SP0_ENABLE
+        axi_sp0 = std::make_unique<saxis<SP0_DATA_WIDTH>>(
+            STRINGIFY(SP0_HIER_BASE));
+        co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+            axi_sp0->reset(yield);
+        }));
+#endif
+#ifdef SP1_ENABLE
+        axi_sp1 = std::make_unique<saxis<SP1_DATA_WIDTH>>(
+            STRINGIFY(SP1_HIER_BASE));
+        co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+            axi_sp1->reset(yield);
+        }));
+#endif
+#ifdef SP2_ENABLE
+        axi_sp2 = std::make_unique<saxis<SP2_DATA_WIDTH>>(
+            STRINGIFY(SP2_HIER_BASE));
+        co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+            axi_sp2->reset(yield);
         }));
 #endif
         // Do the reset
