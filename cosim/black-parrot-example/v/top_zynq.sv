@@ -21,20 +21,20 @@ module top_zynq
    // but we set them to make expectations consistent
 
    // Parameters of Axi Slave Bus Interface S00_AXI
-   , parameter integer C_S00_AXI_DATA_WIDTH   = 32
+   , parameter integer C_GP0_AXI_DATA_WIDTH   = 32
 
    // needs to be updated to fit all addresses used
    // by bsg_zynq_pl_shell read_locs_lp (update in top.v as well)
-   , parameter integer C_S00_AXI_ADDR_WIDTH   = 10
-   , parameter integer C_S01_AXI_DATA_WIDTH   = 32
+   , parameter integer C_GP0_AXI_ADDR_WIDTH   = 10
+   , parameter integer C_GP1_AXI_DATA_WIDTH   = 32
    // the ARM AXI S01 interface drops the top two bits
-   , parameter integer C_S01_AXI_ADDR_WIDTH   = 30
-   , parameter integer C_S02_AXI_DATA_WIDTH   = 32
-   , parameter integer C_S02_AXI_ADDR_WIDTH   = 28
-   , parameter integer C_M00_AXI_DATA_WIDTH   = 64
-   , parameter integer C_M00_AXI_ADDR_WIDTH   = 32
-   , parameter integer C_M01_AXI_DATA_WIDTH   = 32
-   , parameter integer C_M01_AXI_ADDR_WIDTH   = 32
+   , parameter integer C_GP1_AXI_ADDR_WIDTH   = 30
+   , parameter integer C_GP2_AXI_DATA_WIDTH   = 32
+   , parameter integer C_GP2_AXI_ADDR_WIDTH   = 28
+   , parameter integer C_HP0_AXI_DATA_WIDTH   = 64
+   , parameter integer C_HP0_AXI_ADDR_WIDTH   = 32
+   , parameter integer C_HP1_AXI_DATA_WIDTH   = 32
+   , parameter integer C_HP1_AXI_ADDR_WIDTH   = 32
    )
   (input wire                                    aclk
    , input wire                                  aresetn
@@ -45,67 +45,67 @@ module top_zynq
    , output logic                                tag_data
 
    // Ports of Axi Slave Bus Interface S00_AXI
-   , input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
+   , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
    , input wire [2 : 0]                          s00_axi_awprot
    , input wire                                  s00_axi_awvalid
    , output wire                                 s00_axi_awready
-   , input wire [C_S00_AXI_DATA_WIDTH-1 : 0]     s00_axi_wdata
-   , input wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s00_axi_wstrb
+   , input wire [C_GP0_AXI_DATA_WIDTH-1 : 0]     s00_axi_wdata
+   , input wire [(C_GP0_AXI_DATA_WIDTH/8)-1 : 0] s00_axi_wstrb
    , input wire                                  s00_axi_wvalid
    , output wire                                 s00_axi_wready
    , output wire [1 : 0]                         s00_axi_bresp
    , output wire                                 s00_axi_bvalid
    , input wire                                  s00_axi_bready
-   , input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_araddr
+   , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     s00_axi_araddr
    , input wire [2 : 0]                          s00_axi_arprot
    , input wire                                  s00_axi_arvalid
    , output wire                                 s00_axi_arready
-   , output wire [C_S00_AXI_DATA_WIDTH-1 : 0]    s00_axi_rdata
+   , output wire [C_GP0_AXI_DATA_WIDTH-1 : 0]    s00_axi_rdata
    , output wire [1 : 0]                         s00_axi_rresp
    , output wire                                 s00_axi_rvalid
    , input wire                                  s00_axi_rready
 
-   , input wire [C_S01_AXI_ADDR_WIDTH-1 : 0]     s01_axi_awaddr
+   , input wire [C_GP1_AXI_ADDR_WIDTH-1 : 0]     s01_axi_awaddr
    , input wire [2 : 0]                          s01_axi_awprot
    , input wire                                  s01_axi_awvalid
    , output wire                                 s01_axi_awready
-   , input wire [C_S01_AXI_DATA_WIDTH-1 : 0]     s01_axi_wdata
-   , input wire [(C_S01_AXI_DATA_WIDTH/8)-1 : 0] s01_axi_wstrb
+   , input wire [C_GP1_AXI_DATA_WIDTH-1 : 0]     s01_axi_wdata
+   , input wire [(C_GP1_AXI_DATA_WIDTH/8)-1 : 0] s01_axi_wstrb
    , input wire                                  s01_axi_wvalid
    , output wire                                 s01_axi_wready
    , output wire [1 : 0]                         s01_axi_bresp
    , output wire                                 s01_axi_bvalid
    , input wire                                  s01_axi_bready
-   , input wire [C_S01_AXI_ADDR_WIDTH-1 : 0]     s01_axi_araddr
+   , input wire [C_GP1_AXI_ADDR_WIDTH-1 : 0]     s01_axi_araddr
    , input wire [2 : 0]                          s01_axi_arprot
    , input wire                                  s01_axi_arvalid
    , output wire                                 s01_axi_arready
-   , output wire [C_S01_AXI_DATA_WIDTH-1 : 0]    s01_axi_rdata
+   , output wire [C_GP1_AXI_DATA_WIDTH-1 : 0]    s01_axi_rdata
    , output wire [1 : 0]                         s01_axi_rresp
    , output wire                                 s01_axi_rvalid
    , input wire                                  s01_axi_rready
 
-   , input wire [C_S02_AXI_ADDR_WIDTH-1 : 0]     s02_axi_awaddr
+   , input wire [C_GP2_AXI_ADDR_WIDTH-1 : 0]     s02_axi_awaddr
    , input wire [2 : 0]                          s02_axi_awprot
    , input wire                                  s02_axi_awvalid
    , output wire                                 s02_axi_awready
-   , input wire [C_S02_AXI_DATA_WIDTH-1 : 0]     s02_axi_wdata
-   , input wire [(C_S02_AXI_DATA_WIDTH/8)-1 : 0] s02_axi_wstrb
+   , input wire [C_GP2_AXI_DATA_WIDTH-1 : 0]     s02_axi_wdata
+   , input wire [(C_GP2_AXI_DATA_WIDTH/8)-1 : 0] s02_axi_wstrb
    , input wire                                  s02_axi_wvalid
    , output wire                                 s02_axi_wready
    , output wire [1 : 0]                         s02_axi_bresp
    , output wire                                 s02_axi_bvalid
    , input wire                                  s02_axi_bready
-   , input wire [C_S02_AXI_ADDR_WIDTH-1 : 0]     s02_axi_araddr
+   , input wire [C_GP2_AXI_ADDR_WIDTH-1 : 0]     s02_axi_araddr
    , input wire [2 : 0]                          s02_axi_arprot
    , input wire                                  s02_axi_arvalid
    , output wire                                 s02_axi_arready
-   , output wire [C_S02_AXI_DATA_WIDTH-1 : 0]    s02_axi_rdata
+   , output wire [C_GP2_AXI_DATA_WIDTH-1 : 0]    s02_axi_rdata
    , output wire [1 : 0]                         s02_axi_rresp
    , output wire                                 s02_axi_rvalid
    , input wire                                  s02_axi_rready
 
-   , output wire [C_M00_AXI_ADDR_WIDTH-1:0]      m00_axi_awaddr
+   , output wire [C_HP0_AXI_ADDR_WIDTH-1:0]      m00_axi_awaddr
    , output wire                                 m00_axi_awvalid
    , input wire                                  m00_axi_awready
    , output wire [5:0]                           m00_axi_awid
@@ -117,19 +117,19 @@ module top_zynq
    , output wire [1:0]                           m00_axi_awburst
    , output wire [3:0]                           m00_axi_awqos
 
-   , output wire [C_M00_AXI_DATA_WIDTH-1:0]      m00_axi_wdata
+   , output wire [C_HP0_AXI_DATA_WIDTH-1:0]      m00_axi_wdata
    , output wire                                 m00_axi_wvalid
    , input wire                                  m00_axi_wready
    , output wire [5:0]                           m00_axi_wid
    , output wire                                 m00_axi_wlast
-   , output wire [(C_M00_AXI_DATA_WIDTH/8)-1:0]  m00_axi_wstrb
+   , output wire [(C_HP0_AXI_DATA_WIDTH/8)-1:0]  m00_axi_wstrb
 
    , input wire                                  m00_axi_bvalid
    , output wire                                 m00_axi_bready
    , input wire [5:0]                            m00_axi_bid
    , input wire [1:0]                            m00_axi_bresp
 
-   , output wire [C_M00_AXI_ADDR_WIDTH-1:0]      m00_axi_araddr
+   , output wire [C_HP0_AXI_ADDR_WIDTH-1:0]      m00_axi_araddr
    , output wire                                 m00_axi_arvalid
    , input wire                                  m00_axi_arready
    , output wire [5:0]                           m00_axi_arid
@@ -141,29 +141,29 @@ module top_zynq
    , output wire [1:0]                           m00_axi_arburst
    , output wire [3:0]                           m00_axi_arqos
 
-   , input wire [C_M00_AXI_DATA_WIDTH-1:0]       m00_axi_rdata
+   , input wire [C_HP0_AXI_DATA_WIDTH-1:0]       m00_axi_rdata
    , input wire                                  m00_axi_rvalid
    , output wire                                 m00_axi_rready
    , input wire [5:0]                            m00_axi_rid
    , input wire                                  m00_axi_rlast
    , input wire [1:0]                            m00_axi_rresp
 
-   , output wire [C_M01_AXI_ADDR_WIDTH-1 : 0]    m01_axi_awaddr
+   , output wire [C_HP1_AXI_ADDR_WIDTH-1 : 0]    m01_axi_awaddr
    , output wire [2 : 0]                         m01_axi_awprot
    , output wire                                 m01_axi_awvalid
    , input wire                                  m01_axi_awready
-   , output wire [C_M01_AXI_DATA_WIDTH-1 : 0]    m01_axi_wdata
-   , output wire [(C_M01_AXI_DATA_WIDTH/8)-1:0]  m01_axi_wstrb
+   , output wire [C_HP1_AXI_DATA_WIDTH-1 : 0]    m01_axi_wdata
+   , output wire [(C_HP1_AXI_DATA_WIDTH/8)-1:0]  m01_axi_wstrb
    , output wire                                 m01_axi_wvalid
    , input wire                                  m01_axi_wready
    , input wire [1 : 0]                          m01_axi_bresp
    , input wire                                  m01_axi_bvalid
    , output wire                                 m01_axi_bready
-   , output wire [C_M01_AXI_ADDR_WIDTH-1 : 0]    m01_axi_araddr
+   , output wire [C_HP1_AXI_ADDR_WIDTH-1 : 0]    m01_axi_araddr
    , output wire [2 : 0]                         m01_axi_arprot
    , output wire                                 m01_axi_arvalid
    , input wire                                  m01_axi_arready
-   , input wire [C_M01_AXI_DATA_WIDTH-1 : 0]     m01_axi_rdata
+   , input wire [C_HP1_AXI_DATA_WIDTH-1 : 0]     m01_axi_rdata
    , input wire [1 : 0]                          m01_axi_rresp
    , input wire                                  m01_axi_rvalid
    , output wire                                 m01_axi_rready
@@ -187,7 +187,7 @@ module top_zynq
    // 8: = 1 if the DRAM has been allocated for the device in the ARM PS Linux subsystem
    // C: The base register for the allocated dram
    //
-   logic [num_regs_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_lo;
+   logic [num_regs_ps_to_pl_lp-1:0][C_GP0_AXI_DATA_WIDTH-1:0] csr_data_lo;
    logic [num_regs_ps_to_pl_lp-1:0]                           csr_data_new_lo;
 
    ///////////////////////////////////////////////////////////////////////////////////////
@@ -196,9 +196,9 @@ module top_zynq
    // 0: minstret (64b)
    // 8: mem_profiler (128b)
    //
-   logic [num_regs_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_li;
+   logic [num_regs_pl_to_ps_lp-1:0][C_GP0_AXI_DATA_WIDTH-1:0] csr_data_li;
 
-   logic [C_S00_AXI_DATA_WIDTH-1:0]      pl_to_ps_fifo_data_li, ps_to_pl_fifo_data_lo;
+   logic [C_GP0_AXI_DATA_WIDTH-1:0]      pl_to_ps_fifo_data_li, ps_to_pl_fifo_data_lo;
    logic                                 pl_to_ps_fifo_v_li, pl_to_ps_fifo_ready_lo;
    logic                                 ps_to_pl_fifo_v_lo, ps_to_pl_fifo_ready_li;
 
@@ -248,13 +248,13 @@ module top_zynq
    // Connect Shell to AXI Bus Interface S00_AXI
    bsg_zynq_pl_shell #
      (
-      // need to update C_S00_AXI_ADDR_WIDTH accordingly
+      // need to update C_GP0_AXI_ADDR_WIDTH accordingly
       .num_fifo_ps_to_pl_p(num_fifos_ps_to_pl_lp)
       ,.num_fifo_pl_to_ps_p(num_fifos_pl_to_ps_lp)
       ,.num_regs_ps_to_pl_p (num_regs_ps_to_pl_lp)
       ,.num_regs_pl_to_ps_p(num_regs_pl_to_ps_lp)
-      ,.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH)
-      ,.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
+      ,.C_S_AXI_DATA_WIDTH(C_GP0_AXI_DATA_WIDTH)
+      ,.C_S_AXI_ADDR_WIDTH(C_GP0_AXI_ADDR_WIDTH)
       ) zps
        (
         .csr_data_new_o(csr_data_new_lo)
@@ -299,7 +299,7 @@ module top_zynq
    localparam bootrom_addr_lp = 9;
    logic bb_data_li, bb_v_li;
    logic dram_init_li;
-   logic [C_M00_AXI_ADDR_WIDTH-1:0] dram_base_li;
+   logic [C_HP0_AXI_ADDR_WIDTH-1:0] dram_base_li;
    logic [63:0] minstret_lo;
    // use this as a way of figuring out how much memory a RISC-V program is using
    // each bit corresponds to a region of memory

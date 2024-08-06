@@ -1,52 +1,52 @@
 
 module top_zynq
  #(
-   parameter integer C_S00_AXI_DATA_WIDTH   = 32
-   , parameter integer C_S00_AXI_ADDR_WIDTH = 5
+   parameter integer C_GP0_AXI_DATA_WIDTH   = 32
+   , parameter integer C_GP0_AXI_ADDR_WIDTH = 5
 
-   , parameter integer C_S01_AXI_DATA_WIDTH = 32
-   , parameter integer C_S01_AXI_ADDR_WIDTH = 5
+   , parameter integer C_GP1_AXI_DATA_WIDTH = 32
+   , parameter integer C_GP1_AXI_ADDR_WIDTH = 5
    )
    (
     input wire                                    aclk
     , input wire                                  aresetn
 
-    , input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
+    , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
     , input wire [2 : 0]                          s00_axi_awprot
     , input wire                                  s00_axi_awvalid
     , output wire                                 s00_axi_awready
-    , input wire [C_S00_AXI_DATA_WIDTH-1 : 0]     s00_axi_wdata
-    , input wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s00_axi_wstrb
+    , input wire [C_GP0_AXI_DATA_WIDTH-1 : 0]     s00_axi_wdata
+    , input wire [(C_GP0_AXI_DATA_WIDTH/8)-1 : 0] s00_axi_wstrb
     , input wire                                  s00_axi_wvalid
     , output wire                                 s00_axi_wready
     , output wire [1 : 0]                         s00_axi_bresp
     , output wire                                 s00_axi_bvalid
     , input wire                                  s00_axi_bready
-    , input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_araddr
+    , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     s00_axi_araddr
     , input wire [2 : 0]                          s00_axi_arprot
     , input wire                                  s00_axi_arvalid
     , output wire                                 s00_axi_arready
-    , output wire [C_S00_AXI_DATA_WIDTH-1 : 0]    s00_axi_rdata
+    , output wire [C_GP0_AXI_DATA_WIDTH-1 : 0]    s00_axi_rdata
     , output wire [1 : 0]                         s00_axi_rresp
     , output wire                                 s00_axi_rvalid
     , input wire                                  s00_axi_rready
 
-    , input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s01_axi_awaddr
+    , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     s01_axi_awaddr
     , input wire [2 : 0]                          s01_axi_awprot
     , input wire                                  s01_axi_awvalid
     , output wire                                 s01_axi_awready
-    , input wire [C_S00_AXI_DATA_WIDTH-1 : 0]     s01_axi_wdata
-    , input wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s01_axi_wstrb
+    , input wire [C_GP0_AXI_DATA_WIDTH-1 : 0]     s01_axi_wdata
+    , input wire [(C_GP0_AXI_DATA_WIDTH/8)-1 : 0] s01_axi_wstrb
     , input wire                                  s01_axi_wvalid
     , output wire                                 s01_axi_wready
     , output wire [1 : 0]                         s01_axi_bresp
     , output wire                                 s01_axi_bvalid
     , input wire                                  s01_axi_bready
-    , input wire [C_S00_AXI_ADDR_WIDTH-1 : 0]     s01_axi_araddr
+    , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     s01_axi_araddr
     , input wire [2 : 0]                          s01_axi_arprot
     , input wire                                  s01_axi_arvalid
     , output wire                                 s01_axi_arready
-    , output wire [C_S00_AXI_DATA_WIDTH-1 : 0]    s01_axi_rdata
+    , output wire [C_GP0_AXI_DATA_WIDTH-1 : 0]    s01_axi_rdata
     , output wire [1 : 0]                         s01_axi_rresp
     , output wire                                 s01_axi_rvalid
     , input wire                                  s01_axi_rready
@@ -59,15 +59,15 @@ module top_zynq
    localparam num_fifo_ps_to_pl_lp = 1;
    localparam num_fifo_pl_to_ps_lp = 1;
 
-   wire [1:0][num_fifo_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] pl_to_ps_fifo_data_li;
+   wire [1:0][num_fifo_pl_to_ps_lp-1:0][C_GP0_AXI_DATA_WIDTH-1:0] pl_to_ps_fifo_data_li;
    wire [1:0][num_fifo_pl_to_ps_lp-1:0]                           pl_to_ps_fifo_v_li;
    wire [1:0][num_fifo_pl_to_ps_lp-1:0]                           pl_to_ps_fifo_ready_lo;
 
-   wire [1:0][num_fifo_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] ps_to_pl_fifo_data_lo;
+   wire [1:0][num_fifo_ps_to_pl_lp-1:0][C_GP0_AXI_DATA_WIDTH-1:0] ps_to_pl_fifo_data_lo;
    wire [1:0][num_fifo_ps_to_pl_lp-1:0]                           ps_to_pl_fifo_v_lo;
    wire [1:0][num_fifo_ps_to_pl_lp-1:0]                           ps_to_pl_fifo_yumi_li;
 
-   wire [1:0][num_regs_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_lo;
+   wire [1:0][num_regs_ps_to_pl_lp-1:0][C_GP0_AXI_DATA_WIDTH-1:0] csr_data_lo;
 
 
    bsg_zynq_pl_shell
@@ -76,8 +76,8 @@ module top_zynq
        ,.num_regs_pl_to_ps_p(num_regs_pl_to_ps_lp)
        ,.num_fifo_ps_to_pl_p(num_fifo_ps_to_pl_lp)
        ,.num_fifo_pl_to_ps_p(num_fifo_pl_to_ps_lp)
-       ,.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH)
-       ,.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
+       ,.C_S_AXI_DATA_WIDTH(C_GP0_AXI_DATA_WIDTH)
+       ,.C_S_AXI_ADDR_WIDTH(C_GP0_AXI_ADDR_WIDTH)
        ) bzps0
        (
         .pl_to_ps_fifo_data_i  (pl_to_ps_fifo_data_li [0])
@@ -121,8 +121,8 @@ module top_zynq
        ,.num_regs_pl_to_ps_p(num_regs_pl_to_ps_lp)
        ,.num_fifo_ps_to_pl_p(num_fifo_ps_to_pl_lp)
        ,.num_fifo_pl_to_ps_p(num_fifo_pl_to_ps_lp)
-       ,.C_S_AXI_DATA_WIDTH(C_S01_AXI_DATA_WIDTH)
-       ,.C_S_AXI_ADDR_WIDTH(C_S01_AXI_ADDR_WIDTH)
+       ,.C_S_AXI_DATA_WIDTH(C_GP1_AXI_DATA_WIDTH)
+       ,.C_S_AXI_ADDR_WIDTH(C_GP1_AXI_ADDR_WIDTH)
        ) bzps1
        (
         .pl_to_ps_fifo_data_i  (pl_to_ps_fifo_data_li [1])
