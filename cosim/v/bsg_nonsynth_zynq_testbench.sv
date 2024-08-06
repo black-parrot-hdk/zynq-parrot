@@ -28,6 +28,30 @@ module bsg_nonsynth_zynq_testbench;
   localparam C_HP2_AXI_DATA_WIDTH = `HP2_DATA_WIDTH;
   localparam C_HP2_AXI_ADDR_WIDTH = `HP2_ADDR_WIDTH;
 `endif
+`ifdef SP0_ENABLE
+  localparam C_SP0_AXI_DATA_WIDTH = `SP0_DATA_WIDTH;
+  localparam C_SP0_AXI_ADDR_WIDTH = `SP0_ADDR_WIDTH;
+`endif
+`ifdef SP1_ENABLE
+  localparam C_SP1_AXI_DATA_WIDTH = `SP1_DATA_WIDTH;
+  localparam C_SP1_AXI_ADDR_WIDTH = `SP1_ADDR_WIDTH;
+`endif
+`ifdef SP2_ENABLE
+  localparam C_SP2_AXI_DATA_WIDTH = `SP2_DATA_WIDTH;
+  localparam C_SP2_AXI_ADDR_WIDTH = `SP2_ADDR_WIDTH;
+`endif
+`ifdef MP0_ENABLE
+  localparam C_MP0_AXI_DATA_WIDTH = `MP0_DATA_WIDTH;
+  localparam C_MP0_AXI_ADDR_WIDTH = `MP0_ADDR_WIDTH;
+`endif
+`ifdef MP1_ENABLE
+  localparam C_MP1_AXI_DATA_WIDTH = `MP1_DATA_WIDTH;
+  localparam C_MP1_AXI_ADDR_WIDTH = `MP1_ADDR_WIDTH;
+`endif
+`ifdef MP2_ENABLE
+  localparam C_MP2_AXI_DATA_WIDTH = `MP2_DATA_WIDTH;
+  localparam C_MP2_AXI_ADDR_WIDTH = `MP2_ADDR_WIDTH;
+`endif
 
   localparam aclk_period_lp = 50000;
   logic aclk;
@@ -403,6 +427,120 @@ module bsg_nonsynth_zynq_testbench;
      );
 `endif
 
+`ifdef SP0_ENABLE
+  logic sp0_axi_tvalid, sp0_axi_tready;
+  logic [C_SP0_AXI_DATA_WIDTH-1:0] sp0_axi_tdata;
+  logic [(C_SP0_AXI_DATA_WIDTH/8)-1:0] sp0_axi_tkeep;
+  logic sp0_axi_tlast;
+  bsg_nonsynth_axis_to_dpi
+   #(.data_width_p(C_SP0_AXI_DATA_WIDTH))
+   axil6
+    (.aclk_i(aclk)
+     ,.aresetn_i(aresetn)
+
+     ,.tdata_i(sp0_axi_tdata)
+     ,.tvalid_i(sp0_axi_tvalid)
+     ,.tkeep_i(sp0_axi_tkeep)
+     ,.tready_o(sp0_axi_tready)
+     ,.tlast_i(sp0_axi_tlast)
+     );
+`endif
+
+`ifdef SP1_ENABLE
+  logic sp1_axi_tvalid, sp1_axi_tready;
+  logic [C_SP1_AXI_DATA_WIDTH-1:0] sp1_axi_tdata;
+  logic [(C_SP1_AXI_DATA_WIDTH/8)-1:0] sp1_axi_tkeep;
+  logic sp1_axi_tlast;
+  bsg_nonsynth_axis_to_dpi
+   #(.data_width_p(C_SP1_AXI_DATA_WIDTH))
+   axil7
+    (.aclk_i(aclk)
+     ,.aresetn_i(aresetn)
+
+     ,.tdata_i(sp1_axi_tdata)
+     ,.tvalid_i(sp1_axi_tvalid)
+     ,.tkeep_i(sp1_axi_tkeep)
+     ,.tready_o(sp1_axi_tready)
+     ,.tlast_i(sp1_axi_tlast)
+     );
+`endif
+
+`ifdef SP2_ENABLE
+  logic sp2_axi_tvalid, sp2_axi_tready;
+  logic [C_SP2_AXI_DATA_WIDTH-1:0] sp2_axi_tdata;
+  logic [(C_SP2_AXI_DATA_WIDTH/8)-1:0] sp2_axi_tkeep;
+  logic sp2_axi_tlast;
+  bsg_nonsynth_axis_to_dpi
+   #(.data_width_p(C_SP2_AXI_DATA_WIDTH))
+   axil8
+    (.aclk_i(aclk)
+     ,.aresetn_i(aresetn)
+
+     ,.tdata_i(sp2_axi_tdata)
+     ,.tvalid_i(sp2_axi_tvalid)
+     ,.tkeep_i(sp2_axi_tkeep)
+     ,.tready_o(sp2_axi_tready)
+     ,.tlast_i(sp2_axi_tlast)
+     );
+`endif
+
+`ifdef MP0_ENABLE
+  logic mp0_axi_tvalid, mp0_axi_tready;
+  logic [C_MP0_AXI_DATA_WIDTH-1:0] mp0_axi_tdata;
+  logic [(C_MP0_AXI_DATA_WIDTH/8)-1:0] mp0_axi_tkeep;
+  logic mp0_axi_tlast;
+  bsg_nonsynth_dpi_to_axis
+   #(.data_width_p(C_MP0_AXI_DATA_WIDTH))
+   axil9
+    (.aclk_i(aclk)
+     ,.aresetn_i(aresetn)
+
+     ,.tdata_o(mp0_axi_tdata)
+     ,.tvalid_o(mp0_axi_tvalid)
+     ,.tkeep_o(mp0_axi_tkeep)
+     ,.tready_i(mp0_axi_tready)
+     ,.tlast_o(mp0_axi_tlast)
+     );
+`endif
+
+`ifdef MP1_ENABLE
+  logic mp1_axi_tvalid, mp1_axi_tready;
+  logic [C_MP1_AXI_DATA_WIDTH-1:0] mp1_axi_tdata;
+  logic [(C_MP1_AXI_DATA_WIDTH/8)-1:0] mp1_axi_tkeep;
+  logic mp1_axi_tlast;
+  bsg_nonsynth_dpi_to_axis
+   #(.data_width_p(C_MP1_AXI_DATA_WIDTH))
+   axil10
+    (.aclk_i(aclk)
+     ,.aresetn_i(aresetn)
+
+     ,.tdata_o(mp1_axi_tdata)
+     ,.tvalid_o(mp1_axi_tvalid)
+     ,.tkeep_o(mp1_axi_tkeep)
+     ,.tready_i(mp1_axi_tready)
+     ,.tlast_o(mp1_axi_tlast)
+     );
+`endif
+
+`ifdef MP2_ENABLE
+  logic mp2_axi_tvalid, mp2_axi_tready;
+  logic [C_MP2_AXI_DATA_WIDTH-1:0] mp2_axi_tdata;
+  logic [(C_MP2_AXI_DATA_WIDTH/8)-1:0] mp2_axi_tkeep;
+  logic mp2_axi_tlast;
+  bsg_nonsynth_dpi_to_axis
+   #(.data_width_p(C_MP2_AXI_DATA_WIDTH))
+   axil10
+    (.aclk_i(aclk)
+     ,.aresetn_i(aresetn)
+
+     ,.tdata_o(mp2_axi_tdata)
+     ,.tvalid_o(mp2_axi_tvalid)
+     ,.tkeep_o(mp2_axi_tkeep)
+     ,.tready_i(mp2_axi_tready)
+     ,.tlast_o(mp2_axi_tlast)
+     );
+`endif
+
   top #(
 `ifdef GP0_ENABLE
      .C_GP0_AXI_DATA_WIDTH(C_GP0_AXI_DATA_WIDTH),
@@ -427,6 +565,30 @@ module bsg_nonsynth_zynq_testbench;
 `ifdef HP2_ENABLE
      .C_HP2_AXI_DATA_WIDTH(C_HP2_AXI_DATA_WIDTH),
      .C_HP2_AXI_ADDR_WIDTH(C_HP2_AXI_ADDR_WIDTH),
+`endif
+`ifdef SP0_ENABLE
+     .C_SP0_AXI_DATA_WIDTH(C_SP0_AXI_DATA_WIDTH),
+     .C_SP0_AXI_ADDR_WIDTH(C_SP0_AXI_ADDR_WIDTH),
+`endif
+`ifdef SP1_ENABLE
+     .C_SP1_AXI_DATA_WIDTH(C_SP1_AXI_DATA_WIDTH),
+     .C_SP1_AXI_ADDR_WIDTH(C_SP1_AXI_ADDR_WIDTH),
+`endif
+`ifdef SP2_ENABLE
+     .C_SP2_AXI_DATA_WIDTH(C_SP2_AXI_DATA_WIDTH),
+     .C_SP2_AXI_ADDR_WIDTH(C_SP2_AXI_ADDR_WIDTH),
+`endif
+`ifdef MP0_ENABLE
+     .C_MP0_AXI_DATA_WIDTH(C_MP0_AXI_DATA_WIDTH),
+     .C_MP0_AXI_ADDR_WIDTH(C_MP0_AXI_ADDR_WIDTH),
+`endif
+`ifdef MP1_ENABLE
+     .C_MP1_AXI_DATA_WIDTH(C_MP1_AXI_DATA_WIDTH),
+     .C_MP1_AXI_ADDR_WIDTH(C_MP1_AXI_ADDR_WIDTH),
+`endif
+`ifdef MP2_ENABLE
+     .C_MP2_AXI_DATA_WIDTH(C_MP2_AXI_DATA_WIDTH),
+     .C_MP2_AXI_ADDR_WIDTH(C_MP2_AXI_ADDR_WIDTH),
 `endif
      .__DUMMY(0)
      )
