@@ -54,12 +54,12 @@ public:
     virtual void free_dram(void *virtual_ptr) = 0;
 
 protected:
-    std::unique_ptr<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH>> axi_gp0;
-    std::unique_ptr<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH>> axi_gp1;
-    std::unique_ptr<axilm<GP2_ADDR_WIDTH, GP2_DATA_WIDTH>> axi_gp2;
-    std::unique_ptr<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH>> axi_hp0;
-    std::unique_ptr<axils<HP1_ADDR_WIDTH, HP1_DATA_WIDTH>> axi_hp1;
-    std::unique_ptr<axils<HP2_ADDR_WIDTH, HP2_DATA_WIDTH>> axi_hp2;
+    std::unique_ptr<maxil<GP0_ADDR_WIDTH, GP0_DATA_WIDTH>> axi_gp0;
+    std::unique_ptr<maxil<GP1_ADDR_WIDTH, GP1_DATA_WIDTH>> axi_gp1;
+    std::unique_ptr<maxil<GP2_ADDR_WIDTH, GP2_DATA_WIDTH>> axi_gp2;
+    std::unique_ptr<saxil<HP0_ADDR_WIDTH, HP0_DATA_WIDTH>> axi_hp0;
+    std::unique_ptr<saxil<HP1_ADDR_WIDTH, HP1_DATA_WIDTH>> axi_hp1;
+    std::unique_ptr<saxil<HP2_ADDR_WIDTH, HP2_DATA_WIDTH>> axi_hp2;
 
     std::unique_ptr<zynq_uart> uart;
     std::unique_ptr<zynq_scratchpad> scratchpad;
@@ -69,21 +69,21 @@ protected:
 
     void init() {
 #ifdef GP0_ENABLE
-        axi_gp0 = std::make_unique<axilm<GP0_ADDR_WIDTH, GP0_DATA_WIDTH>>(
+        axi_gp0 = std::make_unique<maxil<GP0_ADDR_WIDTH, GP0_DATA_WIDTH>>(
             STRINGIFY(GP0_HIER_BASE));
         co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
             axi_gp0->reset(yield);
         }));
 #endif
 #ifdef GP1_ENABLE
-        axi_gp1 = std::make_unique<axilm<GP1_ADDR_WIDTH, GP1_DATA_WIDTH>>(
+        axi_gp1 = std::make_unique<maxil<GP1_ADDR_WIDTH, GP1_DATA_WIDTH>>(
             STRINGIFY(GP1_HIER_BASE));
         co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
             axi_gp1->reset(yield);
         }));
 #endif
 #ifdef GP2_ENABLE
-        axi_gp2 = std::make_unique<axilm<GP2_ADDR_WIDTH, GP2_DATA_WIDTH>>(
+        axi_gp2 = std::make_unique<maxil<GP2_ADDR_WIDTH, GP2_DATA_WIDTH>>(
             STRINGIFY(GP2_HIER_BASE));
         co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
             axi_gp2->reset(yield);
@@ -91,7 +91,7 @@ protected:
 #endif
 #ifdef HP0_ENABLE
 #ifndef AXI_MEM_ENABLE
-        axi_hp0 = std::make_unique<axils<HP0_ADDR_WIDTH, HP0_DATA_WIDTH>>(
+        axi_hp0 = std::make_unique<saxil<HP0_ADDR_WIDTH, HP0_DATA_WIDTH>>(
             STRINGIFY(HP0_HIER_BASE));
         co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
             axi_hp0->reset(yield);
@@ -99,14 +99,14 @@ protected:
 #endif
 #endif
 #ifdef HP1_ENABLE
-        axi_hp1 = std::make_unique<axils<HP1_ADDR_WIDTH, HP1_DATA_WIDTH>>(
+        axi_hp1 = std::make_unique<saxil<HP1_ADDR_WIDTH, HP1_DATA_WIDTH>>(
             STRINGIFY(HP1_HIER_BASE));
         co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
             axi_hp1->reset(yield);
         }));
 #endif
 #ifdef HP2_ENABLE
-        axi_hp2 = std::make_unique<axils<HP2_ADDR_WIDTH, HP2_DATA_WIDTH>>(
+        axi_hp2 = std::make_unique<saxil<HP2_ADDR_WIDTH, HP2_DATA_WIDTH>>(
             STRINGIFY(HP2_HIER_BASE));
         co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
             axi_hp2->reset(yield);

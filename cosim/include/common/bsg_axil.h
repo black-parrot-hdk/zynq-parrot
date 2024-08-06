@@ -87,7 +87,7 @@ public:
 // A = axil address width
 // D = axil data width
 template <unsigned int A, unsigned int D>
-class axilm {
+class maxil {
 private:
     string base;
 
@@ -131,7 +131,7 @@ private:
     }
 
 public:
-    axilm(const string &base)
+    maxil(const string &base)
         : base(base),
           p_aclk(string(base) + string(".aclk_gpio")),
           p_aresetn(string(base) + string(".aresetn_gpio")),
@@ -295,7 +295,7 @@ public:
 // A = axil address width
 // D = axil data width
 template <unsigned int A, unsigned int D>
-class axils {
+class saxil {
 private:
     pin<1> p_aclk;
     pin<1> p_aresetn;
@@ -337,7 +337,7 @@ private:
     }
 
 public:
-    axils(const string &base)
+    saxil(const string &base)
         : p_aclk(string(base) + string(".aclk_gpio")),
           p_aresetn(string(base) + string(".aresetn_gpio")),
           p_awaddr(string(base) + string(".awaddr_gpio")),
