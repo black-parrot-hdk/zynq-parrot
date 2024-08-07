@@ -37,9 +37,11 @@ typedef coroutine<void>::push_type yield_t;
 class s_axil_device {
 public:
     virtual bool is_read(uintptr_t address) = 0;
+    virtual bool can_read(uintptr_t address) = 0;
     virtual int32_t read(uintptr_t address) = 0;
 
     virtual bool is_write(uintptr_t address) = 0;
+    virtual bool can_write(uintptr_t address) = 0;
     virtual void write(uintptr_t address, int32_t data) = 0;
 };
 

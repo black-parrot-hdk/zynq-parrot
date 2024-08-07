@@ -94,11 +94,15 @@ static uintptr_t gp1_addr_base = (uintptr_t) GP1_ADDR_BASE;
 #endif
 
 #ifdef GP0_ENABLE
-#define AXI_ENABLE
+#define AXIL_ENABLE
 #endif
 
 #ifdef GP1_ENABLE
-#define AXI_ENABLE
+#define AXIL_ENABLE
+#endif
+
+#ifdef GP2_ENABLE
+#define AXIL_ENABLE
 #endif
 
 #ifndef GP2_ENABLE
@@ -221,6 +225,18 @@ static uintptr_t hp2_addr_base = (uintptr_t) HP2_ADDR_BASE;
 #ifdef SIMULATION
 #error HP2_HIER_BASE must be defined
 #endif
+#endif
+
+#ifdef SP0_ENABLE
+#define AXIS_ENABLE
+#endif
+
+#ifdef SP1_ENABLE
+#define AXIS_ENABLE
+#endif
+
+#ifdef SP2_ENABLE
+#define AXIS_ENABLE
 #endif
 
 #ifndef SP0_ENABLE

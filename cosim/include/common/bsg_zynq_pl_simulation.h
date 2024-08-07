@@ -61,16 +61,17 @@ protected:
     std::unique_ptr<saxil<HP0_ADDR_WIDTH, HP0_DATA_WIDTH>> axi_hp0;
     std::unique_ptr<saxil<HP1_ADDR_WIDTH, HP1_DATA_WIDTH>> axi_hp1;
     std::unique_ptr<saxil<HP2_ADDR_WIDTH, HP2_DATA_WIDTH>> axi_hp2;
-    std::unique_ptr<maxis<MP0_DATA_WIDTH>> axi_mp0;
-    std::unique_ptr<maxis<MP1_DATA_WIDTH>> axi_mp1;
-    std::unique_ptr<maxis<MP2_DATA_WIDTH>> axi_mp2;
-    std::unique_ptr<saxis<SP0_DATA_WIDTH>> axi_sp0;
-    std::unique_ptr<saxis<SP1_DATA_WIDTH>> axi_sp1;
-    std::unique_ptr<saxis<SP2_DATA_WIDTH>> axi_sp2;
+    std::unique_ptr<maxis<SP0_DATA_WIDTH>> axi_sp0;
+    std::unique_ptr<maxis<SP1_DATA_WIDTH>> axi_sp1;
+    std::unique_ptr<maxis<SP2_DATA_WIDTH>> axi_sp2;
+    std::unique_ptr<saxis<MP0_DATA_WIDTH>> axi_mp0;
+    std::unique_ptr<saxis<MP1_DATA_WIDTH>> axi_mp1;
+    std::unique_ptr<saxis<MP2_DATA_WIDTH>> axi_mp2;
 
     std::unique_ptr<zynq_uart> uart;
     std::unique_ptr<zynq_scratchpad> scratchpad;
     std::unique_ptr<zynq_watchdog> watchdog;
+    std::unique_ptr<zynq_buffer> buffer;
 
     std::vector<std::unique_ptr<coro_t>> co_list;
 
@@ -119,46 +120,46 @@ protected:
             axi_hp2->reset(yield);
         }));
 #endif
-#ifdef MP0_ENABLE
-        axi_mp0 = std::make_unique<maxis<MP0_DATA_WIDTH>>(
-            STRINGIFY(MP0_HIER_BASE));
-        co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
-            axi_mp0->reset(yield);
-        }));
-#endif
-#ifdef MP1_ENABLE
-        axi_mp1 = std::make_unique<maxis<MP1_DATA_WIDTH>>(
-            STRINGIFY(MP1_HIER_BASE));
-        co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
-            axi_mp1->reset(yield);
-        }));
-#endif
-#ifdef MP2_ENABLE
-        axi_mp2 = std::make_unique<maxis<MP2_DATA_WIDTH>>(
-            STRINGIFY(MP2_HIER_BASE));
-        co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
-            axi_mp2->reset(yield);
-        }));
-#endif
 #ifdef SP0_ENABLE
-        axi_sp0 = std::make_unique<saxis<SP0_DATA_WIDTH>>(
+        axi_sp0 = std::make_unique<maxis<SP0_DATA_WIDTH>>(
             STRINGIFY(SP0_HIER_BASE));
         co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
             axi_sp0->reset(yield);
         }));
 #endif
 #ifdef SP1_ENABLE
-        axi_sp1 = std::make_unique<saxis<SP1_DATA_WIDTH>>(
+        axi_sp1 = std::make_unique<maxis<SP1_DATA_WIDTH>>(
             STRINGIFY(SP1_HIER_BASE));
         co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
             axi_sp1->reset(yield);
         }));
 #endif
 #ifdef SP2_ENABLE
-        axi_sp2 = std::make_unique<saxis<SP2_DATA_WIDTH>>(
+        axi_sp2 = std::make_unique<maxis<SP2_DATA_WIDTH>>(
             STRINGIFY(SP2_HIER_BASE));
         co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
             axi_sp2->reset(yield);
+        }));
+#endif
+#ifdef MP0_ENABLE
+        axi_mp0 = std::make_unique<saxis<MP0_DATA_WIDTH>>(
+            STRINGIFY(MP0_HIER_BASE));
+        co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+            axi_mp0->reset(yield);
+        }));
+#endif
+#ifdef MP1_ENABLE
+        axi_mp1 = std::make_unique<saxis<MP1_DATA_WIDTH>>(
+            STRINGIFY(MP1_HIER_BASE));
+        co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+            axi_mp1->reset(yield);
+        }));
+#endif
+#ifdef MP2_ENABLE
+        axi_mp2 = std::make_unique<saxis<MP2_DATA_WIDTH>>(
+            STRINGIFY(MP2_HIER_BASE));
+        co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+            axi_mp2->reset(yield);
         }));
 #endif
         // Do the reset
@@ -177,12 +178,16 @@ protected:
 #ifdef UART_ENABLE
         uart = std::make_unique<zynq_uart>();
 #endif
+#ifdef BUFFER_ENABLE
+        buffer = std::make_unique<zynq_buffer>();
+#endif
     }
 
     void destroy_peripherals() {
         scratchpad.reset();
         watchdog.reset();
         uart.reset();
+        buffer.reset();
     }
 
     void next() {
@@ -200,17 +205,22 @@ protected:
         uintptr_t addr;
         int32_t data;
         uint8_t wstrb;
+        uint8_t last;
 #ifdef HP1_ENABLE
         if (!axi_hp1->axil_has_read(&addr)) {
         } else if (scratchpad.get() && scratchpad->is_read(addr)) {
-            co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
-                axi_hp1->axil_read_helper((s_axil_device *)scratchpad.get(),
-                                          yield);
-            }));
+            if (scratchpad->can_read(addr)) {
+                co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+                    axi_hp1->axil_read_helper((s_axil_device *)scratchpad.get(),
+                                              yield);
+                }));
+            }
         } else if (uart.get() && uart->is_read(addr)) {
-            co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
-                axi_hp1->axil_read_helper((s_axil_device *)uart.get(), yield);
-            }));
+            if (uart->can_read(addr)) {
+                co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+                    axi_hp1->axil_read_helper((s_axil_device *)uart.get(), yield);
+                }));
+            }
         } else {
             bsg_pr_err("  bsg_zynq_pl: Unsupported AXI device read at [%x]\n",
                        addr);
@@ -218,14 +228,32 @@ protected:
 
         if (!axi_hp1->axil_has_write(&addr)) {
         } else if (scratchpad && scratchpad->is_write(addr)) {
-            co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
-                axi_hp1->axil_write_helper((s_axil_device *)scratchpad.get(),
-                                           yield);
-            }));
+            if (scratchpad->can_write(addr) {
+                co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+                    axi_hp1->axil_write_helper((s_axil_device *)scratchpad.get(),
+                                               yield);
+                }));
+            }
         } else if (uart.get() && uart->is_write(addr)) {
-            co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
-                axi_hp1->axil_write_helper((s_axil_device *)uart.get(), yield);
-            }));
+            if (uart->can_write(addr) {
+                co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+                    axi_hp1->axil_write_helper((s_axil_device *)uart.get(), yield);
+                }));
+            }
+        } else {
+            bsg_pr_err("  bsg_zynq_pl: Unsupported AXI device write at [%x]\n",
+                       addr);
+        }
+#endif
+#ifdef MP0_ENABLE
+        if (!axi_mp0->axis_has_write(&last)) {
+        } else if (buffer.get()) {
+            if (buffer->can_write(last)) {
+                co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+                    axi_mp0->axis_write_helper((s_axis_device *)buffer.get(),
+                            yield);
+                }));
+            }
         } else {
             bsg_pr_err("  bsg_zynq_pl: Unsupported AXI device write at [%x]\n",
                        addr);
@@ -237,6 +265,7 @@ protected:
         uintptr_t addr;
         int32_t data;
         uint8_t wstrb;
+        uint8_t last;
 #if GP2_ENABLE
         if (watchdog.get() && watchdog->pending_write(&addr, &data, &wstrb)) {
             axil_write(2, addr, data, wstrb,
@@ -246,9 +275,15 @@ protected:
                       [=](int32_t rdata) { watchdog->return_read(rdata); });
         }
 #endif
+
+#ifdef MP0_ENABLE
+        if (buffer.get() && buffer->pending_write(&data, &last)) {
+            axis_write(0, data, last, [=]() { });
+        }
+#endif
     }
 
-#ifdef AXI_ENABLE
+#ifdef AXIL_ENABLE
     void axil_read(int port, uintptr_t addr,
                    std::function<void(int32_t)> callback) {
         if (port == 2) {
@@ -289,6 +324,27 @@ protected:
         }
     }
 #endif
+#ifdef AXIS_ENABLE
+    void axis_write(int port, int32_t data, uint8_t last, std::function<void()> callback) {
+        if (port == 2) {
+            co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+                axi_sp2->axis_write_helper(data, last, yield);
+                callback();
+            }));
+        } else if (port == 1) {
+            co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+                axi_sp1->axis_write_helper(data, last, yield);
+                callback();
+            }));
+        } else {
+            co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
+                axi_sp0->axis_write_helper(data, last, yield);
+                callback();
+            }));
+        }
+    }
+#endif
+
 #ifdef UART_ENABLE
     // Must sync to verilog
     //     typedef struct packed

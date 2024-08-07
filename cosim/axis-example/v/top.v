@@ -9,9 +9,10 @@
         // User parameters ends
         // Do not modify the parameters beyond this line
 
-        // Parameters of Axi Slave Bus Interface S00_AXI
         parameter integer C_GP0_AXI_DATA_WIDTH    = 32,
         parameter integer C_GP0_AXI_ADDR_WIDTH    = 6,
+        parameter integer C_SP0_AXI_DATA_WIDTH    = 32,
+        parameter integer C_MP0_AXI_DATA_WIDTH    = 32,
 
         // Used for placeholder
         parameter integer __DUMMY = 0
@@ -44,12 +45,24 @@
         output wire [C_GP0_AXI_DATA_WIDTH-1:0] gp0_axi_rdata,
         output wire [1:0] gp0_axi_rresp,
         output wire  gp0_axi_rvalid,
-        input wire  gp0_axi_rready
+        input wire  gp0_axi_rready,
+
+        input wire [C_SP0_AXI_DATA_WIDTH-1:0] sp0_axi_tdata,
+        input wire sp0_axi_tvalid,
+        input wire [(C_SP0_AXI_DATA_WIDTH/8)-1:0] sp0_axi_tkeep,
+        input wire sp0_axi_tlast,
+        output wire sp0_axi_tready,
+
+        output wire [C_MP0_AXI_DATA_WIDTH-1:0] mp0_axi_tdata,
+        output wire mp0_axi_tvalid,
+        output wire [(C_MP0_AXI_DATA_WIDTH/8)-1:0] mp0_axi_tkeep,
+        output wire mp0_axi_tlast,
+        input wire mp0_axi_tready
     );
 
     top_zynq
-     #(.C_GP0_AXI_DATA_WIDTH(C_GP0_AXI_DATA_WIDTH)
-       ,.C_GP0_AXI_ADDR_WIDTH(C_GP0_AXI_ADDR_WIDTH)
+     #(.C_SP0_AXI_DATA_WIDTH(C_SP0_AXI_DATA_WIDTH)
+       ,.C_MP0_AXI_DATA_WIDTH(C_MP0_AXI_DATA_WIDTH)
        )
      top_zynq
       (.aclk(aclk)
@@ -78,6 +91,18 @@
        ,.gp0_axi_rresp(gp0_axi_rresp)
        ,.gp0_axi_rvalid(gp0_axi_rvalid)
        ,.gp0_axi_rready(gp0_axi_rready)
+
+       ,.sp0_axi_tdata(sp0_axi_tdata)
+       ,.sp0_axi_tvalid(sp0_axi_tvalid)
+       ,.sp0_axi_tkeep(sp0_axi_tkeep)
+       ,.sp0_axi_tlast(sp0_axi_tlast)
+       ,.sp0_axi_tready(sp0_axi_tready)
+
+       ,.mp0_axi_tdata(mp0_axi_tdata)
+       ,.mp0_axi_tvalid(mp0_axi_tvalid)
+       ,.mp0_axi_tkeep(mp0_axi_tkeep)
+       ,.mp0_axi_tlast(mp0_axi_tlast)
+       ,.mp0_axi_tready(mp0_axi_tready)
        );
 
 endmodule

@@ -35,21 +35,13 @@ typedef coroutine<void>::push_type yield_t;
 
 class s_axis_device {
     public:
-        virtual bool is_read(uintptr_t address) = 0;
-        virtual int32_t read(uintptr_t address) = 0;
-
-        virtual bool is_write(uintptr_t address) = 0;
-        virtual void write(uintptr_t address, int32_t data) = 0;
+        virtual bool can_write(uint8_t last) = 0;
+        virtual void write(int32_t data, uint8_t last) = 0;
 };
 
 class m_axis_device {
     public:
-        virtual bool pending_read(uintptr_t *address) = 0;
-        virtual void return_read(int32_t data) = 0;
-
-        virtual bool pending_write(uintptr_t *address, int32_t *data,
-                uint8_t *wmask) = 0;
-        virtual void return_write() = 0;
+        virtual bool pending_write(int32_t *data, uint8_t *last) = 0;
 };
 
 // D = axis data width
@@ -103,8 +95,10 @@ class saxis {
             printf("bsg_zynq_pl: Exiting reset\n");
         }
 
-        bool axis_has_write() {
+        bool axis_has_write(uint8_t *last) {
             bool tv = this->p_tvalid;
+            *last = this->p_tlast;
+
             return tv && !mutex;
         }
 
@@ -127,13 +121,15 @@ class saxis {
                     tdata = this->p_tdata;
                     tlast = this->p_tlast;
                     p->write(tdata, tlast);
-                }
-
-                if (tlast) {
                     t_done = true;
                 }
 
+                // Tick the clock one cycle
                 yield();
+
+                if (t_done) {
+                    this->p_tready = 0;
+                }
             } while (!t_done);
 
             unlock(yield);
@@ -192,12 +188,14 @@ class maxis {
             printf("bsg_zynq_pl: Exiting reset\n");
         }
 
-        void axis_write_helper(int32_t *tdata, int32_t length, yield_t &yield) {
+        void axis_write_helper(int32_t tdata, int32_t tlast, yield_t &yield) {
             lock(yield);
             int timeout_counter = 0;
-            int count = 0;
 
             bool t_done = false;
+            this->p_tvalid = 1;
+            this->p_tdata = tdata;
+            this->p_tlast = tlast;
             this->p_tkeep = 0xf; // Do not support tkeep for now
             do {
                 // check timeout
@@ -205,17 +203,16 @@ class maxis {
                     bsg_pr_err("bsg_zynq_pl: MAXIS write timeout\n");
                 }
 
-                this->p_tvalid = 1;
-                this->p_tdata = tdata[count];
-                this->p_tlast = (count == length-1);
                 if (this->p_tready) {
-                    if (count++ == length) {
-                        t_done = true;
-                    }
+                    t_done = true;
                 }
 
                 // tick the clock one cycle
                 yield();
+
+                if (t_done) {
+                    this->p_tvalid = 0;
+                }
             } while (!t_done);
 
             unlock(yield);

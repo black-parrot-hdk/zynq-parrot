@@ -1,7 +1,7 @@
 
 `timescale 1 ps / 1 ps
 
-`include "bsg_zynq_pl.svh"
+`include "bsg_zynq_pl.vh"
 
 module top #
   (

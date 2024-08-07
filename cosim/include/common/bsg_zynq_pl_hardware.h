@@ -132,7 +132,7 @@ protected:
 #endif
     }
 
-#ifdef AXI_ENABLE
+#ifdef AXIL_ENABLE
     inline int32_t axil_read(uintptr_t address) {
         // Only aligned 32B reads are currently supported
         assert(alignof(address) >= 4);
