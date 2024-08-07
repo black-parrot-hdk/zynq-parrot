@@ -48,14 +48,8 @@ proc vivado_create_ip { args } {
     make_bd_intf_pins_external -name "S_AXIS" [get_bd_intf_pins top/s_axis]
     set_property CONFIG.ASSOCIATED_BUSIF {M_AXIS:S_AXIS} [get_bd_ports aclk]
     set_property CONFIG.ASSOCIATED_RESET {aresetn} [get_bd_ports aclk]
-    set_property CONFIG.PROTOCOL {AXI4STREAM} [get_bd_intf_ports M_AXIS]
-    set_property CONFIG.PROTOCOL {AXI4STREAM} [get_bd_intf_ports S_AXIS]
-    #connect_bd_net [get_bd_ports tag_clk] [get_bd_pins top/tag_clk]
-    #connect_bd_net [get_bd_ports tag_data] [get_bd_pins top/tag_data]
 
-    ## Need to increase aperture size because of vivado bug
-    #assign_bd_address
-    #set_property range 256M [get_bd_addr_segs {top/m_axil/*}]
+    assign_bd_address
 }
 
 # ZynqParrot hook for customization of BD

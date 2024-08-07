@@ -25,6 +25,12 @@ proc vivado_create_ip { args } {
     set_property CONFIG.ASSOCIATED_RESET {aresetn} [get_bd_ports aclk]
     set_property CONFIG.PROTOCOL {AXI4LITE} [get_bd_intf_ports gp0_axi]
 
+    make_bd_intf_pins_external [get_bd_intf_pins top/sp0_axi] -name "sp0_axi"
+    set_property CONFIG.ASSOCIATED_BUSIF {sp0_axi} [get_bd_ports aclk]
+
+    make_bd_intf_pins_external [get_bd_intf_pins top/mp0_axi] -name "mp0_axi"
+    set_property CONFIG.ASSOCIATED_BUSIF {mp0_axi} [get_bd_ports aclk]
+
     connect_bd_net [get_bd_pins top/aclk] [get_bd_ports aclk]
     connect_bd_net [get_bd_pins top/aresetn] [get_bd_ports aresetn]
 }
