@@ -40,108 +40,108 @@ module top_zynq
    , input wire                                  rt_clk
    
    // Ports of Axi Slave Bus Interface S00_AXI
-   , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
-   , input wire [2 : 0]                          s00_axi_awprot
-   , input wire                                  s00_axi_awvalid
-   , output wire                                 s00_axi_awready
-   , input wire [C_GP0_AXI_DATA_WIDTH-1 : 0]     s00_axi_wdata
-   , input wire [(C_GP0_AXI_DATA_WIDTH/8)-1 : 0] s00_axi_wstrb
-   , input wire                                  s00_axi_wvalid
-   , output wire                                 s00_axi_wready
-   , output wire [1 : 0]                         s00_axi_bresp
-   , output wire                                 s00_axi_bvalid
-   , input wire                                  s00_axi_bready
-   , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     s00_axi_araddr
-   , input wire [2 : 0]                          s00_axi_arprot
-   , input wire                                  s00_axi_arvalid
-   , output wire                                 s00_axi_arready
-   , output wire [C_GP0_AXI_DATA_WIDTH-1 : 0]    s00_axi_rdata
-   , output wire [1 : 0]                         s00_axi_rresp
-   , output wire                                 s00_axi_rvalid
-   , input wire                                  s00_axi_rready
+   , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     gp0_axi_awaddr
+   , input wire [2 : 0]                          gp0_axi_awprot
+   , input wire                                  gp0_axi_awvalid
+   , output wire                                 gp0_axi_awready
+   , input wire [C_GP0_AXI_DATA_WIDTH-1 : 0]     gp0_axi_wdata
+   , input wire [(C_GP0_AXI_DATA_WIDTH/8)-1 : 0] gp0_axi_wstrb
+   , input wire                                  gp0_axi_wvalid
+   , output wire                                 gp0_axi_wready
+   , output wire [1 : 0]                         gp0_axi_bresp
+   , output wire                                 gp0_axi_bvalid
+   , input wire                                  gp0_axi_bready
+   , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     gp0_axi_araddr
+   , input wire [2 : 0]                          gp0_axi_arprot
+   , input wire                                  gp0_axi_arvalid
+   , output wire                                 gp0_axi_arready
+   , output wire [C_GP0_AXI_DATA_WIDTH-1 : 0]    gp0_axi_rdata
+   , output wire [1 : 0]                         gp0_axi_rresp
+   , output wire                                 gp0_axi_rvalid
+   , input wire                                  gp0_axi_rready
 
-   , input wire [C_GP1_AXI_ADDR_WIDTH-1 : 0]     s01_axi_awaddr
-   , input wire [2 : 0]                          s01_axi_awprot
-   , input wire                                  s01_axi_awvalid
-   , output wire                                 s01_axi_awready
-   , input wire [C_GP1_AXI_DATA_WIDTH-1 : 0]     s01_axi_wdata
-   , input wire [(C_GP1_AXI_DATA_WIDTH/8)-1 : 0] s01_axi_wstrb
-   , input wire                                  s01_axi_wvalid
-   , output wire                                 s01_axi_wready
-   , output wire [1 : 0]                         s01_axi_bresp
-   , output wire                                 s01_axi_bvalid
-   , input wire                                  s01_axi_bready
-   , input wire [C_GP1_AXI_ADDR_WIDTH-1 : 0]     s01_axi_araddr
-   , input wire [2 : 0]                          s01_axi_arprot
-   , input wire                                  s01_axi_arvalid
-   , output wire                                 s01_axi_arready
-   , output wire [C_GP1_AXI_DATA_WIDTH-1 : 0]    s01_axi_rdata
-   , output wire [1 : 0]                         s01_axi_rresp
-   , output wire                                 s01_axi_rvalid
-   , input wire                                  s01_axi_rready
+   , input wire [C_GP1_AXI_ADDR_WIDTH-1 : 0]     gp1_axi_awaddr
+   , input wire [2 : 0]                          gp1_axi_awprot
+   , input wire                                  gp1_axi_awvalid
+   , output wire                                 gp1_axi_awready
+   , input wire [C_GP1_AXI_DATA_WIDTH-1 : 0]     gp1_axi_wdata
+   , input wire [(C_GP1_AXI_DATA_WIDTH/8)-1 : 0] gp1_axi_wstrb
+   , input wire                                  gp1_axi_wvalid
+   , output wire                                 gp1_axi_wready
+   , output wire [1 : 0]                         gp1_axi_bresp
+   , output wire                                 gp1_axi_bvalid
+   , input wire                                  gp1_axi_bready
+   , input wire [C_GP1_AXI_ADDR_WIDTH-1 : 0]     gp1_axi_araddr
+   , input wire [2 : 0]                          gp1_axi_arprot
+   , input wire                                  gp1_axi_arvalid
+   , output wire                                 gp1_axi_arready
+   , output wire [C_GP1_AXI_DATA_WIDTH-1 : 0]    gp1_axi_rdata
+   , output wire [1 : 0]                         gp1_axi_rresp
+   , output wire                                 gp1_axi_rvalid
+   , input wire                                  gp1_axi_rready
 
-   , output wire [C_HP0_AXI_ADDR_WIDTH-1:0]      m00_axi_awaddr
-   , output wire                                 m00_axi_awvalid
-   , input wire                                  m00_axi_awready
-   , output wire [5:0]                           m00_axi_awid
-   , output wire                                 m00_axi_awlock
-   , output wire [3:0]                           m00_axi_awcache
-   , output wire [2:0]                           m00_axi_awprot
-   , output wire [7:0]                           m00_axi_awlen
-   , output wire [2:0]                           m00_axi_awsize
-   , output wire [1:0]                           m00_axi_awburst
-   , output wire [3:0]                           m00_axi_awqos
+   , output wire [C_HP0_AXI_ADDR_WIDTH-1:0]      hp0_axi_awaddr
+   , output wire                                 hp0_axi_awvalid
+   , input wire                                  hp0_axi_awready
+   , output wire [5:0]                           hp0_axi_awid
+   , output wire                                 hp0_axi_awlock
+   , output wire [3:0]                           hp0_axi_awcache
+   , output wire [2:0]                           hp0_axi_awprot
+   , output wire [7:0]                           hp0_axi_awlen
+   , output wire [2:0]                           hp0_axi_awsize
+   , output wire [1:0]                           hp0_axi_awburst
+   , output wire [3:0]                           hp0_axi_awqos
 
-   , output wire [C_HP0_AXI_DATA_WIDTH-1:0]      m00_axi_wdata
-   , output wire                                 m00_axi_wvalid
-   , input wire                                  m00_axi_wready
-   , output wire [5:0]                           m00_axi_wid
-   , output wire                                 m00_axi_wlast
-   , output wire [(C_HP0_AXI_DATA_WIDTH/8)-1:0]  m00_axi_wstrb
+   , output wire [C_HP0_AXI_DATA_WIDTH-1:0]      hp0_axi_wdata
+   , output wire                                 hp0_axi_wvalid
+   , input wire                                  hp0_axi_wready
+   , output wire [5:0]                           hp0_axi_wid
+   , output wire                                 hp0_axi_wlast
+   , output wire [(C_HP0_AXI_DATA_WIDTH/8)-1:0]  hp0_axi_wstrb
 
-   , input wire                                  m00_axi_bvalid
-   , output wire                                 m00_axi_bready
-   , input wire [5:0]                            m00_axi_bid
-   , input wire [1:0]                            m00_axi_bresp
+   , input wire                                  hp0_axi_bvalid
+   , output wire                                 hp0_axi_bready
+   , input wire [5:0]                            hp0_axi_bid
+   , input wire [1:0]                            hp0_axi_bresp
 
-   , output wire [C_HP0_AXI_ADDR_WIDTH-1:0]      m00_axi_araddr
-   , output wire                                 m00_axi_arvalid
-   , input wire                                  m00_axi_arready
-   , output wire [5:0]                           m00_axi_arid
-   , output wire                                 m00_axi_arlock
-   , output wire [3:0]                           m00_axi_arcache
-   , output wire [2:0]                           m00_axi_arprot
-   , output wire [7:0]                           m00_axi_arlen
-   , output wire [2:0]                           m00_axi_arsize
-   , output wire [1:0]                           m00_axi_arburst
-   , output wire [3:0]                           m00_axi_arqos
+   , output wire [C_HP0_AXI_ADDR_WIDTH-1:0]      hp0_axi_araddr
+   , output wire                                 hp0_axi_arvalid
+   , input wire                                  hp0_axi_arready
+   , output wire [5:0]                           hp0_axi_arid
+   , output wire                                 hp0_axi_arlock
+   , output wire [3:0]                           hp0_axi_arcache
+   , output wire [2:0]                           hp0_axi_arprot
+   , output wire [7:0]                           hp0_axi_arlen
+   , output wire [2:0]                           hp0_axi_arsize
+   , output wire [1:0]                           hp0_axi_arburst
+   , output wire [3:0]                           hp0_axi_arqos
 
-   , input wire [C_HP0_AXI_DATA_WIDTH-1:0]       m00_axi_rdata
-   , input wire                                  m00_axi_rvalid
-   , output wire                                 m00_axi_rready
-   , input wire [5:0]                            m00_axi_rid
-   , input wire                                  m00_axi_rlast
-   , input wire [1:0]                            m00_axi_rresp
+   , input wire [C_HP0_AXI_DATA_WIDTH-1:0]       hp0_axi_rdata
+   , input wire                                  hp0_axi_rvalid
+   , output wire                                 hp0_axi_rready
+   , input wire [5:0]                            hp0_axi_rid
+   , input wire                                  hp0_axi_rlast
+   , input wire [1:0]                            hp0_axi_rresp
 
-   , output wire [C_HP1_AXI_ADDR_WIDTH-1 : 0]    m01_axi_awaddr
-   , output wire [2 : 0]                         m01_axi_awprot
-   , output wire                                 m01_axi_awvalid
-   , input wire                                  m01_axi_awready
-   , output wire [C_HP1_AXI_DATA_WIDTH-1 : 0]    m01_axi_wdata
-   , output wire [(C_HP1_AXI_DATA_WIDTH/8)-1:0]  m01_axi_wstrb
-   , output wire                                 m01_axi_wvalid
-   , input wire                                  m01_axi_wready
-   , input wire [1 : 0]                          m01_axi_bresp
-   , input wire                                  m01_axi_bvalid
-   , output wire                                 m01_axi_bready
-   , output wire [C_HP1_AXI_ADDR_WIDTH-1 : 0]    m01_axi_araddr
-   , output wire [2 : 0]                         m01_axi_arprot
-   , output wire                                 m01_axi_arvalid
-   , input wire                                  m01_axi_arready
-   , input wire [C_HP1_AXI_DATA_WIDTH-1 : 0]     m01_axi_rdata
-   , input wire [1 : 0]                          m01_axi_rresp
-   , input wire                                  m01_axi_rvalid
-   , output wire                                 m01_axi_rready
+   , output wire [C_HP1_AXI_ADDR_WIDTH-1 : 0]    hp1_axi_awaddr
+   , output wire [2 : 0]                         hp1_axi_awprot
+   , output wire                                 hp1_axi_awvalid
+   , input wire                                  hp1_axi_awready
+   , output wire [C_HP1_AXI_DATA_WIDTH-1 : 0]    hp1_axi_wdata
+   , output wire [(C_HP1_AXI_DATA_WIDTH/8)-1:0]  hp1_axi_wstrb
+   , output wire                                 hp1_axi_wvalid
+   , input wire                                  hp1_axi_wready
+   , input wire [1 : 0]                          hp1_axi_bresp
+   , input wire                                  hp1_axi_bvalid
+   , output wire                                 hp1_axi_bready
+   , output wire [C_HP1_AXI_ADDR_WIDTH-1 : 0]    hp1_axi_araddr
+   , output wire [2 : 0]                         hp1_axi_arprot
+   , output wire                                 hp1_axi_arvalid
+   , input wire                                  hp1_axi_arready
+   , input wire [C_HP1_AXI_DATA_WIDTH-1 : 0]     hp1_axi_rdata
+   , input wire [1 : 0]                          hp1_axi_rresp
+   , input wire                                  hp1_axi_rvalid
+   , output wire                                 hp1_axi_rready
    );
 
   localparam num_regs_ps_to_pl_lp = 7;
@@ -198,25 +198,25 @@ module top_zynq
 
        ,.S_AXI_ACLK   (aclk)
        ,.S_AXI_ARESETN(aresetn)
-       ,.S_AXI_AWADDR (s00_axi_awaddr)
-       ,.S_AXI_AWPROT (s00_axi_awprot)
-       ,.S_AXI_AWVALID(s00_axi_awvalid)
-       ,.S_AXI_AWREADY(s00_axi_awready)
-       ,.S_AXI_WDATA  (s00_axi_wdata)
-       ,.S_AXI_WSTRB  (s00_axi_wstrb)
-       ,.S_AXI_WVALID (s00_axi_wvalid)
-       ,.S_AXI_WREADY (s00_axi_wready)
-       ,.S_AXI_BRESP  (s00_axi_bresp)
-       ,.S_AXI_BVALID (s00_axi_bvalid)
-       ,.S_AXI_BREADY (s00_axi_bready)
-       ,.S_AXI_ARADDR (s00_axi_araddr)
-       ,.S_AXI_ARPROT (s00_axi_arprot)
-       ,.S_AXI_ARVALID(s00_axi_arvalid)
-       ,.S_AXI_ARREADY(s00_axi_arready)
-       ,.S_AXI_RDATA  (s00_axi_rdata)
-       ,.S_AXI_RRESP  (s00_axi_rresp)
-       ,.S_AXI_RVALID (s00_axi_rvalid)
-       ,.S_AXI_RREADY (s00_axi_rready)
+       ,.S_AXI_AWADDR (gp0_axi_awaddr)
+       ,.S_AXI_AWPROT (gp0_axi_awprot)
+       ,.S_AXI_AWVALID(gp0_axi_awvalid)
+       ,.S_AXI_AWREADY(gp0_axi_awready)
+       ,.S_AXI_WDATA  (gp0_axi_wdata)
+       ,.S_AXI_WSTRB  (gp0_axi_wstrb)
+       ,.S_AXI_WVALID (gp0_axi_wvalid)
+       ,.S_AXI_WREADY (gp0_axi_wready)
+       ,.S_AXI_BRESP  (gp0_axi_bresp)
+       ,.S_AXI_BVALID (gp0_axi_bvalid)
+       ,.S_AXI_BREADY (gp0_axi_bready)
+       ,.S_AXI_ARADDR (gp0_axi_araddr)
+       ,.S_AXI_ARPROT (gp0_axi_arprot)
+       ,.S_AXI_ARVALID(gp0_axi_arvalid)
+       ,.S_AXI_ARREADY(gp0_axi_arready)
+       ,.S_AXI_RDATA  (gp0_axi_rdata)
+       ,.S_AXI_RRESP  (gp0_axi_rresp)
+       ,.S_AXI_RVALID (gp0_axi_rvalid)
+       ,.S_AXI_RREADY (gp0_axi_rready)
        );
 
   ///////////////////////////////////////////////////////////////////////////////////////
@@ -431,45 +431,45 @@ module top_zynq
      ,.dest_x_i(gp1_dst_x_lo)
      ,.dest_y_i(gp1_dst_y_lo)
 
-     ,.s_axil_awaddr_i(s01_axi_awaddr)
-     ,.s_axil_awprot_i(s01_axi_awprot)
-     ,.s_axil_awvalid_i(s01_axi_awvalid)
-     ,.s_axil_awready_o(s01_axi_awready)
-     ,.s_axil_wdata_i(s01_axi_wdata)
-     ,.s_axil_wstrb_i(s01_axi_wstrb)
-     ,.s_axil_wvalid_i(s01_axi_wvalid)
-     ,.s_axil_wready_o(s01_axi_wready)
-     ,.s_axil_bresp_o(s01_axi_bresp)
-     ,.s_axil_bvalid_o(s01_axi_bvalid)
-     ,.s_axil_bready_i(s01_axi_bready)
-     ,.s_axil_araddr_i(s01_axi_araddr)
-     ,.s_axil_arprot_i(s01_axi_arprot)
-     ,.s_axil_arvalid_i(s01_axi_arvalid)
-     ,.s_axil_arready_o(s01_axi_arready)
-     ,.s_axil_rdata_o(s01_axi_rdata)
-     ,.s_axil_rresp_o(s01_axi_rresp)
-     ,.s_axil_rvalid_o(s01_axi_rvalid)
-     ,.s_axil_rready_i(s01_axi_rready)
+     ,.s_axil_awaddr_i(gp1_axi_awaddr)
+     ,.s_axil_awprot_i(gp1_axi_awprot)
+     ,.s_axil_awvalid_i(gp1_axi_awvalid)
+     ,.s_axil_awready_o(gp1_axi_awready)
+     ,.s_axil_wdata_i(gp1_axi_wdata)
+     ,.s_axil_wstrb_i(gp1_axi_wstrb)
+     ,.s_axil_wvalid_i(gp1_axi_wvalid)
+     ,.s_axil_wready_o(gp1_axi_wready)
+     ,.s_axil_bresp_o(gp1_axi_bresp)
+     ,.s_axil_bvalid_o(gp1_axi_bvalid)
+     ,.s_axil_bready_i(gp1_axi_bready)
+     ,.s_axil_araddr_i(gp1_axi_araddr)
+     ,.s_axil_arprot_i(gp1_axi_arprot)
+     ,.s_axil_arvalid_i(gp1_axi_arvalid)
+     ,.s_axil_arready_o(gp1_axi_arready)
+     ,.s_axil_rdata_o(gp1_axi_rdata)
+     ,.s_axil_rresp_o(gp1_axi_rresp)
+     ,.s_axil_rvalid_o(gp1_axi_rvalid)
+     ,.s_axil_rready_i(gp1_axi_rready)
 
-     ,.m_axil_awaddr_o(m01_axi_awaddr)
-     ,.m_axil_awprot_o(m01_axi_awprot)
-     ,.m_axil_awvalid_o(m01_axi_awvalid)
-     ,.m_axil_awready_i(m01_axi_awready)
-     ,.m_axil_wdata_o(m01_axi_wdata)
-     ,.m_axil_wstrb_o(m01_axi_wstrb)
-     ,.m_axil_wvalid_o(m01_axi_wvalid)
-     ,.m_axil_wready_i(m01_axi_wready)
-     ,.m_axil_bresp_i(m01_axi_bresp)
-     ,.m_axil_bvalid_i(m01_axi_bvalid)
-     ,.m_axil_bready_o(m01_axi_bready)
-     ,.m_axil_araddr_o(m01_axi_araddr)
-     ,.m_axil_arprot_o(m01_axi_arprot)
-     ,.m_axil_arvalid_o(m01_axi_arvalid)
-     ,.m_axil_arready_i(m01_axi_arready)
-     ,.m_axil_rdata_i(m01_axi_rdata)
-     ,.m_axil_rresp_i(m01_axi_rresp)
-     ,.m_axil_rvalid_i(m01_axi_rvalid)
-     ,.m_axil_rready_o(m01_axi_rready)
+     ,.m_axil_awaddr_o(hp1_axi_awaddr)
+     ,.m_axil_awprot_o(hp1_axi_awprot)
+     ,.m_axil_awvalid_o(hp1_axi_awvalid)
+     ,.m_axil_awready_i(hp1_axi_awready)
+     ,.m_axil_wdata_o(hp1_axi_wdata)
+     ,.m_axil_wstrb_o(hp1_axi_wstrb)
+     ,.m_axil_wvalid_o(hp1_axi_wvalid)
+     ,.m_axil_wready_i(hp1_axi_wready)
+     ,.m_axil_bresp_i(hp1_axi_bresp)
+     ,.m_axil_bvalid_i(hp1_axi_bvalid)
+     ,.m_axil_bready_o(hp1_axi_bready)
+     ,.m_axil_araddr_o(hp1_axi_araddr)
+     ,.m_axil_arprot_o(hp1_axi_arprot)
+     ,.m_axil_arvalid_o(hp1_axi_arvalid)
+     ,.m_axil_arready_i(hp1_axi_arready)
+     ,.m_axil_rdata_i(hp1_axi_rdata)
+     ,.m_axil_rresp_i(hp1_axi_rresp)
+     ,.m_axil_rvalid_i(hp1_axi_rvalid)
+     ,.m_axil_rready_o(hp1_axi_rready)
      );
 
   logic [C_GP0_AXI_DATA_WIDTH-1:0] mc_req_lo;
@@ -651,71 +651,71 @@ module top_zynq
      ,.dma_data_v_i(dma_data_v_lo)
      ,.dma_data_yumi_o(dma_data_yumi_li)
 
-     ,.axi_awid_o(m00_axi_awid)
+     ,.axi_awid_o(hp0_axi_awid)
      ,.axi_awaddr_addr_o(axi_awaddr)
      ,.axi_awaddr_cache_id_o(axi_awaddr_cache_id)
-     ,.axi_awlen_o(m00_axi_awlen)
-     ,.axi_awsize_o(m00_axi_awsize)
-     ,.axi_awburst_o(m00_axi_awburst)
-     ,.axi_awcache_o(m00_axi_awcache)
-     ,.axi_awprot_o(m00_axi_awprot)
-     ,.axi_awlock_o(m00_axi_awlock)
-     ,.axi_awvalid_o(m00_axi_awvalid)
-     ,.axi_awready_i(m00_axi_awready)
+     ,.axi_awlen_o(hp0_axi_awlen)
+     ,.axi_awsize_o(hp0_axi_awsize)
+     ,.axi_awburst_o(hp0_axi_awburst)
+     ,.axi_awcache_o(hp0_axi_awcache)
+     ,.axi_awprot_o(hp0_axi_awprot)
+     ,.axi_awlock_o(hp0_axi_awlock)
+     ,.axi_awvalid_o(hp0_axi_awvalid)
+     ,.axi_awready_i(hp0_axi_awready)
 
-     ,.axi_wdata_o(m00_axi_wdata)
-     ,.axi_wstrb_o(m00_axi_wstrb)
-     ,.axi_wlast_o(m00_axi_wlast)
-     ,.axi_wvalid_o(m00_axi_wvalid)
-     ,.axi_wready_i(m00_axi_wready)
+     ,.axi_wdata_o(hp0_axi_wdata)
+     ,.axi_wstrb_o(hp0_axi_wstrb)
+     ,.axi_wlast_o(hp0_axi_wlast)
+     ,.axi_wvalid_o(hp0_axi_wvalid)
+     ,.axi_wready_i(hp0_axi_wready)
 
-     ,.axi_bid_i(m00_axi_bid)
-     ,.axi_bresp_i(m00_axi_bresp)
-     ,.axi_bvalid_i(m00_axi_bvalid)
-     ,.axi_bready_o(m00_axi_bready)
+     ,.axi_bid_i(hp0_axi_bid)
+     ,.axi_bresp_i(hp0_axi_bresp)
+     ,.axi_bvalid_i(hp0_axi_bvalid)
+     ,.axi_bready_o(hp0_axi_bready)
 
-     ,.axi_arid_o(m00_axi_arid)
+     ,.axi_arid_o(hp0_axi_arid)
      ,.axi_araddr_addr_o(axi_araddr)
      ,.axi_araddr_cache_id_o(axi_araddr_cache_id)
-     ,.axi_arlen_o(m00_axi_arlen)
-     ,.axi_arsize_o(m00_axi_arsize)
-     ,.axi_arburst_o(m00_axi_arburst)
-     ,.axi_arcache_o(m00_axi_arcache)
-     ,.axi_arprot_o(m00_axi_arprot)
-     ,.axi_arlock_o(m00_axi_arlock)
-     ,.axi_arvalid_o(m00_axi_arvalid)
-     ,.axi_arready_i(m00_axi_arready)
+     ,.axi_arlen_o(hp0_axi_arlen)
+     ,.axi_arsize_o(hp0_axi_arsize)
+     ,.axi_arburst_o(hp0_axi_arburst)
+     ,.axi_arcache_o(hp0_axi_arcache)
+     ,.axi_arprot_o(hp0_axi_arprot)
+     ,.axi_arlock_o(hp0_axi_arlock)
+     ,.axi_arvalid_o(hp0_axi_arvalid)
+     ,.axi_arready_i(hp0_axi_arready)
 
-     ,.axi_rid_i(m00_axi_rid)
-     ,.axi_rdata_i(m00_axi_rdata)
-     ,.axi_rresp_i(m00_axi_rresp)
-     ,.axi_rlast_i(m00_axi_rlast)
-     ,.axi_rvalid_i(m00_axi_rvalid)
-     ,.axi_rready_o(m00_axi_rready)
+     ,.axi_rid_i(hp0_axi_rid)
+     ,.axi_rdata_i(hp0_axi_rdata)
+     ,.axi_rresp_i(hp0_axi_rresp)
+     ,.axi_rlast_i(hp0_axi_rlast)
+     ,.axi_rvalid_i(hp0_axi_rvalid)
+     ,.axi_rready_o(hp0_axi_rready)
      );
   wire [C_HP0_AXI_ADDR_WIDTH-1:0] axi_awaddr_hash = {axi_awaddr_cache_id, axi_awaddr[0+:bsg_machine_llcache_addr_width_lp-lg_num_dma_lp]};
   wire [C_HP0_AXI_ADDR_WIDTH-1:0] axi_araddr_hash = {axi_araddr_cache_id, axi_araddr[0+:bsg_machine_llcache_addr_width_lp-lg_num_dma_lp]};
 
-  assign m00_axi_awaddr = axi_awaddr_hash + dram_base_li;
-  assign m00_axi_araddr = axi_araddr_hash + dram_base_li;
+  assign hp0_axi_awaddr = axi_awaddr_hash + dram_base_li;
+  assign hp0_axi_araddr = axi_araddr_hash + dram_base_li;
 
   // synopsys translate_off
 
   always @(negedge aclk)
-    if (m00_axi_awvalid & m00_axi_awready)
-      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_awaddr_hash,m00_axi_awaddr);
+    if (hp0_axi_awvalid & hp0_axi_awready)
+      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_awaddr_hash,hp0_axi_awaddr);
 
   always @(negedge aclk)
-    if (m00_axi_wvalid & m00_axi_wready)
-      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Data %x (AXI HP0)",m00_axi_wdata);
+    if (hp0_axi_wvalid & hp0_axi_wready)
+      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Data %x (AXI HP0)",hp0_axi_wdata);
 
   always @(negedge aclk)
-    if (m00_axi_arvalid & m00_axi_arready)
-      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Read Addr %x -> %x (AXI HP0)",axi_araddr_hash,m00_axi_araddr);
+    if (hp0_axi_arvalid & hp0_axi_arready)
+      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Read Addr %x -> %x (AXI HP0)",axi_araddr_hash,hp0_axi_araddr);
 
   always @(negedge aclk)
-    if (m00_axi_rvalid & m00_axi_rready)
-      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Read Data %x (AXI HP0)",m00_axi_rdata);
+    if (hp0_axi_rvalid & hp0_axi_rready)
+      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Read Data %x (AXI HP0)",hp0_axi_rdata);
 
   // synopsys translate_on
 

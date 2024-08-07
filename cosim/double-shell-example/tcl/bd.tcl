@@ -20,11 +20,11 @@ proc vivado_create_ip { args } {
 
     create_bd_port -dir I -type clk -freq_hz ${aclk_freq_hz} aclk
     create_bd_port -dir I -type rst aresetn
-    make_bd_intf_pins_external [get_bd_intf_pins top/s00_axi] -name "s00_axi"
-    make_bd_intf_pins_external [get_bd_intf_pins top/s01_axi] -name "s01_axi"
-    set_property CONFIG.ASSOCIATED_BUSIF {s00_axi:s01_axi} [get_bd_ports aclk]
+    make_bd_intf_pins_external [get_bd_intf_pins top/gp0_axi] -name "gp0_axi"
+    make_bd_intf_pins_external [get_bd_intf_pins top/gp1_axi] -name "gp1_axi"
+    set_property CONFIG.ASSOCIATED_BUSIF {gp0_axi:gp1_axi} [get_bd_ports aclk]
     set_property CONFIG.ASSOCIATED_RESET {aresetn} [get_bd_ports aclk]
-    set_property CONFIG.PROTOCOL {AXI4LITE} [get_bd_intf_ports s00_axi]
+    set_property CONFIG.PROTOCOL {AXI4LITE} [get_bd_intf_ports gp0_axi]
 
     connect_bd_net [get_bd_pins top/aclk] [get_bd_ports aclk]
     connect_bd_net [get_bd_pins top/aresetn] [get_bd_ports aresetn]

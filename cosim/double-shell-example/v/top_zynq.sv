@@ -11,45 +11,45 @@ module top_zynq
     input wire                                    aclk
     , input wire                                  aresetn
 
-    , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
-    , input wire [2 : 0]                          s00_axi_awprot
-    , input wire                                  s00_axi_awvalid
-    , output wire                                 s00_axi_awready
-    , input wire [C_GP0_AXI_DATA_WIDTH-1 : 0]     s00_axi_wdata
-    , input wire [(C_GP0_AXI_DATA_WIDTH/8)-1 : 0] s00_axi_wstrb
-    , input wire                                  s00_axi_wvalid
-    , output wire                                 s00_axi_wready
-    , output wire [1 : 0]                         s00_axi_bresp
-    , output wire                                 s00_axi_bvalid
-    , input wire                                  s00_axi_bready
-    , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     s00_axi_araddr
-    , input wire [2 : 0]                          s00_axi_arprot
-    , input wire                                  s00_axi_arvalid
-    , output wire                                 s00_axi_arready
-    , output wire [C_GP0_AXI_DATA_WIDTH-1 : 0]    s00_axi_rdata
-    , output wire [1 : 0]                         s00_axi_rresp
-    , output wire                                 s00_axi_rvalid
-    , input wire                                  s00_axi_rready
+    , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     gp0_axi_awaddr
+    , input wire [2 : 0]                          gp0_axi_awprot
+    , input wire                                  gp0_axi_awvalid
+    , output wire                                 gp0_axi_awready
+    , input wire [C_GP0_AXI_DATA_WIDTH-1 : 0]     gp0_axi_wdata
+    , input wire [(C_GP0_AXI_DATA_WIDTH/8)-1 : 0] gp0_axi_wstrb
+    , input wire                                  gp0_axi_wvalid
+    , output wire                                 gp0_axi_wready
+    , output wire [1 : 0]                         gp0_axi_bresp
+    , output wire                                 gp0_axi_bvalid
+    , input wire                                  gp0_axi_bready
+    , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     gp0_axi_araddr
+    , input wire [2 : 0]                          gp0_axi_arprot
+    , input wire                                  gp0_axi_arvalid
+    , output wire                                 gp0_axi_arready
+    , output wire [C_GP0_AXI_DATA_WIDTH-1 : 0]    gp0_axi_rdata
+    , output wire [1 : 0]                         gp0_axi_rresp
+    , output wire                                 gp0_axi_rvalid
+    , input wire                                  gp0_axi_rready
 
-    , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     s01_axi_awaddr
-    , input wire [2 : 0]                          s01_axi_awprot
-    , input wire                                  s01_axi_awvalid
-    , output wire                                 s01_axi_awready
-    , input wire [C_GP0_AXI_DATA_WIDTH-1 : 0]     s01_axi_wdata
-    , input wire [(C_GP0_AXI_DATA_WIDTH/8)-1 : 0] s01_axi_wstrb
-    , input wire                                  s01_axi_wvalid
-    , output wire                                 s01_axi_wready
-    , output wire [1 : 0]                         s01_axi_bresp
-    , output wire                                 s01_axi_bvalid
-    , input wire                                  s01_axi_bready
-    , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     s01_axi_araddr
-    , input wire [2 : 0]                          s01_axi_arprot
-    , input wire                                  s01_axi_arvalid
-    , output wire                                 s01_axi_arready
-    , output wire [C_GP0_AXI_DATA_WIDTH-1 : 0]    s01_axi_rdata
-    , output wire [1 : 0]                         s01_axi_rresp
-    , output wire                                 s01_axi_rvalid
-    , input wire                                  s01_axi_rready
+    , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     gp1_axi_awaddr
+    , input wire [2 : 0]                          gp1_axi_awprot
+    , input wire                                  gp1_axi_awvalid
+    , output wire                                 gp1_axi_awready
+    , input wire [C_GP0_AXI_DATA_WIDTH-1 : 0]     gp1_axi_wdata
+    , input wire [(C_GP0_AXI_DATA_WIDTH/8)-1 : 0] gp1_axi_wstrb
+    , input wire                                  gp1_axi_wvalid
+    , output wire                                 gp1_axi_wready
+    , output wire [1 : 0]                         gp1_axi_bresp
+    , output wire                                 gp1_axi_bvalid
+    , input wire                                  gp1_axi_bready
+    , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     gp1_axi_araddr
+    , input wire [2 : 0]                          gp1_axi_arprot
+    , input wire                                  gp1_axi_arvalid
+    , output wire                                 gp1_axi_arready
+    , output wire [C_GP0_AXI_DATA_WIDTH-1 : 0]    gp1_axi_rdata
+    , output wire [1 : 0]                         gp1_axi_rresp
+    , output wire                                 gp1_axi_rvalid
+    , input wire                                  gp1_axi_rready
     );
 
    localparam num_regs_ps_to_pl_lp = 2;
@@ -94,25 +94,25 @@ module top_zynq
 
         ,.S_AXI_ACLK   (aclk           )
         ,.S_AXI_ARESETN(aresetn        )
-        ,.S_AXI_AWADDR (s00_axi_awaddr )
-        ,.S_AXI_AWPROT (s00_axi_awprot )
-        ,.S_AXI_AWVALID(s00_axi_awvalid)
-        ,.S_AXI_AWREADY(s00_axi_awready)
-        ,.S_AXI_WDATA  (s00_axi_wdata  )
-        ,.S_AXI_WSTRB  (s00_axi_wstrb  )
-        ,.S_AXI_WVALID (s00_axi_wvalid )
-        ,.S_AXI_WREADY (s00_axi_wready )
-        ,.S_AXI_BRESP  (s00_axi_bresp  )
-        ,.S_AXI_BVALID (s00_axi_bvalid )
-        ,.S_AXI_BREADY (s00_axi_bready )
-        ,.S_AXI_ARADDR (s00_axi_araddr )
-        ,.S_AXI_ARPROT (s00_axi_arprot )
-        ,.S_AXI_ARVALID(s00_axi_arvalid)
-        ,.S_AXI_ARREADY(s00_axi_arready)
-        ,.S_AXI_RDATA  (s00_axi_rdata  )
-        ,.S_AXI_RRESP  (s00_axi_rresp  )
-        ,.S_AXI_RVALID (s00_axi_rvalid )
-        ,.S_AXI_RREADY (s00_axi_rready )
+        ,.S_AXI_AWADDR (gp0_axi_awaddr )
+        ,.S_AXI_AWPROT (gp0_axi_awprot )
+        ,.S_AXI_AWVALID(gp0_axi_awvalid)
+        ,.S_AXI_AWREADY(gp0_axi_awready)
+        ,.S_AXI_WDATA  (gp0_axi_wdata  )
+        ,.S_AXI_WSTRB  (gp0_axi_wstrb  )
+        ,.S_AXI_WVALID (gp0_axi_wvalid )
+        ,.S_AXI_WREADY (gp0_axi_wready )
+        ,.S_AXI_BRESP  (gp0_axi_bresp  )
+        ,.S_AXI_BVALID (gp0_axi_bvalid )
+        ,.S_AXI_BREADY (gp0_axi_bready )
+        ,.S_AXI_ARADDR (gp0_axi_araddr )
+        ,.S_AXI_ARPROT (gp0_axi_arprot )
+        ,.S_AXI_ARVALID(gp0_axi_arvalid)
+        ,.S_AXI_ARREADY(gp0_axi_arready)
+        ,.S_AXI_RDATA  (gp0_axi_rdata  )
+        ,.S_AXI_RRESP  (gp0_axi_rresp  )
+        ,.S_AXI_RVALID (gp0_axi_rvalid )
+        ,.S_AXI_RREADY (gp0_axi_rready )
         );
 
    bsg_zynq_pl_shell
@@ -139,25 +139,25 @@ module top_zynq
 
         ,.S_AXI_ACLK   (aclk           )
         ,.S_AXI_ARESETN(aresetn        )
-        ,.S_AXI_AWADDR (s01_axi_awaddr )
-        ,.S_AXI_AWPROT (s01_axi_awprot )
-        ,.S_AXI_AWVALID(s01_axi_awvalid)
-        ,.S_AXI_AWREADY(s01_axi_awready)
-        ,.S_AXI_WDATA  (s01_axi_wdata  )
-        ,.S_AXI_WSTRB  (s01_axi_wstrb  )
-        ,.S_AXI_WVALID (s01_axi_wvalid )
-        ,.S_AXI_WREADY (s01_axi_wready )
-        ,.S_AXI_BRESP  (s01_axi_bresp  )
-        ,.S_AXI_BVALID (s01_axi_bvalid )
-        ,.S_AXI_BREADY (s01_axi_bready )
-        ,.S_AXI_ARADDR (s01_axi_araddr )
-        ,.S_AXI_ARPROT (s01_axi_arprot )
-        ,.S_AXI_ARVALID(s01_axi_arvalid)
-        ,.S_AXI_ARREADY(s01_axi_arready)
-        ,.S_AXI_RDATA  (s01_axi_rdata  )
-        ,.S_AXI_RRESP  (s01_axi_rresp  )
-        ,.S_AXI_RVALID (s01_axi_rvalid )
-        ,.S_AXI_RREADY (s01_axi_rready )
+        ,.S_AXI_AWADDR (gp1_axi_awaddr )
+        ,.S_AXI_AWPROT (gp1_axi_awprot )
+        ,.S_AXI_AWVALID(gp1_axi_awvalid)
+        ,.S_AXI_AWREADY(gp1_axi_awready)
+        ,.S_AXI_WDATA  (gp1_axi_wdata  )
+        ,.S_AXI_WSTRB  (gp1_axi_wstrb  )
+        ,.S_AXI_WVALID (gp1_axi_wvalid )
+        ,.S_AXI_WREADY (gp1_axi_wready )
+        ,.S_AXI_BRESP  (gp1_axi_bresp  )
+        ,.S_AXI_BVALID (gp1_axi_bvalid )
+        ,.S_AXI_BREADY (gp1_axi_bready )
+        ,.S_AXI_ARADDR (gp1_axi_araddr )
+        ,.S_AXI_ARPROT (gp1_axi_arprot )
+        ,.S_AXI_ARVALID(gp1_axi_arvalid)
+        ,.S_AXI_ARREADY(gp1_axi_arready)
+        ,.S_AXI_RDATA  (gp1_axi_rdata  )
+        ,.S_AXI_RRESP  (gp1_axi_rresp  )
+        ,.S_AXI_RVALID (gp1_axi_rvalid )
+        ,.S_AXI_RREADY (gp1_axi_rready )
         );
 
 

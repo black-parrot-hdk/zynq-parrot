@@ -27,68 +27,68 @@ import bsg_tag_pkg::*;
   , input wire                                  aresetn
   
   // Ports of Axi Slave Bus Interface S00_AXI
-  , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr
-  , input wire [2 : 0]                          s00_axi_awprot
-  , input wire                                  s00_axi_awvalid
-  , output wire                                 s00_axi_awready
-  , input wire [C_GP0_AXI_DATA_WIDTH-1 : 0]     s00_axi_wdata
-  , input wire [(C_GP0_AXI_DATA_WIDTH/8)-1 : 0] s00_axi_wstrb
-  , input wire                                  s00_axi_wvalid
-  , output wire                                 s00_axi_wready
-  , output wire [1 : 0]                         s00_axi_bresp
-  , output wire                                 s00_axi_bvalid
-  , input wire                                  s00_axi_bready
-  , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     s00_axi_araddr
-  , input wire [2 : 0]                          s00_axi_arprot
-  , input wire                                  s00_axi_arvalid
-  , output wire                                 s00_axi_arready
-  , output wire [C_GP0_AXI_DATA_WIDTH-1 : 0]    s00_axi_rdata
-  , output wire [1 : 0]                         s00_axi_rresp
-  , output wire                                 s00_axi_rvalid
-  , input wire                                  s00_axi_rready
+  , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     gp0_axi_awaddr
+  , input wire [2 : 0]                          gp0_axi_awprot
+  , input wire                                  gp0_axi_awvalid
+  , output wire                                 gp0_axi_awready
+  , input wire [C_GP0_AXI_DATA_WIDTH-1 : 0]     gp0_axi_wdata
+  , input wire [(C_GP0_AXI_DATA_WIDTH/8)-1 : 0] gp0_axi_wstrb
+  , input wire                                  gp0_axi_wvalid
+  , output wire                                 gp0_axi_wready
+  , output wire [1 : 0]                         gp0_axi_bresp
+  , output wire                                 gp0_axi_bvalid
+  , input wire                                  gp0_axi_bready
+  , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     gp0_axi_araddr
+  , input wire [2 : 0]                          gp0_axi_arprot
+  , input wire                                  gp0_axi_arvalid
+  , output wire                                 gp0_axi_arready
+  , output wire [C_GP0_AXI_DATA_WIDTH-1 : 0]    gp0_axi_rdata
+  , output wire [1 : 0]                         gp0_axi_rresp
+  , output wire                                 gp0_axi_rvalid
+  , input wire                                  gp0_axi_rready
 
-  , output wire [C_HP0_AXI_ADDR_WIDTH-1:0]      m00_axi_awaddr
-  , output wire                                 m00_axi_awvalid
-  , input wire                                  m00_axi_awready
-  , output wire [5:0]                           m00_axi_awid
-  , output wire                                 m00_axi_awlock
-  , output wire [3:0]                           m00_axi_awcache
-  , output wire [2:0]                           m00_axi_awprot
-  , output wire [7:0]                           m00_axi_awlen
-  , output wire [2:0]                           m00_axi_awsize
-  , output wire [1:0]                           m00_axi_awburst
-  , output wire [3:0]                           m00_axi_awqos
+  , output wire [C_HP0_AXI_ADDR_WIDTH-1:0]      hp0_axi_awaddr
+  , output wire                                 hp0_axi_awvalid
+  , input wire                                  hp0_axi_awready
+  , output wire [5:0]                           hp0_axi_awid
+  , output wire                                 hp0_axi_awlock
+  , output wire [3:0]                           hp0_axi_awcache
+  , output wire [2:0]                           hp0_axi_awprot
+  , output wire [7:0]                           hp0_axi_awlen
+  , output wire [2:0]                           hp0_axi_awsize
+  , output wire [1:0]                           hp0_axi_awburst
+  , output wire [3:0]                           hp0_axi_awqos
 
-  , output wire [C_HP0_AXI_DATA_WIDTH-1:0]      m00_axi_wdata
-  , output wire                                 m00_axi_wvalid
-  , input wire                                  m00_axi_wready
-  , output wire [5:0]                           m00_axi_wid
-  , output wire                                 m00_axi_wlast
-  , output wire [(C_HP0_AXI_DATA_WIDTH/8)-1:0]  m00_axi_wstrb
+  , output wire [C_HP0_AXI_DATA_WIDTH-1:0]      hp0_axi_wdata
+  , output wire                                 hp0_axi_wvalid
+  , input wire                                  hp0_axi_wready
+  , output wire [5:0]                           hp0_axi_wid
+  , output wire                                 hp0_axi_wlast
+  , output wire [(C_HP0_AXI_DATA_WIDTH/8)-1:0]  hp0_axi_wstrb
 
-  , input wire                                  m00_axi_bvalid
-  , output wire                                 m00_axi_bready
-  , input wire [5:0]                            m00_axi_bid
-  , input wire [1:0]                            m00_axi_bresp
+  , input wire                                  hp0_axi_bvalid
+  , output wire                                 hp0_axi_bready
+  , input wire [5:0]                            hp0_axi_bid
+  , input wire [1:0]                            hp0_axi_bresp
 
-  , output wire [C_HP0_AXI_ADDR_WIDTH-1:0]      m00_axi_araddr
-  , output wire                                 m00_axi_arvalid
-  , input wire                                  m00_axi_arready
-  , output wire [5:0]                           m00_axi_arid
-  , output wire                                 m00_axi_arlock
-  , output wire [3:0]                           m00_axi_arcache
-  , output wire [2:0]                           m00_axi_arprot
-  , output wire [7:0]                           m00_axi_arlen
-  , output wire [2:0]                           m00_axi_arsize
-  , output wire [1:0]                           m00_axi_arburst
-  , output wire [3:0]                           m00_axi_arqos
+  , output wire [C_HP0_AXI_ADDR_WIDTH-1:0]      hp0_axi_araddr
+  , output wire                                 hp0_axi_arvalid
+  , input wire                                  hp0_axi_arready
+  , output wire [5:0]                           hp0_axi_arid
+  , output wire                                 hp0_axi_arlock
+  , output wire [3:0]                           hp0_axi_arcache
+  , output wire [2:0]                           hp0_axi_arprot
+  , output wire [7:0]                           hp0_axi_arlen
+  , output wire [2:0]                           hp0_axi_arsize
+  , output wire [1:0]                           hp0_axi_arburst
+  , output wire [3:0]                           hp0_axi_arqos
 
-  , input wire [C_HP0_AXI_DATA_WIDTH-1:0]       m00_axi_rdata
-  , input wire                                  m00_axi_rvalid
-  , output wire                                 m00_axi_rready
-  , input wire [5:0]                            m00_axi_rid
-  , input wire                                  m00_axi_rlast
-  , input wire [1:0]                            m00_axi_rresp
+  , input wire [C_HP0_AXI_DATA_WIDTH-1:0]       hp0_axi_rdata
+  , input wire                                  hp0_axi_rvalid
+  , output wire                                 hp0_axi_rready
+  , input wire [5:0]                            hp0_axi_rid
+  , input wire                                  hp0_axi_rlast
+  , input wire [1:0]                            hp0_axi_rresp
   );
 
   localparam num_regs_ps_to_pl_lp = 5;
@@ -145,25 +145,25 @@ import bsg_tag_pkg::*;
 
        ,.S_AXI_ACLK   (aclk)
        ,.S_AXI_ARESETN(aresetn)
-       ,.S_AXI_AWADDR (s00_axi_awaddr)
-       ,.S_AXI_AWPROT (s00_axi_awprot)
-       ,.S_AXI_AWVALID(s00_axi_awvalid)
-       ,.S_AXI_AWREADY(s00_axi_awready)
-       ,.S_AXI_WDATA  (s00_axi_wdata)
-       ,.S_AXI_WSTRB  (s00_axi_wstrb)
-       ,.S_AXI_WVALID (s00_axi_wvalid)
-       ,.S_AXI_WREADY (s00_axi_wready)
-       ,.S_AXI_BRESP  (s00_axi_bresp)
-       ,.S_AXI_BVALID (s00_axi_bvalid)
-       ,.S_AXI_BREADY (s00_axi_bready)
-       ,.S_AXI_ARADDR (s00_axi_araddr)
-       ,.S_AXI_ARPROT (s00_axi_arprot)
-       ,.S_AXI_ARVALID(s00_axi_arvalid)
-       ,.S_AXI_ARREADY(s00_axi_arready)
-       ,.S_AXI_RDATA  (s00_axi_rdata)
-       ,.S_AXI_RRESP  (s00_axi_rresp)
-       ,.S_AXI_RVALID (s00_axi_rvalid)
-       ,.S_AXI_RREADY (s00_axi_rready)
+       ,.S_AXI_AWADDR (gp0_axi_awaddr)
+       ,.S_AXI_AWPROT (gp0_axi_awprot)
+       ,.S_AXI_AWVALID(gp0_axi_awvalid)
+       ,.S_AXI_AWREADY(gp0_axi_awready)
+       ,.S_AXI_WDATA  (gp0_axi_wdata)
+       ,.S_AXI_WSTRB  (gp0_axi_wstrb)
+       ,.S_AXI_WVALID (gp0_axi_wvalid)
+       ,.S_AXI_WREADY (gp0_axi_wready)
+       ,.S_AXI_BRESP  (gp0_axi_bresp)
+       ,.S_AXI_BVALID (gp0_axi_bvalid)
+       ,.S_AXI_BREADY (gp0_axi_bready)
+       ,.S_AXI_ARADDR (gp0_axi_araddr)
+       ,.S_AXI_ARPROT (gp0_axi_arprot)
+       ,.S_AXI_ARVALID(gp0_axi_arvalid)
+       ,.S_AXI_ARREADY(gp0_axi_arready)
+       ,.S_AXI_RDATA  (gp0_axi_rdata)
+       ,.S_AXI_RRESP  (gp0_axi_rresp)
+       ,.S_AXI_RVALID (gp0_axi_rvalid)
+       ,.S_AXI_RREADY (gp0_axi_rready)
        );
 
   ///////////////////////////////////////////////////////////////////////////////////////
@@ -531,47 +531,47 @@ import bsg_tag_pkg::*;
      ,.dma_data_v_i(dma_data_v_lo)
      ,.dma_data_yumi_o(dma_data_yumi_li)
 
-     ,.axi_awid_o(m00_axi_awid)
+     ,.axi_awid_o(hp0_axi_awid)
      ,.axi_awaddr_addr_o(axi_awaddr)
      ,.axi_awaddr_cache_id_o(axi_awaddr_cache_id)
-     ,.axi_awlen_o(m00_axi_awlen)
-     ,.axi_awsize_o(m00_axi_awsize)
-     ,.axi_awburst_o(m00_axi_awburst)
-     ,.axi_awcache_o(m00_axi_awcache)
-     ,.axi_awprot_o(m00_axi_awprot)
-     ,.axi_awlock_o(m00_axi_awlock)
-     ,.axi_awvalid_o(m00_axi_awvalid)
-     ,.axi_awready_i(m00_axi_awready)
+     ,.axi_awlen_o(hp0_axi_awlen)
+     ,.axi_awsize_o(hp0_axi_awsize)
+     ,.axi_awburst_o(hp0_axi_awburst)
+     ,.axi_awcache_o(hp0_axi_awcache)
+     ,.axi_awprot_o(hp0_axi_awprot)
+     ,.axi_awlock_o(hp0_axi_awlock)
+     ,.axi_awvalid_o(hp0_axi_awvalid)
+     ,.axi_awready_i(hp0_axi_awready)
 
-     ,.axi_wdata_o(m00_axi_wdata)
-     ,.axi_wstrb_o(m00_axi_wstrb)
-     ,.axi_wlast_o(m00_axi_wlast)
-     ,.axi_wvalid_o(m00_axi_wvalid)
-     ,.axi_wready_i(m00_axi_wready)
+     ,.axi_wdata_o(hp0_axi_wdata)
+     ,.axi_wstrb_o(hp0_axi_wstrb)
+     ,.axi_wlast_o(hp0_axi_wlast)
+     ,.axi_wvalid_o(hp0_axi_wvalid)
+     ,.axi_wready_i(hp0_axi_wready)
 
-     ,.axi_bid_i(m00_axi_bid)
-     ,.axi_bresp_i(m00_axi_bresp)
-     ,.axi_bvalid_i(m00_axi_bvalid)
-     ,.axi_bready_o(m00_axi_bready)
+     ,.axi_bid_i(hp0_axi_bid)
+     ,.axi_bresp_i(hp0_axi_bresp)
+     ,.axi_bvalid_i(hp0_axi_bvalid)
+     ,.axi_bready_o(hp0_axi_bready)
 
-     ,.axi_arid_o(m00_axi_arid)
+     ,.axi_arid_o(hp0_axi_arid)
      ,.axi_araddr_addr_o(axi_araddr)
      ,.axi_araddr_cache_id_o(axi_araddr_cache_id)
-     ,.axi_arlen_o(m00_axi_arlen)
-     ,.axi_arsize_o(m00_axi_arsize)
-     ,.axi_arburst_o(m00_axi_arburst)
-     ,.axi_arcache_o(m00_axi_arcache)
-     ,.axi_arprot_o(m00_axi_arprot)
-     ,.axi_arlock_o(m00_axi_arlock)
-     ,.axi_arvalid_o(m00_axi_arvalid)
-     ,.axi_arready_i(m00_axi_arready)
+     ,.axi_arlen_o(hp0_axi_arlen)
+     ,.axi_arsize_o(hp0_axi_arsize)
+     ,.axi_arburst_o(hp0_axi_arburst)
+     ,.axi_arcache_o(hp0_axi_arcache)
+     ,.axi_arprot_o(hp0_axi_arprot)
+     ,.axi_arlock_o(hp0_axi_arlock)
+     ,.axi_arvalid_o(hp0_axi_arvalid)
+     ,.axi_arready_i(hp0_axi_arready)
 
-     ,.axi_rid_i(m00_axi_rid)
-     ,.axi_rdata_i(m00_axi_rdata)
-     ,.axi_rresp_i(m00_axi_rresp)
-     ,.axi_rlast_i(m00_axi_rlast)
-     ,.axi_rvalid_i(m00_axi_rvalid)
-     ,.axi_rready_o(m00_axi_rready)
+     ,.axi_rid_i(hp0_axi_rid)
+     ,.axi_rdata_i(hp0_axi_rdata)
+     ,.axi_rresp_i(hp0_axi_rresp)
+     ,.axi_rlast_i(hp0_axi_rlast)
+     ,.axi_rvalid_i(hp0_axi_rvalid)
+     ,.axi_rready_o(hp0_axi_rready)
      );
   localparam dram_addr_width_lp = `BSG_SAFE_CLOG2(memory_upper_limit_lp);
   wire [C_HP0_AXI_ADDR_WIDTH-1:0] axi_awaddr_hash = {axi_awaddr_cache_id, axi_awaddr[0+:dram_addr_width_lp-lg_num_dma_lp]};
@@ -659,18 +659,18 @@ import bsg_tag_pkg::*;
         end
     end
 
-  assign m00_axi_awaddr = axi_awaddr_hash + dram_base_li;
-  assign m00_axi_araddr = axi_araddr_hash + dram_base_li;
+  assign hp0_axi_awaddr = axi_awaddr_hash + dram_base_li;
+  assign hp0_axi_araddr = axi_araddr_hash + dram_base_li;
 
   // synopsys translate_off
 
   always @(negedge aclk)
-    if (m00_axi_awvalid & m00_axi_awready)
-      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_awaddr,m00_axi_awaddr);
+    if (hp0_axi_awvalid & hp0_axi_awready)
+      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Write Addr %x -> %x (AXI HP0)",axi_awaddr,hp0_axi_awaddr);
 
   always @(negedge aclk)
-    if (m00_axi_arvalid & m00_axi_arready)
-      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Read Addr %x -> %x (AXI HP0)",axi_araddr,m00_axi_araddr);
+    if (hp0_axi_arvalid & hp0_axi_arready)
+      if (debug_lp) $display("top_zynq: (BP DRAM) AXI Read Addr %x -> %x (AXI HP0)",axi_araddr,hp0_axi_araddr);
 
   // synopsys translate_on
 
