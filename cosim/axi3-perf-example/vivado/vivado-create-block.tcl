@@ -12,7 +12,7 @@ proc vivado_create_ip { args } {
 	apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config { Clk "/processing_system7_0/FCLK_CLK0" }  [get_bd_pins proc_sys_reset_0/slowest_sync_clk]
 	apply_bd_automation -rule xilinx.com:bd_rule:board -config { Manual_Source {Auto}}  [get_bd_pins proc_sys_reset_0/ext_reset_in]
 
-	connect_bd_intf_net [get_bd_intf_pins processing_system7_0/M_AXI_GP0] [get_bd_intf_pins dut_0/s00_axi]
+	connect_bd_intf_net [get_bd_intf_pins processing_system7_0/M_AXI_GP0] [get_bd_intf_pins dut_0/gp0_axi]
 	connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins dut_0/aclk]
 	connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK]
 	connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins dut_0/aresetn]

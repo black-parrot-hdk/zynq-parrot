@@ -7,8 +7,8 @@ proc vivado_create_ip { args } {
 
     connect_bd_net [get_bd_pins vps_0/aclk] [get_bd_pins dut_0/aclk]
     connect_bd_net [get_bd_pins vps_0/aresetn] [get_bd_pins dut_0/aresetn]
-    connect_bd_intf_net [get_bd_intf_pins vps_0/GP0_AXI] [get_bd_intf_pins dut_0/s00_axi]
-    connect_bd_intf_net [get_bd_intf_pins vps_0/HP0_AXI] [get_bd_intf_pins dut_0/m00_axi]
+    connect_bd_intf_net [get_bd_intf_pins vps_0/GP0_AXI] [get_bd_intf_pins dut_0/gp0_axi]
+    connect_bd_intf_net [get_bd_intf_pins vps_0/HP0_AXI] [get_bd_intf_pins dut_0/hp0_axi]
 }
 
 proc vivado_constrain_ip { args } {

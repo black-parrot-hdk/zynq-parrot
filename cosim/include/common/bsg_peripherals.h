@@ -5,6 +5,9 @@
 #include <vector>
 #include <queue>
 
+#include "bsg_axil.h"
+#include "bsg_axis.h"
+
 // Scratchpad
 #define SCRATCHPAD_BASE 0x1000000
 #define SCRATCHPAD_SIZE 0x100000
@@ -22,6 +25,14 @@ public:
     bool is_write(uintptr_t address) override {
         return (address >= SCRATCHPAD_BASE) &&
                (address < SCRATCHPAD_BASE + SCRATCHPAD_SIZE);
+    }
+
+    bool can_read(uintptr_t address) override {
+        return true;
+    }
+
+    bool can_write(uintptr_t address) override {
+        return true;
     }
 
     int32_t read(uintptr_t address) override {
@@ -62,6 +73,14 @@ public:
     bool is_write(uintptr_t address) override {
 
         return (address >= UART_BASE) && (address < UART_BASE + UART_SIZE);
+    }
+
+    bool can_read(uintptr_t address) override {
+        return true;
+    }
+
+    bool can_write(uintptr_t address) override {
+        return true;
     }
 
     int32_t read(uintptr_t address) override {
@@ -157,5 +176,48 @@ public:
 
     void return_read(int32_t data) { /* Unimp */ }
 };
+
+// Buffer
+class zynq_buffer : public s_axis_device, m_axis_device {
+    bool buffer_full = false;
+    std::queue<int32_t> buffer;
+
+public:
+    zynq_buffer() {}
+
+    bool can_write(uint8_t last) {
+        return !buffer_full;
+    }
+
+    void write(int32_t data, uint8_t last) {
+        bsg_pr_dbg_pl("  bsg_zynq_pl: fifo write <- %x\n", data);
+        buffer.push(data);
+        if (last) {
+            buffer_full = true;
+        }
+    }
+
+    bool pending_write(int32_t *data, uint8_t *last) {
+        if (buffer_full) {
+            *data = buffer.front();
+            bsg_pr_dbg_pl("  bsg_zynq_pl: fifo read -> %x\n", *data);
+
+            buffer.pop();
+            data++;
+
+            if (buffer.empty()) {
+                *last = true;
+                buffer_full = false;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    // USER Functions
+};
+
 
 #endif
