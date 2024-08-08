@@ -18,14 +18,21 @@ TARGET_WORK      ?= $(SOFTWARE_WORK_DIR)/$(TARGET_NAME)
 TARGET_PROJ      ?= $(TARGET_WORK)/dummy.proj
 TARGET_XSA       ?= $(TARGET_WORK)/dummy.xsa
 TARGET_TCL       ?= $(TARGET_WORK)/dummy.tcl
-TARGET_ENV       ?= $(TARGET_SDK)/dummy.environment-setup-x86
+TARGET_ENV       ?= $(TARGET_SDK)/environment-setup-x86_64-linux-gnu
+TARGET_TRIPLE    ?=
 
 TARGET_VERILATOR ?= $(TARGET_SDK)/bin/verilator
 TARGET_PYNQ ?= $(TARGET_SDK)/lib/dummy.a
+TARGET_OPENOCD ?= $(TARGET_SDK)/bin/openocd
 
 dummy.%:
+	mkdir -p $(@D)
 	mkdir -p $(TARGET_WORK)
 	mkdir -p $(TARGET_SDK)
+	touch $@
+
+$(TARGET_ENV):
+	mkdir -p $(@D)
 	touch $@
 
 else ifeq ($(TARGET_NAME),pynqz2)
@@ -37,9 +44,11 @@ TARGET_PROJ      ?= $(TARGET_NAME)_proj
 TARGET_XSA       ?= $(TARGET_WORK)/$(TARGET_NAME)_basic.xsa
 TARGET_TCL       ?= $(SOFTWARE_TCL_DIR)/vivado-gen-xsa-$(TARGET_NAME).tcl
 TARGET_ENV       ?= $(PYNQZ2_ENV)
+TARGET_TRIPLE    ?= $(TARGET_CC)
 
 TARGET_VERILATOR ?= $(TARGET_SDK)/bin/verilator
 TARGET_PYNQ ?= $(TARGET_SDK)/lib/libpynq.a
+TARGET_OPENOCD ?= $(TARGET_SDK)/bin/openocd
 else ifeq ($(TARGET_NAME),ultra96v2)
 TARGET_CC        ?= aarch64-xilinx-linux-gnueabi
 TARGET_TEMPLATE  ?= zynqMP
@@ -49,20 +58,34 @@ TARGET_PROJ      ?= $(TARGET_NAME)_proj
 TARGET_XSA       ?= $(TARGET_WORK)/$(TARGET_NAME)_basic.xsa
 TARGET_TCL       ?= $(SOFTWARE_TCL_DIR)/vivado-gen-xsa-$(TARGET_NAME).tcl
 TARGET_ENV       ?= $(ULTRA96V2_ENV)
+TARGET_TRIPLE    ?= $(TARGET_CC)
 
 TARGET_VERILATOR ?= $(TARGET_SDK)/bin/verilator
 TARGET_PYNQ ?= $(TARGET_SDK)/lib/libpynq.a
+TARGET_OPENOCD ?= $(TARGET_SDK)/bin/openocd
 else
 $(error Unknown TARGET_NAME $(TARGET_NAME) for software)
 endif
 
-all: verilator pynq
+all: verilator pynq openocd
+
+HOST_CC ?= x86_64-linux-gnu
+openocd: $(TARGET_OPENOCD)
+%/bin/openocd: export OPENOCD_CONFIG="--enable-remote-bitbang"
+%/bin/openocd: $(TARGET_ENV)
+	mkdir -p $(@D)
+	git clone --recurse-submodules -b riscv https://github.com/riscv-collab/riscv-openocd $(TARGET_WORK)/riscv-openocd
+	cd $(TARGET_WORK)/riscv-openocd; source $(TARGET_ENV) && ./bootstrap
+	cd $(TARGET_WORK)/riscv-openocd; source $(TARGET_ENV) && cp $(TARGET_WORK)/riscv-openocd/{build-aux/,}config.guess
+	cd $(TARGET_WORK)/; source $(TARGET_ENV) && \
+		$(TARGET_WORK)/riscv-openocd/contrib/cross-build.sh $(TARGET_TRIPLE)
+	cp $(TARGET_WORK)/$(TARGET_TRIPLE)-root/usr/bin/openocd $@
 
 pynq: $(TARGET_PYNQ)
 %/lib/libpynq.a: $(TARGET_ENV)
 	mkdir -p $(@D)
-	git clone -b image_v2.6.0 https://github.com/Xilinx/PYNQ.git $(TARGET_WORK)/PYNQ
-	git clone -b master https://github.com/mesham/pynq_api.git $(TARGET_WORK)/pynq_api
+	git clone --recurse-submodules -b image_v2.6.0 https://github.com/Xilinx/PYNQ.git $(TARGET_WORK)/PYNQ
+	git clone --recurse-submodules -b master https://github.com/mesham/pynq_api.git $(TARGET_WORK)/pynq_api
 	sed -i "/CC.*=/d" $(TARGET_WORK)/pynq_api/makefile
 	sed -i "/CFLAGS.*=/d" $(TARGET_WORK)/pynq_api/makefile
 	cd $(TARGET_WORK)/pynq_api; \
@@ -73,7 +96,6 @@ pynq: $(TARGET_PYNQ)
 	cp $(TARGET_WORK)/pynq_api/libpynq.so $(@D)
 	cp $(TARGET_WORK)/pynq_api/src/pynq_api.h $(@D)
 
-HOST_CC ?= x86_64-linux-gnu
 verilator: $(TARGET_VERILATOR)
 %/bin/verilator: $(TARGET_ENV)
 	mkdir -p $(@D)
