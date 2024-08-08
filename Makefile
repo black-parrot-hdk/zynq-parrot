@@ -10,7 +10,9 @@ prep: checkout
 	$(MAKE) -C $(BLACKPARROT_DIR) libs
 	$(MAKE) -C $(BLACKPARROT_TOOLS_DIR) tools
 	$(MAKE) -C $(BLACKPARROT_SDK_DIR) sdk PLATFORM=$(PLATFORM)
-	$(MAKE) -C $(BLACKPARROT_SDK_DIR) prog
+	$(MAKE) -j1 -C $(BLACKPARROT_SDK_DIR) prog
+	$(MAKE) -C $(BLACKPARROT_SDK_DIR) linux
+	$(MAKE) -C $(SOFTWARE_DIR) all TARGET_NAME=$(BOARDNAME)
 
 prep_bsg: prep
 	# BlackParrot
