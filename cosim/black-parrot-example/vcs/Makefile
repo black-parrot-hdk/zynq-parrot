@@ -31,8 +31,9 @@ DEFINES += GP0_HIER_BASE=bsg_nonsynth_zynq_testbench.axil0
 DEFINES += GP1_ADDR_BASE=0x80000000U
 DEFINES += GP1_HIER_BASE=bsg_nonsynth_zynq_testbench.axil1
 DEFINES += GP2_ADDR_BASE=0x80000000U
-DEFINES += GP2_HIER_BASE=bsg_nonsynth_zynq_testbench.axil2
-DEFINES += WATCHDOG_ENABLE
+#DEFINES += GP2_HIER_BASE=bsg_nonsynth_zynq_testbench.axil2
+#DEFINES += WATCHDOG_ENABLE
+DEFINES += AXI_DMI_ENABLE
 DEFINES += HP0_ADDR_BASE=0x0000000U
 DEFINES += AXI_MEM_ENABLE
 DEFINES += HP1_ADDR_BASE=0x1000000U
@@ -74,6 +75,13 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axil.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_axil_to_dpi.sv" >> $@
+	echo "$(BLACKPARROT_SUB_DIR)/zynq/import/riscv-dbg/src/dm_pkg.sv" >> $@
+	echo "$(BLACKPARROT_SUB_DIR)/zynq/import/riscv-dbg/src/dm_csrs.sv" >> $@
+	echo "$(BLACKPARROT_SUB_DIR)/zynq/import/riscv-dbg/src/dm_mem.sv" >> $@
+	echo "$(BLACKPARROT_SUB_DIR)/zynq/import/riscv-dbg/debug_rom/debug_rom.sv" >> $@
+	echo "$(BLACKPARROT_SUB_DIR)/zynq/import/riscv-dbg/src/dm_sba.sv" >> $@
+	echo "$(BLACKPARROT_SUB_DIR)/zynq/import/riscv-dbg/src/dm_top.sv" >> $@
+	echo "$(BLACKPARROT_SUB_DIR)/zynq/import/opentitan/hw/dv/dpi/dmidpi/dmidpi.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv" >> $@
 	if [ "$(DROMAJO_COSIM)" = "1" ]; then \
 		echo "$(BLACKPARROT_DIR)/bp_top/test/common/bp_nonsynth_cosim.sv" >> $@; \

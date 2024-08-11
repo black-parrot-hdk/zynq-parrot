@@ -11,7 +11,7 @@ VCS_OPTS += -timescale=1ps/1ps
 VCS_OPTS += -diag timescale
 VCS_OPTS += -f flist.vcs
 VCS_OPTS += -top $(TB_MODULE)
-VCS_OPTS += -debug_pp
+#VCS_OPTS += -debug_pp
 VCS_OPTS += +vcs+vcdpluson +vcs+vcdplusautoflushon
 VCS_OPTS += +vcs+lic+wait
 VCS_OPTS += +incdir+$(COSIM_DIR)/include/vcs
@@ -20,6 +20,11 @@ VCS_OPTS += $(MAIN_PROGRAM)
 VCS_OPTS += $(BP_SDK_LIB_DIR)/libboost_coroutine.a
 VCS_OPTS += $(BP_SDK_LIB_DIR)/libboost_context.a
 VCS_OPTS += $(BP_SDK_LIB_DIR)/libboost_system.a
+
+# TODO: Make into library
+VCS_OPTS += $(HOME)/test-open-ocd/dmidpi.c
+VCS_OPTS += $(HOME)/test-open-ocd/tcp_server.c +lint=TFIPC-L
+CFLAGS += -I$(HOME)/test-open-ocd/
 
 CFLAGS += -DVCS
 CFLAGS += -DHOST_$(call upper,$(HOST))
@@ -42,7 +47,7 @@ CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_test
 CINCLUDES += -I$(CURR_DESIGN_DIR)
 
-TRACE ?= +bsg_trace +vpdfilesize+512
+TRACE ?= +bsg_trace +vpdfilesize+64
 
 all:
 	@echo "## See the makefile for the fun things you can do in this directory"

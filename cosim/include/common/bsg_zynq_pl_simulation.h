@@ -91,11 +91,13 @@ protected:
         }));
 #endif
 #ifdef GP2_ENABLE
-        axi_gp2 = std::make_unique<maxil<GP2_ADDR_WIDTH, GP2_DATA_WIDTH>>(
+#ifndef AXI_DMI_ENABLE
+        axi_gp2 = std::make_unique<axilm<GP2_ADDR_WIDTH, GP2_DATA_WIDTH>>(
             STRINGIFY(GP2_HIER_BASE));
         co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
             axi_gp2->reset(yield);
         }));
+#endif
 #endif
 #ifdef HP0_ENABLE
 #ifndef AXI_MEM_ENABLE
@@ -107,11 +109,13 @@ protected:
 #endif
 #endif
 #ifdef HP1_ENABLE
-        axi_hp1 = std::make_unique<saxil<HP1_ADDR_WIDTH, HP1_DATA_WIDTH>>(
+#ifndef AXI_DMI_ENABLE
+        axi_hp1 = std::make_unique<axils<HP1_ADDR_WIDTH, HP1_DATA_WIDTH>>(
             STRINGIFY(HP1_HIER_BASE));
         co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
             axi_hp1->reset(yield);
         }));
+#endif
 #endif
 #ifdef HP2_ENABLE
         axi_hp2 = std::make_unique<saxil<HP2_ADDR_WIDTH, HP2_DATA_WIDTH>>(
@@ -207,7 +211,7 @@ protected:
         uint8_t wstrb;
         uint8_t last;
 #ifdef HP1_ENABLE
-        if (!axi_hp1->axil_has_read(&addr)) {
+        if (!axi_hp1 || !axi_hp1->axil_has_read(&addr)) {
         } else if (scratchpad.get() && scratchpad->is_read(addr)) {
             if (scratchpad->can_read(addr)) {
                 co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
@@ -226,7 +230,7 @@ protected:
                        addr);
         }
 
-        if (!axi_hp1->axil_has_write(&addr)) {
+        if (!axi_hp1 || !axi_hp1->axil_has_write(&addr)) {
         } else if (scratchpad && scratchpad->is_write(addr)) {
             if (scratchpad->can_write(addr) {
                 co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
