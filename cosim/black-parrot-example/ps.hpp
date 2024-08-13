@@ -9,7 +9,8 @@
 #define GP0_RD_CSR_BOOTROM_ADDR   (GP0_RD_CSR_DRAM_BASE      + 0x4)
 #ifdef COV_EN
 #define GP0_RD_CSR_COV_EN         (GP0_RD_CSR_BOOTROM_ADDR   + 0x4)
-#define GP0_RD_PL2PS_FIFO_0_DATA  (GP0_RD_CSR_COV_EN         + 0x4)
+#define GP0_RD_CSR_AXIS_MAX_LEN   (GP0_RD_CSR_COV_EN         + 0x4)
+#define GP0_RD_PL2PS_FIFO_0_DATA  (GP0_RD_CSR_AXIS_MAX_LEN   + 0x4)
 #else
 #define GP0_RD_PL2PS_FIFO_0_DATA  (GP0_RD_CSR_BOOTROM_ADDR   + 0x4)
 #endif
@@ -25,6 +26,10 @@
 #define GP0_RD_MCYCLE             (GP0_RD_CYCLE              + 0x8)
 #define GP0_RD_MINSTRET           (GP0_RD_MCYCLE             + 0x8)
 #define GP0_RD_COUNTERS           (GP0_RD_CYCLE)
+#define GP0_RD_COV_GATE           (GP0_RD_MINSTRET           + 0x8)
+#define GP0_RD_COV_CNT            (GP0_RD_COV_GATE           + 0x4)
+#define GP0_RD_COV_STAT           (GP0_RD_COV_CNT            + 0x4)
+#define GP0_RD_COV_LAST           (GP0_RD_COV_STAT           + 0x4)
 
 // GP0 Write Memory Map
 #define GP0_WR_CSR_SYS_RESETN     GP0_RD_CSR_SYS_RESETN
@@ -34,7 +39,8 @@
 #define GP0_WR_CSR_BOOTROM_ADDR   GP0_RD_CSR_BOOTROM_ADDR
 #ifdef COV_EN
 #define GP0_WR_CSR_COV_EN         GP0_RD_CSR_COV_EN
-#define GP0_WR_PS2PL_FIFO_DATA    (GP0_WR_CSR_COV_EN + 0x4)
+#define GP0_WR_CSR_AXIS_MAX_LEN   GP0_RD_CSR_AXIS_MAX_LEN
+#define GP0_WR_PS2PL_FIFO_DATA    (GP0_WR_CSR_AXIS_MAX_LEN + 0x4)
 #else
 #define GP0_WR_PS2PL_FIFO_DATA    (GP0_WR_CSR_BOOTROM_ADDR + 0x4)
 #endif

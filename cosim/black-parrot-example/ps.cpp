@@ -192,10 +192,40 @@ pthread_t cov_pid;
 bool cov_run = true;
 
 void* cov_poll(void *vargp) {
+  bsg_zynq_pl* zpl = (bsg_zynq_pl*) vargp;
   while(cov_run) {
+
+    uint32_t cov_gate = zpl->shell_read(GP0_RD_COV_GATE);
+    bsg_pr_info("ps.cpp: cov_gate: %x\n", cov_gate);
+
+    uint32_t cov_cnt = zpl->shell_read(GP0_RD_COV_CNT);
+    bsg_pr_info("ps.cpp: cov_cnt: %x\n", cov_cnt);
+
+    uint32_t cov_stat = zpl->shell_read(GP0_RD_COV_STAT);
+    bsg_pr_info("ps.cpp: cov_stat: %x\n", cov_stat);
+
+    uint32_t cov_last = zpl->shell_read(GP0_RD_COV_LAST);
+    bsg_pr_info("ps.cpp: cov_last: %x\n", cov_last);
+
     // initiate read transfer and wait for completion
     PYNQ_readDMA(&dma, &cov_buff, 0, sizeof(uint32_t) * COV_BUF_LEN);
-    PYNQ_waitForDMAComplete(&dma, AXI_DMA_READ);
+    bsg_pr_info("ps.cpp: issued read DMA\n");
+
+    cov_gate = zpl->shell_read(GP0_RD_COV_GATE);
+    bsg_pr_info("ps.cpp: cov_gate: %x\n", cov_gate);
+
+    cov_cnt = zpl->shell_read(GP0_RD_COV_CNT);
+    bsg_pr_info("ps.cpp: cov_cnt: %x\n", cov_cnt);
+
+    cov_stat = zpl->shell_read(GP0_RD_COV_STAT);
+    bsg_pr_info("ps.cpp: cov_stat: %x\n", cov_stat);
+
+    cov_last = zpl->shell_read(GP0_RD_COV_LAST);
+    bsg_pr_info("ps.cpp: cov_last: %x\n", cov_last);
+
+    int len;
+    PYNQ_waitForDMAComplete(&dma, AXI_DMA_READ, &len);
+    bsg_pr_info("ps.cpp: got read DMA with len: %d\n", len);
 
     // process the packet
     cov_proc((uint32_t*)cov_buff.pointer);
@@ -209,14 +239,18 @@ void cov_start(bsg_zynq_pl *zpl) {
   PYNQ_allocatedSharedMemory(&cov_buff, sizeof(uint32_t) * COV_BUF_LEN, 0);
 
   bsg_pr_info("ps.cpp: openning DMA device\n");
-  PYNQ_openDMA(&dma, GP0_DMA_ADDR, true, false);
+  PYNQ_openDMA(&dma, GP0_DMA_ADDR, true, false, sizeof(uint32_t) * COV_BUF_LEN);
+
+  // set max axis len
+  bsg_pr_info("ps.cpp: Setting max axis len\n");
+  zpl->shell_write(GP0_WR_CSR_AXIS_MAX_LEN, 256, 0xf);
 
   // assert coverage collection
   bsg_pr_info("ps.cpp: Asserting coverage collection enable\n");
   zpl->shell_write(GP0_WR_CSR_COV_EN, 0x1, 0xf);
 
   // start coverage polling thread
-  pthread_create(&cov_pid, NULL, cov_poll, NULL);
+  pthread_create(&cov_pid, NULL, cov_poll, (void*)zpl);
 }
 
 void cov_done(bsg_zynq_pl *zpl) {
@@ -253,6 +287,10 @@ void cov_poll(bsg_zynq_pl *zpl) {
 }
 
 void cov_start(bsg_zynq_pl *zpl) {
+  // set max axis len
+  bsg_pr_info("ps.cpp: Setting max axis len\n");
+  zpl->shell_write(GP0_WR_CSR_AXIS_MAX_LEN, 256, 0xf);
+
   // assert coverage collection
   bsg_pr_info("ps.cpp: Asserting coverage collection enable\n");
   zpl->shell_write(GP0_WR_CSR_COV_EN, 0x1, 0xf);

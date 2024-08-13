@@ -12,7 +12,7 @@ export CORE_FREQ  ?= 40
 COV_EN ?= 1
 RAND_COV ?= 0
 ifeq ($(RAND_COV),1)
-COV_NUM ?= 4
+COV_NUM ?= 36
 else
 COV_NUM ?= 11
 endif

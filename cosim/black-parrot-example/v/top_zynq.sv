@@ -188,11 +188,12 @@ module top_zynq
    localparam bp_axi_data_width_lp  = 64;
  
 `ifdef COV_EN
-   localparam num_regs_ps_to_pl_lp  = 6;
+   localparam num_regs_ps_to_pl_lp  = 7;
+   localparam num_regs_pl_to_ps_lp  = 15;
 `else
    localparam num_regs_ps_to_pl_lp  = 5;
-`endif
    localparam num_regs_pl_to_ps_lp  = 11;
+`endif
 
    localparam num_fifo_ps_to_pl_lp = 1;
    localparam num_fifo_pl_to_ps_lp = 1;
@@ -206,6 +207,7 @@ module top_zynq
    // 3: The base register for the allocated dram
    // 4: The bootrom access address
    // 5: The coverage sampling enable
+   // 6: axis max len
    //
    logic [num_regs_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_lo;
    logic [num_regs_ps_to_pl_lp-1:0]                           csr_data_new_lo;
@@ -218,6 +220,10 @@ module top_zynq
    // 5-6: cycle
    // 7-8: mcycle
    // 9-10: minstret
+   // 11: cov_gate_lo
+   // 12: cov_cnt_lo
+   // 13: cov_stat_lo
+   // 14: cov_last_lo
    //
    logic [num_regs_pl_to_ps_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] csr_data_li;
 
@@ -350,6 +356,9 @@ module top_zynq
 `ifdef COV_EN
    logic cov_en_li;
    assign cov_en_li          = csr_data_lo[5];
+
+   logic [31:0] axis_max_len_li;
+   assign axis_max_len_li = csr_data_lo[6];
 `endif
 
    bsg_counter_clear_up
@@ -436,6 +445,23 @@ module top_zynq
    logic cov_en_sync_li;
    logic [num_cov_p-1:0] cov_gate_lo;
    wire gate_lo = cov_en_sync_li & (|cov_gate_lo);
+   assign csr_data_li[11] = cov_gate_lo;
+   assign csr_data_li[12] = axis_packer.cnt_lo;
+   assign csr_data_li[13] = {cov_way_lo, axis_packer_v_li, axis_packer_last_li, axis_packer_ready_lo, axis_packer_v_lo, axis_packer_last_lo, axis_packer_ready_li};
+
+   logic [31:0] axis_cnt_r, axis_cnt_r2;
+   always_ff @(posedge aclk) begin
+     if(m02_axis_tvalid & m02_axis_tready & ~m02_axis_tlast) begin
+       axis_cnt_r <= axis_cnt_r + 1'b1;
+     end
+     if(m02_axis_tvalid & m02_axis_tready & m02_axis_tlast) begin
+       axis_cnt_r <= '0;
+       axis_cnt_r2 <= axis_cnt_r;
+     end
+   end
+   assign csr_data_li[14] = axis_cnt_r2;
+
+
 `else
    wire gate_lo = 1'b0;
 `endif
@@ -1052,11 +1078,12 @@ module top_zynq
 
    bsg_axi_stream_packer
     #(.width_p(C_M02_AXI_DATA_WIDTH)
-     ,.max_len_p(256)
      )
     axis_packer
      (.clk_i(ds_clk)
      ,.reset_i(ds_reset_li)
+
+     ,.max_len_i(axis_max_len_li)
 
      ,.v_i(axis_packer_v_li)
      ,.last_i(axis_packer_last_li)

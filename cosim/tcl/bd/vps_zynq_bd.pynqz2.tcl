@@ -68,6 +68,7 @@ proc vivado_create_ip { args } {
     create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dma axi_dma_0
     set_property CONFIG.c_include_sg {0} [get_bd_cells axi_dma_0]
     set_property CONFIG.c_include_mm2s {0} [get_bd_cells axi_dma_0]
+    set_property CONFIG.c_sg_length_width {26} [get_bd_cells axi_dma_0]
     set_property CONFIG.c_m_axi_s2mm_data_width {64} [get_bd_cells axi_dma_0]
     set_property CONFIG.c_s2mm_burst_size {256} [get_bd_cells axi_dma_0]
 

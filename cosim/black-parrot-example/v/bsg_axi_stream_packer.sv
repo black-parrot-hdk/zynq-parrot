@@ -3,12 +3,11 @@
 
 module bsg_axi_stream_packer
  #(parameter `BSG_INV_PARAM(width_p)
-  ,parameter `BSG_INV_PARAM(max_len_p)
-
-  ,localparam lg_max_len_lp = `BSG_SAFE_CLOG2(max_len_p)
   )
   (input clk_i
   ,input reset_i
+
+  ,input [31:0] max_len_i
 
   ,input v_i
   ,input last_i
@@ -22,11 +21,11 @@ module bsg_axi_stream_packer
   );
 
 
-  logic [lg_max_len_lp-1:0] cnt_lo;
+  logic [31:0] cnt_lo;
   bsg_counter_clear_up
-   #(.max_val_p(max_len_p-1), .init_val_p(0))
+   #(.max_val_p({31{1'b1}}), .init_val_p(0))
    cycle_cnt
-    (.clk_i(clk)
+    (.clk_i(clk_i)
     ,.reset_i(reset_i)
     ,.clear_i(v_o & ready_i & last_o)
     ,.up_i(v_o & ready_i & ~last_o)
@@ -44,7 +43,7 @@ module bsg_axi_stream_packer
     ,.data_o(safe_last)
     );
 
-  wire critical_last = (cnt_lo == (max_len_p - 1));
+  wire critical_last = (cnt_lo == (max_len_i - 1));
 
   assign ready_o = ready_i & ~last_o;
 
