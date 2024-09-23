@@ -27,19 +27,19 @@ proc vivado_create_ip { args } {
     create_bd_port -dir O -type data tag_ck
     create_bd_port -dir O -type data tag_data
 
-    make_bd_intf_pins_external [get_bd_intf_pins -hier s00_axi] -name "s00_axi"
-    make_bd_intf_pins_external [get_bd_intf_pins -hier s01_axi] -name "s01_axi"
-    make_bd_intf_pins_external [get_bd_intf_pins -hier s02_axi] -name "s02_axi"
-    make_bd_intf_pins_external [get_bd_intf_pins -hier m00_axi] -name "m00_axi"
-    make_bd_intf_pins_external [get_bd_intf_pins -hier m01_axi] -name "m01_axi"
+    make_bd_intf_pins_external [get_bd_intf_pins -hier gp0_axi] -name "gp0_axi"
+    make_bd_intf_pins_external [get_bd_intf_pins -hier gp1_axi] -name "gp1_axi"
+    make_bd_intf_pins_external [get_bd_intf_pins -hier gp2_axi] -name "gp2_axi"
+    make_bd_intf_pins_external [get_bd_intf_pins -hier hp0_axi] -name "hp0_axi"
+    make_bd_intf_pins_external [get_bd_intf_pins -hier hp1_axi] -name "hp1_axi"
 
-    set_property CONFIG.ASSOCIATED_BUSIF {s00_axi:s01_axi:s02_axi:m00_axi:m01_axi} [get_bd_ports aclk]
+    set_property CONFIG.ASSOCIATED_BUSIF {gp0_axi:gp1_axi:gp2_axi:hp0_axi:hp1_axi} [get_bd_ports aclk]
     set_property CONFIG.ASSOCIATED_RESET {aresetn:sys_resetn} [get_bd_ports aclk]
-    set_property CONFIG.PROTOCOL {AXI4LITE} [get_bd_intf_ports s00_axi]
-    set_property CONFIG.PROTOCOL {AXI4LITE} [get_bd_intf_ports s01_axi]
-    set_property CONFIG.PROTOCOL {AXI4LITE} [get_bd_intf_ports s02_axi]
-    set_property CONFIG.PROTOCOL {AXI4} [get_bd_intf_ports m00_axi]
-    set_property CONFIG.PROTOCOL {AXI4LITE} [get_bd_intf_ports m01_axi]
+    set_property CONFIG.PROTOCOL {AXI4LITE} [get_bd_intf_ports gp0_axi]
+    set_property CONFIG.PROTOCOL {AXI4LITE} [get_bd_intf_ports gp1_axi]
+    set_property CONFIG.PROTOCOL {AXI4LITE} [get_bd_intf_ports gp2_axi]
+    set_property CONFIG.PROTOCOL {AXI4} [get_bd_intf_ports hp0_axi]
+    set_property CONFIG.PROTOCOL {AXI4LITE} [get_bd_intf_ports hp1_axi]
 
     connect_bd_net [get_bd_pins top/aclk] [get_bd_ports aclk]
     connect_bd_net [get_bd_pins top/rt_clk] [get_bd_ports rt_clk]
@@ -48,15 +48,15 @@ proc vivado_create_ip { args } {
     connect_bd_net [get_bd_pins top/tag_data] [get_bd_ports tag_data]
     connect_bd_net [get_bd_pins top/sys_resetn] [get_bd_ports sys_resetn]
 
-    set m00_seg_offset 0x0
-    set m00_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_intf_ports m00_axi]]
-    set m00_seg_size [expr 1 << ${m00_addr_width}]
-    assign_bd_address -target_address_space [get_bd_addr_spaces top/m00_axi] [get_bd_addr_segs m00*] -offset ${m00_seg_offset} -range ${m00_seg_size}
+    set hp0_seg_offset 0x0
+    set hp0_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_intf_ports hp0_axi]]
+    set hp0_seg_size [expr 1 << ${hp0_addr_width}]
+    assign_bd_address -target_address_space [get_bd_addr_spaces top/hp0_axi] [get_bd_addr_segs m00*] -offset ${hp0_seg_offset} -range ${hp0_seg_size}
 
-    set m01_seg_offset 0x0
-    set m01_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_intf_ports m01_axi]]
-    set m01_seg_size [expr 1 << ${m01_addr_width}]
-    assign_bd_address -target_address_space [get_bd_addr_spaces top/m01_axi] [get_bd_addr_segs m01*] -offset ${m01_seg_offset} -range ${m01_seg_size}
+    set hp1_seg_offset 0x0
+    set hp1_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_intf_ports hp1_axi]]
+    set hp1_seg_size [expr 1 << ${hp1_addr_width}]
+    assign_bd_address -target_address_space [get_bd_addr_spaces top/hp1_axi] [get_bd_addr_segs m01*] -offset ${hp1_seg_offset} -range ${hp1_seg_size}
 
     assign_bd_address
 }

@@ -94,11 +94,15 @@ static uintptr_t gp1_addr_base = (uintptr_t) GP1_ADDR_BASE;
 #endif
 
 #ifdef GP0_ENABLE
-#define AXI_ENABLE
+#define AXIL_ENABLE
 #endif
 
 #ifdef GP1_ENABLE
-#define AXI_ENABLE
+#define AXIL_ENABLE
+#endif
+
+#ifdef GP2_ENABLE
+#define AXIL_ENABLE
 #endif
 
 #ifndef GP2_ENABLE
@@ -220,6 +224,108 @@ static uintptr_t hp2_addr_base = (uintptr_t) HP2_ADDR_BASE;
 #ifndef HP2_HIER_BASE
 #ifdef SIMULATION
 #error HP2_HIER_BASE must be defined
+#endif
+#endif
+
+#ifdef SP0_ENABLE
+#define AXIS_ENABLE
+#endif
+
+#ifdef SP1_ENABLE
+#define AXIS_ENABLE
+#endif
+
+#ifdef SP2_ENABLE
+#define AXIS_ENABLE
+#endif
+
+#ifndef SP0_ENABLE
+#define SP0_DATA_WIDTH 0
+#define SP0_HIER_BASE ""
+#endif
+
+#ifndef SP0_DATA_WIDTH
+#error SP0_DATA_WIDTH must be defined
+#endif
+
+#ifndef SP0_HIER_BASE
+#ifdef SIMULATION
+#error SP0_HIER_BASE must be defined
+#endif
+#endif
+
+#ifndef SP1_ENABLE
+#define SP1_DATA_WIDTH 0
+#define SP1_HIER_BASE ""
+#endif
+
+#ifndef SP1_DATA_WIDTH
+#error SP1_DATA_WIDTH must be defined
+#endif
+
+#ifndef SP1_HIER_BASE
+#ifdef SIMULATION
+#error SP1_HIER_BASE must be defined
+#endif
+#endif
+
+#ifndef SP2_ENABLE
+#define SP2_DATA_WIDTH 0
+#define SP2_HIER_BASE ""
+#endif
+
+#ifndef SP2_DATA_WIDTH
+#error SP2_DATA_WIDTH must be defined
+#endif
+
+#ifndef SP2_HIER_BASE
+#ifdef SIMULATION
+#error SP2_HIER_BASE must be defined
+#endif
+#endif
+
+#ifndef MP0_ENABLE
+#define MP0_DATA_WIDTH 0
+#define MP0_HIER_BASE ""
+#endif
+
+#ifndef MP0_DATA_WIDTH
+#error MP0_DATA_WIDTH must be defined
+#endif
+
+#ifndef MP0_HIER_BASE
+#ifdef SIMULATION
+#error MP0_HIER_BASE must be defined
+#endif
+#endif
+
+#ifndef MP1_ENABLE
+#define MP1_DATA_WIDTH 0
+#define MP1_HIER_BASE ""
+#endif
+
+#ifndef MP1_DATA_WIDTH
+#error MP1_DATA_WIDTH must be defined
+#endif
+
+#ifndef MP1_HIER_BASE
+#ifdef SIMULATION
+#error MP1_HIER_BASE must be defined
+#endif
+#endif
+
+#ifndef MP2_ENABLE
+#define MP2_DATA_WIDTH 0
+#define MP2_HIER_BASE ""
+#endif
+
+#ifndef MP2_DATA_WIDTH
+#error MP2_DATA_WIDTH must be defined
+#endif
+
+#ifndef MP2_HIER_BASE
+#ifdef SIMULATION
+#error MP2_HIER_BASE must be defined
 #endif
 #endif
 
