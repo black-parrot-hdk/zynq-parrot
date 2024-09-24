@@ -28,14 +28,14 @@ prep_lite: checkout
 prep: prep_lite
 	$(MAKE) -C $(BP_RTL_DIR) libs
 	$(MAKE) -C $(BP_TOOLS_DIR) tools
-	$(MAKE) -C $(BP_SDK_DIR) sdk PLATFORM=$(PLATFORM)
+	$(MAKE) -C $(BP_SDK_DIR) sdk PLATFORM=zynqparrot
 	$(MAKE) -C $(BP_SDK_DIR) prog
 	$(MAKE) -C $(BSG_MANYCORE_DIR)/software/riscv-tools build-riscv-gnu-tools
 
 prep_bsg: prep
 	$(MAKE) -C $(BP_RTL_DIR) libs_bsg
 	$(MAKE) -C $(BP_TOOLS_DIR) tools_bsg
-	$(MAKE) -C $(BP_SDK_DIR) sdk_bsg PLATFORM=$(PLATFORM)
+	$(MAKE) -C $(BP_SDK_DIR) sdk_bsg PLATFORM=zynqparrot
 	$(MAKE) -C $(BP_SDK_DIR) prog_bsg
 	$(MAKE) -C $(BSG_MANYCORE_DIR)/software/riscv-tools build-llvm
 
