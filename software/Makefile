@@ -31,6 +31,7 @@ TARGET_ENV       ?= $(TARGET_SDK)/environment-setup-$(HOST_CC)
 TARGET_VERILATOR ?= $(TARGET_SDK)/bin/verilator
 TARGET_PYNQ ?= $(TARGET_SDK)/lib/dummy.a
 TARGET_OPENOCD ?= $(TARGET_SDK)/bin/openocd
+TARGET_DROMAJO ?= $(TARGET_SDK)/bin/dromajo
 
 dummy.%:
 	mkdir -p $(@D)
@@ -64,6 +65,7 @@ TARGET_ENV       ?= $(PYNQZ2_ENV)
 TARGET_VERILATOR ?= $(TARGET_SDK)/bin/verilator
 TARGET_PYNQ ?= $(TARGET_SDK)/lib/libpynq.a
 TARGET_OPENOCD ?= $(TARGET_SDK)/bin/openocd
+TARGET_DROMAJO ?= $(TARGET_SDK)/bin/dromajo
 else ifeq ($(TARGET_NAME),ultra96v2)
 TARGET_CC        ?= aarch64-xilinx-linux-gnueabi
 TARGET_TEMPLATE  ?= zynqMP
@@ -77,11 +79,27 @@ TARGET_ENV       ?= $(ULTRA96V2_ENV)
 TARGET_VERILATOR ?= $(TARGET_SDK)/bin/verilator
 TARGET_PYNQ ?= $(TARGET_SDK)/lib/libpynq.a
 TARGET_OPENOCD ?= $(TARGET_SDK)/bin/openocd
+TARGET_DROMAJO ?= $(TARGET_SDK)/bin/dromajo
 else
 $(error Unknown TARGET_NAME $(TARGET_NAME) for software)
 endif
 
-all: verilator pynq openocd
+all: verilator pynq openocd dromajo
+
+dromajo: $(TARGET_DROMAJO)
+%/bin/dromajo: $(TARGET_ENV)
+	mkdir -p $(@D)
+	mkdir -p $(TARGET_WORK)/dromajo_build
+	cd $(TARGET_WORK)/dromajo_build; source $(TARGET_ENV) && \
+		cmake -S $(BLACKPARROT_TOOLS_DIR)/dromajo -DCMAKE_BUILD_TYPE=Release
+	cd $(TARGET_WORK)/dromajo_build; source $(TARGET_ENV) && \
+		find . -name "flags.make" -exec sed -i "s/-march=native -mtune=native//g" {} \;
+	cd $(TARGET_WORK)/dromajo_build; source $(TARGET_ENV) && \
+		$(MAKE) VLEN=0
+	cd $(TARGET_WORK)/dromajo_build; source $(TARGET_ENV) && \
+		cp dromajo $(TARGET_SDK)/bin; \
+		cp libdromajo_cosim.a $(TARGET_SDK)/lib; \
+		cp $(BLACKPARROT_TOOLS_DIR)/dromajo/include/dromajo_cosim.h $(TARGET_SDK)/include;
 
 openocd: $(TARGET_OPENOCD)
 %/bin/openocd: export OPENOCD_CONFIG=--enable-remote-bitbang
