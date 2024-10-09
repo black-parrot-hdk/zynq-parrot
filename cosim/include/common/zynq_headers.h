@@ -131,7 +131,9 @@ static uintptr_t gp2_addr_base = (uintptr_t) GP2_ADDR_BASE;
 
 #ifndef GP2_HIER_BASE
 #ifdef SIMULATION
+#ifndef AXI_DMI_ENABLE
 #error GP2_HIER_BASE must be defined
+#endif
 #endif
 #endif
 

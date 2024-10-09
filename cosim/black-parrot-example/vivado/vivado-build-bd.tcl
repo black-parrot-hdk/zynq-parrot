@@ -16,7 +16,8 @@ set do_impl    $::env(IMPL)
 set do_handoff $::env(HANDOFF)
 set threads    $::env(THREADS)
 
-vivado_create_ip_proj ${proj_name} ${proj_bd} ${ip_name} ${part} ${ip_script}
+vivado_create_ip_proj ${proj_name} ${proj_bd} ${ip_name} ${part} ${ip_script} \
+    1 0 1
 
 vivado_elab_wrap ${do_elab} ${proj_bd}
 vivado_read_xdc ${xdc_dir} ${boardname}

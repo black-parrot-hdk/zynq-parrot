@@ -174,7 +174,7 @@ module top_zynq
    localparam bp_axi_addr_width_lp  = 32;
    localparam bp_axi_data_width_lp  = 64;
    localparam num_regs_ps_to_pl_lp  = 5;
-   localparam num_regs_pl_to_ps_lp  = 8;
+   localparam num_regs_pl_to_ps_lp  = 7;
    localparam num_fifos_ps_to_pl_lp = 1;
    localparam num_fifos_pl_to_ps_lp = 1;
 
@@ -454,7 +454,7 @@ module top_zynq
    logic  [1 : 0]                               spack_axi_bresp;
    logic                                        spack_axi_bvalid;
    logic                                        spack_axi_bready;
-   logic [bp_axil_data_width_lp-1 : 0]          spack_axi_araddr;
+   logic [bp_axil_addr_width_lp-1 : 0]          spack_axi_araddr;
    logic [2 : 0]                                spack_axi_arprot;
    logic                                        spack_axi_arvalid;
    logic                                        spack_axi_arready;
@@ -509,7 +509,7 @@ module top_zynq
    #(.addr_width_p(bp_axil_addr_width_lp)
      ,.data_width_p(bp_axil_data_width_lp)
      // BP host address space is below this
-     ,.split_addr_p(32'h0020_0000)
+     ,.split_addr_p(32'h0010_3000)
      )
    axil_demux
     (.clk_i(aclk)

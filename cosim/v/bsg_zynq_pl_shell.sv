@@ -308,7 +308,7 @@ module bsg_zynq_pl_shell #
 
         always @(negedge S_AXI_ACLK)
           begin
-             assert(~S_AXI_ARESETN | ~slv_wr_sel_one_hot[num_regs_ps_to_pl_p+k] | ps_to_pl_fifo_ready_lo[k])
+             assert(S_AXI_ARESETN !== 1'b0 | ~slv_wr_sel_one_hot[num_regs_ps_to_pl_p+k] | ps_to_pl_fifo_ready_lo[k])
                else $error("write to full fifo");
           end
 
@@ -402,7 +402,7 @@ module bsg_zynq_pl_shell #
 
         always @(negedge S_AXI_ACLK)
           begin
-             assert(~S_AXI_ARESETN | ~slv_rd_sel_one_hot[num_regs_ps_to_pl_p+k] | pl_to_ps_fifo_valid_lo[k])
+             assert(S_AXI_ARESETN !== 1'b0 | ~slv_rd_sel_one_hot[num_regs_ps_to_pl_p+k] | pl_to_ps_fifo_valid_lo[k])
                else $error("read from empty fifo");
           end
      end
