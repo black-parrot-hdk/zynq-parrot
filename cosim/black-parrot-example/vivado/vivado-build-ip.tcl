@@ -85,3 +85,14 @@ vivado_create_ip_proj ${proj_name} ${proj_bd} ${ip_name} ${part} ${ip_script} \
 vivado_package_ip ${proj_bd} ${ip_name} ${ip_script}
 vivado_customize_ip ${proj_bd} ${ip_name} ${ip_script}
 
+set boardname   $::env(BOARDNAME)
+set ip_script   $::env(COSIM_TCL_DIR)/bd/axi_plic_bd.tcl
+set ip_name     plic
+set proj_name   ${ip_name}_ip_proj
+set proj_bd     ${ip_name}_bd_1
+set part        $::env(PART)
+vivado_create_ip_proj ${proj_name} ${proj_bd} ${ip_name} ${part} ${ip_script} \
+    ${aclk_mhz}
+vivado_package_ip ${proj_bd} ${ip_name} ${ip_script}
+vivado_customize_ip ${proj_bd} ${ip_name} ${ip_script}
+
