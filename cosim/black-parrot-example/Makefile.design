@@ -46,7 +46,7 @@ $(CURR_VSRC_DIR)/bsg_blackparrot_pkg.sv:
 	echo >> $@
 
 $(CURR_VSRC_DIR)/bsg_bootrom.bin: $(BP_SDK_DIR)/prog/bootrom/bootrom.riscv
-	$(RISCV_OBJCOPY) -O binary --reverse-bytes=4 $< $@
+	$(RISCV_OBJCOPY) -O binary $< $@
 
 $(CURR_VSRC_DIR)/bsg_bootrom.rom: $(CURR_VSRC_DIR)/bsg_bootrom.bin
 	$(XXD) -b -g4 -c4 $< | $(AWK) '{print $$2}' > $@

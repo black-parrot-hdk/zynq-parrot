@@ -315,7 +315,7 @@ module top_zynq
 
    assign csr_data_li[0+:2] = minstret_lo;
    assign csr_data_li[2+:4] = mem_profiler_r;
-   assign csr_data_li[6+:1] = bootrom_data_li;
+   assign csr_data_li[6+:1] = {<<8{bootrom_data_li}};
 
    // Tag bitbang
    logic tag_clk_r_lo, tag_data_r_lo;

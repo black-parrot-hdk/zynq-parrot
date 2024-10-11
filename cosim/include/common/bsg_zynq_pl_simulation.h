@@ -228,14 +228,14 @@ protected:
 
         if (!axi_hp1->axil_has_write(&addr)) {
         } else if (scratchpad && scratchpad->is_write(addr)) {
-            if (scratchpad->can_write(addr) {
+            if (scratchpad->can_write(addr)) {
                 co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
                     axi_hp1->axil_write_helper((s_axil_device *)scratchpad.get(),
                                                yield);
                 }));
             }
         } else if (uart.get() && uart->is_write(addr)) {
-            if (uart->can_write(addr) {
+            if (uart->can_write(addr)) {
                 co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
                     axi_hp1->axil_write_helper((s_axil_device *)uart.get(), yield);
                 }));

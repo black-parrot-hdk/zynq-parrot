@@ -88,8 +88,8 @@ inline void send_bp_rev_packet(bsg_zynq_pl *zpl, bp_bedrock_packet *packet) {
     zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA+4, pkt_data[i], 0xf);
   }
 }
-
-inline void send_bp_write(bsg_zynq_pl *zpl, uint64_t addr, int32_t data, int8_t wmask) {
+int j = 0;
+inline void send_bp_write(bsg_zynq_pl *zpl, uint64_t addr, int64_t data, uint8_t wmask) {
   bp_bedrock_packet fwd_packet;
   bp_bedrock_mem_payload payload;
 
@@ -99,14 +99,15 @@ inline void send_bp_write(bsg_zynq_pl *zpl, uint64_t addr, int32_t data, int8_t 
   fwd_packet.subop    = BEDROCK_STORE;
   fwd_packet.addr0    = (addr >> 0 ) & 0xffffffff;
   fwd_packet.addr1    = (addr >> 32) & 0xffffffff;
-  fwd_packet.size     = 2; // Only support 32b currently
+  fwd_packet.size     = (wmask == 0xff) ? 3 : 2; // Only support 32/64 currently
   fwd_packet.payload  = payload;
-  fwd_packet.data     = data;
+  fwd_packet.data0    = (data >> 0 ) & 0xffffffff;
+  fwd_packet.data1    = (data >> 32) & 0xffffffff;
 
   send_bp_fwd_packet(zpl, &fwd_packet);
 }
 
-inline int32_t send_bp_read(bsg_zynq_pl *zpl, uint64_t addr) {
+inline int64_t send_bp_read(bsg_zynq_pl *zpl, uint64_t addr) {
   bp_bedrock_packet fwd_packet;
   bp_bedrock_mem_payload payload;
 
@@ -116,7 +117,7 @@ inline int32_t send_bp_read(bsg_zynq_pl *zpl, uint64_t addr) {
   fwd_packet.subop    = BEDROCK_STORE;
   fwd_packet.addr0    = (addr >> 0 ) & 0xffffffff;
   fwd_packet.addr1    = (addr >> 32) & 0xffffffff;
-  fwd_packet.size     = 2; // Only support 32b currently
+  fwd_packet.size     = 3; // Only support 64b currently
   fwd_packet.payload  = payload;
 
   send_bp_fwd_packet(zpl, &fwd_packet);
@@ -124,7 +125,11 @@ inline int32_t send_bp_read(bsg_zynq_pl *zpl, uint64_t addr) {
   bp_bedrock_packet rev_packet;
   recv_bp_rev_packet(zpl, &rev_packet);
 
-  return rev_packet.data;
+  int64_t return_data = 0;
+  return_data |= (rev_packet.data0 << 0);
+  return_data |= (rev_packet.data0 << 32);
+
+  return return_data;
 }
 
 void *monitor(void *vargp) {
@@ -141,22 +146,21 @@ void *monitor(void *vargp) {
 
 inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr, bool bp_not_shell) {
   uint64_t val, val_hi, val_lo, val_hi2;
+  if (bp_not_shell) {
+    return (uint64_t) send_bp_read(zpl, addr + 4);
+  }
+
   do {
-    if (bp_not_shell) {
-      val_hi = send_bp_read(zpl, addr + 4);
-      val_lo = send_bp_read(zpl, addr + 0);
-      val_hi2 = send_bp_read(zpl, addr + 4);
-    } else {
-      val_hi = zpl->shell_read(addr + 4);
-      val_lo = zpl->shell_read(addr + 0);
-      val_hi2 = zpl->shell_read(addr + 4);
-    }
+    val_hi = zpl->shell_read(addr + 4);
+    val_lo = zpl->shell_read(addr + 0);
+    val_hi2 = zpl->shell_read(addr + 4);
     if (val_hi == val_hi2) {
       val = val_hi << 32;
       val += val_lo;
       return val;
-    } else
+    } else {
       bsg_pr_err("ps.cpp: timer wrapover!\n");
+    }
   } while (1);
 }
 
@@ -394,8 +398,7 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
 
     if (nbf[0] == 0x3 || nbf[0] == 0x2 || nbf[0] == 0x1 || nbf[0] == 0x0) {
       if (nbf[0] == 0x3) {
-        send_bp_write(zpl, nbf[1], nbf[2], 0xf);
-        send_bp_write(zpl, nbf[1]+4, nbf[2]>>32, 0xf);
+        send_bp_write(zpl, nbf[1], nbf[2], 0xff);
       }
       else if (nbf[0] == 0x2) {
         send_bp_write(zpl, nbf[1], nbf[2], 0xf);
@@ -422,7 +425,9 @@ bool decode_bp_output(bsg_zynq_pl *zpl) {
   recv_bp_fwd_packet(zpl, &fwd_packet);
 
   uint32_t address = fwd_packet.addr0 & 0xFFFFFFFC;
-  uint32_t data = fwd_packet.data;
+  uint64_t data = 0;
+  data |= fwd_packet.data0 << 0;
+  data |= fwd_packet.data1 << 32;
   char print_data = data & 0xFF;
   char core = (address-0x102000) >> 3;
   // write from BP
@@ -439,11 +444,16 @@ bool decode_bp_output(bsg_zynq_pl *zpl) {
   } else if (address == 0x103000) {
     bsg_pr_dbg_ps("ps.cpp: Watchdog tick\n");
   } else if (address >= 0x110000 && address < 0x111000) {
-    int bootrom_addr = (address >> 2) & 0x1ff;
-    zpl->shell_write(GP0_WR_CSR_BOOTROM_ADDR, bootrom_addr, 0xf);
-    int bootrom_data = zpl->shell_read(GP0_RD_BOOTROM_DATA);
+    int bootrom_addr0 = (address >> 2) & 0x1ff;
+    zpl->shell_write(GP0_WR_CSR_BOOTROM_ADDR, bootrom_addr0, 0xf);
+    int bootrom_data0 = zpl->shell_read(GP0_RD_BOOTROM_DATA);
+    int bootrom_addr1 = bootrom_addr0 + 1;
+    zpl->shell_write(GP0_WR_CSR_BOOTROM_ADDR, bootrom_addr1, 0xf);
+    int bootrom_data1 = zpl->shell_read(GP0_RD_BOOTROM_DATA);
+
     bp_bedrock_packet rev_packet = fwd_packet;
-    rev_packet.data = bootrom_data;
+    rev_packet.data0 = bootrom_data0;
+    rev_packet.data1 = bootrom_data1;
     send_bp_rev_packet(zpl, &rev_packet);
   } else {
     bsg_pr_err("ps.cpp: Errant write to %lx\n", address);

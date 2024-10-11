@@ -219,7 +219,7 @@ module top_zynq
    assign csr_data_li[0] = |bp_credits_used;
    assign csr_data_li[1] = minstret_lo[31:0];
    assign csr_data_li[2] = minstret_lo[63:32];
-   assign csr_data_li[3] = bootrom_data_li;
+   assign csr_data_li[3] = {<<8{bootrom_data_li}};
 
    // (MBT)
    // note: this ability to probe into the core is not supported in ASIC toolflows but
@@ -266,7 +266,7 @@ module top_zynq
    logic [num_dev_lp-1:0][bedrock_fill_width_p-1:0] dev_rev_data_lo;
    logic [num_dev_lp-1:0] dev_rev_v_lo, dev_rev_ready_and_li;
 
-   bp_me_endpoint_to_fifos
+   bp_endpoint_to_fifos
     #(.bp_params_p(bp_params_p)
       ,.fifo_width_p(C_GP0_AXI_DATA_WIDTH)
       ,.num_credits_p(bp_credits_lp)
@@ -328,7 +328,7 @@ module top_zynq
    logic [C_HP0_AXI_DATA_WIDTH-1:0] m_axil_rdata;
    logic [1:0] m_axil_rresp;
    logic m_axil_rvalid, m_axil_rready;
-   bp_me_axil_master
+   bp_axil_master
     #(.bp_params_p(bp_params_p)
       ,.axil_data_width_p(C_HP0_AXI_DATA_WIDTH)
       ,.axil_addr_width_p(C_HP0_AXI_ADDR_WIDTH)

@@ -22,6 +22,7 @@ CFLAGS += $(addprefix -D,$(DEFINES))
 LDFLAGS += -L$(BP_SDK_LIB_DIR)
 LDFLAGS += -lboost_coroutine -lboost_context -lboost_system
 
+CINCLUDES += -I$(BLACKPARROT_SUB_DIR)/blackparrot/src
 CINCLUDES += -I$(BP_SDK_INSTALL_DIR)/include
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/xcelium
