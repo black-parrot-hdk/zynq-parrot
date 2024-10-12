@@ -235,7 +235,7 @@ module bsg_nonsynth_zynq_testbench;
   logic [1:0]                           m00_axi_rresp;
 
 `ifdef AXI_MEM_ENABLE
-  bsg_nonsynth_axi_mem
+  bsg_nonsynth_axi_mem_dma
     #(.axi_id_width_p(6)
       ,.axi_addr_width_p(C_M00_AXI_ADDR_WIDTH)
       ,.axi_data_width_p(C_M00_AXI_DATA_WIDTH)

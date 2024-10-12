@@ -47,8 +47,13 @@
 #define BP_NCPUS 1
 #endif
 
+#ifndef ZYNQ
+#include "bsg_mem_dma.hpp"
+bsg_mem_dma::Memory* bsg_mem;
+#endif
+
 // Helper functions
-void nbf_load(bsg_zynq_pl *zpl, char *filename);
+void nbf_load(bsg_zynq_pl *zpl, char *filename, bool direct);
 bool decode_bp_output(bsg_zynq_pl *zpl, long data);
 void report(bsg_zynq_pl *zpl, char *);
 
@@ -358,8 +363,13 @@ int ps_main(int argc, char **argv) {
         (long)DRAM_ALLOCATE_SIZE);
     buf = (volatile int*)zpl->allocate_dram(DRAM_ALLOCATE_SIZE, &phys_ptr);
     bsg_pr_info("ps.cpp: received %p (phys = %lx)\n", buf, phys_ptr);
+#ifdef ZYNQ
     zpl->shell_write(GP0_WR_CSR_DRAM_BASE, phys_ptr, 0xf);
     assert((zpl->shell_read(GP0_RD_CSR_DRAM_BASE) == (int32_t)(phys_ptr)));
+#else
+    zpl->shell_write(GP0_WR_CSR_DRAM_BASE, 0x0, 0xf);
+    bsg_mem = bsg_mem_dma::bsg_mem_dma_get_memory(0);
+#endif
     bsg_pr_info("ps.cpp: wrote and verified base register\n");
     zpl->shell_write(GP0_WR_CSR_DRAM_INITED, 0x1, 0xf);
     assert(zpl->shell_read(GP0_RD_CSR_DRAM_INITED) == 1);
@@ -473,7 +483,11 @@ int ps_main(int argc, char **argv) {
   }
 
   bsg_pr_info("ps.cpp: beginning nbf load\n");
-  nbf_load(zpl, argv[1]);
+#ifdef ZYNQ
+  nbf_load(zpl, argv[1], false);
+#else
+  nbf_load(zpl, argv[1], true);
+#endif
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
   unsigned long long mtime_start = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
@@ -571,14 +585,41 @@ std::uint32_t rotl(std::uint32_t v, std::int32_t shift) {
   return (v<<s) | (v>>(32-s));
 }
 
-void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
+void nbf_write(bsg_zynq_pl *zpl, long unsigned int addr, long long int data, bool direct) {
+  if (addr >= DRAM_BASE_ADDR) {
+    if(direct) {
+      for(int i = 0; i < 8; i++)
+        bsg_mem->set(addr - DRAM_BASE_ADDR + i, (data >> (8*i)) & 0xff);
+    }
+    else
+      zpl->shell_write(gp1_addr_base + addr - DRAM_BASE_ADDR, data, 0xf);
+  }
+  else
+    zpl->shell_write(GP1_CSR_BASE_ADDR + addr, data, 0xf);
+}
+
+long long int nbf_read(bsg_zynq_pl *zpl, long unsigned int addr, bool direct) {
+  if (addr >= DRAM_BASE_ADDR) {
+    if(direct) {
+      long long data = 0;
+      for(int i = 0; i < 8; i++)
+        data = data | ((long long int)bsg_mem->get(addr - DRAM_BASE_ADDR + i) << (8*i));
+      return data;
+    }
+    else
+      return zpl->shell_read(gp1_addr_base + addr - DRAM_BASE_ADDR);
+  }
+  else
+    return zpl->shell_read(GP1_CSR_BASE_ADDR + addr);
+}
+
+void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename, bool direct) {
   string nbf_command;
   string tmp;
   string delimiter = "_";
 
   long long int nbf[3];
   int pos = 0;
-  long unsigned int base_addr;
   int data;
   ifstream nbf_file(nbf_filename);
 
@@ -607,31 +648,26 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
 
       // we map BP physical address for CSRs etc (0x0000_0000 - 0x0FFF_FFFF)
       // to ARM address to 0xA0000_0000 - 0xAFFF_FFFF  (256MB)
-      if (nbf[1] >= DRAM_BASE_ADDR)
-        base_addr = gp1_addr_base - DRAM_BASE_ADDR;
-      else
-        base_addr = GP1_CSR_BASE_ADDR;
-
       if (nbf[0] == 0x3) {
-        zpl->shell_write(base_addr + nbf[1], nbf[2], 0xf);
-        zpl->shell_write(base_addr + nbf[1] + 4, nbf[2] >> 32, 0xf);
+        nbf_write(zpl, nbf[1], nbf[2], direct);
+        nbf_write(zpl, nbf[1] + 4, nbf[2] >> 32, direct);
       }
       else if (nbf[0] == 0x2) {
-        zpl->shell_write(base_addr + nbf[1], nbf[2], 0xf);
+        nbf_write(zpl, nbf[1], nbf[2], direct);
       }
       else if (nbf[0] == 0x1) {
         int offset = nbf[1] % 4;
         int shift = 8 * offset;
-        data = zpl->shell_read(base_addr + nbf[1] - offset);
+        data = nbf_read(zpl, nbf[1] - offset, direct);
         data = data & rotl((uint32_t)0xffff0000,shift) + ((nbf[2] & ((uint32_t)0x0000ffff)) << shift);
-        zpl->shell_write(base_addr + nbf[1] - offset, data, 0xf);
+        nbf_write(zpl, nbf[1] - offset, data, direct);
       }
       else {
         int offset = nbf[1] % 4;
         int shift = 8 * offset;
-        data = zpl->shell_read(base_addr + nbf[1] - offset);
+        data = nbf_read(zpl, nbf[1] - offset, direct);
         data = data & rotl((uint32_t)0xffffff00,shift) + ((nbf[2] & ((uint32_t)0x000000ff)) << shift);
-        zpl->shell_write(base_addr + nbf[1] - offset, data, 0xf);
+        nbf_write(zpl, nbf[1] - offset, data, direct);
       }
     }
     else if (nbf[0] == 0xfe) {
@@ -645,7 +681,6 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
       return;
     }
   }
-
   bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
 }
 

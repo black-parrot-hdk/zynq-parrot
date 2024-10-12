@@ -3,13 +3,17 @@
 
 (* keep_hierarchy = "yes" *)
 module bsg_cover_realign
- #(parameter `BSG_INV_PARAM(num_p)
+ #(parameter `BSG_INV_PARAM(id_p)
+  ,parameter `BSG_INV_PARAM(num_p)
   ,parameter `BSG_INV_PARAM(num_chain_p)
   ,parameter `BSG_INV_PARAM(chain_offset_arr_p)
   ,parameter `BSG_INV_PARAM(chain_depth_arr_p)
   ,parameter `BSG_INV_PARAM(step_p)
+  ,parameter `BSG_INV_PARAM(debug_p)
   )
   (input clk_i
+  ,input reset_i
+  ,input v_i
   ,input [num_p-1:0] data_i
   ,output logic [num_p-1:0] data_o
   );
@@ -34,6 +38,26 @@ module bsg_cover_realign
 
     assign data_o[msb_idx_lp : lsb_idx_lp] = chain_data_lo;
   end
+
+   // synopsys translate_off
+   if(debug_p) begin: debug
+     integer f_raw, f_align;
+     string fn_raw, fn_align;
+     initial begin
+       fn_raw = $sformatf("%0d.raw", id_p);
+       fn_align = $sformatf("%0d.align", id_p);
+       f_raw = $fopen(fn_raw, "w");
+       f_align = $fopen(fn_align, "w");
+     end
+
+     always_ff @(negedge clk_i) begin
+       if(~reset_i & v_i) begin
+         $fwrite(f_raw, "%x\n", data_i);
+         $fwrite(f_align, "%x\n", data_o);
+       end
+     end
+   end
+   // synopsys translate_on
 
 endmodule
 

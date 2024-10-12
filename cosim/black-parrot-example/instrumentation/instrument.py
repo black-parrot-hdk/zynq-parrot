@@ -41,13 +41,17 @@ def cov_head(i, gsize, l, depths, offsets):
   return f"\
   wire [{gsize}-1:0] cov_{i}_lo; \n\
   bsg_cover_realign \n\
-    #(.num_p              ({gsize}) \n\
+    #(.id_p               ({i}) \n\
+     ,.num_p              ({gsize}) \n\
      ,.num_chain_p        ({l}) \n\
      ,.chain_offset_arr_p ({ostr}) \n\
      ,.chain_depth_arr_p  ({dstr}) \n\
-     ,.step_p             (10)) \n\
+     ,.step_p             (10) \n\
+     ,.debug_p            (1)) \n\
    realign_{i}\n\
     (.clk_i            (bp_clk) \n\
+    ,.reset_i          (bp_reset_li) \n\
+    ,.v_i              (cov_en_sync_li) \n\
     ,.data_i           ({{\n"
 
 def cov_tail(i, gsize):
@@ -59,10 +63,7 @@ def cov_tail(i, gsize):
     #(.id_p            ({i}) \n\
      ,.width_p         ({gsize}) \n\
      ,.els_p           (cam_els_lp) \n\
-     ,.out_width_p     (C_M02_AXI_DATA_WIDTH) \n\
-     ,.id_width_p      (cov_id_width_lp) \n\
-     ,.els_width_p     (cov_len_width_lp) \n\
-     ,.len_width_p     (cov_els_width_lp) \n\
+     ,.out_width_p     (C_DMA_AXIS_DATA_WIDTH) \n\
      ,.lg_afifo_size_p (3) \n\
      ,.debug_p(0)) \n\
    cover_{i}\n\
@@ -75,10 +76,7 @@ def cov_tail(i, gsize):
     ,.v_i              (cov_en_sync_li) \n\
     ,.data_i           (cov_{i}_lo) \n\
     ,.ready_o          () \n\
-    ,.drain_i          (1'b0) \n\
     ,.gate_o           (cov_gate_lo[{i}]) \n\
-    ,.id_v_o           (cov_id_v_lo[{i}]) \n\
-    ,.id_o             (cov_id_lo[{i}]) \n\
     ,.els_o            (cov_els_lo[{i}]) \n\
     ,.len_o            (cov_len_lo[{i}]) \n\
     ,.ready_i          (cov_ready_li[{i}]) \n\
