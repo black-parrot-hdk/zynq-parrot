@@ -25,7 +25,7 @@ proc vivado_create_ip { args } {
     set hp0_seg_offset 0x0
     set hp0_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_ports top/hp0_axi]]
     set hp0_seg_size [expr 1 << ${hp0_addr_width}]
-    assign_bd_address -target_address_space [get_bd_addr_spaces top/hp0_axi] [get_bd_addr_segs m00*] -range ${hp0_seg_size} -offset ${hp0_seg_offset}
+    assign_bd_address -target_address_space [get_bd_addr_spaces top/hp0_axi] [get_bd_addr_segs hp0*] -range ${hp0_seg_size} -offset ${hp0_seg_offset}
 
     assign_bd_address
 }

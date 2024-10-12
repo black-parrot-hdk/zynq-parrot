@@ -51,12 +51,12 @@ proc vivado_create_ip { args } {
     set hp0_seg_offset 0x0
     set hp0_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_intf_ports hp0_axi]]
     set hp0_seg_size [expr 1 << ${hp0_addr_width}]
-    assign_bd_address -target_address_space [get_bd_addr_spaces top/hp0_axi] [get_bd_addr_segs m00*] -offset ${hp0_seg_offset} -range ${hp0_seg_size}
+    assign_bd_address -target_address_space [get_bd_addr_spaces top/hp0_axi] [get_bd_addr_segs hp0*] -offset ${hp0_seg_offset} -range ${hp0_seg_size}
 
     set hp1_seg_offset 0x0
     set hp1_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_intf_ports hp1_axi]]
     set hp1_seg_size [expr 1 << ${hp1_addr_width}]
-    assign_bd_address -target_address_space [get_bd_addr_spaces top/hp1_axi] [get_bd_addr_segs m01*] -offset ${hp1_seg_offset} -range ${hp1_seg_size}
+    assign_bd_address -target_address_space [get_bd_addr_spaces top/hp1_axi] [get_bd_addr_segs hp1*] -offset ${hp1_seg_offset} -range ${hp1_seg_size}
 
     assign_bd_address
 }

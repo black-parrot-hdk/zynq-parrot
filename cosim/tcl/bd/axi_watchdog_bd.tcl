@@ -25,6 +25,8 @@ proc vivado_create_ip { args } {
 
     lappend dir_list "${BASEJUMP_STL_DIR}/bsg_misc"
     lappend dir_list "${BASEJUMP_STL_DIR}/bsg_tag"
+    lappend file_list "${BASEJUMP_STL_DIR}/bsg_misc/bsg_defines.sv"
+    lappend file_list "${BASEJUMP_STL_DIR}/bsg_tag/bsg_tag.svh"
 
     lappend file_list "${BASEJUMP_STL_DIR}/bsg_axi/bsg_axi_pkg.sv"
     lappend file_list "${BASEJUMP_STL_DIR}/bsg_tag/bsg_tag_pkg.sv"
