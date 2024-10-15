@@ -26,7 +26,7 @@ static void get_argv(char *args, int argc, char **argv) {
     // VCS doesn't provide it to us. Instead, we "hack" around it by reading
     // the path from 'proc/self/exe'. The maximum path-name length is 1024,
     // with an extra null character for safety
-    static char path[1025] = { '\0' };
+    static char path[1025] = {'\0'};
 
     readlink("/proc/self/exe", path, sizeof(path) - 1);
     argv[0] = path;
@@ -52,4 +52,3 @@ static void get_argv(char *args, int argc, char **argv) {
 }
 
 #endif
-

@@ -46,12 +46,12 @@ typedef uint32_t uint32x4_t[4];
 #endif
 #define GP0_ADDR_SIZE_BYTES (1ULL << GP0_ADDR_WIDTH)
 #endif
-static uintptr_t gp0_addr_size_bytes = (uintptr_t) GP0_ADDR_SIZE_BYTES;
+static uintptr_t gp0_addr_size_bytes = (uintptr_t)GP0_ADDR_SIZE_BYTES;
 
 #ifndef GP0_ADDR_BASE
 #error GP0_ADDR_BASE must be defined
 #endif
-static uintptr_t gp0_addr_base = (uintptr_t) GP0_ADDR_BASE;
+static uintptr_t gp0_addr_base = (uintptr_t)GP0_ADDR_BASE;
 
 #ifndef GP0_DATA_WIDTH
 #error GP0_DATA_WIDTH must be defined
@@ -76,12 +76,12 @@ static uintptr_t gp0_addr_base = (uintptr_t) GP0_ADDR_BASE;
 #endif
 #define GP1_ADDR_SIZE_BYTES (1ULL << GP1_ADDR_WIDTH)
 #endif
-static uintptr_t gp1_addr_size_bytes = (uintptr_t) GP1_ADDR_SIZE_BYTES;
+static uintptr_t gp1_addr_size_bytes = (uintptr_t)GP1_ADDR_SIZE_BYTES;
 
 #ifndef GP1_ADDR_BASE
 #error GP1_ADDR_BASE must be defined
 #endif
-static uintptr_t gp1_addr_base = (uintptr_t) GP1_ADDR_BASE;
+static uintptr_t gp1_addr_base = (uintptr_t)GP1_ADDR_BASE;
 
 #ifndef GP1_DATA_WIDTH
 #error GP1_DATA_WIDTH must be defined
@@ -118,12 +118,12 @@ static uintptr_t gp1_addr_base = (uintptr_t) GP1_ADDR_BASE;
 #endif
 #define GP2_ADDR_SIZE_BYTES (1ULL << GP2_ADDR_WIDTH)
 #endif
-static uintptr_t gp2_addr_size_bytes = (uintptr_t) GP2_ADDR_SIZE_BYTES;
+static uintptr_t gp2_addr_size_bytes = (uintptr_t)GP2_ADDR_SIZE_BYTES;
 
 #ifndef GP2_ADDR_BASE
 #error GP2_ADDR_BASE must be defined
 #endif
-static uintptr_t gp2_addr_base = (uintptr_t) GP2_ADDR_BASE;
+static uintptr_t gp2_addr_base = (uintptr_t)GP2_ADDR_BASE;
 
 #ifndef GP2_DATA_WIDTH
 #error GP2_DATA_WIDTH must be defined
@@ -136,7 +136,7 @@ static uintptr_t gp2_addr_base = (uintptr_t) GP2_ADDR_BASE;
 #endif
 
 #ifndef HP0_ENABLE
-#define HP0_ADDR_WIDTH 0 
+#define HP0_ADDR_WIDTH 0
 #define HP0_DATA_WIDTH 0
 #define HP0_ADDR_BASE 0
 #define HP0_HIER_BASE ""
@@ -148,12 +148,12 @@ static uintptr_t gp2_addr_base = (uintptr_t) GP2_ADDR_BASE;
 #endif
 #define HP0_ADDR_SIZE_BYTES (1ULL << HP0_ADDR_WIDTH)
 #endif
-static uintptr_t hp0_addr_size_bytes = (uintptr_t) HP0_ADDR_SIZE_BYTES;
+static uintptr_t hp0_addr_size_bytes = (uintptr_t)HP0_ADDR_SIZE_BYTES;
 
 #ifndef HP0_ADDR_BASE
 #error HP0_ADDR_BASE must be defined
 #endif
-static uintptr_t hp0_addr_base = (uintptr_t) HP0_ADDR_BASE;
+static uintptr_t hp0_addr_base = (uintptr_t)HP0_ADDR_BASE;
 
 #ifndef HP0_DATA_WIDTH
 #error HP0_DATA_WIDTH must be defined
@@ -180,12 +180,12 @@ static uintptr_t hp0_addr_base = (uintptr_t) HP0_ADDR_BASE;
 #endif
 #define HP1_ADDR_SIZE_BYTES (1ULL << HP1_ADDR_WIDTH)
 #endif
-static uintptr_t hp1_addr_size_bytes = (uintptr_t) HP1_ADDR_SIZE_BYTES;
+static uintptr_t hp1_addr_size_bytes = (uintptr_t)HP1_ADDR_SIZE_BYTES;
 
 #ifndef HP1_ADDR_BASE
 #error HP1_ADDR_BASE must be defined
 #endif
-static uintptr_t hp1_addr_base = (uintptr_t) HP1_ADDR_BASE;
+static uintptr_t hp1_addr_base = (uintptr_t)HP1_ADDR_BASE;
 
 #ifndef HP1_DATA_WIDTH
 #error HP1_DATA_WIDTH must be defined
@@ -210,12 +210,12 @@ static uintptr_t hp1_addr_base = (uintptr_t) HP1_ADDR_BASE;
 #endif
 #define HP2_ADDR_SIZE_BYTES (1ULL << HP2_ADDR_WIDTH)
 #endif
-static uintptr_t hp2_addr_size_bytes = (uintptr_t) HP2_ADDR_SIZE_BYTES;
+static uintptr_t hp2_addr_size_bytes = (uintptr_t)HP2_ADDR_SIZE_BYTES;
 
 #ifndef HP2_ADDR_BASE
 #error HP2_ADDR_BASE must be defined
 #endif
-static uintptr_t hp2_addr_base = (uintptr_t) HP2_ADDR_BASE;
+static uintptr_t hp2_addr_base = (uintptr_t)HP2_ADDR_BASE;
 
 #ifndef HP2_DATA_WIDTH
 #error HP2_DATA_WIDTH must be defined
@@ -330,7 +330,7 @@ static uintptr_t hp2_addr_base = (uintptr_t) HP2_ADDR_BASE;
 #endif
 
 #ifndef UART_ENABLE
-#define UART_DEV /dev/null
+#define UART_DEV / dev / null
 #define UART_DEV_STR ""
 #define UART_BAUD 0
 #else
@@ -347,11 +347,10 @@ static uintptr_t hp2_addr_base = (uintptr_t) HP2_ADDR_BASE;
 #endif
 #else
 #define UART_DEV_STR STRINGIFY(UART_DEV)
-#define PPCAT_NX(A, B) A ## B
+#define PPCAT_NX(A, B) A##B
 #define PPCAT(A, B) PPCAT_NX(A, B)
 #define UART_BAUD_ENUM PPCAT(B, UART_BAUD)
 #endif
 #endif
 
 #endif
-

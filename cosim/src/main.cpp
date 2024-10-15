@@ -12,12 +12,11 @@ extern "C" int cosim_main(char *argstr) {
     char *argv[argc];
     get_argv(argstr, argc, argv);
 #else
-    int main(int argc, char **argv) {
+int main(int argc, char **argv) {
 #endif
-        // this ensures that even with tee, the output is line buffered
-        // so that we can see what is happening in real time
-        setvbuf(stdout, NULL, _IOLBF, 0);
+    // this ensures that even with tee, the output is line buffered
+    // so that we can see what is happening in real time
+    setvbuf(stdout, NULL, _IOLBF, 0);
 
-        return ps_main(argc, argv);
-    }
-
+    return ps_main(argc, argv);
+}

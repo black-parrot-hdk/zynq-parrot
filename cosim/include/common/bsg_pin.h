@@ -3,25 +3,26 @@
 #define BSG_PIN_H
 
 #include "bsg_nonsynth_dpi_gpio.hpp"
-#include "bsg_printing.h"
 #include "bsg_pin.h"
+#include "bsg_printing.h"
 
 #ifndef ZYNQ_AXI_TIMEOUT
 #define ZYNQ_AXI_TIMEOUT 1000
 #endif
 
-extern "C" { int bsg_dpi_time(); }
+extern "C" {
+int bsg_dpi_time();
+}
 using namespace std;
 using namespace bsg_nonsynth_dpi;
 using namespace boost::coroutines2;
 using namespace std::placeholders;
 
 // W = width of pin
-template <unsigned int W>
-class pin {
+template <unsigned int W> class pin {
     std::unique_ptr<dpi_gpio<W>> gpio;
 
-public:
+  public:
     pin(const string &hierarchy) {
         gpio = std::make_unique<dpi_gpio<W>>(hierarchy);
     }
@@ -49,4 +50,3 @@ public:
 };
 
 #endif
-
