@@ -34,8 +34,6 @@ export SOFTWARE_IMPORT_DIR   ?= $(IMPORT_DIR)
 export SOFTWARE_INSTALL_DIR  ?= $(SOFTWARE_DIR)/install
 export SOFTWARE_WORK_DIR     ?= $(SOFTWARE_INSTALL_DIR)/work
 
-export BASEJUMP_STL_DIR      ?= $(COSIM_IMPORT_DIR)/basejump_stl
-
 export BLACKPARROT_DIR       ?= $(COSIM_IMPORT_DIR)/black-parrot
 export BLACKPARROT_TOOLS_DIR ?= $(COSIM_IMPORT_DIR)/black-parrot-tools
 export BLACKPARROT_SUB_DIR   ?= $(COSIM_IMPORT_DIR)/black-parrot-subsystems
@@ -49,6 +47,7 @@ export BP_TOP_DIR            ?= $(BLACKPARROT_DIR)/bp_top
 export BP_EXTERNAL_DIR       ?= $(BLACKPARROT_DIR)/external
 export BP_BASEJUMP_STL_DIR   ?= $(BP_EXTERNAL_DIR)/basejump_stl
 export HARDFLOAT_DIR         ?= $(BP_EXTERNAL_DIR)/HardFloat
+export BASEJUMP_STL_DIR      ?= $(BP_BASEJUMP_STL_DIR)
 # Override to zynq-parrot version
 export BP_TOOLS_DIR          ?= $(BLACKPARROT_TOOLS_DIR)
 export BP_SDK_DIR            ?= $(BLACKPARROT_SDK_DIR)
