@@ -5,201 +5,165 @@ include $(TOP)/Makefile.config
 
 include $(TOP)/software/mk/Makefile.env
 
-.DEFAULT_GOAL := all
+.DEFAULT_GOAL := help
 
-TARGET_NAME ?= x86
-ifeq ($(TARGET_NAME),x86)
-TARGET_CC        ?= $(X86_CC)
-TARGET_SDK       ?= $(X86_SDK)
-TARGET_WORK      ?= $(X86_WORK)
-# These files aren't used for native compilation, but we
-#   stub them out to reuse the makefile targets
-TARGET_TEMPLATE  ?= dummy
-TARGET_PROJ      ?= $(TARGET_WORK)/dummy.proj
-TARGET_XSA       ?= $(TARGET_WORK)/dummy.xsa
-TARGET_TCL       ?= $(TARGET_WORK)/dummy.tcl
-TARGET_ENV       ?= $(X86_ENV)
+help: ## Show this help
+	  @$(EGREP) -h '\s##\s' $(MAKEFILE_LIST) \
+		  | $(AWK) 'BEGIN {FS = ":.*?## "}; {printf "\033[36m  %-30s\033[0m %s\n", $$1, $$2}'
 
-TARGET_RISCV64 ?= $(TARGET_SDK)/bin/riscv64-unknown-elf-dramfs-gcc
-TARGET_RISCV32 ?= $(TARGET_SDK)/bin/riscv32-unknown-elf-dramfs-gcc
-TARGET_VERILATOR ?= $(TARGET_SDK)/bin/verilator
-TARGET_PYNQ ?= $(TARGET_SDK)/lib/dummy.a
-TARGET_OPENOCD ?= $(TARGET_SDK)/bin/openocd
-TARGET_DROMAJO ?= $(TARGET_SDK)/bin/dromajo
-
-dummy.%:
-	mkdir -p $(@D)
-	mkdir -p $(TARGET_WORK)
-	mkdir -p $(TARGET_SDK)
-	touch $@
-
-$(TARGET_ENV):
-	mkdir -p $(@D)
-	@$(eval reg_vars := $(filter-out .%,$(sort $(.VARIABLES))))
-	@$(eval env_vars := $(foreach V, $(reg_vars), \
-		$(if $(filter-out environment% default automatic undefined, $(origin $V)), \
-			'$V="$($V)"')))
-	for e in ${env_vars}; \
-	 do \
-		echo "$$e" >> $@; \
-	 done
-	sed -i "/CURDIR/d" $@
-	sed -i "/CURR_/d" $@
-	sed -i "/MAKE/d" $@
-	sed -i "/PART/d" $@
-
-else ifeq ($(TARGET_NAME),pynqz2)
-TARGET_CC        ?= $(PYNQZ2_CC)
-TARGET_WORK      ?= $(PYNQZ2_WORK)
-TARGET_SDK       ?= $(PYNQZ2_SDK)
-TARGET_TEMPLATE  ?= zynq
-TARGET_PROJ      ?= $(TARGET_NAME)_proj
-TARGET_XSA       ?= $(TARGET_WORK)/$(TARGET_NAME)_basic.xsa
-TARGET_TCL       ?= $(SOFTWARE_TCL_DIR)/vivado-gen-xsa-$(TARGET_NAME).tcl
-TARGET_ENV       ?= $(PYNQZ2_ENV)
-
-TARGET_RISCV64 ?= $(TARGET_SDK)/bin/riscv64-unknown-elf-dramfs-gcc
-TARGET_RISCV32 ?= $(TARGET_SDK)/bin/riscv32-unknown-elf-dramfs-gcc
-TARGET_VERILATOR ?= $(TARGET_SDK)/bin/verilator
-TARGET_PYNQ ?= $(TARGET_SDK)/lib/libpynq.a
-TARGET_OPENOCD ?= $(TARGET_SDK)/bin/openocd
-TARGET_DROMAJO ?= $(TARGET_SDK)/bin/dromajo
-else ifeq ($(TARGET_NAME),ultra96v2)
-TARGET_CC        ?= aarch64-xilinx-linux-gnueabi
-TARGET_WORK      ?= $(ULTRA96V2_WORK)
-TARGET_SDK       ?= $(ULTRA96V2_SDK)
-TARGET_TEMPLATE  ?= zynqMP
-TARGET_PROJ      ?= $(TARGET_NAME)_proj
-TARGET_XSA       ?= $(TARGET_WORK)/$(TARGET_NAME)_basic.xsa
-TARGET_TCL       ?= $(SOFTWARE_TCL_DIR)/vivado-gen-xsa-$(TARGET_NAME).tcl
-TARGET_ENV       ?= $(ULTRA96V2_ENV)
-
-TARGET_RISCV64 ?= $(TARGET_SDK)/bin/riscv64-unknown-elf-dramfs-gcc
-TARGET_RISCV32 ?= $(TARGET_SDK)/bin/riscv32-unknown-elf-dramfs-gcc
-TARGET_VERILATOR ?= $(TARGET_SDK)/bin/verilator
-TARGET_PYNQ ?= $(TARGET_SDK)/lib/libpynq.a
-TARGET_OPENOCD ?= $(TARGET_SDK)/bin/openocd
-TARGET_DROMAJO ?= $(TARGET_SDK)/bin/dromajo
-else
-$(error Unknown TARGET_NAME $(TARGET_NAME) for software)
-endif
-
-all: verilator pynq openocd dromajo riscv32
-
+riscv64: ## BlackParrot riscv64-unknown-elf-dramfs toolchain
 riscv64: $(TARGET_RISCV64)
-%/bin/riscv64-unknown-elf-dramfs-gcc: export RISCV64_SOURCE_DIR := $(BLACKPARROT_SDK_DIR)/riscv-gnu-toolchain
-%/bin/riscv64-unknown-elf-dramfs-gcc: export RISCV64_BUILD_DIR := $(TARGET_WORK)/riscv64_build
-%/bin/riscv64-unknown-elf-dramfs-gcc: export RISCV64_INSTALL_DIR := $(TARGET_SDK)
-%/bin/riscv64-unknown-elf-dramfs-gcc: export NEWLIB_TUPLE := riscv64-unknown-elf-dramfs
-%/bin/riscv64-unknown-elf-dramfs-gcc: | $(TARGET_ENV)
-	mkdir -p $(@D) $(RISCV64_BUILD_DIR)
-	cd $(RISCV64_BUILD_DIR); source $(TARGET_ENV) && \
-		$(RISCV64_SOURCE_DIR)/configure \
-		--prefix=$(TARGET_SDK) \
-		--disable-linux --disable-gdb --with-abi=lp64d --disable-qemu-system --with-arch=rv64gcb --with-tune=bsg_blackparrot \
-		--with-target-cflags="-mstrict-align -mcmodel=medany" \
-		--with-target-cxxflags="-mstrict-align -mcmodel=medany"; \
-		$(MAKE)
-	cp $(RISCV64_INSTALL_DIR)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(TARGET_SDK)/bin/dramfs_mklfs
+%/bin/riscv64-unknown-elf-dramfs-gcc: $(TARGET_RISCV64_DEPS) | $(TARGET_ENV)
+	$(eval RISCV64_BUILD_DIR := $(TARGET_WORK)/riscv64_build)
+	$(eval RISCV64_SOURCE_DIR := $(BLACKPARROT_SDK_DIR)/riscv-gnu-toolchain)
+	$(eval RISCV64_CONFIGURE_FLAGS := --disable-linux --disable-gdb --disable-qemu-system)
+	$(eval RISCV64_CONFIGURE_FLAGS += --with-arch=rv64gcb --with-abi=lp64d)
+	$(eval RISCV64_CONFIGURE_FLAGS += --with-tune=bsg_blackparrot)
+	$(eval export NEWLIB_TUPLE=riscv64-unknown-elf-dramfs)
+	$(MKDIR) $(@D) $(RISCV64_BUILD_DIR)
+	$(CD) $(RISCV64_BUILD_DIR); $(ENV_SETUP) && \
+		$(RISCV64_SOURCE_DIR)/configure --prefix=$(TARGET_SDK) $(RISCV64_CONFIGURE_FLAGS); \
+		$(MAKE) CFLAGS_FOR_TARGET_EXTRA="-mstrict-align -mcmodel=medany"
+	$(CP) $(TARGET_SDK)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(TARGET_SDK)/bin/dramfs_mklfs
 
+riscv32: ## HammerBlade riscv32-unknown-elf-dramfs toolchain
 riscv32: $(TARGET_RISCV32)
-%/bin/riscv32-unknown-elf-dramfs-gcc: export RISCV32_SOURCE_DIR := $(BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain
-%/bin/riscv32-unknown-elf-dramfs-gcc: export RISCV32_BUILD_DIR := $(TARGET_WORK)/riscv32_build
-%/bin/riscv32-unknown-elf-dramfs-gcc: export RISCV32_INSTALL_DIR := $(TARGET_SDK)
-%/bin/riscv32-unknown-elf-dramfs-gcc: | $(TARGET_ENV)
-	mkdir -p $(@D) $(RISCV32_BUILD_DIR)
-	cd $(RISCV32_BUILD_DIR); source $(TARGET_ENV) && \
-		cp $(BSG_MANYCORE_DIR)/software/riscv-tools/Makefile .; \
-		cp $(BSG_MANYCORE_DIR)/software/riscv-tools/spike.patch .; \
-		cp $(BSG_MANYCORE_DIR)/software/riscv-tools/spike-gcc.patch .; \
+%/bin/riscv32-unknown-elf-dramfs-gcc: $(TARGET_RISCV32_DEPS) | $(TARGET_ENV)
+	$(eval RISCV32_BUILD_DIR := $(TARGET_WORK)/riscv32_build)
+	$(eval RISCV32_SOURCE_DIR := $(BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain)
+	$(eval RISCV32_CONFIGURE_FLAGS := --disable-linux --disable-gdb)
+	$(eval RISCV32_CONFIGURE_FLAGS += --with-abi=ilp32f --with-arch=rv32imaf)
+	$(eval RISCV32_CONFIGURE_FLAGS += --with-tune=bsg_vanilla_2020)
+	$(eval export RISCV_INSTALL_DIR=$(TARGET_SDK))
+	$(MKDIR) $(@D) $(RISCV32_BUILD_DIR)
+	$(CP) $(BSG_MANYCORE_DIR)/software/riscv-tools/Makefile $(RISCV32_BUILD_DIR)
+	$(CD) $(RISCV32_BUILD_DIR); $(ENV_SETUP) && \
+		$(MAKE) checkout-deps; \
 		$(MAKE) build-deps;
-	cd $(RISCV32_BUILD_DIR); source $(TARGET_ENV) && \
-		$(RISCV32_SOURCE_DIR)/configure \
-		--prefix=$(TARGET_SDK) \
-		--disable-linux --disable-gdb --with-abi=ilp32f --with-arch=rv32imaf --with-tune=bsg_vanilla_2020; \
+	$(CD) $(RISCV32_BUILD_DIR); $(ENV_SETUP) && \
+		$(RISCV32_SOURCE_DIR)/configure --prefix=$(TARGET_SDK) $(RISCV32_CONFIGURE_FLAGS); \
 		$(MAKE) CFLAGS_FOR_TARGET_EXTRA='-fno-common'
 
+dromajo: ## For co-simulation libraries
 dromajo: $(TARGET_DROMAJO)
-%/bin/dromajo: export DROMAJO_BUILD_DIR := $(TARGET_WORK)/dromajo_build
-%/bin/dromajo: export DROMAJO_INSTALL_DIR := $(TARGET_SDK)
-%/bin/dromajo: | $(TARGET_ENV)
-	mkdir -p $(@D) $(DROMAJO_BUILD_DIR)
-	cd $(DROMAJO_BUILD_DIR); source $(TARGET_ENV) && \
-		cmake -S $(BLACKPARROT_TOOLS_DIR)/dromajo -DCMAKE_BUILD_TYPE=Release; \
-		find . -name "flags.make" -exec sed -i "s/-march=native -mtune=native//g" {} \;
-	cd $(TARGET_WORK)/dromajo_build; source $(TARGET_ENV) && \
+%/bin/dromajo: $(TARGET_DROMAJO_DEPS) | $(TARGET_ENV)
+	$(eval DROMAJO_BUILD_DIR := $(TARGET_WORK)/dromajo_build)
+	$(eval DROMAJO_SOURCE_DIR := $(BLACKPARROT_TOOLS_DIR)/dromajo)
+	$(MKDIR) $(@D) $(DROMAJO_BUILD_DIR)
+	$(CD) $(DROMAJO_BUILD_DIR); $(ENV_SETUP) && \
+		$(CMAKE) -S $(BLACKPARROT_TOOLS_DIR)/dromajo -DCMAKE_BUILD_TYPE=Release; \
+		$(FINDHERE) -name "flags.make" -exec $(SED_I) "s/-march=native -mtune=native//g" {} \;
+	$(CD) $(TARGET_WORK)/dromajo_build; $(ENV_SETUP) && \
 		$(MAKE) VLEN=0; \
-		cp dromajo $(TARGET_SDK)/bin; \
-		cp libdromajo_cosim.a $(TARGET_SDK)/lib; \
-		cp $(BLACKPARROT_TOOLS_DIR)/dromajo/include/dromajo_cosim.h $(TARGET_SDK)/include;
+		$(CP) dromajo $(TARGET_SDK)/bin; \
+		$(CP) libdromajo_cosim.a $(TARGET_SDK)/lib; \
+		$(CP) $(BLACKPARROT_TOOLS_DIR)/dromajo/include/dromajo_cosim.h $(TARGET_SDK)/include;
 
+openocd: ## Experimental build to allow us to run gdbserver on remote
 openocd: $(TARGET_OPENOCD)
-%/bin/openocd: export OPENOCD_BUILD_DIR := $(TARGET_WORK)/openocd_build
-%/bin/openocd: export OPENOCD_AUTOTOOLS_DIR := $(TARGET_WORK)/autotools
-%/bin/openocd: export OPENOCD_CONFIG := --enable-remote-bitbang
-%/bin/openocd: | $(TARGET_ENV)
-	mkdir -p $(@D) $(OPENOCD_BUILD_DIR)
-	git clone --recurse-submodules -b riscv https://github.com/riscv-collab/riscv-openocd $(OPENOCD_BUILD_DIR)/riscv-openocd
+%/bin/openocd: $(TARGET_OPENOCD_DEPS) | $(TARGET_ENV)
+	$(eval OPENOCD_BUILD_DIR := $(TARGET_WORK)/openocd_build)
+	$(eval OPENOCD_SOURCE_DIR := $(OPENOCD_BUILD_DIR)/riscv-openocd)
+	$(eval OPENOCD_AUTOTOOLS_DIR := $(TARGET_WORK)/autotools)
+	$(MKDIR) $(@D) $(OPENOCD_BUILD_DIR)
+	$(GCLONE) -b riscv https://github.com/riscv-collab/riscv-openocd $(OPENOCD_SOURCE_DIR)
 ifneq (,$(findstring centos,$(shell python -m platform)))
-	cd $(OPENOCD_BUILD_DIR)/; wget -qO- http://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz | tar xzv
-	cd $(OPENOCD_BUILD_DIR)/; wget -qO- http://ftp.gnu.org/gnu/automake/automake-1.15.tar.gz | tar xzv
-	cd $(OPENOCD_BUILD_DIR)/; wget -qO- http://ftp.gnu.org/gnu/libtool/libtool-2.4.6.tar.gz | tar xzv
-	cd $(OPENOCD_BUILD_DIR)/; wget -qO- https://pkgconfig.freedesktop.org/releases/pkg-config-0.28.tar.gz | tar xzv
-	cd $(OPENOCD_BUILD_DIR)/automake-1.15;   ./configure --prefix=$(OPENOCD_AUTOTOOLS_DIR); make install
-	cd $(OPENOCD_BUILD_DIR)/autoconf-2.69;   ./configure --prefix=$(OPENOCD_AUTOTOOLS_DIR); make install
-	cd $(OPENOCD_BUILD_DIR)/libtool-2.4.6;   ./configure --prefix=$(OPENOCD_AUTOTOOLS_DIR); make install
-	cd $(OPENOCD_BUILD_DIR)/pkg-config-0.28; ./configure --prefix=$(OPENOCD_AUTOTOOLS_DIR); make install
+	$(CD) $(OPENOCD_BUILD_DIR)/; wget -qO- http://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz | tar xzv
+	$(CD) $(OPENOCD_BUILD_DIR)/; wget -qO- http://ftp.gnu.org/gnu/automake/automake-1.15.tar.gz | tar xzv
+	$(CD) $(OPENOCD_BUILD_DIR)/; wget -qO- http://ftp.gnu.org/gnu/libtool/libtool-2.4.6.tar.gz | tar xzv
+	$(CD) $(OPENOCD_BUILD_DIR)/; wget -qO- https://pkgconfig.freedesktop.org/releases/pkg-config-0.28.tar.gz | tar xzv
+	$(CD) $(OPENOCD_BUILD_DIR)/automake-1.15;   ./configure --prefix=$(OPENOCD_AUTOTOOLS_DIR); make install
+	$(CD) $(OPENOCD_BUILD_DIR)/autoconf-2.69;   ./configure --prefix=$(OPENOCD_AUTOTOOLS_DIR); make install
+	$(CD) $(OPENOCD_BUILD_DIR)/libtool-2.4.6;   ./configure --prefix=$(OPENOCD_AUTOTOOLS_DIR); make install
+	$(CD) $(OPENOCD_BUILD_DIR)/pkg-config-0.28; ./configure --prefix=$(OPENOCD_AUTOTOOLS_DIR); make install
 endif
-	cd $(OPENOCD_BUILD_DIR)/riscv-openocd; source $(TARGET_ENV) && \
-		PATH=$(OPENOCD_AUTOTOOLS_DIR)/bin:$(PATH) ./bootstrap; \
-		cp {build-aux/,}config.guess;
-	cd $(OPENOCD_BUILD_DIR)/riscv-openocd; source $(TARGET_ENV) && \
-		./contrib/cross-build.sh $(TARGET_CC); \
-		cp $(OPENOCD_BUILD_DIR)/riscv-openocd/$(TARGET_CC)-root/usr/bin/openocd $@
+	$(CD) $(OPENOCD_SOURCE_DIR); $(ENV_SETUP) && \
+		PATH=$(OPENOCD_AUTOTOOLS_DIR)/bin:$(PATH) \
+			./bootstrap; \
+		$(CP) {build-aux/,}config.guess;
+	$(CD) $(OPENOCD_SOURCE_DIR); $(ENV_SETUP) && \
+		OPENOCD_CONFIG=--enable-remote-bitbang \
+			./contrib/cross-build.sh $(TARGET_CC);
+	$(CP) $(OPENOCD_BUILD_DIR)/riscv-openocd/$(TARGET_CC)-root/usr/bin/openocd $@
 
+pynq: ## Official Xilinx pynq libraries and header files
 pynq: $(TARGET_PYNQ)
-%/lib/libpynq.a: export PYNQ_BUILD_DIR := $(TARGET_WORK)/pynq_build
-%/lib/libpynq.a: | $(TARGET_ENV)
-	mkdir -p $(@D) $(PYNQ_BUILD_DIR)
-	git clone --recurse-submodules -b image_v2.6.0 https://github.com/Xilinx/PYNQ.git $(PYNQ_BUILD_DIR)/PYNQ
-	git clone --recurse-submodules -b master https://github.com/mesham/pynq_api.git $(PYNQ_BUILD_DIR)/pynq_api
-	cd $(PYNQ_BUILD_DIR)/pynq_api; source $(TARGET_ENV) && \
-		sed -i "/CC.*=/d" makefile; \
-		sed -i "s#CFLAGS.*$$#$$CFLAGS -I$(TARGET_WORK)/PYNQ/sdbuild/packages/libsds/libcma#g" makefile; \
+%/lib/libpynq.a: $(TARGET_PYNQ_DEPS) | $(TARGET_ENV)
+	$(eval export PYNQ_BUILD_DIR := $(TARGET_WORK)/pynq_build)
+	$(MKDIR) $(@D) $(PYNQ_BUILD_DIR)
+	$(GCLONE) -b image_v2.6.0 https://github.com/Xilinx/PYNQ.git $(PYNQ_BUILD_DIR)/PYNQ
+	$(GCLONE) -b master https://github.com/mesham/pynq_api.git $(PYNQ_BUILD_DIR)/pynq_api
+	$(CD) $(PYNQ_BUILD_DIR)/pynq_api; $(ENV_SETUP) && \
+		$(SED_I) "/CC.*=/d" makefile; \
+		$(SED_I) "s#CFLAGS.*$$#$$CFLAGS -I$(TARGET_WORK)/PYNQ/sdbuild/packages/libsds/libcma#g" makefile; \
 		$(MAKE) all;
-	cd $(PYNQ_BUILD_DIR)/pynq_api; source $(TARGET_ENV) && \
-		cp ./libpynq.a $(@D); \
-		cp ./libpynq.so $(@D); \
-		cp ./src/pynq_api.h $(@D);
+	$(CD) $(PYNQ_BUILD_DIR)/pynq_api; $(ENV_SETUP) && \
+		$(CP) ./libpynq.a $(@D); \
+		$(CP) ./libpynq.so $(@D); \
+		$(CP) ./src/pynq_api.h $(@D);
 
+
+verilator: ## Open-source RTL simulator for alternative co-simulation
 verilator: $(TARGET_VERILATOR)
 %/bin/verilator: export VERILATOR_BUILD_DIR := $(TARGET_WORK)/verilator_build
 %/bin/verilator: export VERILATOR_SOURCE_DIR := $(BLACKPARROT_TOOLS_DIR)/verilator
-%/bin/verilator: | $(TARGET_ENV)
-	mkdir -p $(@D) $(VERILATOR_BUILD_DIR)
-	cd $(VERILATOR_SOURCE_DIR); source $(TARGET_ENV) && \
-		autoreconf -i
-	cd $(VERILATOR_BUILD_DIR); source $(TARGET_ENV) && \
+%/bin/verilator: $(TARGET_VERILATOR_DEPS) | $(TARGET_ENV)
+	$(MKDIR) $(@D) $(VERILATOR_BUILD_DIR)
+	$(CD) $(VERILATOR_SOURCE_DIR); $(ENV_SETUP) && \
+		$(AUTORECONF) -i
+	$(CD) $(VERILATOR_BUILD_DIR); $(ENV_SETUP) && \
 		$(VERILATOR_SOURCE_DIR)/configure --prefix=$(TARGET_SDK); \
 		$(MAKE) all && $(MAKE) installbin installdata install-msg
 
-environment-setup: | $(TARGET_ENV)
-environment-setup-%: export PETALINUX_BUILD_DIR := $(TARGET_WORK)/petalinux_build
-environment-setup-%: export PETALINUX_PROJ := $(PETALINUX_BUILD_DIR)/$(TARGET_PROJ)
-environment-setup-%:
-	mkdir -p $(@D) $(PETALINUX_BUILD_DIR)
-	cd $(PETALINUX_BUILD_DIR); \
-		$(VIVADO_RUN) -source $(TARGET_TCL)
-	cd $(PETALINUX_BUILD_DIR); \
-		$(PETALINUX_RUN)-create --type project --template $(TARGET_TEMPLATE) --name $(TARGET_PROJ); \
-		$(PETALINUX_RUN)-config --verbose --silentconfig --get-hw-description $< --project $(TARGET_PROJ); \
-		$(PETALINUX_RUN)-build --sdk --project $(TARGET_PROJ); \
-	cd $(PETALINUX_BUILD_DIR)/$(TARGET_PROJ); \
-		$(PETALINUX_RUN)-package --sysroot --sdk=images/linux/sdk.sh; \
-		mv images/linux/sdk/environment-setup-* $@
+environment-reconfig: ## Reconfigure the environment in-place, w/o rebuilding
+environment-reconfig:
+	@if [ -f "$(TARGET_ENV)" ]; then \
+		$(ECHO) "Saving $(TARGET_ENV) to $(TARGET_ENV).old"; \
+	fi
+	$(MV) $(TARGET_ENV){,.old}
+	$(MAKE) $(TARGET_ENV)
 
-clean:
-	rm -rf $(TARGET_ENV)
-	rm -rf $(TARGET_WORK)
-	rm -rf $(SOFTWARE_INSTALL_DIR)/$(TARGET_NAME)
+environment-setup: ## Creates the SDK environment for a specific TARGET_NAME
+environment-setup: $(TARGET_ENV)
+environment-setup-%: | $(TARGET_DIRS)
+	$(eval XSA_BUILD_DIR := $(TARGET_WORK)/xsa_build)
+	$(eval XSA_GEN_TCL := $(SOFTWARE_TCL_DIR)/vivado-gen-xsa-$(TARGET_NAME).tcl)
+	$(eval XSA_GEN_FILE := $(XSA_BUILD_DIR)/$(TARGET_NAME)_basic.xsa)
+	$(eval PETALINUX_BUILD_DIR := $(TARGET_WORK)/petalinux_build)
+	$(eval PETALINUX_PROJ := $(PETALINUX_BUILD_DIR)/$(TARGET_PROJ))
+	$(MKDIR) $(@D) $(XSA_BUILD_DIR) $(PETALINUX_BUILD_DIR)
+	$(CD) $(XSA_BUILD_DIR); \
+		$(VIVADO_RUN) -source $(XSA_GEN_TCL);
+	$(CD) $(PETALINUX_BUILD_DIR); \
+		$(PETALINUX_RUN)-create --type project --template $(TARGET_TEMPLATE) --name $(notdir $(PETALINUX_PROJ)); \
+		$(PETALINUX_RUN)-config --verbose --silentconfig --get-hw-description $(XSA_GEN_FILE) --project $(notdir $(PETALINUX_PROJ)); \
+		$(PETALINUX_RUN)-build --sdk --project $(notdir $(PETALINUX_PROJ)); \
+	$(CD) $(PETALINUX_PROJ); \
+		$(PETALINUX_RUN)-package --sysroot --sdk=images/linux/sdk.sh; \
+		$(MV) images/linux/sdk/environment-setup-* $@
+
+all: ## Make all targets for SDK
+all: pynq dromajo openocd verilator riscv32 riscv64
+
+clean.%: ## Cleans the work directory for a specific TARGET_NAME
+clean.%:
+	if [[ "$*" =~ ^[a-zA-Z0-9]+$$ ]] ; then \
+		echo "Cleaning $*"; \
+		$(RMRF) $(SOFTWARE_INSTALL_DIR)/$*/work; \
+	fi
+
+clean.all: ## Cleans all target work and install directories
+clean.all:
+	$(RMRF) $(wildcard $(SOFTWARE_INSTALL_DIR)/*/work)
+
+bleach.%: ## Cleans the work directory for a specific TARGET_NAME
+bleach.%:
+	if [[ "$*" =~ ^[a-zA-Z0-9]+$$ ]] ; then \
+		echo "Bleaching $*"; \
+		$(RMRF) $(SOFTWARE_INSTALL_DIR)/$*; \
+	fi
+
+bleach.all: ## Bleaches all target work and install directories
+bleach.all:
+	$(RMRF) $(wildcard $(SOFTWARE_INSTALL_DIR)/*)
 
