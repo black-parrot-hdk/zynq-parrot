@@ -65,7 +65,7 @@ TARGET_PYNQ ?= $(TARGET_SDK)/lib/libpynq.a
 TARGET_OPENOCD ?= $(TARGET_SDK)/bin/openocd
 TARGET_DROMAJO ?= $(TARGET_SDK)/bin/dromajo
 else ifeq ($(TARGET_NAME),ultra96v2)
-TARGET_CC        ?= aarch64-xilinx-linux-gnueabi
+TARGET_CC        ?= $(ULTRA96V2_CC)
 TARGET_WORK      ?= $(ULTRA96V2_WORK)
 TARGET_SDK       ?= $(ULTRA96V2_SDK)
 TARGET_TEMPLATE  ?= zynqMP
@@ -87,13 +87,13 @@ endif
 all: verilator pynq openocd dromajo riscv32
 
 riscv64: $(TARGET_RISCV64)
-%/bin/riscv64-unknown-elf-dramfs-gcc: export RISCV64_SOURCE_DIR := $(BLACKPARROT_SDK_DIR)/riscv-gnu-toolchain
-%/bin/riscv64-unknown-elf-dramfs-gcc: export RISCV64_BUILD_DIR := $(TARGET_WORK)/riscv64_build
-%/bin/riscv64-unknown-elf-dramfs-gcc: export RISCV64_INSTALL_DIR := $(TARGET_SDK)
-%/bin/riscv64-unknown-elf-dramfs-gcc: export NEWLIB_TUPLE := riscv64-unknown-elf-dramfs
 %/bin/riscv64-unknown-elf-dramfs-gcc: | $(TARGET_ENV)
+	$(eval RISCV64_BUILD_DIR := $(TARGET_WORK)/riscv64_build)
+	$(eval RISCV64_SOURCE_DIR := $(BLACKPARROT_SDK_DIR)/riscv-gnu-toolchain)
+	$(eval RISCV64_INSTALL_DIR := $(TARGET_SDK))
 	mkdir -p $(@D) $(RISCV64_BUILD_DIR)
 	cd $(RISCV64_BUILD_DIR); source $(TARGET_ENV) && \
+		NEWLIB_TUPLE=riscv64-unknown-elf-dramfs \
 		$(RISCV64_SOURCE_DIR)/configure \
 		--prefix=$(TARGET_SDK) \
 		--disable-linux --disable-gdb --with-abi=lp64d --disable-qemu-system --with-arch=rv64gcb --with-tune=bsg_blackparrot \
@@ -103,10 +103,10 @@ riscv64: $(TARGET_RISCV64)
 	cp $(RISCV64_INSTALL_DIR)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(TARGET_SDK)/bin/dramfs_mklfs
 
 riscv32: $(TARGET_RISCV32)
-%/bin/riscv32-unknown-elf-dramfs-gcc: export RISCV32_SOURCE_DIR := $(BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain
-%/bin/riscv32-unknown-elf-dramfs-gcc: export RISCV32_BUILD_DIR := $(TARGET_WORK)/riscv32_build
-%/bin/riscv32-unknown-elf-dramfs-gcc: export RISCV32_INSTALL_DIR := $(TARGET_SDK)
 %/bin/riscv32-unknown-elf-dramfs-gcc: | $(TARGET_ENV)
+	$(eval RISCV32_BUILD_DIR := $(TARGET_WORK)/riscv32_build)
+	$(eval RISCV32_SOURCE_DIR := $(BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain)
+	$(eval RISCV32_INSTALL_DIR := $(TARGET_SDK))
 	mkdir -p $(@D) $(RISCV32_BUILD_DIR)
 	cd $(RISCV32_BUILD_DIR); source $(TARGET_ENV) && \
 		cp $(BSG_MANYCORE_DIR)/software/riscv-tools/Makefile .; \
@@ -120,9 +120,10 @@ riscv32: $(TARGET_RISCV32)
 		$(MAKE) CFLAGS_FOR_TARGET_EXTRA='-fno-common'
 
 dromajo: $(TARGET_DROMAJO)
-%/bin/dromajo: export DROMAJO_BUILD_DIR := $(TARGET_WORK)/dromajo_build
-%/bin/dromajo: export DROMAJO_INSTALL_DIR := $(TARGET_SDK)
 %/bin/dromajo: | $(TARGET_ENV)
+	$(eval DROMAJO_BUILD_DIR := $(TARGET_WORK)/dromajo_build)
+	$(eval DROMAJO_SOURCE_DIR := $(BLACKPARROT_TOOLS_DIR)/dromajo)
+	$(eval DROMAJO_INSTALL_DIR := $(TARGET_SDK))
 	mkdir -p $(@D) $(DROMAJO_BUILD_DIR)
 	cd $(DROMAJO_BUILD_DIR); source $(TARGET_ENV) && \
 		cmake -S $(BLACKPARROT_TOOLS_DIR)/dromajo -DCMAKE_BUILD_TYPE=Release; \
@@ -134,12 +135,13 @@ dromajo: $(TARGET_DROMAJO)
 		cp $(BLACKPARROT_TOOLS_DIR)/dromajo/include/dromajo_cosim.h $(TARGET_SDK)/include;
 
 openocd: $(TARGET_OPENOCD)
-%/bin/openocd: export OPENOCD_BUILD_DIR := $(TARGET_WORK)/openocd_build
-%/bin/openocd: export OPENOCD_AUTOTOOLS_DIR := $(TARGET_WORK)/autotools
-%/bin/openocd: export OPENOCD_CONFIG := --enable-remote-bitbang
 %/bin/openocd: | $(TARGET_ENV)
+	$(eval OPENOCD_BUILD_DIR := $(TARGET_WORK)/openocd_build)
+	$(eval OPENOCD_SOURCE_DIR := $(OPENOCD_BUILD_DIR)/riscv-openocd)
+	$(eval OPENOCD_INSTALL_DIR := $(TARGET_SDK))
+	$(eval OPENOCD_AUTOTOOLS_DIR := $(TARGET_WORK)/autotools)
 	mkdir -p $(@D) $(OPENOCD_BUILD_DIR)
-	git clone --recurse-submodules -b riscv https://github.com/riscv-collab/riscv-openocd $(OPENOCD_BUILD_DIR)/riscv-openocd
+	git clone --recurse-submodules -b riscv https://github.com/riscv-collab/riscv-openocd $(OPENOCD_SOURCE_DIR)
 ifneq (,$(findstring centos,$(shell python -m platform)))
 	cd $(OPENOCD_BUILD_DIR)/; wget -qO- http://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz | tar xzv
 	cd $(OPENOCD_BUILD_DIR)/; wget -qO- http://ftp.gnu.org/gnu/automake/automake-1.15.tar.gz | tar xzv
@@ -150,11 +152,13 @@ ifneq (,$(findstring centos,$(shell python -m platform)))
 	cd $(OPENOCD_BUILD_DIR)/libtool-2.4.6;   ./configure --prefix=$(OPENOCD_AUTOTOOLS_DIR); make install
 	cd $(OPENOCD_BUILD_DIR)/pkg-config-0.28; ./configure --prefix=$(OPENOCD_AUTOTOOLS_DIR); make install
 endif
-	cd $(OPENOCD_BUILD_DIR)/riscv-openocd; source $(TARGET_ENV) && \
-		PATH=$(OPENOCD_AUTOTOOLS_DIR)/bin:$(PATH) ./bootstrap; \
+	cd $(OPENOCD_SOURCE_DIR); source $(TARGET_ENV) && \
+		PATH=$(OPENOCD_AUTOTOOLS_DIR)/bin:$(PATH) \
+			./bootstrap; \
 		cp {build-aux/,}config.guess;
-	cd $(OPENOCD_BUILD_DIR)/riscv-openocd; source $(TARGET_ENV) && \
-		./contrib/cross-build.sh $(TARGET_CC); \
+	cd $(OPENOCD_SOURCE_DIR); source $(TARGET_ENV) && \
+		OPENOCD_CONFIG=--enable-remote-bitbang \
+			./contrib/cross-build.sh $(TARGET_CC); \
 		cp $(OPENOCD_BUILD_DIR)/riscv-openocd/$(TARGET_CC)-root/usr/bin/openocd $@
 
 pynq: $(TARGET_PYNQ)
@@ -186,17 +190,23 @@ verilator: $(TARGET_VERILATOR)
 environment-setup: | $(TARGET_ENV)
 environment-setup-%: export PETALINUX_BUILD_DIR := $(TARGET_WORK)/petalinux_build
 environment-setup-%: export PETALINUX_PROJ := $(PETALINUX_BUILD_DIR)/$(TARGET_PROJ)
-environment-setup-%:
-	mkdir -p $(@D) $(PETALINUX_BUILD_DIR)
-	cd $(PETALINUX_BUILD_DIR); \
+environment-setup-%: $(TARGET_XSA)
+	$(eval 
+	echo $(PETALINUX_BUILD_DIR)
+	#cd $(PETALINUX_BUILD_DIR); \
+	#	$(PETALINUX_RUN)-create --type project --template $(TARGET_TEMPLATE) --name $(TARGET_PROJ); \
+	#	$(PETALINUX_RUN)-config --verbose --silentconfig --get-hw-description $< --project $(TARGET_PROJ); \
+	#	$(PETALINUX_RUN)-build --sdk --project $(TARGET_PROJ); \
+	#cd $(PETALINUX_BUILD_DIR)/$(TARGET_PROJ); \
+	#	$(PETALINUX_RUN)-package --sysroot --sdk=images/linux/sdk.sh; \
+	#	mv images/linux/sdk/environment-setup-* $@
+
+$(TARGET_XSA): export XSA_BUILD_DIR := $(TARGET_WORK)/xsa_build
+$(TARGET_XSA):
+	mkdir -p $(@D) $(XSA_BUILD_DIR)
+	cd $(XSA_BUILD_DIR); \
 		$(VIVADO_RUN) -source $(TARGET_TCL)
-	cd $(PETALINUX_BUILD_DIR); \
-		$(PETALINUX_RUN)-create --type project --template $(TARGET_TEMPLATE) --name $(TARGET_PROJ); \
-		$(PETALINUX_RUN)-config --verbose --silentconfig --get-hw-description $< --project $(TARGET_PROJ); \
-		$(PETALINUX_RUN)-build --sdk --project $(TARGET_PROJ); \
-	cd $(PETALINUX_BUILD_DIR)/$(TARGET_PROJ); \
-		$(PETALINUX_RUN)-package --sysroot --sdk=images/linux/sdk.sh; \
-		mv images/linux/sdk/environment-setup-* $@
+	cp $(XSA_BUILD_DIR)/$(@F) $@
 
 clean:
 	rm -rf $(TARGET_ENV)
