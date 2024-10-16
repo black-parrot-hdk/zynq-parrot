@@ -26,113 +26,108 @@
 
 extern "C" {
 #include "/usr/include/libxlnk_cma.h"
-    void _xlnk_reset();
+void _xlnk_reset();
 };
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <assert.h>
-#include <string>
-#include <fstream>
-#include <iostream>
-#include <cstdint>
-#include <inttypes.h>
-#include <memory>
 #include "bsg_argparse.h"
 #include "bsg_printing.h"
 #include "zynq_headers.h"
+#include <assert.h>
+#include <cstdint>
+#include <errno.h>
+#include <fcntl.h>
+#include <fstream>
+#include <inttypes.h>
+#include <iostream>
+#include <memory>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "bsg_zynq_pl_hardware.h"
 
 using namespace std;
 
 class bsg_zynq_pl : public bsg_zynq_pl_hardware {
-    public:
-        bsg_zynq_pl(int argc, char *argv[]) {
-            printf("// bsg_zynq_pl: be sure to run as root\n");
-            init();
-        }
+  public:
+    bsg_zynq_pl(int argc, char *argv[]) {
+        printf("// bsg_zynq_pl: be sure to run as root\n");
+        init();
+    }
 
-        ~bsg_zynq_pl(void) {
-            deinit();
-        }
+    ~bsg_zynq_pl(void) { deinit(); }
 
-        void tick(void) override {
-            /* Does nothing on PS */
-        }
+    void tick(void) override { /* Does nothing on PS */
+    }
 
-        void start(void) override {
-            printf("bsg_zynq_pl: start() called\n");
-        }
+    void start(void) override { printf("bsg_zynq_pl: start() called\n"); }
 
-        void stop(void) override {
-            printf("bsg_zynq_pl: stop() called\n");
-        }
+    void stop(void) override { printf("bsg_zynq_pl: stop() called\n"); }
 
-        void done(void) override {
-            printf("bsg_zynq_pl: done() called, exiting\n");
-        }
+    void done(void) override {
+        printf("bsg_zynq_pl: done() called, exiting\n");
+    }
 
-        // returns virtual pointer, writes physical parameter into arguments
-        void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) override {
+    // returns virtual pointer, writes physical parameter into arguments
+    void *allocate_dram(unsigned long len_in_bytes,
+                        unsigned long *physical_ptr) override {
 
-            // resets all CMA buffers across system (eek!)
-            _xlnk_reset();
+        // resets all CMA buffers across system (eek!)
+        _xlnk_reset();
 
-            // for now, we do uncacheable to keep things simple, memory accesses go
-            // straight to DRAM and
-            // thus would be coherent with the PL
+        // for now, we do uncacheable to keep things simple, memory accesses go
+        // straight to DRAM and
+        // thus would be coherent with the PL
 
-            void *virtual_ptr =
-                cma_alloc(len_in_bytes, 0); // 1 = cacheable, 0 = uncacheable
-            assert(virtual_ptr != NULL);
-            *physical_ptr = cma_get_phy_addr(virtual_ptr);
-            printf("bsg_zynq_pl: allocate_dram() called with size %ld bytes --> virtual "
-                    "ptr=%p, physical ptr=0x%8.8lx\n",
-                    len_in_bytes, virtual_ptr, *physical_ptr);
-            return virtual_ptr;
-        }
+        void *virtual_ptr =
+            cma_alloc(len_in_bytes, 0); // 1 = cacheable, 0 = uncacheable
+        assert(virtual_ptr != NULL);
+        *physical_ptr = cma_get_phy_addr(virtual_ptr);
+        printf("bsg_zynq_pl: allocate_dram() called with size %ld bytes --> "
+               "virtual "
+               "ptr=%p, physical ptr=0x%8.8lx\n",
+               len_in_bytes, virtual_ptr, *physical_ptr);
+        return virtual_ptr;
+    }
 
-        void free_dram(void *virtual_ptr) override {
-            printf("bsg_zynq_pl: free_dram() called on virtual ptr=%p\n", virtual_ptr);
-            cma_free(virtual_ptr);
-        }
+    void free_dram(void *virtual_ptr) override {
+        printf("bsg_zynq_pl: free_dram() called on virtual ptr=%p\n",
+               virtual_ptr);
+        cma_free(virtual_ptr);
+    }
 
-        int32_t shell_read(uintptr_t addr) override {
-            return axil_read(addr);
-        }
+    int32_t shell_read(uintptr_t addr) override { return axil_read(addr); }
 
-        void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) override {
-            axil_write(addr, data, wmask);
-        }
+    void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) override {
+        axil_write(addr, data, wmask);
+    }
 
 #ifdef NEON
-        //typedef uint32_t uint32x4_t[4];
-        void shell_write4(uintptr_t addr, int32_t data0, int32_t data1, int32_t data2, int32_t data3) override {
-            volatile uint32x4_t *ptr = (volatile uint32x4_t *) addr;
-            int32_t sarray[4] = {data0, data1, data2, data3};
-            uint32_t *array{reinterpret_cast<uint32_t *>(sarray)};
-            uint32x4_t val = vld1q_u32(array);
+    // typedef uint32_t uint32x4_t[4];
+    void shell_write4(uintptr_t addr, int32_t data0, int32_t data1,
+                      int32_t data2, int32_t data3) override {
+        volatile uint32x4_t *ptr = (volatile uint32x4_t *)addr;
+        int32_t sarray[4] = {data0, data1, data2, data3};
+        uint32_t *array{reinterpret_cast<uint32_t *>(sarray)};
+        uint32x4_t val = vld1q_u32(array);
 
-            *ptr = val;
-        }
+        *ptr = val;
+    }
 
-        void shell_read4(uintptr_t addr, int32_t *data0, int32_t *data1, int32_t *data2, int32_t *data3) override {
-            volatile uint32x4_t *ptr = (volatile uint32x4_t *) addr;
-            uint32x4_t val = *ptr;
+    void shell_read4(uintptr_t addr, int32_t *data0, int32_t *data1,
+                     int32_t *data2, int32_t *data3) override {
+        volatile uint32x4_t *ptr = (volatile uint32x4_t *)addr;
+        uint32x4_t val = *ptr;
 
-            *data0 = val[0];
-            *data1 = val[1];
-            *data2 = val[2];
-            *data3 = val[3];
-        }
+        *data0 = val[0];
+        *data1 = val[1];
+        *data2 = val[2];
+        *data3 = val[3];
+    }
 #endif
 };
 
 #endif
-

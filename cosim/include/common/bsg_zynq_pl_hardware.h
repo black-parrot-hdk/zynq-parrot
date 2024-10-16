@@ -2,20 +2,20 @@
 #ifndef BSG_ZYNQ_PL_HARDWARE_H
 #define BSG_ZYNQ_PL_HARDWARE_H
 
-#include <unistd.h>
-#include <stdlib.h>
+#include <assert.h>
+#include <cstdint>
+#include <errno.h>
+#include <fcntl.h>
+#include <fstream>
+#include <inttypes.h>
+#include <iostream>
+#include <memory>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <assert.h>
-#include <string>
-#include <fstream>
-#include <iostream>
-#include <cstdint>
-#include <inttypes.h>
-#include <memory>
+#include <unistd.h>
 #ifdef UART_ENABLE
 #define termios asmtermios
 #include <asm/termios.h>
@@ -29,7 +29,7 @@
 using namespace std;
 
 class bsg_zynq_pl_hardware {
-public:
+  public:
     virtual void start(void) = 0;
     virtual void stop(void) = 0;
     virtual void tick(void) = 0;
@@ -38,7 +38,7 @@ public:
                                 unsigned long *physical_ptr) = 0;
     virtual void free_dram(void *virtual_ptr) = 0;
 
-protected:
+  protected:
     int serial_port;
     uintptr_t gp0_base_offset = 0;
     uintptr_t gp1_base_offset = 0;
@@ -142,15 +142,15 @@ protected:
         volatile int32_t *ptr32 = axil_get_ptr32(address);
         int32_t data = *ptr32;
         bsg_pr_dbg_pl("  bsg_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n",
-                        address, data);
+                      address, data);
 
         return data;
     }
 
     inline void axil_write(uintptr_t address, int32_t data, uint8_t wstrb) {
         bsg_pr_dbg_pl("  bsg_zynq_pl: AXI writing [%" PRIxPTR
-                        "]=%8.8x mask %" PRIu8 "\n",
-                        address, data, wstrb);
+                      "]=%8.8x mask %" PRIu8 "\n",
+                      address, data, wstrb);
 
         // for now we don't support alternate write strobes
         assert(wstrb == 0XF || wstrb == 0x3 || wstrb == 0x1);
@@ -165,7 +165,7 @@ protected:
             volatile int8_t *ptr8 = axil_get_ptr8(address);
             *ptr8 = data;
         } else {
-            assert(false);  // Illegal write strobe
+            assert(false); // Illegal write strobe
         }
     }
 #endif
@@ -222,7 +222,7 @@ protected:
     }
 #endif
 
-public:
+  public:
     virtual int32_t shell_read(uintptr_t addr) = 0;
     virtual void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) = 0;
 
@@ -244,4 +244,3 @@ public:
 };
 
 #endif
-

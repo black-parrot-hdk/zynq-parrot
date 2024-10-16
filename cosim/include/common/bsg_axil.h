@@ -3,29 +3,30 @@
 #define BSG_AXIL_H
 
 #include <cassert>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string>
-#include <functional>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
 #include <svdpi.h>
 #include <unistd.h>
-#include <string>
 
 #include <boost/coroutine2/all.hpp>
 
 #include "bsg_nonsynth_dpi_gpio.hpp"
-#include "bsg_printing.h"
 #include "bsg_pin.h"
+#include "bsg_printing.h"
 
 #ifndef ZYNQ_AXI_TIMEOUT
 #define ZYNQ_AXI_TIMEOUT 1000
 #endif
 
-extern "C" { int bsg_dpi_time(); }
+extern "C" {
+int bsg_dpi_time();
+}
 using namespace std;
 using namespace bsg_nonsynth_dpi;
 using namespace boost::coroutines2;
@@ -35,7 +36,7 @@ typedef coroutine<void>::pull_type coro_t;
 typedef coroutine<void>::push_type yield_t;
 
 class s_axil_device {
-public:
+  public:
     virtual bool is_read(uintptr_t address) = 0;
     virtual bool can_read(uintptr_t address) = 0;
     virtual int32_t read(uintptr_t address) = 0;
@@ -46,7 +47,7 @@ public:
 };
 
 class m_axil_device {
-public:
+  public:
     virtual bool pending_read(uintptr_t *address) = 0;
     virtual void return_read(int32_t data) = 0;
 
@@ -57,9 +58,8 @@ public:
 
 // A = axil address width
 // D = axil data width
-template <unsigned int A, unsigned int D>
-class maxil {
-private:
+template <unsigned int A, unsigned int D> class maxil {
+  private:
     string base;
 
     pin<1> p_aclk;
@@ -101,10 +101,9 @@ private:
         mutex = 0;
     }
 
-public:
+  public:
     maxil(const string &base)
-        : base(base),
-          p_aclk(string(base) + string(".aclk_gpio")),
+        : base(base), p_aclk(string(base) + string(".aclk_gpio")),
           p_aresetn(string(base) + string(".aresetn_gpio")),
           p_awaddr(string(base) + string(".awaddr_gpio")),
           p_awprot(string(base) + string(".awprot_gpio")),
@@ -124,8 +123,7 @@ public:
           p_rdata(string(base) + string(".rdata_gpio")),
           p_rresp(string(base) + string(".rresp_gpio")),
           p_rvalid(string(base) + string(".rvalid_gpio")),
-          p_rready(string(base) + string(".rready_gpio")),
-          mutex(0) {
+          p_rready(string(base) + string(".rready_gpio")), mutex(0) {
         std::cout << "Instantiating AXIL at " << base << std::endl;
     }
 
@@ -265,9 +263,8 @@ public:
 
 // A = axil address width
 // D = axil data width
-template <unsigned int A, unsigned int D>
-class saxil {
-private:
+template <unsigned int A, unsigned int D> class saxil {
+  private:
     pin<1> p_aclk;
     pin<1> p_aresetn;
 
@@ -307,7 +304,7 @@ private:
         mutex = 0;
     }
 
-public:
+  public:
     saxil(const string &base)
         : p_aclk(string(base) + string(".aclk_gpio")),
           p_aresetn(string(base) + string(".aresetn_gpio")),
@@ -486,4 +483,3 @@ public:
 };
 
 #endif
-

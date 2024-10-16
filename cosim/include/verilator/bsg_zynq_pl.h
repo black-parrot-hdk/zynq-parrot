@@ -5,31 +5,33 @@
 #ifndef BSG_ZYNQ_PL_H
 #define BSG_ZYNQ_PL_H
 
-#include <cassert>
-#include <stdio.h>
-#include <string>
-#include <fstream>
-#include <iostream>
 #include "bsg_axil.h"
-#include "bsg_printing.h"
 #include "bsg_nonsynth_dpi_clock_gen.hpp"
 #include "bsg_nonsynth_dpi_gpio.hpp"
 #include "bsg_peripherals.h"
-#include "zynq_headers.h"
-#include "verilated_fst_c.h"
+#include "bsg_printing.h"
 #include "verilated_cov.h"
+#include "verilated_fst_c.h"
+#include "zynq_headers.h"
+#include <cassert>
+#include <fstream>
+#include <iostream>
+#include <stdio.h>
+#include <string>
 
-#include "bsg_zynq_pl_simulation.h"
 #include "Vbsg_nonsynth_zynq_testbench.h"
+#include "bsg_zynq_pl_simulation.h"
 #include "verilated.h"
 
-extern "C" { int bsg_dpi_time(); }
+extern "C" {
+int bsg_dpi_time();
+}
 
 class bsg_zynq_pl : public bsg_zynq_pl_simulation {
     Vbsg_nonsynth_zynq_testbench *tb;
     VerilatedFstC *wf;
 
-    public:
+  public:
     bsg_zynq_pl(int argc, char *argv[]) {
         // Initialize Verilators variables
         Verilated::commandArgs(argc, argv);
@@ -47,7 +49,7 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
         init();
     }
 
-    ~bsg_zynq_pl(void) { }
+    ~bsg_zynq_pl(void) {}
 
     // Each bsg_timekeeper::next() moves to the next clock edge
     //   so we need 2 to perform one full clock cycle.
@@ -68,7 +70,8 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
         wf->close();
     }
 
-    void *allocate_dram(unsigned long len_in_bytes, unsigned long *physical_ptr) {
+    void *allocate_dram(unsigned long len_in_bytes,
+                        unsigned long *physical_ptr) {
         bsg_pr_info("  bsg_zynq_pl: Allocated dummy DRAM\n");
         void *virtual_ptr = (unsigned long *)malloc(len_in_bytes);
         *physical_ptr = (unsigned long)virtual_ptr;
@@ -82,4 +85,3 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
 };
 
 #endif
-

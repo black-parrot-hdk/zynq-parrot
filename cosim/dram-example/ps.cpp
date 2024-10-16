@@ -12,39 +12,39 @@
 // This test is incomplete, the PL does not actually currently access the DRAM.
 //
 
-#include <stdlib.h>
-#include <stdio.h>
 #include "bsg_zynq_pl.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 #define DRAM_ALLOC_SIZE_BYTES 16384
 
 int ps_main(int argc, char **argv) {
-  bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
+    bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
 
-  int mask1 = 0xf;
-  unsigned long phys_ptr;
+    int mask1 = 0xf;
+    unsigned long phys_ptr;
 
-  volatile int *buf;
+    volatile int *buf;
 
-  buf = (volatile int *)zpl->allocate_dram(DRAM_ALLOC_SIZE_BYTES, &phys_ptr);
+    buf = (volatile int *)zpl->allocate_dram(DRAM_ALLOC_SIZE_BYTES, &phys_ptr);
 
-  // write all of the dram
-  for (int i = 0; i < DRAM_ALLOC_SIZE_BYTES / 4; i++)
-    buf[i] = i;
+    // write all of the dram
+    for (int i = 0; i < DRAM_ALLOC_SIZE_BYTES / 4; i++)
+        buf[i] = i;
 
-  // read all of the dram
-  for (int i = 0; i < DRAM_ALLOC_SIZE_BYTES / 4; i++)
-    assert(buf[i] == i);
+    // read all of the dram
+    for (int i = 0; i < DRAM_ALLOC_SIZE_BYTES / 4; i++)
+        assert(buf[i] == i);
 
-  zpl->shell_write(0x0 + GP0_ADDR_BASE, phys_ptr, mask1);
+    zpl->shell_write(0x0 + GP0_ADDR_BASE, phys_ptr, mask1);
 
-  assert((zpl->shell_read(0x0 + GP0_ADDR_BASE) == (phys_ptr)));
+    assert((zpl->shell_read(0x0 + GP0_ADDR_BASE) == (phys_ptr)));
 
-  if (argc == 1)
-    zpl->free_dram((void *)buf);
+    if (argc == 1)
+        zpl->free_dram((void *)buf);
 
-  zpl->done();
+    zpl->done();
 
-  delete zpl;
-  exit(EXIT_SUCCESS);
+    delete zpl;
+    exit(EXIT_SUCCESS);
 }
