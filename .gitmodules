@@ -10,11 +10,6 @@
     path = import/bsg_manycore
     url = https://github.com/bespoke-silicon-group/bsg_manycore
     branch = master
-[submodule "import/basejump_stl"]
-    path = import/basejump_stl
-    url = https://github.com/bespoke-silicon-group/basejump_stl
-    branch = master
-
 [submodule "import/black-parrot-tools"]
     path = import/black-parrot-tools
     url = https://github.com/black-parrot/black-parrot-tools
