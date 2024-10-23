@@ -25,6 +25,7 @@
 #include "bsg_tag_bitbang.h"
 #include "bsg_zynq_pl.h"
 #include "bsg_printing.h"
+#include "coemulation.hpp"
 
 #ifndef FREE_DRAM
 #define FREE_DRAM 0
@@ -293,12 +294,17 @@ void device_poll(bsg_zynq_pl *zpl) {
   while (1) {
     // keep reading as long as there is data
     if (zpl->shell_read(GP0_RD_PL2PS_FIFO_0_CTRS) != 0) {
+      bsg_pr_dbg_ps("Core sent syscall or IO\n");
       decode_bp_output(zpl, zpl->shell_read(GP0_RD_PL2PS_FIFO_0_DATA));
     }
+
     // break loop when all cores done
     if (done_vec.all()) {
 #ifdef COV_EN
       cov_done(zpl);
+#endif
+#ifdef DROMAJO_COEMU
+      dromajo_finish();
 #endif
       break;
     }
@@ -307,13 +313,17 @@ void device_poll(bsg_zynq_pl *zpl) {
     // on Zynq coverage polling is done on a seperate thread
     cov_poll(zpl);
 #endif
+
+#ifdef DROMAJO_COEMU
+    dromajo_coemulation(zpl);
+
+#endif
   }
 }
 
 int ps_main(int argc, char **argv) {
 
   bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
-
   int32_t val;
   bsg_pr_info("ps.cpp: reading four base registers\n");
   bsg_pr_info("ps.cpp: reset(lo)=%d, bitbang=%d, dram_init=%d, dram_base=%d\n",
@@ -509,6 +519,14 @@ int ps_main(int argc, char **argv) {
   bsg_pr_info("ps.cpp: Starting scan thread\n");
   pthread_t monitor_id;
   pthread_create(&monitor_id, NULL, monitor, NULL);
+#endif
+
+#ifdef DROMAJO_COEMU
+  bsg_pr_info("ps.cpp: Dromajo coemulation enabled\n");
+  dromajo_init(0, 1, 256, argv[2]);
+  dromajo_cosim_failed = true; // conservative
+#else
+  bsg_pr_info("ps.cpp: Dromajo coemulation disabled\n");
 #endif
 
   bsg_pr_info("ps.cpp: Starting i/o polling thread\n");

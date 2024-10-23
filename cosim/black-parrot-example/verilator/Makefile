@@ -5,6 +5,7 @@ include ../Makefile.design
 #############################
 
 DROMAJO_COSIM ?= 0
+DROMAJO_COEMU ?= 1
 
 BP_NCPUS ?= 1
 
@@ -15,6 +16,12 @@ CFLAGS += -DBP_NCPUS=$(BP_NCPUS)
 ifeq ($(DROMAJO_COSIM),1)
 CFLAGS += -I$(BP_TOOLS_DIR)/dromajo/include
 endif
+
+ifeq ($(DROMAJO_COEMU),1)
+CINCLUDES += -I$(BP_TOOLS_DIR)/dromajo/include
+LDFLAGS += -L$(BP_TOOLS_DIR)/dromajo/build_x86 -ldromajo_cosim
+endif
+
 
 DEFINES += GP0_ADDR_BASE=0x400000000U
 DEFINES += GP0_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil0
@@ -32,6 +39,9 @@ DEFINES += SCRATCHPAD_ENABLE
 DEFINES += DMA_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil5
 
 SIM_ARGS += $(NBF_FILE)
+#ifdef DROMAJO_COEMU
+SIM_ARGS += $(ELF_FILE)
+#endif
 
 # Enable backpressure, emulating context switches
 #CFLAGS += -DSIM_BACKPRESSURE_ENABLE
