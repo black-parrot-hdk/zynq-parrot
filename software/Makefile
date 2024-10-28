@@ -64,21 +64,11 @@ openocd: $(TARGET_OPENOCD)
 %/bin/openocd: $(TARGET_OPENOCD_DEPS) | $(TARGET_ENV)
 	$(eval OPENOCD_BUILD_DIR := $(TARGET_WORK)/openocd_build)
 	$(eval OPENOCD_SOURCE_DIR := $(OPENOCD_BUILD_DIR)/riscv-openocd)
-	$(eval OPENOCD_AUTOTOOLS_DIR := $(TARGET_WORK)/autotools)
+	$(eval OPENOCD_DEPS_DIR := $(TARGET_WORK)/openocd_deps)
 	$(MKDIR) $(@D) $(OPENOCD_BUILD_DIR)
 	$(GCLONE) -b riscv https://github.com/riscv-collab/riscv-openocd $(OPENOCD_SOURCE_DIR)
-ifneq (,$(findstring centos,$(shell python -m platform)))
-	$(CD) $(OPENOCD_BUILD_DIR)/; wget -qO- http://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz | tar xzv
-	$(CD) $(OPENOCD_BUILD_DIR)/; wget -qO- http://ftp.gnu.org/gnu/automake/automake-1.15.tar.gz | tar xzv
-	$(CD) $(OPENOCD_BUILD_DIR)/; wget -qO- http://ftp.gnu.org/gnu/libtool/libtool-2.4.6.tar.gz | tar xzv
-	$(CD) $(OPENOCD_BUILD_DIR)/; wget -qO- https://pkgconfig.freedesktop.org/releases/pkg-config-0.28.tar.gz | tar xzv
-	$(CD) $(OPENOCD_BUILD_DIR)/automake-1.15;   ./configure --prefix=$(OPENOCD_AUTOTOOLS_DIR); make install
-	$(CD) $(OPENOCD_BUILD_DIR)/autoconf-2.69;   ./configure --prefix=$(OPENOCD_AUTOTOOLS_DIR); make install
-	$(CD) $(OPENOCD_BUILD_DIR)/libtool-2.4.6;   ./configure --prefix=$(OPENOCD_AUTOTOOLS_DIR); make install
-	$(CD) $(OPENOCD_BUILD_DIR)/pkg-config-0.28; ./configure --prefix=$(OPENOCD_AUTOTOOLS_DIR); make install
-endif
 	$(CD) $(OPENOCD_SOURCE_DIR); $(ENV_SETUP) && \
-		PATH=$(OPENOCD_AUTOTOOLS_DIR)/bin:$(PATH) \
+		PATH=$(OPENOCD_DEPS_DIR)/bin:$(PATH) \
 			./bootstrap; \
 		$(CP) {build-aux/,}config.guess;
 	$(CD) $(OPENOCD_SOURCE_DIR); $(ENV_SETUP) && \
