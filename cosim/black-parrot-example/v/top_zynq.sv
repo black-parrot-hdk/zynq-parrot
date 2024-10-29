@@ -435,14 +435,18 @@ module top_zynq
    // Gating Logic
    (* gated_clock = "yes" *) wire bp_clk;
 
+  logic coemu_gate_lo;
+
+  wire cce_gate_lo;
 `ifdef COV_EN
    logic cov_en_sync_li;
    logic [num_cov_p-1:0] cov_gate_lo;
-   wire gate_lo = cov_en_sync_li & (|cov_gate_lo);
+   assign cce_gate_lo = cov_en_sync_li & (|cov_gate_lo);
 `else
-   wire gate_lo = 1'b0;
+   assign cce_gate_lo = 1'b0;
 `endif
 
+  wire gate_lo = cce_gate_lo | coemu_gate_lo;
    // Clock Generation
 `ifdef VIVADO
 `ifdef ULTRASCALE
@@ -469,7 +473,7 @@ module top_zynq
     $error("Unknown device family!");
   end
 `endif
-`else
+`else // verilator
    bsg_icg_pos
     clk_buf
      (.clk_i(ds_clk)
@@ -759,6 +763,27 @@ module top_zynq
      ,.val_o(frd_raw_li)
      );
 
+
+  // gating contribution
+  reg coemu_gate_r;
+  always @(negedge aclk)
+    if(~aresetn)
+      coemu_gate_r <= '0;
+    else
+      if(~coemu_gate_r & (~commit_fifo_ready_sync_li | ~ird_sync_ready_li | ~frd_sync_ready_li) & cov_en_li) // gate when sync fifos are full & gating enabled(=coverage collection enabled)
+        coemu_gate_r <= '1;
+      else if(coemu_gate_r & (~commit_fifo_v_lo & ~pl2ps_ird_v_lo & ~pl2ps_frd_v_lo) | ~cov_en_li) // ungate after sync fifos are fully drained
+        coemu_gate_r <= '0;
+
+  // ungated_aclk domain
+  bsg_sync_sync
+   #(.width_p(1))
+   gate_cross
+   (.oclk_i(ds_clk)
+   ,.iclk_data_i(coemu_gate_r)
+   ,.oclk_data_o(coemu_gate_lo)
+   );
+
   // pl_to_ps_fifo valids
   assign pl_to_ps_fifo_v_li[23] = pl2ps_xcpt_v_lo & &pl2ps_commit_readies_lo;
   assign pl_to_ps_fifo_v_li[22] = pl2ps_xcpt_v_lo & &pl2ps_commit_readies_lo;
@@ -841,6 +866,8 @@ module top_zynq
   assign pl2ps_commit_readies_lo[0] =  pl_to_ps_fifo_ready_lo[4];
 
   /* end of Dromajo co-emulation */
+`else
+  assign coemu_gate_lo = 1'b0;
 `endif
 
    // Address Translation (MBT):

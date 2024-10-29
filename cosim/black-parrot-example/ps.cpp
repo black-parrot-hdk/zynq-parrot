@@ -579,7 +579,7 @@ int ps_main(int argc, char **argv) {
               zpl->shell_read(GP0_RD_MEM_PROF_2),
               zpl->shell_read(GP0_RD_MEM_PROF_1),
               zpl->shell_read(GP0_RD_MEM_PROF_0));
-  btb->idle(500000);
+  btb->idle(5000);
   // in general we do not want to free the dram; the Xilinx allocator has a
   // tendency to
   // fail after many allocate/fail cycle. instead we keep a pointer to the dram
@@ -700,6 +700,7 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename, bool direct) {
     }
   }
   bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
+  nbf_file.close();
 }
 
 bool decode_bp_output(bsg_zynq_pl *zpl, long data) {

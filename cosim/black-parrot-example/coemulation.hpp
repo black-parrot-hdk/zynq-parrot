@@ -273,17 +273,17 @@ bool dromajo_coemulation(bsg_zynq_pl *zpl) {
       if(d.idep) {
         wdata = irf[d.rfaddr].front();
         irf[d.rfaddr].pop();
-        bsg_pr_info("[Coemulation]: %016llx | %08x | %016llx | i%d %016llx\n",
-            pc.front(), insn.front(), mstatus.front(), d.rfaddr, wdata);
+        bsg_pr_dbg_ps("[Coemulation]: %016llx | %08x | %016llx | %016llx | i%d %016llx\n",
+            pc.front(), insn.front(), mstatus.front(), dromajo_instret, d.rfaddr, wdata);
       } else if(d.fdep) {
         wdata = frf[d.rfaddr].front();
         frf[d.rfaddr].pop();
-        bsg_pr_info("[Coemulation]: %016llx | %08x | %016llx | f%d %016llx\n",
-            pc.front(), insn.front(), mstatus.front(), d.rfaddr, wdata);
+        bsg_pr_dbg_ps("[Coemulation]: %016llx | %08x | %016llx | %016llx | f%d %016llx\n",
+            pc.front(), insn.front(), mstatus.front(), dromajo_instret, d.rfaddr, wdata);
       } else {
         wdata = 0;
-        bsg_pr_info("[Coemulation]: %016llx | %08x | %016llx\n",
-            pc.front(), insn.front(), mstatus.front());
+        bsg_pr_dbg_ps("[Coemulation]: %016llx | %08x | %016llx | %016llx\n",
+            pc.front(), insn.front(), mstatus.front(), dromajo_instret);
       }
 
 #ifdef   ZYNQ_PS_DEBUG
