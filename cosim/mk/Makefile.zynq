@@ -26,15 +26,11 @@ endif
 
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/zynq
-CINCLUDES += -I$(CURR_DESIGN_DIR)
+CINCLUDES += -I$(DESIGN_DIR)
 
 CSOURCES += $(MAIN_PROGRAM)
 
 BUILD_COLLATERAL += $(BASENAME)_bd_1.map
-
-all:
-	@echo "Rules for ZYNQ; see $(TOP)/cosim/mk/Makefile.zynq for more:"
-	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.zynq
 
 EXE ?= control-program
 run: $(EXE) $(RUN_COLLATERAL)

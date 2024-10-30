@@ -9,7 +9,7 @@ proc vivado_create_xsa { proj_name proj_bd part } {
         -config { make_external "FIXED_IO, DDR" Master "Disable" Slave "Disable" }
     connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK]
     generate_target all [get_files ${proj_bd}.bd]
-    write_hw_platform -fixed -force -file pynqz2_basic.xsa
+    write_hw_platform -fixed -force -file basic.xsa
     save_bd_design
 }
 

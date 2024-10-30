@@ -10,7 +10,7 @@ FLIST ?= $(abspath flist.vcs)
 $(BP_FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs $(BASE_FLIST)
 	cat $^ | sed "s/BASEJUMP_STL_DIR/BP_BASEJUMP_STL_DIR/g" | envsubst > $@
 	sed -i "/bp_common_pkg.sv/d" $@
-	sed -i "1i $(CURR_VSRC_DIR)/bp_common_pkg.sv" $@
+	sed -i "1i $(DESIGN_VSRC_DIR)/bp_common_pkg.sv" $@
 
 $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	cat $^ | envsubst > $@
@@ -31,9 +31,9 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	sed -i "/bsg_icg_pos.sv/d" $@
 	sed -i "/test_bsg_clock_params.sv/d" $@
 	# Fixing recursive instantiation bug in vivado 2022.2
-	sed    "s/\`BSG_INV_PARAM(width_p)/width_p = 1/" $(BASEJUMP_STL_DIR)/bsg_misc/bsg_popcount.sv > $(CURR_VSRC_DIR)/bsg_popcount.sv
+	sed    "s/\`BSG_INV_PARAM(width_p)/width_p = 1/" $(BASEJUMP_STL_DIR)/bsg_misc/bsg_popcount.sv > $(DESIGN_VSRC_DIR)/bsg_popcount.sv
 	sed -i "/bsg_popcount.sv/d" $@
-	echo $(CURR_VSRC_DIR)/bsg_popcount.sv >> $@
+	echo $(DESIGN_VSRC_DIR)/bsg_popcount.sv >> $@
 
 include $(TOP)/cosim/mk/Makefile.vivado
 

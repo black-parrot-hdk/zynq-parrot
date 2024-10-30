@@ -1,7 +1,5 @@
 TOP  := $(shell git rev-parse --show-toplevel)
 
-include $(TOP)/Makefile.config
-
 export BP_RTL_DIR       := $(TOP)/import/black-parrot
 export BP_TOOLS_DIR     := $(TOP)/import/black-parrot-tools
 export BP_SDK_DIR       := $(TOP)/import/black-parrot-sdk
@@ -21,7 +19,7 @@ checkout:
 prep_lite: checkout
 	$(MAKE) -C $(BP_RTL_DIR) libs_lite
 	$(MAKE) -C $(BP_TOOLS_DIR) tools_lite
-	$(MAKE) -C $(BP_SDK_DIR) sdk_lite
+	$(MAKE) -C $(BP_SDK_DIR) sdk_lite PLATFORM=zynqparrot
 	$(MAKE) -C $(BP_SDK_DIR) prog_lite
 	$(MAKE) -C $(BSG_MANYCORE_DIR)/software/riscv-tools build-deps build-spike
 

@@ -7,7 +7,7 @@ proc vivado_create_xsa { proj_name proj_bd part } {
     set_property -dict [list CONFIG.PSU__FPGA_PL0_ENABLE {1}] [get_bd_cells zynq_ultra_ps_e_0]
     connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_lpd_aclk]
     generate_target all [get_files ${proj_bd}.bd]
-    write_hw_platform -fixed -force -file ultra96v2_basic.xsa
+    write_hw_platform -fixed -force -file basic.xsa
     save_bd_design
 }
 

@@ -28,7 +28,7 @@ CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/xcelium
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_test
-CINCLUDES += -I$(CURR_DESIGN_DIR)
+CINCLUDES += -I$(DESIGN_DIR)
 
 TRACE ?= +bsg_trace
 
@@ -60,12 +60,4 @@ clean:
 
 view:
 	$(SIMVISION) dump.shm &
-
-help:
-	@echo -e "Usage: make"
-	@echo -e "\tclean - Cleans directory"
-	@echo -e "\tview - Open waveform in gtkwave"
-	@echo -e "\tall - Runs the current test"
-	@echo -e "Options"
-	@echo -e "\tTRACE = whether to dump a .fst waveform"
 

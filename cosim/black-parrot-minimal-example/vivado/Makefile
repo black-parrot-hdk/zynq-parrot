@@ -11,7 +11,7 @@ $(BP_FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs
 	cp $^ $@
 	sed -i "s/BASEJUMP_STL_DIR/BP_BASEJUMP_STL_DIR/g" $@
 	sed -i "/bp_common_pkg.sv/d" $@
-	sed -i "1i $(CURR_VSRC_DIR)/bp_common_pkg.sv" $@
+	sed -i "1i $(DESIGN_VSRC_DIR)/bp_common_pkg.sv" $@
 
 $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	cat $^ | envsubst > $@

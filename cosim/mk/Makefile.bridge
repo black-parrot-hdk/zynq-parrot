@@ -9,7 +9,7 @@ CFLAGS += -std=c++20
 
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/bridge
-CINCLUDES += -I$(CURR_DESIGN_DIR)
+CINCLUDES += -I$(DESIGN_DIR)
 
 CSOURCES += $(MAIN_PROGRAM)
 
@@ -18,16 +18,17 @@ all:
 	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.bridge
 
 EXE ?= control-program
+run: ## Run a co-simulated test
 run: $(EXE) $(RUN_COLLATERAL)
 	sudo ./$< $(SIM_ARGS) | tee run.log
 
 $(EXE): $(HOST_PROGRAM) $(BUILD_COLLATERAL)
 	$(GCC) $(CFLAGS) $(LDFLAGS) $(CINCLUDES) $(CSOURCES) $< $(CFLAGS) $(LDFLAGS) -o $@
 
-unpack_bitstream:
+unpack_bitstream: ## Unpack the compressed bitstream onto the FPGA
 	$(BASE64) -d ../$(BASENAME)_bd_1.$(HOST).$(BOARDNAME).tar.xz.b64 | $(TAR) xvJ
 
-program_fpga:
+program_fpga: ## Program the FPGA with the unpacked bitstream
 	$(VIVADO_RUN) -source $(COSIM_TCL_DIR)/program_fpga.tcl
 
 clean:

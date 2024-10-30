@@ -1,7 +1,7 @@
-TOP  := $(shell git rev-parse --show-toplevel)
-CURR := $(shell pwd)
+
+TOP ?= $(shell git rev-parse --show-toplevel)
 include $(TOP)/Makefile.common
-include $(TOP)/Makefile.config
+include $(COSIM_MK_DIR)/Makefile.env
 
 #############################
 # Design Settings
@@ -10,7 +10,7 @@ TB_MODULE  ?= bsg_nonsynth_zynq_testbench
 BASENAME   ?= blackparrot
 
 MAIN_PROGRAM ?= $(COSIM_CSRC_DIR)/main.cpp
-HOST_PROGRAM ?= $(CURR_DESIGN_DIR)/ps.cpp
+HOST_PROGRAM ?= $(DESIGN_DIR)/ps.cpp
 
 #############################
 # Design Defines
@@ -35,7 +35,7 @@ RISCV_OBJCOPY ?= riscv64-unknown-elf-dramfs-objcopy
 ASCII_TO_ROM ?= $(BASEJUMP_STL_DIR)/bsg_mem/bsg_ascii_to_rom.py
 
 CFG ?= e_bp_unicore_zynqparrot_cfg
-$(CURR_VSRC_DIR)/bsg_blackparrot_pkg.sv:
+$(DESIGN_VSRC_DIR)/bsg_blackparrot_pkg.sv:
 	echo "package bsg_blackparrot_pkg;" >> $@
 	echo >> $@
 	echo "import bp_common_pkg::*;" >> $@
@@ -45,19 +45,19 @@ $(CURR_VSRC_DIR)/bsg_blackparrot_pkg.sv:
 	echo "endpackage" >> $@
 	echo >> $@
 
-$(CURR_VSRC_DIR)/bsg_bootrom.bin: $(BP_SDK_DIR)/prog/bootrom/bootrom.riscv
+$(DESIGN_VSRC_DIR)/bsg_bootrom.bin: $(BP_SDK_DIR)/prog/bootrom/bootrom.riscv
 	$(RISCV_OBJCOPY) -O binary $< $@
 
-$(CURR_VSRC_DIR)/bsg_bootrom.rom: $(CURR_VSRC_DIR)/bsg_bootrom.bin
+$(DESIGN_VSRC_DIR)/bsg_bootrom.rom: $(DESIGN_VSRC_DIR)/bsg_bootrom.bin
 	$(XXD) -b -g4 -c4 $< | $(AWK) '{print $$2}' > $@
 
-$(CURR_VSRC_DIR)/bsg_bootrom.v: $(CURR_VSRC_DIR)/bsg_bootrom.rom
+$(DESIGN_VSRC_DIR)/bsg_bootrom.v: $(DESIGN_VSRC_DIR)/bsg_bootrom.rom
 	$(PYTHON) $(ASCII_TO_ROM) $< bsg_bootrom zero > $@
 
-BUILD_COLLATERAL  = $(CURR_VSRC_DIR)/bsg_blackparrot_pkg.sv
-BUILD_COLLATERAL += $(CURR_VSRC_DIR)/bsg_bootrom.v
-BUILD_COLLATERAL += $(CURR_VSRC_DIR)/bsg_bootrom.rom
-BUILD_COLLATERAL += $(CURR_VSRC_DIR)/bsg_bootrom.bin
+BUILD_COLLATERAL  = $(DESIGN_VSRC_DIR)/bsg_blackparrot_pkg.sv
+BUILD_COLLATERAL += $(DESIGN_VSRC_DIR)/bsg_bootrom.v
+BUILD_COLLATERAL += $(DESIGN_VSRC_DIR)/bsg_bootrom.rom
+BUILD_COLLATERAL += $(DESIGN_VSRC_DIR)/bsg_bootrom.bin
 
 #############################
 # Run Collateral
@@ -66,7 +66,7 @@ NBF_NCPUS ?= 1
 
 VPATH := $(wildcard $(BLACKPARROT_SDK_DIR)/prog/*)
 %.nbf: %.riscv
-	cp $< $(CURR)/
+	cp $< $*.riscv
 	$(RISCV_OBJCOPY) -O verilog $< $*.mem
 	$(SED) -i "s/@8/@0/g" $*.mem
 	$(PYTHON) $(BP_COMMON_DIR)/software/py/nbf.py \

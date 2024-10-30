@@ -9,7 +9,6 @@ See [The ZynqParrot Co-simulation Development Flow](https://docs.google.com/docu
   run on various simulators as well as Zynq-based FPGAs, which is ideal for prototyping accelerators.
 - **software/** contains software infrastructure for generating tests used in cosimulation
   examples. For example, RISC-V compilers and programs for the BlackParrot RISC-V processor.
-- **ci/** contains Continuous Integration scripts to verify the repository's functionality
 
 ## Prerequisites
 

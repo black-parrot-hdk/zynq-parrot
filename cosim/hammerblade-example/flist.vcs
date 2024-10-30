@@ -33,10 +33,10 @@ $BLACKPARROT_SUB_DIR/manycore/v/bsg_manycore_endpoint_to_fifos.sv
 $BLACKPARROT_SUB_DIR/manycore/v/bsg_hammerblade.sv
 $BLACKPARROT_SUB_DIR/manycore/v/bsg_manycore_switch_1x2.sv
 $COSIM_VSRC_DIR/bsg_zynq_pl_shell.sv
-$CURR_VSRC_DIR/bsg_blackparrot_pkg.sv
-$CURR_VSRC_DIR/bsg_bladerunner_pkg.sv
-$CURR_VSRC_DIR/bsg_bladerunner_configuration.sv
-$CURR_VSRC_DIR/zynq_pkg.sv
-$CURR_VSRC_DIR/top_zynq.sv
-$CURR_VSRC_DIR/top.v
+$DESIGN_VSRC_DIR/bsg_blackparrot_pkg.sv
+$DESIGN_VSRC_DIR/bsg_bladerunner_pkg.sv
+$DESIGN_VSRC_DIR/bsg_bladerunner_configuration.sv
+$DESIGN_VSRC_DIR/zynq_pkg.sv
+$DESIGN_VSRC_DIR/top_zynq.sv
+$DESIGN_VSRC_DIR/top.v
 

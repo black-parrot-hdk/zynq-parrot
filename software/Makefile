@@ -3,7 +3,7 @@ TOP ?= $(shell git rev-parse --show-toplevel)
 include $(TOP)/Makefile.common
 include $(TOP)/Makefile.config
 
-include $(TOP)/software/mk/Makefile.env
+include $(SOFTWARE_DIR)/mk/Makefile.env
 
 .DEFAULT_GOAL := help
 
@@ -11,20 +11,28 @@ help: ## Show this help
 	  @$(EGREP) -h '\s##\s' $(MAKEFILE_LIST) \
 		  | $(AWK) 'BEGIN {FS = ":.*?## "}; {printf "\033[36m  %-30s\033[0m %s\n", $$1, $$2}'
 
+# We build these on host because there's no problem
+bp-progs:
+	$(eval BP_SDK_PROG_DIR = $(SOFTWARE_DIR)/prog)
+	$(ENV_SETUP) && $(MAKE) -C $(BLACKPARROT_SDK_DIR) bedrock linker
+	$(ENV_SETUP) && $(MAKE) -C $(BLACKPARROT_SDK_DIR) prog_lite;
+	# Linux build doesn't work with ENV SETUP currently
+	$(MAKE) -C $(BLACKPARROT_SDK_DIR) linux;
+
 riscv64: ## BlackParrot riscv64-unknown-elf-dramfs toolchain
 riscv64: $(TARGET_RISCV64)
 %/bin/riscv64-unknown-elf-dramfs-gcc: $(TARGET_RISCV64_DEPS) | $(TARGET_ENV)
 	$(eval RISCV64_BUILD_DIR := $(TARGET_WORK)/riscv64_build)
 	$(eval RISCV64_SOURCE_DIR := $(BLACKPARROT_SDK_DIR)/riscv-gnu-toolchain)
 	$(eval RISCV64_CONFIGURE_FLAGS := --disable-linux --disable-gdb --disable-qemu-system)
-	$(eval RISCV64_CONFIGURE_FLAGS += --with-arch=rv64gcb --with-abi=lp64d)
-	$(eval RISCV64_CONFIGURE_FLAGS += --with-tune=bsg_blackparrot)
+	$(eval RISCV64_CONFIGURE_FLAGS += --with-multilib-generator="rv64g-lp64d--;rv64gcb-lp64d--")
+	$(eval RISCV64_CONFIGURE_FLAGS += --with-cmodel=medany --with-tune=bsg_blackparrot)
 	$(eval export NEWLIB_TUPLE=riscv64-unknown-elf-dramfs)
 	$(MKDIR) $(@D) $(RISCV64_BUILD_DIR)
 	$(CD) $(RISCV64_BUILD_DIR); $(ENV_SETUP) && \
 		$(RISCV64_SOURCE_DIR)/configure --prefix=$(TARGET_SDK) $(RISCV64_CONFIGURE_FLAGS); \
-		$(MAKE) CFLAGS_FOR_TARGET_EXTRA="-mstrict-align -mcmodel=medany"
-	$(CP) $(TARGET_SDK)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(TARGET_SDK)/bin/dramfs_mklfs
+		$(MAKE) CFLAGS_FOR_TARGET_EXTRA="-mstrict-align -mcmodel=medany"; \
+		$(CP) $(TARGET_SDK)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(TARGET_SDK)/bin/dramfs_mklfs; \
 
 riscv32: ## HammerBlade riscv32-unknown-elf-dramfs toolchain
 riscv32: $(TARGET_RISCV32)
@@ -83,15 +91,13 @@ pynq: $(TARGET_PYNQ)
 	$(MKDIR) $(@D) $(PYNQ_BUILD_DIR)
 	$(GCLONE) -b image_v2.6.0 https://github.com/Xilinx/PYNQ.git $(PYNQ_BUILD_DIR)/PYNQ
 	$(GCLONE) -b master https://github.com/mesham/pynq_api.git $(PYNQ_BUILD_DIR)/pynq_api
-	$(CD) $(PYNQ_BUILD_DIR)/pynq_api; $(ENV_SETUP) && \
-		$(SED_I) "/CC.*=/d" makefile; \
-		$(SED_I) "s#CFLAGS.*$$#$$CFLAGS -I$(TARGET_WORK)/PYNQ/sdbuild/packages/libsds/libcma#g" makefile; \
-		$(MAKE) all;
+	$(CD) $(PYNQ_BUILD_DIR)/pynq_api; $(ENV_SETUP) && $(SED_I) "/^CC/d" makefile;
+	$(CD) $(PYNQ_BUILD_DIR)/pynq_api; $(ENV_SETUP) && $(SED_I) "s#^CFLAGS.*#CFLAGS = $$CFLAGS -I$(PYNQ_BUILD_DIR)/PYNQ/sdbuild/packages/libsds/libcma#g" makefile;
+	$(CD) $(PYNQ_BUILD_DIR)/pynq_api; $(ENV_SETUP) && $(MAKE) all;
 	$(CD) $(PYNQ_BUILD_DIR)/pynq_api; $(ENV_SETUP) && \
 		$(CP) ./libpynq.a $(@D); \
 		$(CP) ./libpynq.so $(@D); \
 		$(CP) ./src/pynq_api.h $(@D);
-
 
 verilator: ## Open-source RTL simulator for alternative co-simulation
 verilator: $(TARGET_VERILATOR)
@@ -102,7 +108,11 @@ verilator: $(TARGET_VERILATOR)
 	$(CD) $(VERILATOR_SOURCE_DIR); $(ENV_SETUP) && \
 		$(AUTORECONF) -i
 	$(CD) $(VERILATOR_BUILD_DIR); $(ENV_SETUP) && \
-		$(VERILATOR_SOURCE_DIR)/configure --prefix=$(TARGET_SDK); \
+		$(VERILATOR_SOURCE_DIR)/configure \
+			--prefix=$(TARGET_SDK) \
+			--build=$(HOST_CC) \
+			--host=$(TARGET_CC) \
+			--target=$(TARGET_CC); \
 		$(MAKE) all && $(MAKE) installbin installdata install-msg
 
 environment-reconfig: ## Reconfigure the environment in-place, w/o rebuilding
@@ -117,23 +127,22 @@ environment-setup: ## Creates the SDK environment for a specific TARGET_NAME
 environment-setup: $(TARGET_ENV)
 environment-setup-%: | $(TARGET_DIRS)
 	$(eval XSA_BUILD_DIR := $(TARGET_WORK)/xsa_build)
-	$(eval XSA_GEN_TCL := $(SOFTWARE_TCL_DIR)/vivado-gen-xsa-$(TARGET_NAME).tcl)
-	$(eval XSA_GEN_FILE := $(XSA_BUILD_DIR)/$(TARGET_NAME)_basic.xsa)
-	$(eval PETALINUX_BUILD_DIR := $(TARGET_WORK)/petalinux_build)
-	$(eval PETALINUX_PROJ := $(PETALINUX_BUILD_DIR)/$(TARGET_PROJ))
-	$(MKDIR) $(@D) $(XSA_BUILD_DIR) $(PETALINUX_BUILD_DIR)
+	$(eval XSA_FILE := $(XSA_BUILD_DIR)/basic.xsa)
+	$(eval PETALINUX_PROJ := $(TARGET_SDK)/petalinux_proj)
+	$(MKDIR) $(@D) $(XSA_BUILD_DIR)
 	$(CD) $(XSA_BUILD_DIR); \
-		$(VIVADO_RUN) -source $(XSA_GEN_TCL);
-	$(CD) $(PETALINUX_BUILD_DIR); \
+		$(VIVADO_RUN) -source $(TARGET_TCL);
+	$(CD) $(TARGET_SDK); \
 		$(PETALINUX_RUN)-create --type project --template $(TARGET_TEMPLATE) --name $(notdir $(PETALINUX_PROJ)); \
-		$(PETALINUX_RUN)-config --verbose --silentconfig --get-hw-description $(XSA_GEN_FILE) --project $(notdir $(PETALINUX_PROJ)); \
-		$(PETALINUX_RUN)-build --sdk --project $(notdir $(PETALINUX_PROJ)); \
+		$(PETALINUX_RUN)-config --verbose --silentconfig --get-hw-description $(XSA_FILE) --project $(notdir $(PETALINUX_PROJ)); \
+		$(PETALINUX_RUN)-build --sdk --project $(notdir $(PETALINUX_PROJ));
 	$(CD) $(PETALINUX_PROJ); \
 		$(PETALINUX_RUN)-package --sysroot --sdk=images/linux/sdk.sh; \
 		$(MV) images/linux/sdk/environment-setup-* $@
 
 all: ## Make all targets for SDK
-all: pynq dromajo openocd verilator riscv32 riscv64
+#all: pynq dromajo openocd verilator riscv32 riscv64
+all: pynq dromajo openocd verilator
 
 clean.%: ## Cleans the work directory for a specific TARGET_NAME
 clean.%:

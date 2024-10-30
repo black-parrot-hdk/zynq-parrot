@@ -1,6 +1,4 @@
 
-include $(COSIM_MK_DIR)/Makefile.env
-
 VCS_OPTS += -full64
 VCS_OPTS += -notice
 VCS_OPTS += -V
@@ -11,6 +9,9 @@ VCS_OPTS += -timescale=1ps/1ps
 VCS_OPTS += -diag timescale
 VCS_OPTS += -f flist.vcs
 VCS_OPTS += -top $(TB_MODULE)
+
+# debug_all == more accurate, debug_pp == speed
+#VCS_OPTS += -debug_all
 VCS_OPTS += -debug_pp
 VCS_OPTS += +vcs+vcdpluson +vcs+vcdplusautoflushon
 VCS_OPTS += +vcs+lic+wait
@@ -41,12 +42,9 @@ CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/vcs
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_test
-CINCLUDES += -I$(CURR_DESIGN_DIR)
+CINCLUDES += -I$(DESIGN_DIR)
 
 TRACE ?= +bsg_trace +vpdfilesize+512
-
-all:
-	@echo "## See the makefile for the fun things you can do in this directory"
 
 RUN_LOG ?= run.log
 run: simv $(RUN_COLLATERAL)
@@ -57,6 +55,9 @@ simv: $(HOST_PROGRAM) $(FLIST) $(BUILD_COLLATERAL)
 	$(VCS) $(VCS_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" \
 		-LDFLAGS "$(LDFLAGS)" -o $@ $< \
 		2>&1 | tee -i $(BUILD_LOG)
+
+view:
+	$(_DVE) -full64 -vpd vcdplus.vpd
 
 clean:
 	rm -rf csrc/
@@ -73,15 +74,4 @@ clean:
 	rm -rf *.rv*o*
 	rm -rf *.dump*
 	rm -rf $(BUILD_COLLATERAL) $(SIM_COLLATERAL)
-
-view:
-	$(_DVE) -full64 -vpd vcdplus.vpd
-
-help:
-	@echo -e "Usage: make"
-	@echo -e "\tclean - Cleans directory"
-	@echo -e "\tview - Open waveform in gtkwave"
-	@echo -e "\tall - Runs the current test"
-	@echo -e "Options"
-	@echo -e "\tTRACE = whether to dump a .fst waveform"
 

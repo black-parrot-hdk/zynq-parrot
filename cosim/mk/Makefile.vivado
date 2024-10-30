@@ -24,13 +24,13 @@ fpga_report_build_block:
 fpga_build_ip: ip_repo
 ip_repo: $(FLIST) $(BUILD_COLLATERAL)
 	mkdir $@
-	$(VIVADO_RUN) -source $(CURR)/vivado-build-ip.tcl
+	$(VIVADO_RUN) -source $(DESIGN_VIVADO_DIR)/vivado/vivado-build-ip.tcl
 	-@grep --color "CRITICAL WARNING:" vivado.log || true
 	-@grep --color "ERROR:" vivado.log || true
 	-@tail -n5 vivado.log
 
 fpga_build: ip_repo
-	$(VIVADO_RUN) -source $(CURR)/vivado-build-bd.tcl
+	$(VIVADO_RUN) -source $(DESIGN_VIVADO_DIR)/vivado-build-bd.tcl
 	$(MAKE) fpga_report_build_block
 
 # we are looking for a *_bd_1.bit, *_bd_1_bd.map, *_bd_1.hwh

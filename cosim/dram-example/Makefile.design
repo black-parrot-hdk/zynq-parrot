@@ -1,7 +1,7 @@
-TOP  := $(shell git rev-parse --show-toplevel)
-CURR := $(shell pwd)
+
+TOP ?= $(shell git rev-parse --show-toplevel)
 include $(TOP)/Makefile.common
-include $(TOP)/Makefile.config
+include $(COSIM_MK_DIR)/Makefile.env
 
 #############################
 # Design Settings
@@ -10,7 +10,7 @@ TB_MODULE  ?= bsg_nonsynth_zynq_testbench
 BASENAME   ?= dram
 
 MAIN_PROGRAM ?= $(COSIM_CSRC_DIR)/main.cpp
-HOST_PROGRAM ?= $(CURR_DESIGN_DIR)/ps.cpp
+HOST_PROGRAM ?= $(DESIGN_DIR)/ps.cpp
 
 #############################
 # Design Defines
