@@ -1,5 +1,7 @@
 include ../Makefile.design
 
+SHELL := . /home/dpetrisko/scratch/nfs/zynq-parrot/software/install/x86/environment-setup-x86 && /bin/bash
+
 #############################
 # Accelerator Software Settings
 #############################

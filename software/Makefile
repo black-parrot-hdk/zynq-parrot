@@ -2,14 +2,9 @@ TOP ?= $(shell git rev-parse --show-toplevel)
 include $(TOP)/Makefile.common
 include $(SOFTWARE_DIR)/mk/Makefile.env
 
-.DEFAULT_GOAL := help
-
-help: ## Show this help
-	  @$(EGREP) -h '\s##\s' $(MAKEFILE_LIST) \
-		  | $(AWK) 'BEGIN {FS = ":.*?## "}; {printf "\033[36m  %-30s\033[0m %s\n", $$1, $$2}'
-
 # We build these on host because there's no problem
 bp-progs:
+	error
 	$(eval BP_SDK_PROG_DIR = $(SOFTWARE_DIR)/prog)
 	$(ENV_SETUP) && $(MAKE) -C $(BLACKPARROT_SDK_DIR) bedrock linker
 	$(ENV_SETUP) && $(MAKE) -C $(BLACKPARROT_SDK_DIR) prog_lite;
