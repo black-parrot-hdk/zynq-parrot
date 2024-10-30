@@ -1,8 +1,5 @@
 TOP ?= $(shell git rev-parse --show-toplevel)
-
 include $(TOP)/Makefile.common
-include $(TOP)/Makefile.config
-
 include $(SOFTWARE_DIR)/mk/Makefile.env
 
 .DEFAULT_GOAL := help
