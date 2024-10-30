@@ -11,5 +11,5 @@ else ifeq ($(BOARDNAME),ultra96v2)
 DEFINES += GP0_ADDR_BASE=0xA0000000
 endif
 
-include $(TOP)/cosim/mk/Makefile.zynq
+include $(COSIM_MK_DIR)/Makefile.zynq
 

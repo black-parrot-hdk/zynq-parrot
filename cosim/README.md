@@ -24,6 +24,8 @@ Design have a standard structure designed to click into the ZynqParrot build sys
 
 Designs can run in hardware or co-simulation by entering the appropriate backend directory
 
+"make help" displays the possible targets for a given backend
+
 ** Note: Not all backends are supported for all targets and should error out with an explicit message. **
 
 ### Simulation Backends

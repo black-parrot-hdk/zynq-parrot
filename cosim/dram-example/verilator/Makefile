@@ -28,5 +28,5 @@ $(FLIST): $(BASE_FLIST)
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_axil_to_dpi.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv" >> $@
 
-include $(TOP)/cosim/mk/Makefile.verilator
+include $(COSIM_MK_DIR)/Makefile.verilator
 

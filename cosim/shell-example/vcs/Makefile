@@ -30,5 +30,5 @@ $(FLIST): $(BASE_FLIST)
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axil.sv" >> $@
 	echo "$(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv" >> $@
 
-include $(TOP)/cosim/mk/Makefile.vcs
+include $(COSIM_MK_DIR)/Makefile.vcs
 

@@ -14,5 +14,5 @@ DEFINES += GP1_ADDR_SIZE_BYTES=4096
 $(FLIST): $(BASE_FLIST)
 	cat $< | envsubst > $@
 
-include $(TOP)/cosim/mk/Makefile.zynq
+include $(COSIM_MK_DIR)/Makefile.zynq
 

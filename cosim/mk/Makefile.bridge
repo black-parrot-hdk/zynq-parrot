@@ -13,12 +13,8 @@ CINCLUDES += -I$(DESIGN_DIR)
 
 CSOURCES += $(MAIN_PROGRAM)
 
-all:
-	@echo "Rules for BRIDGE; see $(TOP)/cosim/mk/Makefile.bridge for more:"
-	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.bridge
-
 EXE ?= control-program
-run: ## Run a co-simulated test
+run: ## Run a co-simulation over the UART bridge
 run: $(EXE) $(RUN_COLLATERAL)
 	sudo ./$< $(SIM_ARGS) | tee run.log
 
@@ -31,7 +27,7 @@ unpack_bitstream: ## Unpack the compressed bitstream onto the FPGA
 program_fpga: ## Program the FPGA with the unpacked bitstream
 	$(VIVADO_RUN) -source $(COSIM_TCL_DIR)/program_fpga.tcl
 
-clean:
+clean: ## Cleans the directory of co-simulation runs
 	rm -rf $(EXE) $(BUILD_COLLATERAL) $(SIM_COLLATERAL)
 	rm -rf *.log
 

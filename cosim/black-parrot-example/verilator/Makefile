@@ -80,5 +80,5 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 
 bootrom: $(DESIGN_VSRC_DIR)/bsg_bootrom.v
 
-include $(TOP)/cosim/mk/Makefile.verilator
+include $(COSIM_MK_DIR)/Makefile.verilator
 

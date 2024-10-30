@@ -35,5 +35,5 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	sed -i "/bsg_popcount.sv/d" $@
 	echo $(DESIGN_VSRC_DIR)/bsg_popcount.sv >> $@
 
-include $(TOP)/cosim/mk/Makefile.vivado
+include $(COSIM_MK_DIR)/Makefile.vivado
 

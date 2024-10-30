@@ -13,5 +13,5 @@ ifneq ($(BOARDNAME),pynqz2)
 $(error Only PynqZ2 currently supported)
 endif
 
-include $(TOP)/cosim/mk/Makefile.vivado
+include $(COSIM_MK_DIR)/Makefile.vivado
 

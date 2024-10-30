@@ -13,5 +13,5 @@ $(FLIST): $(BASE_FLIST)
 	sed -i "/bsg_icg_pos.sv/d" $@
 	sed -i "/test_bsg_clock_params.sv/d" $@
 
-include $(TOP)/cosim/mk/Makefile.vivado
+include $(COSIM_MK_DIR)/Makefile.vivado
 

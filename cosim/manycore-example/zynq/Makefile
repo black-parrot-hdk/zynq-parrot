@@ -21,5 +21,5 @@ endif
 
 SIM_ARGS += $(NBF_FILE)
 
-include $(TOP)/cosim/mk/Makefile.zynq
+include $(COSIM_MK_DIR)/Makefile.zynq
 

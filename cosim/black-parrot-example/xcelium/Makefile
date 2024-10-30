@@ -80,6 +80,6 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 		cp $(ELF_FILE) prog.elf; \
 	fi
 
-include $(TOP)/cosim/mk/Makefile.xcelium
+include $(COSIM_MK_DIR)/Makefile.xcelium
 
 

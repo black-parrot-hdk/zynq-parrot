@@ -5,5 +5,5 @@ include ../Makefile.design
 #############################
 CFLAGS += -DZYNQ_PS_DEBUG
 
-include $(TOP)/cosim/mk/Makefile.zynq
+include $(COSIM_MK_DIR)/Makefile.zynq
 

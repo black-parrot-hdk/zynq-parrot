@@ -47,6 +47,7 @@ CINCLUDES += -I$(DESIGN_DIR)
 TRACE ?= +bsg_trace +vpdfilesize+512
 
 RUN_LOG ?= run.log
+run: ## Runs a co-simulation with Synopsys VCS
 run: simv $(RUN_COLLATERAL)
 	./$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
 
@@ -56,10 +57,10 @@ simv: $(HOST_PROGRAM) $(FLIST) $(BUILD_COLLATERAL)
 		-LDFLAGS "$(LDFLAGS)" -o $@ $< \
 		2>&1 | tee -i $(BUILD_LOG)
 
-view:
+view: ## Views a simulation dump with Synopsys DVE
 	$(_DVE) -full64 -vpd vcdplus.vpd
 
-clean:
+clean: ## Clean the directory of simulation runs
 	rm -rf csrc/
 	rm -rf ucli.key
 	rm -rf vc_hdrs.h

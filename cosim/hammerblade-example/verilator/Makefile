@@ -64,5 +64,5 @@ $(FLIST): $(BP_FLIST) $(MC_FLIST) $(BASE_FLIST)
 	sed -i "/import\/basejump_stl.*bsg_cache_pkg.sv/d" $@
 	sed -i "/import\/basejump_stl.*bsg_wormhole_router_pkg.sv/d" $@
 
-include $(TOP)/cosim/mk/Makefile.verilator
+include $(COSIM_MK_DIR)/Makefile.verilator
 
