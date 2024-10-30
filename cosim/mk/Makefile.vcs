@@ -23,7 +23,7 @@ VCS_OPTS += $(BP_SDK_LIB_DIR)/libboost_context.a
 VCS_OPTS += $(BP_SDK_LIB_DIR)/libboost_system.a
 
 CFLAGS += -DVCS
-CFLAGS += -DHOST_$(call upper,$(HOST))
+CFLAGS += -DHOST_$(call bsg_fn_upper,$(HOST))
 CFLAGS += -std=c++14
 CFLAGS += -D_DEFAULT_SOURCE -D_BSD_SOURCE
 CFLAGS += $(addprefix -D,$(DEFINES))

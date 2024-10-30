@@ -2,7 +2,7 @@
 include $(COSIM_MK_DIR)/Makefile.env
 
 CFLAGS += -DBRIDGE
-CFLAGS += -DHOST_$(call upper,$(HOST))
+CFLAGS += -DHOST_$(call bsg_fn_upper,$(HOST))
 CFLAGS += $(addprefix -D,$(DEFINES))
 CFLAGS += -O2
 CFLAGS += -std=c++20

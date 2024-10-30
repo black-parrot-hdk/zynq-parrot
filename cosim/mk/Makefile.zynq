@@ -8,7 +8,7 @@ $(error ZYNQ code should be run on the PS, not x86)
 endif
 
 CFLAGS += -DZYNQ
-CFLAGS += -DHOST_$(call upper,$(HOST))
+CFLAGS += -DHOST_$(call bsg_fn_upper,$(HOST))
 CFLAGS += $(addprefix -D,$(DEFINES))
 CFLAGS += -O2
 CFLAGS += -lcma -lpthread

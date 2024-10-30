@@ -11,7 +11,7 @@ VV_OPTS += +incdir+$(COSIM_DIR)/include/verilator
 VV_OPTS += $(addprefix +define+,$(DEFINES))
 
 CFLAGS += -DVERILATOR
-CFLAGS += -DHOST_$(call upper,$(HOST))
+CFLAGS += -DHOST_$(call bsg_fn_upper,$(HOST))
 CFLAGS += $(addprefix -D,$(DEFINES))
 CFLAGS += -std=c++14
 # PL Debug

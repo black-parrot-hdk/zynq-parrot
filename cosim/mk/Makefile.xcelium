@@ -16,7 +16,7 @@ XRUN_OPTS += $(MAIN_PROGRAM)
 CFLAGS += $(addprefix +define+,$(DEFINES))
 
 CFLAGS += -DXCELIUM
-CFLAGS += -DHOST_$(call upper,$(HOST))
+CFLAGS += -DHOST_$(call bsg_fn_upper,$(HOST))
 CFLAGS += $(addprefix -D,$(DEFINES))
 
 LDFLAGS += -L$(BP_SDK_LIB_DIR)
