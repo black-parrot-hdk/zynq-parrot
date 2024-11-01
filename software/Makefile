@@ -26,7 +26,7 @@ riscv64: $(TARGET_RISCV64)
 	@$(eval export NEWLIB_TUPLE=riscv64-unknown-elf-dramfs)
 	@$(MKDIR) $(@D) $(RISCV64_BUILD_DIR)
 	@$(CD) $(RISCV64_BUILD_DIR); $(ENV_SETUP) && \
-		$(RISCV64_SOURCE_DIR)/configure --prefix=$(TARGET_SDK) $(RISCV64_CONFIGURE_FLAGS); \
+		$(RISCV64_SOURCE_DIR)/configure $${CONFIGURE_FLAGS} $(RISCV64_CONFIGURE_FLAGS); \
 		$(MAKE) CFLAGS_FOR_TARGET_EXTRA="-mstrict-align -mcmodel=medany"; \
 		$(CP) $(TARGET_SDK)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(TARGET_SDK)/bin/dramfs_mklfs;
 
@@ -41,12 +41,8 @@ riscv32: $(TARGET_RISCV32)
 	@$(eval RISCV32_CONFIGURE_FLAGS += --with-tune=bsg_vanilla_2020)
 	@$(eval export RISCV_INSTALL_DIR=$(TARGET_SDK))
 	@$(MKDIR) $(@D) $(RISCV32_BUILD_DIR)
-	@$(CP) $(BSG_MANYCORE_DIR)/software/riscv-tools/Makefile $(RISCV32_BUILD_DIR)
 	@$(CD) $(RISCV32_BUILD_DIR); $(ENV_SETUP) && \
-		$(MAKE) checkout-deps; \
-		$(MAKE) build-deps;
-	@$(CD) $(RISCV32_BUILD_DIR); $(ENV_SETUP) && \
-		$(RISCV32_SOURCE_DIR)/configure --prefix=$(TARGET_SDK) --build=$(HOST_CC) --host=$(TARGET_CC) $(RISCV32_CONFIGURE_FLAGS); \
+		$(RISCV32_SOURCE_DIR)/configure $${CONFIGURE_FLAGS} $(RISCV32_CONFIGURE_FLAGS); \
 		$(MAKE) CFLAGS_FOR_TARGET_EXTRA='-fno-common'
 	@$(ECHO) "Successfully built $@!"
 
@@ -57,9 +53,9 @@ dromajo: $(TARGET_DROMAJO)
 	$(eval DROMAJO_BUILD_DIR := $(TARGET_WORK)/dromajo_build)
 	$(eval DROMAJO_SOURCE_DIR := $(BLACKPARROT_TOOLS_DIR)/dromajo)
 	$(MKDIR) $(@D) $(DROMAJO_BUILD_DIR)
-	$(CD) $(DROMAJO_BUILD_DIR); $(ENV_SETUP) &&
+	$(CD) $(DROMAJO_BUILD_DIR); $(ENV_SETUP) && \
 	   $(CMAKE) -S $(BLACKPARROT_TOOLS_DIR)/dromajo -DCMAKE_BUILD_TYPE=Release; \
-	   $(FINDHERE) -name "flags.make" -exec $(SED_I) "s/-march=native -mtune=native//g" {} \; \
+	   $(FINDHERE) -name "flags.make" -exec $(SED_I) "s/-march=native -mtune=native//g" {} \;
 	$(CD) $(TARGET_WORK)/dromajo_build; $(ENV_SETUP) && \
 	   $(MAKE) VLEN=0; \
 	   $(CP) dromajo $(TARGET_SDK)/bin; \
@@ -74,17 +70,19 @@ openocd: $(TARGET_OPENOCD)
 	@$(eval OPENOCD_BUILD_DIR := $(TARGET_WORK)/openocd_build)
 	@$(eval OPENOCD_SOURCE_DIR := $(OPENOCD_BUILD_DIR)/riscv-openocd)
 	@$(eval OPENOCD_DEPS_DIR := $(TARGET_WORK)/openocd_deps)
+	@$(eval OPENOCD_CONFIGURE_FLAGS := "--enable-remote-bitbang")
 	@$(eval unexport MAKEFLAGS)
 	@$(MKDIR) $(@D) $(OPENOCD_BUILD_DIR)
 	@$(GCLONE) -b riscv https://github.com/riscv-collab/riscv-openocd $(OPENOCD_SOURCE_DIR)
 	@$(CD) $(OPENOCD_SOURCE_DIR); $(ENV_SETUP) && \
-		PATH=$(OPENOCD_DEPS_DIR)/bin:$(PATH) \
+		PATH=$(OPENOCD_DEPS_DIR)/bin:$${PATH} \
 			./bootstrap; \
 		$(CP) {build-aux/,}config.guess;
 	@$(CD) $(OPENOCD_SOURCE_DIR); $(ENV_SETUP) && \
-		OPENOCD_CONFIG=--enable-remote-bitbang \
-			./contrib/cross-build.sh $(TARGET_CC);
-	@$(CP) $(OPENOCD_SOURCE_DIR)/$(TARGET_CC)-root/usr/bin/openocd $@
+		./configure $${CONFIGURE_FLAGS} $(OPENOCD_CONFIGURE_FLAGS); \
+		$(MAKE) all; \
+		$(MAKE) install
+	@$(CP) $(OPENOCD_SOURCE_DIR)/src/$(@F) $(TARGET_SDK)/bin/$(@F)
 	@$(ECHO) "Successfully built $@!"
 
 .PHONY: libpynq
@@ -113,13 +111,10 @@ verilator: $(TARGET_VERILATOR)
 	@$(eval export VERILATOR_SOURCE_DIR := $(BLACKPARROT_TOOLS_DIR)/verilator)
 	@$(MKDIR) $(@D) $(VERILATOR_BUILD_DIR)
 	@$(CD) $(VERILATOR_SOURCE_DIR); $(ENV_SETUP) && \
-		$(AUTORECONF) -i
+		$(AUTOCONF)
 	@$(CD) $(VERILATOR_BUILD_DIR); $(ENV_SETUP) && \
-		$(VERILATOR_SOURCE_DIR)/configure \
-			--prefix=$(TARGET_SDK) \
-			--build=$(HOST_CC) \
-			--host=$(TARGET_CC) \
-			--target=$(TARGET_CC); \
+		$(VERILATOR_SOURCE_DIR)/configure $${CONFIGURE_FLAGS};
+	@$(CD) $(VERILATOR_BUILD_DIR); $(ENV_SETUP) && \
 		$(MAKE) all && $(MAKE) installbin installdata install-msg
 	@$(ECHO) "Successfully built $@!"
 
@@ -133,6 +128,9 @@ environment-reconfig:
 	@$(MAKE) $(TARGET_ENV)
 	@$(ECHO) "Successfully regenerated $@!"
 
+# Note:
+#   sudo ln -s /usr/arm-linux-gnueabihf/lib/ld-linux-armhf.so.3 /lib/ld-linux-armhf.so.3
+#   https://stackoverflow.com/questions/47787562/u-boot-lib-ld-linux-armhf-so-3-no-such-file-or-directory
 .PHONY: environment-setup
 environment-setup: ## Creates the SDK environment for a specific TARGET_NAME
 environment-setup: $(TARGET_ENV)
@@ -147,20 +145,21 @@ environment-setup-%:
 		$(PETALINUX_RUN)-create --type project --template $(TARGET_TEMPLATE) --name $(notdir $(PETALINUX_PROJ)); \
 		$(PETALINUX_RUN)-config --verbose --silentconfig --get-hw-description $(XSA_FILE) --project $(notdir $(PETALINUX_PROJ)); \
 		$(PETALINUX_RUN)-build --sdk --project $(notdir $(PETALINUX_PROJ));
-	@$(CD) $(PETALINUX_PROJ); \
-		$(PETALINUX_RUN)-package --sysroot --sdk=images/linux/sdk.sh; \
-		$(MV) images/linux/sdk/environment-setup-* $@;
-	@$(ECHO) "#######################################" >> $@
-	@$(ECHO) "# Extra Environment Manipulation ######" >> $@
-	@$(ECHO) "#######################################" >> $@
-	@$(ECHO) "# unset default exported variables for submake" >> $@
-	@$(ECHO) "# but keep threads " >> $@
-	@$(ECHO) "unset SHELL" >> $@
-	@$(ECHO) "# append new paths MAKEFLAGS for submake" >> $@
-	@$(ECHO) "PATH=\$${TARGET_SDK}/bin:\$${PATH}" >> $@
-	@$(ECHO) "" >> $@
-	@$(MKEXE) $@
-	@$(ECHO) "Successfully built $@!"
+	#@$(CD) $(PETALINUX_PROJ); \
+	#	$(PETALINUX_RUN)-package --sysroot --sdk=images/linux/sdk.sh; \
+	#	$(MV) images/linux/sdk/environment-setup-* $@;
+	#@$(ECHO) "#######################################" >> $@
+	#@$(ECHO) "# Extra Environment Manipulation ######" >> $@
+	#@$(ECHO) "#######################################" >> $@
+	#@$(ECHO) "# unset default exported variables for submake" >> $@
+	#@$(ECHO) "# but keep threads " >> $@
+	#@$(ECHO) "unset SHELL" >> $@
+	#@$(ECHO) "# append new paths MAKEFLAGS for submake" >> $@
+	#@$(ECHO) "export PATH=\"\$${TARGET_SDK}/bin:\$${PATH}"\" >> $@
+	#@$(ECHO) "export CONFIGURE_FLAGS=\"\$${CONFIGURE_FLAGS} --prefix=$(TARGET_SDK)\"" >> $@
+	#@$(ECHO) "" >> $@
+	#@$(MKEXE) $@
+	#@$(ECHO) "Successfully built $@!"
 
 .PHONY: all
 all: ## Make all targets for SDK

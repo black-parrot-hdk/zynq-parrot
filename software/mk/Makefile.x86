@@ -51,8 +51,8 @@ $(X86_SDK)/environment-setup-%:
 	@$(ECHO) "#######################################" >> $@
 	@$(ECHO) "# Currently Set Environment Variables #" >> $@
 	@$(ECHO) "#######################################" >> $@
-	@for e in ${env_vars}; do
-		$(ECHO) "$$e" >> $@;
+	@for e in ${env_vars}; do \
+		$(ECHO) "$$e" >> $@; \
 	done
 	@$(SED_I) "/PATH/d" $@
 	@$(SED_I) "/CURDIR/d" $@
@@ -65,7 +65,8 @@ $(X86_SDK)/environment-setup-%:
 	@$(ECHO) "#######################################" >> $@
 	@$(ECHO) "unset SHELL" >> $@
 	@$(ECHO) "# append new paths MAKEFLAGS for submake" >> $@
-	@$(ECHO) "PATH=\$$TARGET_SDK}/bin:\$${PATH}" >> $@
+	@$(ECHO) "export PATH=\"\$${TARGET_SDK}/bin:\$${PATH}"\" >> $@
+	@$(ECHO) "export CONFIGURE_FLAGS=\"\$${CONFIGURE_FLAGS} --prefix=$(TARGET_SDK)\"" >> $@
 	@$(ECHO) "" >> $@
 	@$(MKEXE) $@
 	@$(ECHO) "Successfully built $@!"
