@@ -48,26 +48,29 @@ $(X86_SDK)/environment-setup-%:
 		$(filter-out bsg_var_% bsg_fn_% $(VARS_OLD),$(sort $(.VARIABLES))), \
 		$(if $($(V)),'$V="$($V)"')))
 	@$(MKDIR) $(@D) $(TARGET_SDK)/bin $(TARGET_SDK)/lib $(TARGET_SDK)/include
-	@$(ECHO) "#######################################" >> $@
-	@$(ECHO) "# Currently Set Environment Variables #" >> $@
-	@$(ECHO) "#######################################" >> $@
+	@$(ECHO) '#######################################' >> $@
+	@$(ECHO) '# Currently Set Environment Variables #' >> $@
+	@$(ECHO) '#######################################' >> $@
 	@for e in ${env_vars}; do \
 		$(ECHO) "$$e" >> $@; \
 	done
-	@$(SED_I) "/PATH/d" $@
-	@$(SED_I) "/CURDIR/d" $@
-	@$(SED_I) "/MAKE/d" $@
-	@$(SED_I) "/PART/d" $@
-	@$(SED_I) "/SHELL/d" $@
-	@$(SED_I) "/TOP/d" $@
-	@$(ECHO) "#######################################" >> $@
-	@$(ECHO) "# Extra Environment Manipulation ######" >> $@
-	@$(ECHO) "#######################################" >> $@
-	@$(ECHO) "unset SHELL" >> $@
-	@$(ECHO) "# append new paths MAKEFLAGS for submake" >> $@
-	@$(ECHO) "export PATH=\"\$${TARGET_SDK}/bin:\$${PATH}"\" >> $@
-	@$(ECHO) "export CONFIGURE_FLAGS=\"\$${CONFIGURE_FLAGS} --prefix=$(TARGET_SDK)\"" >> $@
-	@$(ECHO) "" >> $@
+	@$(SED_I) '/PATH/d' $@
+	@$(SED_I) '/CURDIR/d' $@
+	@$(SED_I) '/MAKE/d' $@
+	@$(SED_I) '/PART/d' $@
+	@$(SED_I) '/SHELL/d' $@
+	@$(SED_I) '/TOP/d' $@
+	@$(ECHO) '#######################################' >> $@
+	@$(ECHO) '# Extra Environment Manipulation ######' >> $@
+	@$(ECHO) '#######################################' >> $@
+	@$(ECHO) '# unset default exported variables for submake' >> $@
+	@$(ECHO) '# but keep threads' >> $@
+	@$(ECHO) 'export MAKEFLAGS=""' >> $@
+	@$(ECHO) 'unset SHELL' >> $@
+	@$(ECHO) '# Update GCC flags' >> $@
+	@$(ECHO) 'export PATH="\$${TARGET_SDK}/bin:\$${PATH}"' >> $@
+	@$(ECHO) 'export CONFIGURE_FLAGS="--prefix=$(TARGET_SDK)"' >> $@
+	@$(ECHO) '' >> $@
 	@$(MKEXE) $@
-	@$(ECHO) "Successfully built $@!"
+	@$(ECHO) 'Successfully built $@!'
 
