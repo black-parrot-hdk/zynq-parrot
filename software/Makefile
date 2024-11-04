@@ -137,12 +137,13 @@ environment-setup-%:
 	@$(eval PETALINUX_XSA := $(TARGET_WORK)/basic.xsa)
 	@$(eval PETALINUX_PROJ := $(TARGET_WORK)/petalinux_proj)
 	@$(eval PETALINUX_SDK := $(TARGET_SDK)/petalinux-sdk)
-	@$(eval PETALINUX_CONFIG_OPTS := "--verbose --silentconfig --set 'CONFIG_libstdc++=y'")
+	@$(eval PETALINUX_ROOTFS_CONFIG := $(PETALINUX_PROJ)/project-spec/configs/rootfs_config)
 	@$(MKDIR) $(@D) $(TARGET_WORK) $(TARGET_SDK)/bin $(TARGET_SDK)/lib $(TARGET_SDK)/include
 	@$(CD) $(TARGET_WORK); \
 		$(VIVADO_RUN) -mode batch -source $(TARGET_TCL); \
 		$(PETALINUX_RUN)-create --type project --template $(TARGET_TEMPLATE) --name $(notdir $(PETALINUX_PROJ)); \
-		$(PETALINUX_RUN)-config $(PETALINUX_CONFIG_OPTS) --get-hw-description $(PETALINUX_XSA) --project $(notdir $(PETALINUX_PROJ)); \
+		$(PETALINUX_RUN)-config --verbose --silentconfig --get-hw-description $(PETALINUX_XSA) --project $(notdir $(PETALINUX_PROJ)); \
+		$(ECHO) "CONFIG_libstdc++=y" >> $(PETALINUX_ROOTFS_CONFIG); \
 		$(PETALINUX_RUN)-build --sdk --project $(notdir $(PETALINUX_PROJ));
 	@$(CD) $(PETALINUX_PROJ); $(PETALINUX_RUN)-package --sysroot --sdk=images/linux/sdk.sh --d $(PETALINUX_SDK);
 	@$(SYMLINK) $(PETALINUX_SDK)/environment-setup-* $@;
