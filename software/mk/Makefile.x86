@@ -60,17 +60,16 @@ $(X86_SDK)/environment-setup-%:
 	@$(SED_I) '/PART/d' $@
 	@$(SED_I) '/SHELL/d' $@
 	@$(SED_I) '/TOP/d' $@
-	@$(ECHO) '#######################################' >> $@
-	@$(ECHO) '# Extra Environment Manipulation ######' >> $@
-	@$(ECHO) '#######################################' >> $@
-	@$(ECHO) '# unset default exported variables for submake' >> $@
-	@$(ECHO) '# but keep threads' >> $@
+	@$(ECHO) "#######################################" >> $@
+	@$(ECHO) "# Extra Environment Manipulation ######" >> $@
+	@$(ECHO) "#######################################" >> $@
+	@$(ECHO) "# unset default exported variables for submake" >> $@
+	@$(ECHO) "# but keep threads " >> $@
 	@$(ECHO) 'export MAKEFLAGS=""' >> $@
-	@$(ECHO) 'unset SHELL' >> $@
-	@$(ECHO) '# Update GCC flags' >> $@
-	@$(ECHO) 'export PATH="\$${TARGET_SDK}/bin:\$${PATH}"' >> $@
-	@$(ECHO) 'export CONFIGURE_FLAGS="--prefix=$(TARGET_SDK)"' >> $@
-	@$(ECHO) '' >> $@
+	@$(ECHO) "unset SHELL" >> $@
+	@$(ECHO) "export PATH=\"\$${TARGET_SDK}/bin:\$${PATH}"\" >> $@
+	@$(ECHO) "export CONFIGURE_FLAGS=\"\$${CONFIGURE_FLAGS} --prefix=$(TARGET_SDK)\"" >> $@
+	@$(ECHO) "" >> $@
 	@$(MKEXE) $@
 	@$(ECHO) 'Successfully built $@!'
 

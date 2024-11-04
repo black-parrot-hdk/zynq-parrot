@@ -27,8 +27,10 @@ riscv64: $(TARGET_RISCV64)
 	@$(MKDIR) $(@D) $(RISCV64_BUILD_DIR)
 	@$(CD) $(RISCV64_BUILD_DIR); $(ENV_SETUP) && \
 		$(RISCV64_SOURCE_DIR)/configure $${CONFIGURE_FLAGS} $(RISCV64_CONFIGURE_FLAGS); \
-		$(MAKE) CFLAGS_FOR_TARGET_EXTRA="-mstrict-align -mcmodel=medany"; \
-		$(CP) $(TARGET_SDK)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(TARGET_SDK)/bin/dramfs_mklfs;
+		$(MAKE) \
+			CFLAGS_FOR_TARGET_EXTRA="-mstrict-align -mcmodel=medany"; \
+			CXXFLAGS_FOR_TARGET_EXTRA="-mstrict-align -mcmodel=medany"
+	@$(SYMLINK) $(TARGET_SDK)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(TARGET_SDK)/bin/dramfs_mklfs;
 
 .PHONY: riscv32
 riscv32: ## HammerBlade riscv32-unknown-elf-dramfs toolchain
@@ -128,38 +130,43 @@ environment-reconfig:
 	@$(MAKE) $(TARGET_ENV)
 	@$(ECHO) "Successfully regenerated $@!"
 
-# Note:
-#   sudo ln -s /usr/arm-linux-gnueabihf/lib/ld-linux-armhf.so.3 /lib/ld-linux-armhf.so.3
-#   https://stackoverflow.com/questions/47787562/u-boot-lib-ld-linux-armhf-so-3-no-such-file-or-directory
 .PHONY: environment-setup
 environment-setup: ## Creates the SDK environment for a specific TARGET_NAME
 environment-setup: $(TARGET_ENV)
 environment-setup-%:
-	@$(eval XSA_BUILD_DIR := $(TARGET_WORK)/xsa_build)
-	@$(eval XSA_FILE := $(XSA_BUILD_DIR)/basic.xsa)
-	@$(eval PETALINUX_PROJ := $(TARGET_SDK)/petalinux_proj)
-	@$(MKDIR) $(@D) $(TARGET_SDK)/bin $(TARGET_SDK)/lib $(TARGET_SDK)/include $(XSA_BUILD_DIR)
-	@$(CD) $(XSA_BUILD_DIR); \
-		$(VIVADO_RUN) -mode batch -source $(TARGET_TCL);
-	@$(CD) $(TARGET_SDK); \
+	@$(eval PETALINUX_XSA := $(TARGET_WORK)/basic.xsa)
+	@$(eval PETALINUX_PROJ := $(TARGET_WORK)/petalinux_proj)
+	@$(eval PETALINUX_SDK := $(TARGET_SDK)/petalinux-sdk)
+	@$(eval PETALINUX_CONFIG_OPTS := "--verbose --silentconfig --set 'CONFIG_libstdc++=y'")
+	@$(MKDIR) $(@D) $(TARGET_WORK) $(TARGET_SDK)/bin $(TARGET_SDK)/lib $(TARGET_SDK)/include
+	@$(CD) $(TARGET_WORK); \
+		$(VIVADO_RUN) -mode batch -source $(TARGET_TCL); \
 		$(PETALINUX_RUN)-create --type project --template $(TARGET_TEMPLATE) --name $(notdir $(PETALINUX_PROJ)); \
-		$(PETALINUX_RUN)-config --verbose --silentconfig --get-hw-description $(XSA_FILE) --project $(notdir $(PETALINUX_PROJ)); \
+		$(PETALINUX_RUN)-config $(PETALINUX_CONFIG_OPTS) --get-hw-description $(PETALINUX_XSA) --project $(notdir $(PETALINUX_PROJ)); \
 		$(PETALINUX_RUN)-build --sdk --project $(notdir $(PETALINUX_PROJ));
-	#@$(CD) $(PETALINUX_PROJ); \
-	#	$(PETALINUX_RUN)-package --sysroot --sdk=images/linux/sdk.sh; \
-	#	$(MV) images/linux/sdk/environment-setup-* $@;
-	#@$(ECHO) "#######################################" >> $@
-	#@$(ECHO) "# Extra Environment Manipulation ######" >> $@
-	#@$(ECHO) "#######################################" >> $@
-	#@$(ECHO) "# unset default exported variables for submake" >> $@
-	#@$(ECHO) "# but keep threads " >> $@
-	#@$(ECHO) "unset SHELL" >> $@
-	#@$(ECHO) "# append new paths MAKEFLAGS for submake" >> $@
-	#@$(ECHO) "export PATH=\"\$${TARGET_SDK}/bin:\$${PATH}"\" >> $@
-	#@$(ECHO) "export CONFIGURE_FLAGS=\"\$${CONFIGURE_FLAGS} --prefix=$(TARGET_SDK)\"" >> $@
-	#@$(ECHO) "" >> $@
-	#@$(MKEXE) $@
-	#@$(ECHO) "Successfully built $@!"
+	@$(CD) $(PETALINUX_PROJ); $(PETALINUX_RUN)-package --sysroot --sdk=images/linux/sdk.sh --d $(PETALINUX_SDK);
+	@$(SYMLINK) $(PETALINUX_SDK)/environment-setup-* $@;
+	@$(ECHO) "" >> $@
+	@$(ECHO) "#######################################" >> $@
+	@$(ECHO) "# Extra Environment Manipulation ######" >> $@
+	@$(ECHO) "#######################################" >> $@
+	@$(ECHO) "# Set SDK and put SDK binaries on the path" >> $@
+	@$(ECHO) "export TARGET_SDK=\"$(TARGET_SDK)\"" >> $@
+	@$(ECHO) "export PATH=\"${TARGET_SDK}/bin:${PATH}\"" >> $@
+	@$(ECHO) "export CONFIGURE_FLAGS=\"${CONFIGURE_FLAGS} --prefix=/home/dpetrisko/scratch/nfs/zynq-parrot/software/install/pynqz2\"" >> $@
+	@$(ECHO) "# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=34257" >> $@
+	@$(ECHO) "export CC=\"${CC} -Wl,-rpath,${SDKTARGETSYSROOT}/lib\"" >> $@
+	@$(ECHO) "export CC=\"${CC} -Wl,--dynamic-linker=${SDKTARGETSYSROOT}/lib/ld-linux-armhf.so.3\"" >> $@
+	@$(ECHO) "export CXX=\"${CXX} -Wl,-rpath,${SDKTARGETSYSROOT}/lib\"" >> $@
+	@$(ECHO) "export CXX=\"${CXX} -Wl,--dynamic-linker=${SDKTARGETSYSROOT}/lib/ld-linux-armhf.so.3\"" >> $@
+	@$(ECHO) "export CPP=\"${CPP} -Wl,-rpath,${SDKTARGETSYSROOT}/lib\"" >> $@
+	@$(ECHO) "export CPP=\"${CPP} -Wl,--dynamic-linker=${SDKTARGETSYSROOT}/lib/ld-linux-armhf.so.3\"" >> $@
+	@$(ECHO) "export CFLAGS=\"${CFLAGS} -Wno-error=format-security\"" >> $@
+	@$(ECHO) "export CXXFLAGS=\"${CXXFLAGS} -Wno-error=format-security\"" >> $@
+	@$(ECHO) "export CPPFLAGS=\"${CPPFLAGS} -Wno-error=format-security\"" >> $@
+	@$(ECHO) "" >> $@
+	@$(MKEXE) $@
+	@$(ECHO) "Successfully built $@!"
 
 .PHONY: all
 all: ## Make all targets for SDK
