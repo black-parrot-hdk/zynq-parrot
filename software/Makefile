@@ -23,14 +23,21 @@ riscv64: $(TARGET_RISCV64)
 	@$(eval RISCV64_CONFIGURE_FLAGS := --disable-linux --disable-gdb --disable-qemu-system)
 	@$(eval RISCV64_CONFIGURE_FLAGS += --with-multilib-generator="rv64g-lp64d--;rv64gcb-lp64d--")
 	@$(eval RISCV64_CONFIGURE_FLAGS += --with-cmodel=medany --with-tune=bsg_blackparrot)
+	@$(eval RISCV64_CONFIGURE_FLAGS += --with-host=arm-xilinx-linux-gnueabi)
+	@$(eval RISCV64_CONFIGURE_FLAGS += --prefix=$(TARGET_SDK))
 	@$(eval export NEWLIB_TUPLE=riscv64-unknown-elf-dramfs)
 	@$(MKDIR) $(@D) $(RISCV64_BUILD_DIR)
+	#@$(CD) $(RISCV64_BUILD_DIR); $(ENV_SETUP) && \
+	#	$(RISCV64_SOURCE_DIR)/configure $(RISCV64_CONFIGURE_FLAGS);
+	#@$(CD) $(RISCV64_BUILD_DIR); $(ENV_SETUP) && \
+	#	CFLAGS_FOR_TARGET_EXTRA="-mstrict-align -mcmodel=medany" \
+	#	CXXFLAGS_FOR_TARGET_EXTRA="-mstrict-align -mcmodel=medany" \
+	#	$(MAKE) stamps/build-binutils-newlib
 	@$(CD) $(RISCV64_BUILD_DIR); $(ENV_SETUP) && \
-		$(RISCV64_SOURCE_DIR)/configure $${CONFIGURE_FLAGS} $(RISCV64_CONFIGURE_FLAGS); \
-		$(MAKE) \
-			CFLAGS_FOR_TARGET_EXTRA="-mstrict-align -mcmodel=medany"; \
-			CXXFLAGS_FOR_TARGET_EXTRA="-mstrict-align -mcmodel=medany"
-	@$(SYMLINK) $(TARGET_SDK)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(TARGET_SDK)/bin/dramfs_mklfs;
+		CFLAGS_FOR_TARGET_EXTRA="-mstrict-align -mcmodel=medany" \
+		CXXFLAGS_FOR_TARGET_EXTRA="-mstrict-align -mcmodel=medany" \
+		$(MAKE) stamps/build-gcc-newlib-stage1
+	#@$(SYMLINK) $(TARGET_SDK)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(TARGET_SDK)/bin/dramfs_mklfs;
 
 .PHONY: riscv32
 riscv32: ## HammerBlade riscv32-unknown-elf-dramfs toolchain
@@ -127,7 +134,7 @@ environment-reconfig:
 		$(ECHO) "Saving $(TARGET_ENV) to $(TARGET_ENV).old"; \
 		$(MV) $(TARGET_ENV){,.old}; \
 	fi
-	@$(MAKE) $(TARGET_ENV)
+	@$(MAKE) environment-setup
 	@$(ECHO) "Successfully regenerated $@!"
 
 .PHONY: environment-setup
@@ -139,32 +146,40 @@ environment-setup-%:
 	@$(eval PETALINUX_SDK := $(TARGET_SDK)/petalinux-sdk)
 	@$(eval PETALINUX_ROOTFS_CONFIG := $(PETALINUX_PROJ)/project-spec/configs/rootfs_config)
 	@$(MKDIR) $(@D) $(TARGET_WORK) $(TARGET_SDK)/bin $(TARGET_SDK)/lib $(TARGET_SDK)/include
-	@$(CD) $(TARGET_WORK); \
-		$(VIVADO_RUN) -mode batch -source $(TARGET_TCL); \
-		$(PETALINUX_RUN)-create --type project --template $(TARGET_TEMPLATE) --name $(notdir $(PETALINUX_PROJ)); \
-		$(PETALINUX_RUN)-config --verbose --silentconfig --get-hw-description $(PETALINUX_XSA) --project $(notdir $(PETALINUX_PROJ)); \
-		$(ECHO) "CONFIG_libstdc++=y" >> $(PETALINUX_ROOTFS_CONFIG); \
-		$(PETALINUX_RUN)-build --sdk --project $(notdir $(PETALINUX_PROJ));
-	@$(CD) $(PETALINUX_PROJ); $(PETALINUX_RUN)-package --sysroot --sdk=images/linux/sdk.sh --d $(PETALINUX_SDK);
-	@$(SYMLINK) $(PETALINUX_SDK)/environment-setup-* $@;
+	##@$(CD) $(TARGET_WORK); \
+	#	$(VIVADO_RUN) -mode batch -source $(TARGET_TCL); \
+	#	$(PETALINUX_RUN)-create --type project --template $(TARGET_TEMPLATE) --name $(notdir $(PETALINUX_PROJ)); \
+	#	$(PETALINUX_RUN)-config --verbose --silentconfig --get-hw-description $(PETALINUX_XSA) --project $(notdir $(PETALINUX_PROJ)); \
+	#	$(ECHO) "CONFIG_xrt=y" >> $(PETALINUX_ROOTFS_CONFIG); \
+	#	$(ECHO) "CONFIG_xrt-dev=y" >> $(PETALINUX_ROOTFS_CONFIG); \
+	#	$(ECHO) "CONFIG_xrt=y" >>  $(PETALINUX_ROOTFS_CONFIG); \
+	#	$(ECHO) "CONFIG_xrt-dev=y" >>  $(PETALINUX_ROOTFS_CONFIG); \
+	#	$(ECHO) "CONFIG_zocl=y" >>  $(PETALINUX_ROOTFS_CONFIG); \
+	#	$(ECHO) "CONFIG_opencl-headers-dev=y" >>  $(PETALINUX_ROOTFS_CONFIG); \
+	#	$(ECHO) "CONFIG_opencl-clhpp-dev=y" >>  $(PETALINUX_ROOTFS_CONFIG); \
+	#	$(ECHO) "CONFIG_packagegroup-core-buildessential=y" >> $(PETALINUX_ROOTFS_CONFIG); \
+	#	$(PETALINUX_RUN)-build --sdk --project $(notdir $(PETALINUX_PROJ));
+	##@$(CD) $(PETALINUX_PROJ); $(PETALINUX_RUN)-package --sysroot --sdk=images/linux/sdk.sh --d $(PETALINUX_SDK);
+	@$(CP) $(PETALINUX_SDK)/environment-setup-* $@;
 	@$(ECHO) "" >> $@
 	@$(ECHO) "#######################################" >> $@
 	@$(ECHO) "# Extra Environment Manipulation ######" >> $@
 	@$(ECHO) "#######################################" >> $@
 	@$(ECHO) "# Set SDK and put SDK binaries on the path" >> $@
 	@$(ECHO) "export TARGET_SDK=\"$(TARGET_SDK)\"" >> $@
-	@$(ECHO) "export PATH=\"${TARGET_SDK}/bin:${PATH}\"" >> $@
-	@$(ECHO) "export CONFIGURE_FLAGS=\"${CONFIGURE_FLAGS} --prefix=/home/dpetrisko/scratch/nfs/zynq-parrot/software/install/pynqz2\"" >> $@
+	@$(ECHO) "export PATH=\"\$${TARGET_SDK}/bin:\$${PATH}\"" >> $@
+	@$(ECHO) "export CONFIGURE_FLAGS=\"\$${CONFIGURE_FLAGS} --prefix=/home/dpetrisko/scratch/nfs/zynq-parrot/software/install/pynqz2\"" >> $@
 	@$(ECHO) "# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=34257" >> $@
-	@$(ECHO) "export CC=\"${CC} -Wl,-rpath,${SDKTARGETSYSROOT}/lib\"" >> $@
-	@$(ECHO) "export CC=\"${CC} -Wl,--dynamic-linker=${SDKTARGETSYSROOT}/lib/ld-linux-armhf.so.3\"" >> $@
-	@$(ECHO) "export CXX=\"${CXX} -Wl,-rpath,${SDKTARGETSYSROOT}/lib\"" >> $@
-	@$(ECHO) "export CXX=\"${CXX} -Wl,--dynamic-linker=${SDKTARGETSYSROOT}/lib/ld-linux-armhf.so.3\"" >> $@
-	@$(ECHO) "export CPP=\"${CPP} -Wl,-rpath,${SDKTARGETSYSROOT}/lib\"" >> $@
-	@$(ECHO) "export CPP=\"${CPP} -Wl,--dynamic-linker=${SDKTARGETSYSROOT}/lib/ld-linux-armhf.so.3\"" >> $@
-	@$(ECHO) "export CFLAGS=\"${CFLAGS} -Wno-error=format-security\"" >> $@
-	@$(ECHO) "export CXXFLAGS=\"${CXXFLAGS} -Wno-error=format-security\"" >> $@
-	@$(ECHO) "export CPPFLAGS=\"${CPPFLAGS} -Wno-error=format-security\"" >> $@
+	@$(ECHO) "export CC=\"\$${CC} -Wl,-rpath,\$${SDKTARGETSYSROOT}/lib -Wl,-rpath,\$${SDKTARGETSYSROOT}/usr/lib\"" >> $@
+	@$(ECHO) "export CC=\"\$${CC} -Wl,--dynamic-linker=\$${SDKTARGETSYSROOT}/lib/ld-linux-armhf.so.3\"" >> $@
+	@$(ECHO) "export CXX=\"\$${CXX} -Wl,-rpath,\$${SDKTARGETSYSROOT}/lib -Wl,-rpath,\$${SDKTARGETSYSROOT}/usr/lib\"" >> $@
+	@$(ECHO) "export CXX=\"\$${CXX} -Wl,--dynamic-linker=\$${SDKTARGETSYSROOT}/lib/ld-linux-armhf.so.3\"" >> $@
+	@$(ECHO) "export CPP=\"\$${CPP} -Wl,-rpath,\$${SDKTARGETSYSROOT}/lib -Wl,-rpath,\$${SDKTARGETSYSROOT}/usr/lib\"" >> $@
+	@$(ECHO) "export CPP=\"\$${CPP} -Wl,--dynamic-linker=\$${SDKTARGETSYSROOT}/lib/ld-linux-armhf.so.3\"" >> $@
+	@$(ECHO) "export CFLAGS=\"\$${CFLAGS} -Wno-error=format-security\"" >> $@
+	@$(ECHO) "export CXXFLAGS=\"\$${CXXFLAGS} -Wno-error=format-security\"" >> $@
+	@$(ECHO) "export CPPFLAGS=\"\$${CPPFLAGS} -Wno-error=format-security\"" >> $@
+	@$(ECHO) "export LD_LIBRARY_PATH=\"\$${SDKTARGETSYSROOT}/lib:\$${SDKTARGETSYSROOT}/usr/lib\"" >> $@
 	@$(ECHO) "" >> $@
 	@$(MKEXE) $@
 	@$(ECHO) "Successfully built $@!"

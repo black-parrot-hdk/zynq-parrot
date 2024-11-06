@@ -28,37 +28,37 @@ help: ## Prints this message
 #############################
 # Paths
 #############################
-IMPORT_DIR            ?= $(TOP)/import
+export IMPORT_DIR            ?= $(TOP)/import
 
-COSIM_DIR             ?= $(TOP)/cosim
-COSIM_MK_DIR          ?= $(COSIM_DIR)/mk
-COSIM_VSRC_DIR        ?= $(COSIM_DIR)/v
-COSIM_CSRC_DIR        ?= $(COSIM_DIR)/src
-COSIM_INCLUDE_DIR     ?= $(COSIM_DIR)/include
-COSIM_PY_DIR          ?= $(COSIM_DIR)/py
-COSIM_TCL_DIR         ?= $(COSIM_DIR)/tcl
-COSIM_XDC_DIR         ?= $(COSIM_DIR)/xdc
-COSIM_IMPORT_DIR      ?= $(IMPORT_DIR)
-COSIM_INSTALL_DIR     ?= $(COSIM_DIR)/install
-COSIM_WORK_DIR        ?= $(COSIM_INSTALL_DIR)/work
+export COSIM_DIR             ?= $(TOP)/cosim
+export COSIM_MK_DIR          ?= $(COSIM_DIR)/mk
+export COSIM_VSRC_DIR        ?= $(COSIM_DIR)/v
+export COSIM_CSRC_DIR        ?= $(COSIM_DIR)/src
+export COSIM_INCLUDE_DIR     ?= $(COSIM_DIR)/include
+export COSIM_PY_DIR          ?= $(COSIM_DIR)/py
+export COSIM_TCL_DIR         ?= $(COSIM_DIR)/tcl
+export COSIM_XDC_DIR         ?= $(COSIM_DIR)/xdc
+export COSIM_IMPORT_DIR      ?= $(IMPORT_DIR)
+export COSIM_INSTALL_DIR     ?= $(COSIM_DIR)/install
+export COSIM_WORK_DIR        ?= $(COSIM_INSTALL_DIR)/work
 
-SOFTWARE_DIR          ?= $(TOP)/software
-SOFTWARE_MK_DIR       ?= $(SOFTWARE_DIR)/mk
-SOFTWARE_VSRC_DIR     ?= $(SOFTWARE_DIR)/v
-SOFTWARE_CSRC_DIR     ?= $(SOFTWARE_DIR)/src
-SOFTWARE_INCLUDE_DIR  ?= $(SOFTWARE_DIR)/include
-SOFTWARE_PY_DIR       ?= $(SOFTWARE_DIR)/py
-SOFTWARE_TCL_DIR      ?= $(SOFTWARE_DIR)/tcl
-SOFTWARE_XDC_DIR      ?= $(SOFTWARE_DIR)/xdc
-SOFTWARE_INSTALL_DIR  ?= $(SOFTWARE_DIR)/install
-SOFTWARE_WORK_DIR     ?= $(SOFTWARE_INSTALL_DIR)/work
+export SOFTWARE_DIR          ?= $(TOP)/software
+export SOFTWARE_MK_DIR       ?= $(SOFTWARE_DIR)/mk
+export SOFTWARE_VSRC_DIR     ?= $(SOFTWARE_DIR)/v
+export SOFTWARE_CSRC_DIR     ?= $(SOFTWARE_DIR)/src
+export SOFTWARE_INCLUDE_DIR  ?= $(SOFTWARE_DIR)/include
+export SOFTWARE_PY_DIR       ?= $(SOFTWARE_DIR)/py
+export SOFTWARE_TCL_DIR      ?= $(SOFTWARE_DIR)/tcl
+export SOFTWARE_XDC_DIR      ?= $(SOFTWARE_DIR)/xdc
+export SOFTWARE_INSTALL_DIR  ?= $(SOFTWARE_DIR)/install
+export SOFTWARE_WORK_DIR     ?= $(SOFTWARE_INSTALL_DIR)/work
 
-BLACKPARROT_DIR       ?= $(IMPORT_DIR)/black-parrot
-BLACKPARROT_SDK_DIR   ?= $(IMPORT_DIR)/black-parrot-sdk
-BLACKPARROT_SUB_DIR   ?= $(IMPORT_DIR)/black-parrot-subsystems
-BLACKPARROT_TOOLS_DIR ?= $(IMPORT_DIR)/black-parrot-tools
-BSG_CADENV_DIR        ?= $(IMPORT_DIR)/bsg_cadenv
-BSG_REPLICANT_DIR     ?= $(IMPORT_DIR)/bsg_replicant
-BSG_MANYCORE_DIR      ?= $(IMPORT_DIR)/bsg_manycore
-BASEJUMP_STL_DIR      ?= $(BLACKPARROT_DIR)/external/basejump_stl
+export BLACKPARROT_DIR       ?= $(IMPORT_DIR)/black-parrot
+export BLACKPARROT_SDK_DIR   ?= $(IMPORT_DIR)/black-parrot-sdk
+export BLACKPARROT_SUB_DIR   ?= $(IMPORT_DIR)/black-parrot-subsystems
+export BLACKPARROT_TOOLS_DIR ?= $(IMPORT_DIR)/black-parrot-tools
+export BSG_CADENV_DIR        ?= $(IMPORT_DIR)/bsg_cadenv
+export BSG_REPLICANT_DIR     ?= $(IMPORT_DIR)/bsg_replicant
+export BSG_MANYCORE_DIR      ?= $(IMPORT_DIR)/bsg_manycore
+export BASEJUMP_STL_DIR      ?= $(BLACKPARROT_DIR)/external/basejump_stl
 

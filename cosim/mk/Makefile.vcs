@@ -18,9 +18,9 @@ VCS_OPTS += +vcs+lic+wait
 VCS_OPTS += +incdir+$(COSIM_DIR)/include/vcs
 VCS_OPTS += $(addprefix +define+,$(DEFINES))
 VCS_OPTS += $(MAIN_PROGRAM)
-VCS_OPTS += $(BP_SDK_LIB_DIR)/libboost_coroutine.a
-VCS_OPTS += $(BP_SDK_LIB_DIR)/libboost_context.a
-VCS_OPTS += $(BP_SDK_LIB_DIR)/libboost_system.a
+VCS_OPTS += $(BLACKPARROT_SDK_DIR)/install/lib/libboost_coroutine.a
+VCS_OPTS += $(BLACKPARROT_SDK_DIR)/install/lib/libboost_context.a
+VCS_OPTS += $(BLACKPARROT_SDK_DIR)/install/lib/libboost_system.a
 
 CFLAGS += -DVCS
 CFLAGS += -DHOST_$(call bsg_fn_upper,$(HOST))
@@ -37,7 +37,6 @@ CFLAGS += -DZYNQ_PS_DEBUG
 endif
 
 CINCLUDES += -I$(BLACKPARROT_SUB_DIR)/blackparrot/src
-CINCLUDES += -I$(BP_SDK_INSTALL_DIR)/include
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/vcs
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem

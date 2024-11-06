@@ -3,25 +3,6 @@
 # X86 Target Overrides
 #############################
 
-include $(BSG_CADENV_DIR)/cadenv.mk
-%/cadenv.mk:
-	# BSG users leverage a machine-specific cadenv
-	#   Here, we add sourcing to get these variables as well
-	@$(eval CADENV_URL := git@github.com:bespoke-silicon-group/bsg_cadenv)
-	# Recursive make to include the new fragment
-	@if [ -f "$(BSG_CADENV_DIR)/cadenv.mk" ]; then
-		$(ECHO) "bsg_cadenv already exists";
-	elif [[ ! -z $$(git ls-remote --exit-code $(CADENV_URL) HEAD 2> /dev/null) ]]; then
-		$(GCLONE) $(CADENV_URL) $(@D);
-		$(MAKE) $(TARGET_ENV);
-	else
-		$(ECHO) "bsg_cadenv not found";
-		$(MKDIR) $(@D);
-		$(TOUCH) $@;
-		$(MAKE) $(TARGET_ENV);
-	fi
-	@$(ECHO) "Successfully built $@!"
-
 .centos_openocd_deps:
 	@$(eval OPENOCD_DEPS_DIR := $(TARGET_WORK)/openocd_deps)
 	@$(eval export PATH := $(OPENOCD_DEPS_DIR)/bin:$(PATH))

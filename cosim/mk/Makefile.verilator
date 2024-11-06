@@ -23,11 +23,11 @@ ifeq ($(ZYNQ_PS_DEBUG),1)
 CFLAGS += -DZYNQ_PS_DEBUG
 endif
 
-LDFLAGS += -L$(BP_SDK_INSTALL_DIR)/lib
-LDFLAGS += -lboost_coroutine -lboost_context -lboost_system
+VV_OPTS += $(BLACKPARROT_SDK_DIR)/install/lib/libboost_coroutine.a
+VV_OPTS += $(BLACKPARROT_SDK_DIR)/install/lib/libboost_context.a
+VV_OPTS += $(BLACKPARROT_SDK_DIR)/install/lib/libboost_system.a
 
 CINCLUDES += -I$(BLACKPARROT_SUB_DIR)/blackparrot/src
-CINCLUDES += -I$(BP_SDK_INSTALL_DIR)/include
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/verilator
 CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem

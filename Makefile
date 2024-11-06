@@ -21,7 +21,7 @@ prep_lite: checkout
 	$(MAKE) -C $(BP_TOOLS_DIR) tools_lite
 	$(MAKE) -C $(BP_SDK_DIR) sdk_lite PLATFORM=zynqparrot
 	$(MAKE) -C $(BP_SDK_DIR) prog_lite
-	$(MAKE) -C $(BSG_MANYCORE_DIR)/software/riscv-tools build-deps build-spike
+	$(MAKE) -C $(BSG_MANYCORE_DIR)/software/riscv-tools build-deps
 
 prep: prep_lite
 	$(MAKE) -C $(BP_RTL_DIR) libs
