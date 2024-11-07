@@ -34,15 +34,15 @@ class zynq_scratchpad : public s_axil_device {
     int32_t read(uintptr_t address) override {
         uintptr_t final_addr =
             ((address - SCRATCHPAD_BASE) + SCRATCHPAD_SIZE) % SCRATCHPAD_SIZE;
-        bsg_pr_dbg_pl("  bsg_zynq_pl: scratchpad read [%x] == %x\n", final_addr,
+        bsg_pr_dbg_pl("  bsg_zynq_pl: scratchpad read [%" PRIxPTR "] == %x\n", final_addr,
                       mem.at(final_addr));
         return mem.at(final_addr);
     }
 
     void write(uintptr_t address, int32_t data) override {
-        int final_addr =
+        uintptr_t final_addr =
             ((address - SCRATCHPAD_BASE) + SCRATCHPAD_SIZE) % SCRATCHPAD_SIZE;
-        bsg_pr_dbg_pl("  bsg_zynq_pl: scratchpad write [%x] <- %x\n",
+        bsg_pr_dbg_pl("  bsg_zynq_pl: scratchpad write [%" PRIxPTR "] <- %x\n",
                       final_addr, data);
         mem.at(final_addr) = data;
     }
@@ -87,10 +87,10 @@ class zynq_uart : public s_axil_device {
             retval = ((1 & tx_fifo.empty()) << 2)     // TX empty
                      | ((1 & !rx_fifo.empty()) << 0); // RX valid
         } else {
-            bsg_pr_info("  bsg_zynq_pl: errant uart read: %x\n", final_addr);
+            bsg_pr_info("  bsg_zynq_pl: errant uart read: [%" PRIxPTR "]\n", final_addr);
         }
 
-        bsg_pr_dbg_pl("  bsg_zynq_pl: uart read [%x] == %x\n", final_addr,
+        bsg_pr_dbg_pl("  bsg_zynq_pl: uart read [%" PRIxPTR "] == %x\n", final_addr,
                       retval);
         return retval;
     }

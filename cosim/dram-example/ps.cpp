@@ -38,8 +38,6 @@ int ps_main(int argc, char **argv) {
 
     zpl->shell_write(0x0 + GP0_ADDR_BASE, phys_ptr, mask1);
 
-    assert((zpl->shell_read(0x0 + GP0_ADDR_BASE) == (phys_ptr)));
-
     if (argc == 1)
         zpl->free_dram((void *)buf);
 

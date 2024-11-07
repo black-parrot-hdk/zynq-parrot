@@ -1,0 +1,38 @@
+
+#############################
+# Common variables
+#############################
+
+DEFINES +=
+
+VPACKAGES +=
+
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_clock_gen.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_reset_gen.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_cycle_counter.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_from_fifo.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_to_fifo.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_rom.sv
+VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axil.sv
+VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_axil_to_dpi.sv
+VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axis.sv
+VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_axis_to_dpi.sv
+VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv
+
+VINCLUDES +=
+
+CSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp
+CSOURCES += $(BP_SDK_LIB_DIR)/libboost_coroutine.a
+CSOURCES += $(BP_SDK_LIB_DIR)/libboost_context.a
+CSOURCES += $(BP_SDK_LIB_DIR)/libboost_system.a
+CSOURCES += $(BP_RTL_LIB_DIR)/libdramsim3.a
+
+CINCLUDES +=
+CINCLUDES += $(BASEJUMP_STL_DIR)/bsg_test
+
+CFLAGS += -fPIC
+CFLAGS += -D_DEFAULT_SOURCE -D_BSD_SOURCE
+CFLAGS += -std=c++14
+

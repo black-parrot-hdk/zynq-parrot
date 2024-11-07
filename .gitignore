@@ -1,3 +1,4 @@
+*.o
 trace.fst*
 obj_dir/
 *.jou
@@ -48,3 +49,4 @@ xrun.key
 prog.elf
 *.trace
 install/
+bsg_popcount.sv

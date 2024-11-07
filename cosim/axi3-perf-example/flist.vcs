@@ -1,6 +1,6 @@
 +incdir+$BASEJUMP_STL_DIR/bsg_misc
 +incdir+$BASEJUMP_STL_DIR/bsg_test
 
-$CURR_VSRC_DIR/top_zynq.sv
-$CURR_VSRC_DIR/top.v
+$DESIGN_VSRC_DIR/top_zynq.sv
+$DESIGN_VSRC_DIR/top.v
 

@@ -15,7 +15,7 @@ DEFINES += GP0_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil0
 DEFINES += HP0_ADDR_BASE=0x00000000U
 DEFINES += AXI_MEM_ENABLE
 
-SIM_ARGS += $(NBF_FILE)
+RUN_ARGS += $(NBF_FILE)
 
 #############################
 # Modify base flist
@@ -34,7 +34,7 @@ $(MC_FLIST): $(BSG_MANYCORE_DIR)/machines/arch_filelist.mk
 
 $(FLIST): $(MC_FLIST) $(BASE_FLIST)
 	cat $^ | envsubst > $@
-	echo "+incdir+$(CURR_VSRC_DIR)" >> $@
+	echo "+incdir+$(DESIGN_VSRC_DIR)" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_clock_gen.sv" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_reset_gen.sv" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_axi_mem.sv" >> $@

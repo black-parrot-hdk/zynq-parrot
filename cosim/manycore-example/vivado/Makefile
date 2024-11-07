@@ -17,7 +17,7 @@ $(MC_FLIST): $(BSG_MANYCORE_DIR)/machines/arch_filelist.mk
 
 $(FLIST): $(MC_FLIST) $(BASE_FLIST)
 	cat $^ | envsubst > $@
-	echo "+incdir+$(CURR_VSRC_DIR)" >> $@
+	echo "+incdir+$(DESIGN_VSRC_DIR)" >> $@
 	echo "+incdir+$(COSIM_DIR)/include/vivado" >> $@
 	# Harden synchronizers and clock muxes
 	sed -i "s#.*bsg_launch_sync_sync.sv#$(BASEJUMP_STL_DIR)/hard/ultrascale_plus/bsg_async/bsg_launch_sync_sync.sv#g" $@

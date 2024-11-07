@@ -10,12 +10,14 @@ proc post_propagate { cellpath otherInfo } {
 }
 
 proc vivado_create_ip { args } {
-    set flist [lindex [lindex ${args} 0] 0]
-    set aclk_freq_mhz [lindex [lindex ${args} 0] 1]
+    set vpackages [lindex [lindex ${args} 0] 0]
+    set vsources [lindex [lindex ${args} 0] 1]
+    set vincludes [lindex [lindex ${args} 0] 2]
+    set aclk_freq_mhz [lindex [lindex ${args} 0] 3]
 
     set aclk_freq_hz [expr round(${aclk_freq_mhz}*1e6)]
 
-    vivado_parse_flist flist.vcs
+    vivado_create_design ${vpackages} ${vsources} ${vincludes}
     create_bd_cell -type module -reference top -name top
 
     create_bd_port -dir I -type clk -freq_hz ${aclk_freq_hz} aclk

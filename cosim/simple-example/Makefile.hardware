@@ -1,0 +1,5 @@
+
+VPACKAGES += $(DESIGN_VSRC_DIR)/zynq_pkg.sv
+
+VSOURCES += $(DESIGN_VSRC_DIR)/example_axi_v1_0_S00_AXI.sv
+

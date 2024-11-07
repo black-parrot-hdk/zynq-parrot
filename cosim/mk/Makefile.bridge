@@ -1,15 +1,14 @@
 
-include $(COSIM_MK_DIR)/Makefile.env
+$(error Bridge is currently unsupported)
 
 CFLAGS += -DBRIDGE
-CFLAGS += -DHOST_$(call upper,$(HOST))
+CFLAGS += -DHOST_$(call bsg_fn_upper,$(HOST))
 CFLAGS += $(addprefix -D,$(DEFINES))
 CFLAGS += -O2
 CFLAGS += -std=c++20
 
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/bridge
-CINCLUDES += -I$(CURR_DESIGN_DIR)
 
 CSOURCES += $(MAIN_PROGRAM)
 
@@ -29,8 +28,4 @@ unpack_bitstream:
 
 program_fpga:
 	$(VIVADO_RUN) -source $(COSIM_TCL_DIR)/program_fpga.tcl
-
-clean:
-	rm -rf $(EXE) $(BUILD_COLLATERAL) $(SIM_COLLATERAL)
-	rm -rf *.log
 

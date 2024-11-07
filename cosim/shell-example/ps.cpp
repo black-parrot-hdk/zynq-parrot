@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "ps.hpp"
+
 #include <sys/time.h>
 
 #define DRAM_ALLOC_SIZE_BYTES 16384

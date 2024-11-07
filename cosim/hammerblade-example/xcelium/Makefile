@@ -25,7 +25,7 @@ DEFINES += HP1_HIER_BASE=bsg_nonsynth_zynq_testbench.axil5
 DEFINES += SCRATCHPAD_ENABLE
 DEFINES += BSG_MANYCORE_MACHINE_LOADER_COORD_X=2 BSG_MANYCORE_MACHINE_LOADER_COORD_Y=0
 
-SIM_ARGS += +c_args=$(NBF_FILE)
+RUN_ARGS += +c_args=$(NBF_FILE)
 
 #############################
 # Modify base flist
@@ -39,7 +39,7 @@ $(BP_FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs
 	cp $^ $@
 	sed -i "s/BASEJUMP_STL_DIR/BP_BASEJUMP_STL_DIR/g" $@
 	sed -i "/bp_common_pkg.sv/d" $@
-	sed -i "1i $(CURR_VSRC_DIR)/bp_common_pkg.sv" $@
+	sed -i "1i $(DESIGN_VSRC_DIR)/bp_common_pkg.sv" $@
 
 $(MC_FLIST): $(BSG_MANYCORE_DIR)/machines/arch_filelist.mk
 	cp $^ $@
@@ -51,7 +51,7 @@ $(MC_FLIST): $(BSG_MANYCORE_DIR)/machines/arch_filelist.mk
 
 $(FLIST): $(BP_FLIST) $(MC_FLIST) $(BASE_FLIST)
 	cat $^ | envsubst > $@
-	echo "+incdir+$(CURR_VSRC_DIR)" >> $@
+	echo "+incdir+$(DESIGN_VSRC_DIR)" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_clock_gen.sv" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_reset_gen.sv" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_axi_mem.sv" >> $@

@@ -585,34 +585,37 @@ module bsg_nonsynth_zynq_testbench;
 
 `ifdef VERILATOR
    initial
-     begin
-       if ($test$plusargs("bsg_trace") != 0)
-         begin
-           $display("[%0t] Tracing to trace.fst...\n", $time);
-           $dumpfile("trace.fst");
-           $dumpvars();
-         end
-     end
+     if ($test$plusargs("bsg_trace") != 0)
+       begin
+         $display("[%0t] Tracing to dump.fst...\n", $time);
+         $dumpfile("dump.fst");
+         $dumpvars();
+       end
 `else
    import "DPI-C" context task cosim_main(string c_args);
    string c_args;
    initial
      begin
+       $assertoff();
+       @(posedge aclk);
+       @(posedge aresetn);
+       $asserton();
        if ($test$plusargs("bsg_trace") != 0)
-`ifdef VCS
+    `ifdef VCS
+        `ifdef VCDPLUSON
          begin
            $display("[%0t] Tracing to vcdplus.vpd...\n", $time);
-           $vcdplusfile("vcdplus.vpd");
            $vcdpluson();
            $vcdplusautoflushon();
          end
-`endif
-`ifdef XCELIUM
+        `endif
+    `endif
+    `ifdef XCELIUM
          begin
            $shm_open("dump.shm");
            $shm_probe("ASM");
          end
-`endif
+    `endif
        if ($test$plusargs("c_args") != 0)
          begin
            $value$plusargs("c_args=%s", c_args);
@@ -638,7 +641,7 @@ module bsg_nonsynth_zynq_testbench;
 
    export "DPI-C" function bsg_dpi_time;
    function int bsg_dpi_time();
-     return $time;
+     return int'($time);
    endfunction
 
 endmodule

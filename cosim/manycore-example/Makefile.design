@@ -1,7 +1,10 @@
-TOP  := $(shell git rev-parse --show-toplevel)
-CURR := $(shell pwd)
+TOP ?= $(shell git rev-parse --show-toplevel)
 include $(TOP)/Makefile.common
-include $(TOP)/Makefile.config
+include $(TOP)/Makefile.env
+
+include $(COSIM_MK_DIR)/Makefile.common
+include $(COSIM_MK_DIR)/Makefile.env
+include $(DESIGN_DIR)/Makefile.hardware
 
 #############################
 # Design Settings
@@ -10,7 +13,9 @@ TB_MODULE  ?= bsg_nonsynth_zynq_testbench
 BASENAME   ?= manycore
 
 MAIN_PROGRAM ?= $(COSIM_CSRC_DIR)/main.cpp
-HOST_PROGRAM ?= $(CURR_DESIGN_DIR)/ps.cpp
+HOST_PROGRAM ?= $(DESIGN_DIR)/ps.cpp
+
+RUN_ARGS += +c_args=$(NBF_FILE)
 
 #############################
 # Design Defines
@@ -23,6 +28,10 @@ DEFINES += HP0_DATA_WIDTH=64 HP0_ADDR_WIDTH=32
 DEFINES += ACLK_MHZ=55
 DEFINES += RTCLK_MHZ=8
 
+include $(COSIM_MK_DIR)/Makefile.$(TOOL)
+
+#############################
+# Build Collateral
 #############################
 # Override to zynq-parrot machine path
 BSG_MACHINE_PATH ?= $(BSG_REPLICANT_DIR)/machines/pod_X1Y1_mesh_X2Y2_hbm_one_pseudo_channel
@@ -34,18 +43,19 @@ BSG_PLATFORM_PATH := $(LIBRARIES_PATH)/platforms/bigblade-vcs
 BSG_F1_DIR        := $(BSG_REPLICANT_DIR)
 include $(BSG_REPLICANT_DIR)/hardware/hardware.mk
 
-$(CURR_VSRC_DIR)/bsg_bladerunner_pkg.sv: $(BSG_MACHINE_PATH)/bsg_bladerunner_pkg.sv
+$(DESIGN_VSRC_DIR)/bsg_bladerunner_pkg.sv: $(BSG_MACHINE_PATH)/bsg_bladerunner_pkg.sv
 	cp $< $@
 	$(SED) -i "/parameter int bsg_machine_hetero_type_vec_gp/d" $@
 
-$(CURR_VSRC_DIR)/bsg_bladerunner_configuration.sv: $(BSG_MACHINE_PATH)/bsg_bladerunner_configuration.rom
+$(DESIGN_VSRC_DIR)/bsg_bladerunner_configuration.sv: $(BSG_MACHINE_PATH)/bsg_bladerunner_configuration.rom
 	$(PYTHON2) $(ASCII_TO_ROM_PY) $< bsg_bladerunner_configuration > $@
 
-$(CURR_DESIGN_DIR)/bsg_manycore_machine.h: $(BSG_MACHINE_PATH)/bsg_manycore_machine.h
+$(DESIGN_DIR)/bsg_manycore_machine.h: $(BSG_MACHINE_PATH)/bsg_manycore_machine.h
 	cp $< $@
 
-.PHONY: $(BUILD_COLLATERAL)
-BUILD_COLLATERAL = $(CURR_VSRC_DIR)/bsg_bladerunner_pkg.sv $(CURR_VSRC_DIR)/bsg_bladerunner_configuration.sv $(CURR_DESIGN_DIR)/bsg_manycore_machine.h
+BUILD_COLLATERAL += $(DESIGN_VSRC_DIR)/bsg_bladerunner_pkg.sv
+BUILD_COLLATERAL += $(DESIGN_VSRC_DIR)/bsg_bladerunner_configuration.sv
+BUILD_COLLATERAL += $(DESIGN_DIR)/bsg_manycore_machine.h
 
 #############################
 # Run Collateral

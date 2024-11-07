@@ -39,7 +39,7 @@ DEFINES += HP1_ADDR_BASE=0x1000000U
 DEFINES += HP1_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil4
 DEFINES += SCRATCHPAD_ENABLE
 
-SIM_ARGS += $(NBF_FILE)
+RUN_ARGS += $(NBF_FILE)
 
 RUN_COLLATERAL = $(NBF_FILE) $(ELF_FILE)
 
@@ -59,11 +59,11 @@ $(BP_FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs
 	cp $^ $@
 	sed -i "s/BASEJUMP_STL_DIR/BP_BASEJUMP_STL_DIR/g" $@
 	sed -i "/bp_common_pkg.sv/d" $@
-	sed -i "1i $(CURR_VSRC_DIR)/bp_common_pkg.sv" $@
+	sed -i "1i $(DESIGN_VSRC_DIR)/bp_common_pkg.sv" $@
 
 $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 	cat $^ | envsubst > $@
-	echo "+incdir+$(CURR_VSRC_DIR)" >> $@
+	echo "+incdir+$(DESIGN_VSRC_DIR)" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.sv" >> $@
 	echo "$(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.sv" >> $@
@@ -78,7 +78,7 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 		cp $(ELF_FILE) prog.elf; \
 	fi
 
-bootrom: $(CURR_VSRC_DIR)/bsg_bootrom.v
+bootrom: $(DESIGN_VSRC_DIR)/bsg_bootrom.v
 
 include $(TOP)/cosim/mk/Makefile.verilator
 
