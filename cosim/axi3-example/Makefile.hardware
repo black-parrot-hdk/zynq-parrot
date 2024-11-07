@@ -1,0 +1,4 @@
+
+VSOURCES += $(DESIGN_VSRC_DIR)/top_zynq.sv
+VSOURCES += $(DESIGN_VSRC_DIR)/top.v
+

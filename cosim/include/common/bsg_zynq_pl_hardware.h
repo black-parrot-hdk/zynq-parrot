@@ -26,7 +26,6 @@
 #include "bsg_argparse.h"
 #include "bsg_printing.h"
 #include "zynq_headers.h"
-using namespace std;
 
 class bsg_zynq_pl_hardware {
   public:

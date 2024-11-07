@@ -10,8 +10,6 @@
 #include "bsg_nonsynth_dpi_gpio.hpp"
 #include "bsg_peripherals.h"
 #include "bsg_printing.h"
-#include "verilated_cov.h"
-#include "verilated_fst_c.h"
 #include "zynq_headers.h"
 #include <cassert>
 #include <fstream>
@@ -24,26 +22,33 @@
 #include "verilated.h"
 
 extern "C" {
-int bsg_dpi_time();
+    extern int bsg_zynq_dpi_time();
 }
 
 class bsg_zynq_pl : public bsg_zynq_pl_simulation {
-    Vbsg_nonsynth_zynq_testbench *tb;
-    VerilatedFstC *wf;
+    std::unique_ptr<VerilatedContext> contextp;
+    std::unique_ptr<Vbsg_nonsynth_zynq_testbench> tb;
 
   public:
     bsg_zynq_pl(int argc, char *argv[]) {
+
+        // Create verilated context
+        contextp = std::make_unique<VerilatedContext>();
+
+        // Set debug level, 0 is off, 9 is highest presently used
+        contextp->debug(0);
+        
+        // Randomization reset policy
+        contextp->randReset(2);
+
+        // Verilator must compute traced signals
+        contextp->traceEverOn(true);
+
         // Initialize Verilators variables
-        Verilated::commandArgs(argc, argv);
+        contextp->commandArgs(argc, argv);
 
-        // turn on tracing
-        Verilated::traceEverOn(true);
-
-        tb = new Vbsg_nonsynth_zynq_testbench();
-
-        wf = new VerilatedFstC;
-        tb->trace(wf, 10);
-        wf->open("trace.fst");
+        // Create the TB pointer
+        tb = std::make_unique<Vbsg_nonsynth_zynq_testbench>(contextp.get(), "TOP");
 
         tick();
         init();
@@ -58,16 +63,14 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
     //   at the least.
     void tick(void) override {
         tb->eval();
-        wf->dump(sc_time_stamp());
         bsg_timekeeper::next();
         tb->eval();
-        wf->dump(sc_time_stamp());
         bsg_timekeeper::next();
     }
 
     void done(void) override {
         printf("bsg_zynq_pl: done() called, exiting\n");
-        wf->close();
+        contextp->statsPrintSummary();
     }
 
     void *allocate_dram(unsigned long len_in_bytes,

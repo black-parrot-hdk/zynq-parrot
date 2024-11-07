@@ -49,11 +49,11 @@
 extern "C" {
 #endif // #if defined(__cplusplus)
 
-#define BSG_PRINT_PREFIX_DEBUG_PL "DEBUG-PL: "
-#define BSG_PRINT_PREFIX_DEBUG_PS "DEBUG-PS: "
-#define BSG_PRINT_PREFIX_ERROR "ERROR:   "
-#define BSG_PRINT_PREFIX_WARN "WARNING: "
-#define BSG_PRINT_PREFIX_INFO "INFO:    "
+#define BSG_PRINT_PREFIX_DEBUG_PL "[BSG-DEBUG-PL]: "
+#define BSG_PRINT_PREFIX_DEBUG_PS "[BSG-DEBUG-PS]: "
+#define BSG_PRINT_PREFIX_ERROR "[BSG-ERROR]:   "
+#define BSG_PRINT_PREFIX_WARN "[BSG-WARNING]: "
+#define BSG_PRINT_PREFIX_INFO "[BSG-INFO]:    "
 
 #if defined(ZYNQ_PL_DEBUG)
 #define bsg_pr_dbg_pl(fmt, ...)                                                \

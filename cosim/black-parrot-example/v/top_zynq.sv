@@ -1,6 +1,4 @@
 
-`timescale 1 ps / 1 ps
-
 `include "bsg_tag.svh"
 `include "bp_common_defines.svh"
 `include "bp_be_defines.svh"
@@ -377,6 +375,11 @@ module top_zynq
      assign minstret_lo = blackparrot.processor.m.multicore.cc.y[0].x[0].tile_node.tile.core.core_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
    else
      assign minstret_lo = blackparrot.processor.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.minstret_lo;
+
+ `declare_bp_be_if(vaddr_width_p, paddr_width_p, asid_width_p, branch_metadata_fwd_width_p, fetch_ptr_p, issue_ptr_p);
+  bp_be_commit_pkt_s commit_pkt;
+
+  assign commit_pkt = blackparrot.processor.u.unicore.unicore_lite.core_minimal.be.calculator.      pipe_sys.csr.commit_pkt_cast_o;
 
   bsg_bootrom
    #(.width_p(bootrom_data_lp), .addr_width_p(bootrom_addr_lp))

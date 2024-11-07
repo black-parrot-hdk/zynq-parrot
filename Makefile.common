@@ -1,111 +1,153 @@
-# need to set the shell so that source works
-export SHELL := /bin/bash
-
-export CURR_DESIGN_DIR       ?= $(CURR)/..
-export CURR_VSRC_DIR         ?= $(CURR_DESIGN_DIR)/v
-export CURR_CSRC_DIR         ?= $(CURR_DESIGN_DIR)/src
-export CURR_INCLUDE_DIR      ?= $(CURR_DESIGN_DIR)/include
-export CURR_TCL_DIR          ?= $(CURR_DESIGN_DIR)/tcl
-export CURR_XDC_DIR          ?= $(CURR_DESIGN_DIR)/xdc
-
-export IMPORT_DIR            ?= $(TOP)/import
-
-export COSIM_DIR             ?= $(TOP)/cosim
-export COSIM_MK_DIR          ?= $(COSIM_DIR)/mk
-export COSIM_VSRC_DIR        ?= $(COSIM_DIR)/v
-export COSIM_CSRC_DIR        ?= $(COSIM_DIR)/src
-export COSIM_INCLUDE_DIR     ?= $(COSIM_DIR)/include
-export COSIM_PY_DIR          ?= $(COSIM_DIR)/py
-export COSIM_TCL_DIR         ?= $(COSIM_DIR)/tcl
-export COSIM_XDC_DIR         ?= $(COSIM_DIR)/xdc
-export COSIM_IMPORT_DIR      ?= $(IMPORT_DIR)
-export COSIM_INSTALL_DIR     ?= $(COSIM_DIR)/install
-export COSIM_WORK_DIR        ?= $(COSIM_INSTALL_DIR)/work
-
-export SOFTWARE_DIR          ?= $(TOP)/software
-export SOFTWARE_MK_DIR       ?= $(SOFTWARE_DIR)/mk
-export SOFTWARE_VSRC_DIR     ?= $(SOFTWARE_DIR)/v
-export SOFTWARE_CSRC_DIR     ?= $(SOFTWARE_DIR)/src
-export SOFTWARE_INCLUDE_DIR  ?= $(SOFTWARE_DIR)/include
-export SOFTWARE_PY_DIR       ?= $(SOFTWARE_DIR)/py
-export SOFTWARE_TCL_DIR      ?= $(SOFTWARE_DIR)/tcl
-export SOFTWARE_XDC_DIR      ?= $(SOFTWARE_DIR)/xdc
-export SOFTWARE_IMPORT_DIR   ?= $(IMPORT_DIR)
-export SOFTWARE_INSTALL_DIR  ?= $(SOFTWARE_DIR)/install
-export SOFTWARE_WORK_DIR     ?= $(SOFTWARE_INSTALL_DIR)/work
-
-export BLACKPARROT_DIR       ?= $(COSIM_IMPORT_DIR)/black-parrot
-export BLACKPARROT_TOOLS_DIR ?= $(COSIM_IMPORT_DIR)/black-parrot-tools
-export BLACKPARROT_SUB_DIR   ?= $(COSIM_IMPORT_DIR)/black-parrot-subsystems
-export BLACKPARROT_SDK_DIR   ?= $(SOFTWARE_IMPORT_DIR)/black-parrot-sdk
-export PLATFORM              ?= zynqparrot
-export BP_FE_DIR             ?= $(BLACKPARROT_DIR)/bp_fe
-export BP_COMMON_DIR         ?= $(BLACKPARROT_DIR)/bp_common
-export BP_BE_DIR             ?= $(BLACKPARROT_DIR)/bp_be
-export BP_ME_DIR             ?= $(BLACKPARROT_DIR)/bp_me
-export BP_TOP_DIR            ?= $(BLACKPARROT_DIR)/bp_top
-export BP_EXTERNAL_DIR       ?= $(BLACKPARROT_DIR)/external
-export BP_BASEJUMP_STL_DIR   ?= $(BP_EXTERNAL_DIR)/basejump_stl
-export HARDFLOAT_DIR         ?= $(BP_EXTERNAL_DIR)/HardFloat
-export BASEJUMP_STL_DIR      ?= $(BP_BASEJUMP_STL_DIR)
-# Override to zynq-parrot version
-export BP_TOOLS_DIR          ?= $(BLACKPARROT_TOOLS_DIR)
-export BP_SDK_DIR            ?= $(BLACKPARROT_SDK_DIR)
-export BP_SDK_INSTALL_DIR    ?= $(BP_SDK_DIR)/install
-export BP_SDK_LIB_DIR        ?= $(BP_SDK_INSTALL_DIR)/lib
-
-export BSG_MANYCORE_DIR          ?= $(COSIM_IMPORT_DIR)/bsg_manycore
-export BSG_MANYCORE_SOFTWARE_DIR ?= $(BSG_MANYCORE_DIR)/software
-export BSG_REPLICANT_DIR         ?= $(SOFTWARE_IMPORT_DIR)/bsg_replicant
-export BSG_MANYCORE_RTL_DIR      ?= $(BSG_MANYCORE_DIR)/v
-ifeq (,$(wildcard $(BSG_CADENV_DIR)/cadenv.mk))
-export IGNORE_CADENV 			 ?= 1
-else
-export CAD_DIR                   ?= $(BSG_CADENV_DIR)
-endif
-
-# TODO: Check verilator version
-ifeq ($(shell /usr/bin/arch),armv7l)
-export ARM=1
-export VERILATOR=/usr/local/bin/verilator
-else ifeq ($(shell /usr/bin/arch),aarch64)
-export ARM=1
-export VERILATOR=/usr/local/bin/verilator
-else
--include $(BSG_CADENV_DIR)/cadenv.mk
-export ARM=0
-export VERILATOR ?= verilator
-endif
-export VIVADO    ?= vivado
-export PETALINUX ?= petalinux
-export VCS       ?= vcs
-export _DVE      ?= dve
-export XRUN      ?= xrun
-export XMSIM     ?= xmsim
-export SIMVISION ?= simvision
-export GCC       ?= g++
-export PYTHON    ?= PYTHONPATH=$(COSIM_PY_DIR) python
-export PYTHON2   ?= PYTHONPATH=$(COSIM_PY_DIR) python2
-export PYTHON3   ?= PYTHONPATH=$(COSIM_PY_DIR) python3
-
-export TR       ?= tr
-export SED      ?= sed
-export GREP     ?= grep
-export CAT      ?= cat
-export WGET     ?= wget
-export TAR      ?= tar
-export BASE64   ?= base64
-export XXD      ?= xxd
-export AWK      ?= awk
-export ECHO     ?= echo
-
-export PATH := $(BP_TOOLS_DIR)/install/bin:$(BP_SDK_DIR)/install/bin:$(COSIM_PY_DIR):$(PATH)
-
+#############################
 # Makefile functions
-define upper
-$(shell echo $(1) | $(TR) a-z A-Z)
+#############################
+# Saves initial values so that we can filter them later
+VARS_OLD := $(.VARIABLES)
+
+define bsg_fn_upper
+$(shell echo $(1) | tr a-z A-Z)
 endef
-define lower
-$(shell echo $(1) | $(TR) A-Z a-z)
+define bsg_fn_lower
+$(shell echo $(1) | tr A-Z a-z)
 endef
+define bsg_fn_uniq
+$(if $1,$(firstword $1) $(call bsg_fn_uniq,$(filter-out $(firstword $1),$1)))
+endef
+
+bsg_var_blank :=
+define bsg_var_newline
+
+$(bsg_var_blank)
+endef
+
+bsg_var_percent := %
+
+bsg_var_comma := ,
+
+bsg_var_tab := $(bsg_var_blank)	$(bsg_var_blank)
+
+define bsg_fn_patch_if_new
+	$(eval apply_stage_patch := git apply --ignore-whitespace --ignore-space-change)
+	$(eval apply_commit_patch := git am --ignore-whitespace --ignore-space-change)
+	$(eval check_patch := $(apply_stage_patch) --check --reverse)
+	$(eval src_root := $(1))
+	$(eval patch_root := $(2))
+	$(eval patch_list := $(wildcard $(patch_root)/*.patch))
+	$(eval patch_is_top := $(findstring patches,$(lastword $(subst /, ,$(dir $(patch_root))))))
+	for p in $(patch_list); \
+	do \
+		echo "Checking if patch $$p is applicable"; \
+		cd $(src_root); $(check_patch) $$p && continue; \
+		echo "Patch is unapplied..."; \
+		if [ ! -z "$$patch_is_top" ]; then \
+		echo "Applying patch to sub-directory $(src_root);" \
+		cd $(src_root); $(apply_commit_patch) $$p; \
+		echo "Patch applied!"; \
+		else \
+		echo "Applying patch to top-level $(src_root);" \
+		cd $(src_root); $(apply_stage_patch) $$p; \
+		echo "Patch applied!"; \
+		fi \
+	done
+endef
+
+define bsg_fn_build_if_new
+	$(eval name := $(1))
+	$(eval src_dir := $(2))
+	$(eval touch_dir := $(3))
+	$(eval hash := $$(shell cd $(src_dir); git rev-parse HEAD))
+	$(eval tag := $(addprefix $(touch_dir)/$(name)., $(hash)))
+	$(eval internal_target := $(src_dir)/.$(name)_build)
+	$(eval external_target := build.$(name))
+	$(eval rebuild_target := rebuild.$(name))
+$(external_target): | $(tag)
+$(rebuild_target):
+	rm -f $(touch_dir)/$(name).*
+	+$(MAKE) $(tag)
+$(tag):
+	+$(MAKE) $(internal_target)
+	touch $(tag)
+endef
+
+define bsg_fn_info
+	$(eval $@_msg = $(1))
+	$(eval $@_prefix = "BSG-INFO: ")
+	echo "${$@_prefix} ${$@_msg}";
+endef
+
+define bsg_fn_warn
+	$(eval $@_msg = $(1))
+	$(eval $@_prefix = "BSG-WARN: ")
+	echo "${$@_prefix} ${$@_msg}";
+endef
+
+define bsg_fn_error
+	$(eval $@_msg = $(1))
+	$(eval $@_prefix = "BSG-ERROR: ")
+	echo "${$@_prefix} ${$@_msg}"; \
+	exit -1;
+endef
+
+# Global Makefile settings
+SHELL := /bin/bash
+#MAKEFLAGS += --warn-undefined-variables
+
+# Global help target
+.DEFAULT_GOAL: help
+.PHONY: help
+help: ## prints this message
+	  @egrep -h '\s##\s' $(MAKEFILE_LIST) | sort \
+		  | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m  %-30s\033[0m %s\n", $$1, $$2}'
+
+# Global reset
+.PHONY: bleach_all
+bleach_all: ## wipes the whole repo clean. Use with caution
+	@cd $(ZP_DIR); git clean -ffdx; git submodule deinit -f .
+
+#############################
+# Paths
+#############################
+ZP_DIR         ?= $(TOP)
+ZP_IMPORT_DIR  ?= $(ZP_DIR)/import
+ZP_INSTALL_DIR ?= $(ZP_DIR)/install
+ZP_BIN_DIR     ?= $(ZP_INSTALL_DIR)/bin
+ZP_LIB_DIR     ?= $(ZP_INSTALL_DIR)/lib
+ZP_INCLUDE_DIR ?= $(ZP_INSTALL_DIR)/include
+ZP_TOUCH_DIR   ?= $(ZP_INSTALL_DIR)/touchfiles
+
+COSIM_DIR             ?= $(ZP_DIR)/cosim
+COSIM_MK_DIR          ?= $(COSIM_DIR)/mk
+COSIM_VSRC_DIR        ?= $(COSIM_DIR)/v
+COSIM_CSRC_DIR        ?= $(COSIM_DIR)/src
+COSIM_INCLUDE_DIR     ?= $(COSIM_DIR)/include
+COSIM_PY_DIR          ?= $(COSIM_DIR)/py
+COSIM_TCL_DIR         ?= $(COSIM_DIR)/tcl
+COSIM_XDC_DIR         ?= $(COSIM_DIR)/xdc
+COSIM_INSTALL_DIR     ?= $(COSIM_DIR)/install
+COSIM_WORK_DIR        ?= $(COSIM_INSTALL_DIR)/work
+
+SOFTWARE_DIR          ?= $(ZP_DIR)/software
+SOFTWARE_MK_DIR       ?= $(SOFTWARE_DIR)/mk
+SOFTWARE_VSRC_DIR     ?= $(SOFTWARE_DIR)/v
+SOFTWARE_CSRC_DIR     ?= $(SOFTWARE_DIR)/src
+SOFTWARE_INCLUDE_DIR  ?= $(SOFTWARE_DIR)/include
+SOFTWARE_PY_DIR       ?= $(SOFTWARE_DIR)/py
+SOFTWARE_TCL_DIR      ?= $(SOFTWARE_DIR)/tcl
+SOFTWARE_XDC_DIR      ?= $(SOFTWARE_DIR)/xdc
+SOFTWARE_INSTALL_DIR  ?= $(SOFTWARE_DIR)/install
+SOFTWARE_WORK_DIR     ?= $(SOFTWARE_INSTALL_DIR)/work
+
+ZP_BP_RTL_DIR        ?= $(ZP_IMPORT_DIR)/black-parrot
+ZP_BP_SDK_DIR        ?= $(ZP_IMPORT_DIR)/black-parrot-sdk
+ZP_BP_SUB_DIR        ?= $(ZP_IMPORT_DIR)/black-parrot-subsystems
+ZP_BP_TOOLS_DIR      ?= $(ZP_IMPORT_DIR)/black-parrot-tools
+ZP_BSG_REPLICANT_DIR ?= $(ZP_IMPORT_DIR)/bsg_replicant
+ZP_BSG_MANYCORE_DIR  ?= $(ZP_IMPORT_DIR)/bsg_manycore
+ZP_BASEJUMP_STL_DIR  ?= $(ZP_BP_RTL_DIR)/external/basejump_stl
+ZP_HARDFLOAT_DIR     ?= $(ZP_BP_RTL_DIR)/external/HardFloat
+
+BSG_CADENV_DIR ?= $(ZP_IMPORT_DIR)/bsg_cadenv
+
+# Exported for historical reasons, remove later
+export BP_SDK_DIR := $(ZP_BP_SDK_DIR)
 

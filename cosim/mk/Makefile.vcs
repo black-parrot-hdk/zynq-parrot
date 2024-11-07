@@ -1,87 +1,51 @@
 
-include $(COSIM_MK_DIR)/Makefile.env
+VCS_BUILD_OPTS += -full64
+VCS_BUILD_OPTS += -notice
+VCS_BUILD_OPTS += -V
+VCS_BUILD_OPTS += +v2k -sverilog
+VCS_BUILD_OPTS += -assert svaext
+VCS_BUILD_OPTS += +noportcoerce
+VCS_BUILD_OPTS += -timescale=1ps/1ps
+VCS_BUILD_OPTS += -diag timescale
+VCS_BUILD_OPTS += +vcs+lic+wait
+VCS_BUILD_OPTS += $(addprefix +define+,$(DEFINES))
+VCS_BUILD_OPTS += $(addprefix +incdir+,$(VINCLUDES))
+VCS_BUILD_OPTS += $(call bsg_fn_uniq,$(VPACKAGES))
+VCS_BUILD_OPTS += $(call bsg_fn_uniq,$(VSOURCES))
+VCS_BUILD_OPTS += -CFLAGS "$(CFLAGS)"
+VCS_BUILD_OPTS += -CFLAGS "-fPIC -std=c++14"
+VCS_BUILD_OPTS += -CFLAGS "$(addprefix -I,$(CINCLUDES))"
+VCS_BUILD_OPTS += -CFLAGS "$(addprefix -D,$(DEFINES))"
+VCS_BUILD_OPTS += -LDFLAGS "$(LDFLAGS)"
+VCS_BUILD_OPTS += -LDFLAGS "-lpthread"
+VCS_BUILD_OPTS += -LDFLAGS "$(addprefix -L,$(CLIBDIRS))"
+VCS_BUILD_OPTS += -LDFLAGS "$(addprefix -Wl$(bsg_var_comma)-rpath=,$(CLIBDIRS))"
+VCS_BUILD_OPTS += -LDFLAGS "$(addprefix -l,$(CLIBS))"
+VCS_BUILD_OPTS += $(call bsg_fn_uniq,$(CSOURCES))
 
-VCS_OPTS += -full64
-VCS_OPTS += -notice
-VCS_OPTS += -V
-VCS_OPTS += +v2k -sverilog
-VCS_OPTS += -assert svaext
-VCS_OPTS += +noportcoerce
-VCS_OPTS += -timescale=1ps/1ps
-VCS_OPTS += -diag timescale
-VCS_OPTS += -f flist.vcs
-VCS_OPTS += -top $(TB_MODULE)
-VCS_OPTS += -debug_pp
-VCS_OPTS += +vcs+vcdpluson +vcs+vcdplusautoflushon
-VCS_OPTS += +vcs+lic+wait
-VCS_OPTS += +incdir+$(COSIM_DIR)/include/vcs
-VCS_OPTS += $(addprefix +define+,$(DEFINES))
-VCS_OPTS += $(MAIN_PROGRAM)
-VCS_OPTS += $(BP_SDK_LIB_DIR)/libboost_coroutine.a
-VCS_OPTS += $(BP_SDK_LIB_DIR)/libboost_context.a
-VCS_OPTS += $(BP_SDK_LIB_DIR)/libboost_system.a
+VCS_BUILD_OPTS += -top $(TB_MODULE)
+VCS_BUILD_OPTS += -o simv
 
-CFLAGS += -DVCS
-CFLAGS += -DHOST_$(call upper,$(HOST))
-CFLAGS += -std=c++14
-CFLAGS += -D_DEFAULT_SOURCE -D_BSD_SOURCE
-CFLAGS += $(addprefix -D,$(DEFINES))
-# PL Debug
-ifeq ($(ZYNQ_PL_DEBUG),1)
-CFLAGS += -DZYNQ_PL_DEBUG
+VCS_RUN_OPTS += -no_save
+
+ifneq (,$(TRACE))
+RUN_ARGS += +bsg_trace
+RUN_ARGS += +vpdfilesize+512
 endif
-# PS Debug
-ifeq ($(ZYNQ_PS_DEBUG),1)
-CFLAGS += -DZYNQ_PS_DEBUG
-endif
-
-CINCLUDES += -I$(BLACKPARROT_SUB_DIR)/blackparrot/src
-CINCLUDES += -I$(BP_SDK_INSTALL_DIR)/include
-CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
-CINCLUDES += -I$(COSIM_INCLUDE_DIR)/vcs
-CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
-CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_test
-CINCLUDES += -I$(CURR_DESIGN_DIR)
-
-TRACE ?= +bsg_trace +vpdfilesize+512
-
-all:
-	@echo "## See the makefile for the fun things you can do in this directory"
-
-RUN_LOG ?= run.log
+run: ## runs the simv executable, TRACE=1 to trace
 run: simv $(RUN_COLLATERAL)
-	./$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
+	@./$< $(VCS_RUN_OPTS) $(RUN_ARGS) 2>&1 | $(TEE_I) run.log
 
-BUILD_LOG ?= build.log
-simv: $(HOST_PROGRAM) $(FLIST) $(BUILD_COLLATERAL)
-	$(VCS) $(VCS_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" \
-		-LDFLAGS "$(LDFLAGS)" -o $@ $< \
-		2>&1 | tee -i $(BUILD_LOG)
-
-clean:
-	rm -rf csrc/
-	rm -rf ucli.key
-	rm -rf vc_hdrs.h
-	rm -rf flist*.vcs
-	rm -rf simv* vcdplus.vpd
-	rm -rf build.log
-	rm -rf run.log
-	rm -rf *.nbf
-	rm -rf *.elf
-	rm -rf *.trace
-	rm -rf *.riscv*
-	rm -rf *.rv*o*
-	rm -rf *.dump*
-	rm -rf $(BUILD_COLLATERAL) $(SIM_COLLATERAL)
-
+view: ## views the dump with DVE
 view:
-	$(_DVE) -full64 -vpd vcdplus.vpd
+	@$(_DVE) -full64 -vpd vcdplus.vpd &
 
-help:
-	@echo -e "Usage: make"
-	@echo -e "\tclean - Cleans directory"
-	@echo -e "\tview - Open waveform in gtkwave"
-	@echo -e "\tall - Runs the current test"
-	@echo -e "Options"
-	@echo -e "\tTRACE = whether to dump a .fst waveform"
+ifneq (,$(TRACE))
+BUILD_ARGS += -debug_acc+pp+dmptf
+BUILD_ARGS += +define+VCDPLUSON
+endif
+build: ## builds the simv executable
+build: simv
+simv: $(BUILD_COLLATERAL)
+	$(VCS) $(VCS_BUILD_OPTS) $(BUILD_ARGS) 2>&1 | $(TEE_I) build.log
 

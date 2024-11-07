@@ -1,8 +1,5 @@
 
-`include "bsg_zynq_pl.vh"
 `include "bsg_defines.sv"
-
-`timescale 1ns/1ps
 
 module bsg_zynq_pl_shell #
   (

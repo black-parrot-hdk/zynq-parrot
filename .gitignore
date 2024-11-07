@@ -1,3 +1,4 @@
+*.o
 trace.fst*
 obj_dir/
 *.jou
@@ -20,7 +21,9 @@ control-program
 sds_trace_data.dat
 xcelium.d/
 .simvision/
-dump.shm/
+*.shm/
+*.fst
+*.mem
 .bpad/
 xrun.history
 *.riscv32
@@ -48,3 +51,5 @@ xrun.key
 prog.elf
 *.trace
 install/
+bsg_popcount.sv
+zynq_pkgdef.svh

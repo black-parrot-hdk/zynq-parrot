@@ -11,19 +11,17 @@
 #endif
 
 extern "C" {
-int bsg_dpi_time();
+int bsg_zynq_dpi_time();
 }
-using namespace std;
 using namespace bsg_nonsynth_dpi;
 using namespace boost::coroutines2;
-using namespace std::placeholders;
 
 // W = width of pin
 template <unsigned int W> class pin {
     std::unique_ptr<dpi_gpio<W>> gpio;
 
   public:
-    pin(const string &hierarchy) {
+    pin(const std::string &hierarchy) {
         gpio = std::make_unique<dpi_gpio<W>>(hierarchy);
     }
 

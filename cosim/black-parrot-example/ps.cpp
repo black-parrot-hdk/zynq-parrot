@@ -243,8 +243,9 @@ int ps_main(int argc, char **argv) {
         bsg_pr_info("ps.cpp: Zero-ing DRAM (%d bytes)\n",
                     (int)DRAM_ALLOCATE_SIZE);
         for (int i = 0; i < DRAM_ALLOCATE_SIZE; i += 4) {
-            if (i % (1024 * 1024) == 0)
-                bsg_pr_info("ps.cpp: zero-d %d MB\n", i / (1024 * 1024));
+            //if (i % (1024 * 1024) == 0)
+            if (i % (1024) == 0)
+                bsg_pr_info("ps.cpp: (%d) zero-d %d MB\n", i, i / (1024 * 1024));
             zpl->shell_write(gp1_addr_base + i, 0x0, mask1);
         }
     }

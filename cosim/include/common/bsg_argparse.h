@@ -3,6 +3,8 @@
 #define BSG_ARGPARSE_H
 
 #include <unistd.h>
+#include <string>
+#include <cstring>
 
 // Given a string, determine the number of space-separated arguments
 static int get_argc(char *args) {
@@ -18,7 +20,8 @@ static int get_argc(char *args) {
     return count;
 }
 
-static void get_argv(char *args, int argc, char **argv) {
+// Given a string, parse the space-separated arguments
+static void get_argv(char *args, char **argv) {
     int count = 0;
     char *cur = args, prev = ' ';
 
@@ -49,6 +52,21 @@ static void get_argv(char *args, int argc, char **argv) {
             *cur = '\0';
         cur++;
     }
+}
+
+// Extract +c_args argstring from passed command line arguments
+static void get_argstr(char *argstr, int argc, char **argv) {
+    std::string c_args;
+    for (int i = 0; i < argc; i++) {
+        std::string arg = argv[i];
+
+        if (!arg.rfind("+c_args=", 0)) {
+            c_args = arg.substr(8);
+            break;
+        }
+    }
+
+    strcpy(argstr, c_args.c_str());
 }
 
 #endif

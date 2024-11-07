@@ -28,10 +28,6 @@
 #endif
 #define DRAM_ALLOCATE_SIZE (DRAM_ALLOCATE_SIZE_MB * 1024 * 1024)
 
-#ifndef ZYNQ_PL_DEBUG
-#define ZYNQ_PL_DEBUG 0
-#endif
-
 void nbf_load(bsg_zynq_pl *zpl, char *filename);
 
 inline void send_mc_request_packet(bsg_zynq_pl *zpl,

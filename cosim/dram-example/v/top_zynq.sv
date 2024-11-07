@@ -1,6 +1,4 @@
 
-`timescale 1 ps / 1 ps
-
 module top_zynq
  #(
    // NOTE these parameters are usually overridden by the parent module (top.v)

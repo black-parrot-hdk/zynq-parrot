@@ -123,35 +123,49 @@ proc vivado_add_bd_parameter { name def } {
     set_property value ${def} [ipx::get_user_parameters "${name}" -of_objects [ipx::current_core]]
 }
 
-proc vivado_parse_flist { flist_path } {
-    set f [split [string trim [read [open $flist_path r]]] "\n"]
-    set files [list]
-    set dirs [list]
-    foreach x $f {
-        if {![string match "" $x]} {
-            if {[string match "#*" $x]} {
-                continue
-            } elseif {[string match "+incdir+*" $x]} {
-                set trimchars "+incdir+"
-                set temp [string trimleft $x $trimchars]
-                set expanded [subst $temp]
-                lappend dirs $expanded
-            } else {
-                set expanded [subst $x]
-                lappend files $expanded
-            }
-        }
+
+proc vivado_create_design { vpackages vsources vincludes vdefines } {
+    # TODO: Hardcoded BASEJUMP_STL_DIR
+    set hard_root $::env(BASEJUMP_STL_DIR)/hard/ultrascale_plus
+
+    set include_dirs {}
+    lappend include_dirs ${vincludes}
+    lappend include_dirs ${hard_root}/bsg_async
+    lappend include_dirs ${hard_root}/bsg_link
+    lappend include_dirs ${hard_root}/bsg_mem
+    lappend include_dirs ${hard_root}/bsg_misc
+    set_property include_dirs ${include_dirs} [get_filesets sources_1]
+
+    set final_vsources ${vpackages}
+    foreach f ${vsources} {
+       set harden ""
+       set vbase [file tail $f]
+       foreach h [glob ${hard_root}/*/*.sv] {
+          set hbase [file tail $h]
+          if {${vbase} == ${hbase}} {
+              set harden ${h}
+              break
+          }
+       }
+       if {${harden}!=""} {
+          puts "BSG-INFO: Hardening ${vbase}"
+          lappend final_vsources ${harden}
+       } else {
+          puts "BSG-INFO: ${vbase}"
+          lappend final_vsources ${f}
+       }
     }
 
-    set_property include_dirs $dirs [get_filesets sources_1]
-    add_files -fileset sources_1 -scan_for_includes $files
-    set_property -quiet file_type "SystemVerilog" [get_files *pkg*]
-    set_property -quiet file_type "SystemVerilog" [get_files *.v]
-    set_property -quiet file_type "SystemVerilog" [get_files *.sv]
-    set_property -quiet file_type "Verilog Header" [get_files *.vi]
-    set_property -quiet file_type "Verilog Header" [get_files *.vh]
-    set_property -quiet file_type "Verilog Header" [get_files *.svh]
-    set_property -quiet file_type "Verilog" [get_files top.v]
+    add_files -fileset sources_1 -scan_for_includes ${final_vsources}
+
+    set_property -quiet file_type "SystemVerilog" [get_files -quiet *pkg*]
+    set_property -quiet file_type "SystemVerilog" [get_files -quiet *.v]
+    set_property -quiet file_type "SystemVerilog" [get_files -quiet *.sv]
+    set_property -quiet file_type "Verilog Header" [get_files -quiet *.vi]
+    set_property -quiet file_type "Verilog Header" [get_files -quiet *.vh]
+    set_property -quiet file_type "Verilog Header" [get_files -quiet *.svh]
+    set_property -quiet file_type "Verilog" [get_files -quiet top.v]
+
     update_compile_order -quiet -fileset sources_1
 }
 

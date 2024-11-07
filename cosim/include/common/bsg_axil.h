@@ -24,13 +24,11 @@
 #define ZYNQ_AXI_TIMEOUT 1000
 #endif
 
+using std::string;
+
 extern "C" {
-int bsg_dpi_time();
+int bsg_zynq_dpi_time();
 }
-using namespace std;
-using namespace bsg_nonsynth_dpi;
-using namespace boost::coroutines2;
-using namespace std::placeholders;
 
 typedef coroutine<void>::pull_type coro_t;
 typedef coroutine<void>::push_type yield_t;
@@ -241,8 +239,8 @@ template <unsigned int A, unsigned int D> class maxil {
         this->p_bready = 1;
         do {
             if (timeout_counter++ == ZYNQ_AXI_TIMEOUT) {
-                bsg_pr_err("bsg_zynq_pl: %s, AXI M bvalid timeout at %lld\n,",
-                           base.c_str(), bsg_dpi_time());
+                bsg_pr_err("bsg_zynq_pl: %s, AXI M bvalid timeout at %d\n,",
+                           base.c_str(), bsg_zynq_dpi_time());
             }
 
             if (this->p_bvalid == 1) {

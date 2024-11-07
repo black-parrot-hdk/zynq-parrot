@@ -1,0 +1,139 @@
+
+
+#############################
+# Common variables
+#############################
+DEFINES   += $(call bsg_fn_upper,$(TOOL))
+DEFINES   += $(call bsg_fn_upper,HOST_$(HOST))
+ifeq ($(ZYNQ_PL_DEBUG),1)
+DEFINES   += ZYNQ_PL_DEBUG
+endif
+ifeq ($(ZYNQ_PS_DEBUG),1)
+DEFINES   += ZYNQ_PS_DEBUG
+endif
+
+VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_tag/bsg_tag_pkg.sv
+VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_axi/bsg_axi_pkg.sv
+VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_cache/bsg_cache_pkg.sv
+VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_dmc/bsg_dmc_pkg.sv
+VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_link/bsg_link_pkg.sv
+VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_noc/bsg_mesh_router_pkg.sv
+VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_noc/bsg_noc_pkg.sv
+VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_noc/bsg_wormhole_router_pkg.sv
+
+VSOURCES  += $(COSIM_VSRC_DIR)/bsg_zynq_pl_shell.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top_zynq.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top.v
+VINCLUDES += $(COSIM_INCLUDE_DIR)/$(TOOL)
+VINCLUDES += $(DESIGN_VSRC_DIR)
+VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_async
+VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_misc
+VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_noc
+VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_tag
+VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_test
+VINCLUDES += $(ZP_BP_SUB_DIR)/manycore/v
+
+CSOURCES  += $(MAIN_PROGRAM)
+CSOURCES  += $(HOST_PROGRAM)
+CINCLUDES += $(COSIM_INCLUDE_DIR)/common
+CINCLUDES += $(COSIM_INCLUDE_DIR)/$(TOOL)
+CINCLUDES += $(BP_SDK_INSTALL_DIR)/include
+CINCLUDES += $(BP_TOOLS_INSTALL_DIR)/include
+CINCLUDES += $(BASEJUMP_STL_DIR)/bsg_mem
+CINCLUDES += $(BLACKPARROT_SUB_DIR)/blackparrot/src
+CINCLUDES += $(BSG_REPLICANT_DIR)/libraries
+CFLAGS    +=
+
+BUILD_COLLATERAL += $(DESIGN_VSRC_DIR)/zynq_pkgdef.svh
+RUN_COLLATERAL   +=
+
+BUILD_ARGS +=
+RUN_ARGS   +=
+
+#############################
+# Common targets
+#############################
+%/zynq_pkgdef.svh:
+	@$(ECHO) "\`ifndef ZYNQ_PKGDEF_SVH"  > $@
+	@$(ECHO) "\`define ZYNQ_PKGDEF_SVH" >> $@
+	@$(ECHO) "$(bsg_var_tab)\`include \"bsg_defines.sv\"" >> $@
+	@for def in $(DEFINES); do \
+		if echo $$def | grep -q '='; then \
+			name=$$(echo $$def | cut -d= -f1); \
+			value=$$(echo $$def | cut -d= -f2); \
+			hvalue=$$(echo $$def | cut -d= -f2 | sed "s/^0x/'h/"); \
+			if echo $$value | grep -Eq '^0x[0-9a-fA-F]+$$'; then \
+				$(ECHO) "$(bsg_var_tab)localparam $$name=$$hvalue;" >> $@; \
+			elif echo $$value | grep -Eq '^[0-9]+$$'; then \
+				$(ECHO) "$(bsg_var_tab)localparam $$name=$$value;" >> $@; \
+			else \
+				$(ECHO) "$(bsg_var_tab)localparam $$name=\"$$value\";" >> $@; \
+			fi; \
+		else \
+			$(ECHO) "$(bsg_var_tab)localparam $$def=\"defined\";" >> $@; \
+		fi; \
+	done
+	@$(ECHO) "\`endif" >> $@
+
+#%/zynq_pkgdef.svh:
+#	$(ECHO) "\`ifndef ZYNQ_PKGDEF_SVH"  > $@
+#	$(ECHO) "\`define ZYNQ_PKGDEF_SVH" >> $@
+#	@for def in $(DEFINES); do \
+#		if echo $$def | grep -q '='; then \
+#			name=$$(echo $$def | cut -d= -f1); \
+#			value=$$(echo $$def | cut -d= -f2); \
+#			if echo $$value | grep -Eq '^0x[0-9a-fA-F]+$$'; then \
+#				hex_value=$$(echo $$value | sed 's/^0x/\'h/'); \
+#				$(ECHO) "localparam $$name=$$hex_value;" >> $@; \
+#			elif echo $$value | grep -Eq '^[0-9]+$$'; then \
+#				$(ECHO) "localparam $$name=$$value;" >> $@; \
+#			else \
+#				$(ECHO) "localparam $$name=\"$$value\";" >> $@; \
+#			fi; \
+#		else \
+#			$(ECHO) "localparam $$def=\"defined\";" >> $@; \
+#		fi; \
+#	done
+#	$(ECHO) "\`endif" >> $@
+
+clean: ## cleans the working directory
+clean:
+	@$(RMRF) obj_dir
+	@$(RMRF) trace.fst
+	@$(RMRF) *.log
+	@$(RMRF) *.trace
+	@$(RMRF) *.riscv
+	@$(RMRF) *.dump
+	@$(RMRF) csrc
+	@$(RMRF) ucli.key
+	@$(RMRF) vc_hdrs.h
+	@$(RMRF) simv
+	@$(RMRF) simv.daidir
+	@$(RMRF) vcdplus.vpd
+	@$(RMRF) *.nbf
+	@$(RMRF) *.elf
+	@$(RMRF) *.trace
+	@$(RMRF) *.jou
+	@$(RMRF) *.b64
+	@$(RMRF) xsim.dir
+	@$(RMRF) flist.vcs
+	@$(RMRF) flist.*.vcs
+	@$(RMRF) xcelium.d
+	@$(RMRF) *.history
+	@$(RMRF) *.trace
+	@$(RMRF) *_bd_1.bit
+	@$(RMRF) *_bd_1.hwh
+	@$(RMRF) *_bd_1.tcl
+	@$(RMRF) *_bd_1.map
+	@$(RMRF) DVEfiles
+	@$(RMRF) ip_repo
+	@$(RMRF) control-program
+	@$(RMRF) $(DESIGN_DIR)/*.o
+	@$(RMRF) $(COSIM_CSRC_DIR)/*.o
+ifneq (,$(BUILD_COLLATERAL))
+	@$(RMRF) $(BUILD_COLLATERAL)
+endif
+ifneq (,$(RUN_COLLATERAL))
+	@$(RMRF) $(RUN_COLLATERAL)
+endif
+

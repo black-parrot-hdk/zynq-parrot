@@ -1,63 +1,51 @@
 
-include $(COSIM_MK_DIR)/Makefile.env
-
+# TODO: Move to makefile.env
 export ELAB    ?= 1
 export SYNTH   ?= 1
 export IMPL    ?= 1
 export HANDOFF ?= 1
 export THREADS ?= 8
 
-all:
-	@echo "Rules for Vivado; see $(TOP)/cosim/mk/Makefile.vivado for more:"
-	@grep -o -e "^[a-Z_%\.]*:" $(TOP)/cosim/mk/Makefile.vivado
+export BOARDNAME
+export BASENAME
+export PART
+export TOP_MODULE
 
-fpga_report_build_block:
+export VPACKAGES
+export VSOURCES
+export VINCLUDES
+$(foreach define,$(DEFINES),$(eval export $(define)))
+
+BITSTREAM_FILES ?= $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.map $(BASENAME)_bd_1.hwh
+
+ip_repo: ## packages the IP before synthesis
+ip_repo: $(BUILD_COLLATERAL)
+	@$(MKDIR) $@
+	@$(VIVADO_RUN) -source vivado-build-ip.tcl
+	-@grep --color "CRITICAL WARNING:" vivado.log || true
+	-@grep --color "ERROR:" vivado.log || true
+	-@tail -n5 vivado.log
+
+fpga_build: ## creates an FPGA bitstream
+fpga_build: $(BASENAME)_bd_proj.xpr
+$(BASENAME)_bd_proj.xpr: ip_repo
+	$(eval TIMING_RPT := $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper_timing_summary_routed.rpt)
+	$(VIVADO_RUN) -source vivado-build-bd.tcl
 	-@grep --color "CRITICAL WARNING:" vivado.log || true
 	-@grep --color "ERROR:" vivado.log || true
 	-@tail -n5 vivado.log
 	-@grep --color "ERROR:" `find . -iname "*.log"` || true
-	-@grep -m 1 -A 3 WNS $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper_timing_summary_routed.rpt
-	-@echo "## See $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper_timing_summary_routed.rpt for timing report."
+	-@grep -m 1 -A 3 WNS $(TIMING_RPT) || true
+	-@echo "See $(TIMING_RPT) for timing report."
 
-# this packages the IP, but does not continue to synthesis, pnr and bitfile generation
-# on the x86 server
-fpga_build_ip: ip_repo
-ip_repo: $(FLIST) $(BUILD_COLLATERAL)
-	mkdir $@
-	$(VIVADO_RUN) -source $(CURR)/vivado-build-ip.tcl
-	-@grep --color "CRITICAL WARNING:" vivado.log || true
-	-@grep --color "ERROR:" vivado.log || true
-	-@tail -n5 vivado.log
-
-fpga_build: ip_repo
-	$(VIVADO_RUN) -source $(CURR)/vivado-build-bd.tcl
-	$(MAKE) fpga_report_build_block
-
-# we are looking for a *_bd_1.bit, *_bd_1_bd.map, *_bd_1.hwh
-# 
-#
-pack_bitstream:
+pack_bitstream: ## packs up bistream collateral
+pack_bitstream: $(BASENAME)_bd_proj.xpr
 	$(TAR) -Jc $(BASENAME)_bd_1* | $(BASE64) > ../$(BASENAME)_bd_1.$(HOST).$(BOARDNAME).tar.xz.b64
 
-open:
-	$(VIVADO) $(BASENAME)_bd_proj.xpr &
+open: ## opens the block diagram for the IP project
+open: $(BASENAME)_bd_proj.xpr
+	$(VIVADO_RUN) $< &
 
 open_ip.%:
-	$(VIVADO) $*_ip_proj.xpr &
-
-clean:
-	rm -rf $(BUILD_COLLATERAL)
-	rm -rf xsim.dir/
-	rm -rf flist*.vcs
-	rm -rf *.fpga
-	rm -rf *.log
-	rm -rf *.jou
-	rm -rf *.b64
-	rm -rf *_ip_proj*
-	rm -rf ip_repo
-	rm -rf *_bd_proj*
-	rm -rf *_bd_1.bit *_bd_1.hwh *_bd_1.tcl *_bd_1.map
-	rm -rf vivado_pid*.str
-	rm -rf NA/
-	rm -f *.sv
+	$(VIVADO_RUN) $*_ip_proj.xpr &
 

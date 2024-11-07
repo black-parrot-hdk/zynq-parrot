@@ -1,8 +1,4 @@
 
-`timescale 1 ps / 1 ps
-
-`include "bsg_zynq_pl.vh"
-
 module top
   #(
     // Parameters of Axi Slave Bus Interface S00_AXI

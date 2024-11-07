@@ -13,7 +13,7 @@ $(BP_FLIST): $(BLACKPARROT_DIR)/bp_top/syn/flist.vcs
 	cat $^ | envsubst > $@
 	sed -i "s/BASEJUMP_STL_DIR/BP_BASEJUMP_STL_DIR/g" $@
 	sed -i "/bp_common_pkg.sv/d" $@
-	sed -i "1i $(CURR_VSRC_DIR)/bp_common_pkg.sv" $@
+	sed -i "1i $(DESIGN_VSRC_DIR)/bp_common_pkg.sv" $@
 	echo "+incdir+$(COSIM_DIR)/include/vivado" >> $@
 
 $(MC_FLIST): $(BSG_MANYCORE_DIR)/machines/arch_filelist.mk
@@ -26,7 +26,7 @@ $(MC_FLIST): $(BSG_MANYCORE_DIR)/machines/arch_filelist.mk
 
 $(FLIST): $(BP_FLIST) $(MC_FLIST) $(BASE_FLIST)
 	cat $^ | envsubst > $@
-	echo "+incdir+$(CURR_VSRC_DIR)" >> $@
+	echo "+incdir+$(DESIGN_VSRC_DIR)" >> $@
 	# Remove duplicates, TODO: detect automatically
 	sed -i "/imports\/basejump_stl.*bsg_cache_pkg.sv/d" $@
 	sed -i "/imports\/basejump_stl.*bsg_noc_pkg.sv/d" $@

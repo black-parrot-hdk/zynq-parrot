@@ -1,5 +1,4 @@
 
-`timescale 1 ps / 1 ps
 `include "bsg_defines.sv"
 
 module bsg_nonsynth_zynq_testbench;
@@ -586,60 +585,83 @@ module bsg_nonsynth_zynq_testbench;
 `ifdef VERILATOR
    initial
      begin
-       if ($test$plusargs("bsg_trace") != 0)
-         begin
-           $display("[%0t] Tracing to trace.fst...\n", $time);
-           $dumpfile("trace.fst");
-           $dumpvars();
-         end
+   `ifdef FSTON
+     if ($test$plusargs("bsg_trace") != 0)
+       begin
+         $display("[%0t] Tracing to dump.fst...\n", $time);
+         $dumpfile("dump.fst");
+         $dumpvars();
+       end
+   `endif
      end
+
+   export "DPI-C" task bsg_zynq_dpi_next;
+   task bsg_zynq_dpi_next();
+     $error("BSG-ERROR: bsg_zynq_dpi_next should not be called from Verilator");
+     bsg_zynq_dpi_fini("verilator next call");
+   endtask
 `else
    import "DPI-C" context task cosim_main(string c_args);
    string c_args;
    initial
      begin
-       if ($test$plusargs("bsg_trace") != 0)
-`ifdef VCS
+       $assertoff();
+       @(posedge aclk);
+       @(posedge aresetn);
+       $asserton();
+   `ifdef VCS
+     `ifdef VCDPLUSON
+       if ($test$plusargs("bsg_trace"))
          begin
            $display("[%0t] Tracing to vcdplus.vpd...\n", $time);
-           $vcdplusfile("vcdplus.vpd");
            $vcdpluson();
            $vcdplusautoflushon();
          end
-`endif
-`ifdef XCELIUM
+     `endif
+   `endif
+   `ifdef XCELIUM
+     `ifdef SHMPLUSON
+       if ($test$plusargs("bsg_trace"))
          begin
            $shm_open("dump.shm");
            $shm_probe("ASM");
          end
-`endif
-       if ($test$plusargs("c_args") != 0)
+     `endif
+   `endif
+       if ($test$plusargs("c_args"))
          begin
            $value$plusargs("c_args=%s", c_args);
          end
        cosim_main(c_args);
-       $finish;
+       bsg_zynq_dpi_fini("cosim_main return");
      end
 
    // Evaluate the simulation, until the next clk_i positive edge.
    //
-   // Call bsg_dpi_next in simulators where the C testbench does not
+   // Call bsg_zynq_dpi_next in simulators where the C testbench does not
    // control the progression of time (i.e. NOT Verilator).
    //
    // The #1 statement guarantees that the positive edge has been
    // evaluated, which is necessary for ordering in all of the DPI
    // functions.
-   export "DPI-C" task bsg_dpi_next;
-   task bsg_dpi_next();
+   export "DPI-C" task bsg_zynq_dpi_next;
+   task bsg_zynq_dpi_next();
      @(posedge aclk);
      #1;
    endtask
 `endif
 
-   export "DPI-C" function bsg_dpi_time;
-   function int bsg_dpi_time();
-     return $time;
+   export "DPI-C" function bsg_zynq_dpi_time;
+   function int bsg_zynq_dpi_time();
+     return int'($time);
    endfunction
+
+   export "DPI-C" function bsg_zynq_dpi_fini;
+   function void bsg_zynq_dpi_fini(string reason);
+     $display("[BSG-INFO]: Finish called for reason: %s", reason);
+     $finish;
+   endfunction
+
 
 endmodule
 

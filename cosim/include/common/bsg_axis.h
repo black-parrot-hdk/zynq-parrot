@@ -24,12 +24,11 @@
 #endif
 
 extern "C" {
-int bsg_dpi_time();
+int bsg_zynq_dpi_time();
 }
-using namespace std;
 using namespace bsg_nonsynth_dpi;
 using namespace boost::coroutines2;
-using namespace std::placeholders;
+using namespace std;
 
 typedef coroutine<void>::pull_type coro_t;
 typedef coroutine<void>::push_type yield_t;

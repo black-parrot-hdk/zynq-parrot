@@ -1,6 +1,4 @@
 
-`timescale 1 ps / 1 ps
-
 	module example_axi_v1_0_S00_AXI #
 	(
 		// Users to add parameters here

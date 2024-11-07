@@ -368,12 +368,12 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
             verif_data = send_mc_read(zpl, x_tile, y_tile, epa << 2);
 
             // Some verification reads are expected to fail e.g. CSRs
-            if (req_pkt.payload == resp_pkt.data) {
-                bsg_pr_info("Received verification: %x==%x\n", req_pkt.payload,
-                            resp_pkt.data);
+            if (nbf_data == verif_data) {
+                bsg_pr_info("Received verification: %x==%x\n", verif_data,
+                            nbf_data);
             } else {
-                bsg_pr_info("Failed verification: %x!=%x\n", req_pkt.payload,
-                            resp_pkt.data);
+                bsg_pr_info("Failed verification: %x!=%x\n", verif_data,
+                            nbf_data);
             }
 #endif
         }

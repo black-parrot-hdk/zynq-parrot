@@ -17,7 +17,7 @@ else ifeq ($(BOARDNAME),ultra96v2)
 DEFINES += DRAM_ALLOCATE_SIZE_MB=200
 endif
 
-SIM_ARGS += $(NBF_FILE)
+RUN_ARGS += $(NBF_FILE)
 
 include $(TOP)/cosim/mk/Makefile.zynq
 

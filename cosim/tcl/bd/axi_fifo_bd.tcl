@@ -20,7 +20,7 @@ proc vivado_create_ip { args } {
 
     set BASEJUMP_STL_DIR $::env(BASEJUMP_STL_DIR)
     set BLACKPARROT_SUB_DIR $::env(BLACKPARROT_SUB_DIR)
-    set CURR_VSRC_DIR $::env(CURR_VSRC_DIR)
+    set DESIGN_VSRC_DIR $::env(DESIGN_VSRC_DIR)
     set COSIM_VSRC_DIR $::env(COSIM_VSRC_DIR)
 
     lappend dir_list "${BASEJUMP_STL_DIR}/bsg_misc"

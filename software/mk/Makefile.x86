@@ -1,0 +1,56 @@
+
+#############################
+# X86 Target Overrides
+#############################
+
+.centos_openocd_deps:
+	@$(eval OPENOCD_DEPS_DIR := $(TARGET_WORK)/openocd_deps)
+	@$(eval export PATH := $(OPENOCD_DEPS_DIR)/bin:$(PATH))
+	@$(MKDIR) $@ $(OPENOCD_DEPS_DIR)
+	@$(CD) $(OPENOCD_DEPS_DIR)/; wget -qO- http://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz | tar xzv
+	@$(CD) $(OPENOCD_DEPS_DIR)/; wget -qO- http://ftp.gnu.org/gnu/automake/automake-1.15.tar.gz | tar xzv
+	@$(CD) $(OPENOCD_DEPS_DIR)/; wget -qO- http://ftp.gnu.org/gnu/libtool/libtool-2.4.6.tar.gz | tar xzv
+	@$(CD) $(OPENOCD_DEPS_DIR)/; wget -qO- https://pkgconfig.freedesktop.org/releases/pkg-config-0.28.tar.gz | tar xzv
+	@$(CD) $(OPENOCD_DEPS_DIR)/automake-1.15;   ./configure --prefix=$(OPENOCD_DEPS_DIR); make install
+	@$(CD) $(OPENOCD_DEPS_DIR)/autoconf-2.69;   ./configure --prefix=$(OPENOCD_DEPS_DIR); make install
+	@$(CD) $(OPENOCD_DEPS_DIR)/libtool-2.4.6;   ./configure --prefix=$(OPENOCD_DEPS_DIR); make install
+	@$(CD) $(OPENOCD_DEPS_DIR)/pkg-config-0.28; ./configure --prefix=$(OPENOCD_DEPS_DIR); make install
+
+ifneq (,$(findstring centos,$(shell python -m platform)))
+TARGET_OPENOCD_DEPS += .centos_openocd_deps
+endif
+
+$(X86_SDK)/lib/libpynq.a:
+	@$(TOUCH) $@
+	@$(ECHO) "Successfully built $@!"
+
+$(X86_SDK)/environment-setup-%:
+	@$(eval env_vars := $(foreach V, \
+		$(filter-out bsg_var_% bsg_fn_% $(VARS_OLD),$(sort $(.VARIABLES))), \
+		$(if $($(V)),'$V="$($V)"')))
+	@$(MKDIR) $(@D) $(TARGET_SDK)/bin $(TARGET_SDK)/lib $(TARGET_SDK)/include
+	@$(ECHO) '#######################################' >> $@
+	@$(ECHO) '# Currently Set Environment Variables #' >> $@
+	@$(ECHO) '#######################################' >> $@
+	@for e in ${env_vars}; do \
+		$(ECHO) "$$e" >> $@; \
+	done
+	@$(SED_I) '/PATH/d' $@
+	@$(SED_I) '/CURDIR/d' $@
+	@$(SED_I) '/MAKE/d' $@
+	@$(SED_I) '/PART/d' $@
+	@$(SED_I) '/SHELL/d' $@
+	@$(SED_I) '/TOP/d' $@
+	@$(ECHO) "#######################################" >> $@
+	@$(ECHO) "# Extra Environment Manipulation ######" >> $@
+	@$(ECHO) "#######################################" >> $@
+	@$(ECHO) "# unset default exported variables for submake" >> $@
+	@$(ECHO) "# but keep threads " >> $@
+	@$(ECHO) 'export MAKEFLAGS=""' >> $@
+	@$(ECHO) "unset SHELL" >> $@
+	@$(ECHO) "export PATH=\"\$${TARGET_SDK}/bin:\$${PATH}"\" >> $@
+	@$(ECHO) "export CONFIGURE_FLAGS=\"\$${CONFIGURE_FLAGS} --prefix=$(TARGET_SDK)\"" >> $@
+	@$(ECHO) "" >> $@
+	@$(MKEXE) $@
+	@$(ECHO) 'Successfully built $@!'
+
