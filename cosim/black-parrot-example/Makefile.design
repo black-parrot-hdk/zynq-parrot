@@ -29,12 +29,15 @@ VDEFINES += RAND_COV=1
 endif
 endif
 
-# Dromajo co-emulation
-DROMAJO_COEMU ?= 1
-ifneq ($(DROMAJO_COEMU),0)
-VDEFINES += DROMAJO_COEMU=1
+# ISA co-emulation
+ifeq ($(COEMU),1)
+VDEFINES += COEMU=1
+ifeq ($(SPIKE_COEMU),1)
+  VDEFINES += SPIKE_COEMU=1
+else
+  VDEFINES += DROMAJO_COEMU=1
 endif
-
+endif
 
 #############################
 # Design Defines
@@ -97,19 +100,14 @@ NBF_NCPUS ?= 1
 
 VPATH := $(wildcard $(BLACKPARROT_SDK_DIR)/prog/*)
 %.nbf: %.riscv
-	cp $< $(CURR)/
+	cp $< $(CURR)
 	$(RISCV_OBJDUMP) -D $< > $*.dump
 	$(RISCV_OBJCOPY) -O verilog $< $*.mem
 	$(SED) -i "s/@8/@0/g" $*.mem
 	$(PYTHON) $(BP_COMMON_DIR)/software/py/nbf.py \
-		--debug --skip_zeros --config --boot_pc 0x80000000 --mem $*.mem --ncpus $(NBF_NCPUS) > $@
+		--skip_zeros --config --boot_pc 0x80000000 --mem $*.mem --ncpus $(NBF_NCPUS) > $@
 	rm $*.mem
 
 PROG ?= hello_world
 NBF_FILE ?= $(PROG).nbf
 ELF_FILE ?= $(PROG).riscv
-RUN_COLLATERAL = $(NBF_FILE)
-#ifdef DROMAJO_COEMU
-RUN_COLLATERAL += $(ELF_FILE)
-#endif
-

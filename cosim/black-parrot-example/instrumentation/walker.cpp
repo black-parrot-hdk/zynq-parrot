@@ -604,19 +604,6 @@ bool findIfInput(data_structure &ds, string net) {
   return find(ds.moduleInputs.begin(), ds.moduleInputs.end(), net) != ds.moduleInputs.end();
 }
 
-inline bool matchesPattern(const string& test, const string& prefix) {
-  // Check if the text starts with the prefix
-  if (test.substr(0, prefix.size()) == prefix) {
-    // Check if the character immediately following the prefix is '.' or '['
-    char nextChar = test[prefix.size()];
-    if (nextChar == '.' || nextChar == '[') {
-      return true;
-    }
-  }
-  return false;
-}
-
-
 unordered_set<string> global_visited;
 
 void traverse(string pnet, 
@@ -1616,7 +1603,7 @@ string evalOperation(vpiHandle h) {
   } else {
     result = evalExpr(h, found);
     if(!found)
-      walker_error("Did not really evaluate the function, check `found`");
+      walker_warn("Did not really evaluate the function, check `found`");
   }
   debug("Done evaluating operation\n");
 

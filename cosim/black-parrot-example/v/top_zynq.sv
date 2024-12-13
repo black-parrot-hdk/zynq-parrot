@@ -193,7 +193,7 @@ module top_zynq
    localparam num_regs_pl_to_ps_lp  = 11;
 
    localparam num_fifo_ps_to_pl_lp = 1;
-`ifdef DROMAJO_COEMU
+`ifdef COEMU
    localparam num_fifo_pl_to_ps_lp = 24;
 `else
    localparam num_fifo_pl_to_ps_lp = 1;
@@ -482,7 +482,7 @@ module top_zynq
      );
 `endif
 
-`ifdef DROMAJO_COEMU
+`ifdef COEMU
   /* start of Dromajo FPGA-synthesizable co-emulation */
   `declare_bp_be_if(vaddr_width_p, paddr_width_p, asid_width_p, branch_metadata_fwd_width_p, fetch_ptr_p, issue_ptr_p);
   bp_be_commit_pkt_s commit_pkt;
@@ -655,9 +655,9 @@ module top_zynq
     );
 
   wire pl2ps_commit_v_lo  = commit_fifo_v_lo & &pl2ps_commit_readies_lo &
-                              commit_debug_r & ~freeze_r & instret_v_r;
+                              ~commit_debug_r & ~freeze_r & instret_v_r;
   wire pl2ps_xcpt_v_lo    = commit_fifo_v_lo & &pl2ps_commit_readies_lo &
-                              commit_debug_r & ~freeze_r & (pc_lo != '0) & trap_v_r;
+                              ~commit_debug_r & ~freeze_r & trap_v_r;
 
   wire [31:0] metadata_lo; // TODO redundant (dromajo API should provide this)
   reg end_r;
@@ -821,12 +821,12 @@ module top_zynq
   assign pl_to_ps_fifo_data_li[21] = pl2ps_xcpt_v_lo ? cause_r[63:32] : '1;
   assign pl_to_ps_fifo_data_li[20] = pl2ps_xcpt_v_lo ? cause_r[31:0]  : '1;
 
-  assign pl_to_ps_fifo_data_li[19] = '0;
+  assign pl_to_ps_fifo_data_li[19] = 32'b0;
   assign pl_to_ps_fifo_data_li[18] = frd_raw_li[63:32];
   assign pl_to_ps_fifo_data_li[17] = frd_raw_li[31:0];
   assign pl_to_ps_fifo_data_li[16] = {mcycle_r[23:0], 3'b0, frd_addr_r[4:0]}; // last 27b for synchronizing to mcycle
 
-  assign pl_to_ps_fifo_data_li[15] = '0;
+  assign pl_to_ps_fifo_data_li[15] = 32'b0;
   assign pl_to_ps_fifo_data_li[14] = ird_raw_li[63:32];
   assign pl_to_ps_fifo_data_li[13] = ird_raw_li[31:0];
   assign pl_to_ps_fifo_data_li[12] = {mcycle_r[23:0], 3'b0, ird_addr_r[4:0]};

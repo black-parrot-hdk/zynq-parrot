@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <locale.h>
-#include <pthread.h>
 #include <time.h>
 #include <queue>
 #include <unistd.h>
@@ -36,14 +35,14 @@
 // this is needed for peeking into dromajo_cosim_state to extract PC for precisely trapping exceptions
 #include "riscv_machine.h"
 #include "riscv_cpu.h"
-#define DROMAJO_MAX_INSNS 0x7fff'ffff'ffff'ffffull
-long long         max_insns_cnt = DROMAJO_MAX_INSNS;
+#define MAX_INSNS 0x7fff'ffff'ffff'ffffull
+long long         max_insns_cnt = MAX_INSNS;
 dromajo_cosim_state_t *dromajo_pointer;
-bool                  dromajo_cosim_failed;
-bool                  dromajo_inited = false;
-std::vector<bool>*    dromajo_finished;
-long long int         dromajo_start_time = 0; // start time of dromajo
-long long int         dromajo_instret = 0;
+bool                  coemu_failed;
+bool                  coemu_inited = false;
+std::vector<bool>*    coemu_finished;
+long long int         coemu_start_time = 0; // start time of dromajo
+long long int         coemu_instret = 0;
 // ignores the first 14 (or more) insns while dromajo executes setup code
 #ifdef FPGA
 int                   dromajo_ignore_setup_insns = 0;
@@ -52,10 +51,10 @@ int                   dromajo_ignore_setup_insns = 14;
 #endif
 int                   dromajo_setup_insns_cnt = 0;
 
-void dromajo_init(int hartid, int ncpus, int memory_size, std::string _prog_str) {
-  dromajo_inited = true;
-  bsg_pr_info("[DROMAJO]: Initiating Dromajo co-emulation\n");
-  dromajo_finished = new vector<bool>(ncpus, false);
+void coemu_init(int hartid, int ncpus, int memory_size, std::string _prog_str) {
+  coemu_inited = true;
+  bsg_pr_info("[COEMU]: Initiating Dromajo co-emulation\n");
+  coemu_finished = new vector<bool>(ncpus, false);
 
   char dromajo_str[50];
   sprintf(dromajo_str, "dromajo");
@@ -71,7 +70,7 @@ void dromajo_init(int hartid, int ncpus, int memory_size, std::string _prog_str)
   char *prog_str = new char [_prog_str.length()+1];
   strcpy(prog_str, _prog_str.c_str());
 
-  char* argv[] = {dromajo_str, ncpus_str, memsize_str, prog_str};
+  char* argv[] = {dromajo_str, ncpus_str, memsize_str, trace_str, prog_str};
   dromajo_pointer = dromajo_cosim_init(sizeof(argv)/sizeof(char *), argv);
 
   dromajo_setup_insns_cnt = dromajo_ignore_setup_insns;
@@ -79,27 +78,26 @@ void dromajo_init(int hartid, int ncpus, int memory_size, std::string _prog_str)
 
 bool dromajo_step(int hartid, uint64_t pc, uint32_t insn,
     uint64_t wdata, uint64_t mstatus, bool verbose) {
-  if(dromajo_instret == 0) {
-    dromajo_start_time = get_current_time_in_seconds();
-    bsg_pr_dbg_ps("dromajo_start_time time: %lf\n", dromajo_start_time);
+  if(coemu_instret == 0) {
+    coemu_start_time = get_current_time_in_seconds();
+    bsg_pr_dbg_ps("dromajo_start_time time: %lf\n", coemu_start_time);
     while(dromajo_setup_insns_cnt-- > 0) {
       int exit_code = dromajo_cosim_step(dromajo_pointer, hartid, pc, insn, wdata, mstatus, true, verbose);
       if(exit_code)
         bsg_pr_dbg_ps("Dromajo VM out-of-sync!\n\n\n");
       else {
         bsg_pr_dbg_ps("Dromajo VM henceforth in-sync\n");
-        dromajo_instret++;
+        coemu_instret++;
         return false;
       }
-      dromajo_instret++;
+      coemu_instret++;
     }
   }
   return dromajo_cosim_step(dromajo_pointer, hartid, pc, insn, wdata, mstatus, true, verbose);
 }
 
-void dromajo_finish() {
+void coemu_finish() {
   dromajo_cosim_fini(dromajo_pointer);
-  dromajo_instret = 0; // for future restart
 }
 
 uint64_t dromajo_get_pc() {
@@ -131,26 +129,28 @@ bool bp_done = false;
 bool last_commit = false;
 int self_destruct = 0;
 
-int cmt_cnt = 0, trap_cnt = 0, irf_cnt = 0, frf_cnt = 0;
 #ifdef NEON
 uint32x4_t temp_vector;
 #endif
 
-bool dromajo_coemulation(bsg_zynq_pl *zpl) {
+bool coemu_exec(bsg_zynq_pl *zpl) {
+  static int trap_cnt = 0;
+  static int cmt_cnt = 0;
   // commit_fifo
   if (cmt_cnt == 0)
     cmt_cnt = zpl->shell_read(GP0_RD_PL2PS_FIFO_4_CTRS);
+
   if (cmt_cnt != 0) {
     cmt_cnt--;
 #ifdef NEON
     temp_vector = zpl->shell_read4(GP0_RD_PL2PS_FIFO_4_DATA)
-      bp_insn     = temp_vector[0];
+    bp_insn     = temp_vector[0];
     bp_md       = temp_vector[1];
     bp_pc       = join(temp_vector[3], temp_vector[2]);
 
     temp_vector = zpl->shell_read4(GP0_RD_PL2PS_FIFO_8_CTRS);
     bp_mstatus  = join(temp_vector[1], temp_vector[0]);
-    bp_minstret   = join(temp_vector[3], temp_vector[2]);
+    bp_minstret = join(temp_vector[3], temp_vector[2]);
 #else
     bp_insn     = zpl->shell_read(GP0_RD_PL2PS_FIFO_4_DATA);
     bp_md       = zpl->shell_read(GP0_RD_PL2PS_FIFO_5_DATA);
@@ -192,12 +192,11 @@ bool dromajo_coemulation(bsg_zynq_pl *zpl) {
     bp_epc   = ((uint64_t)zpl->shell_read(GP0_RD_PL2PS_FIFO_23_DATA) << 32)
       | (uint32_t)zpl->shell_read(GP0_RD_PL2PS_FIFO_22_DATA);
 #endif
-    bp_eminstret = minstret.front(); // true because current insn is not committed (trap)
-    if((bp_cause & 0xFFFFFFF) != 0xFFFFFFF) { // when '1, not trap
-      bsg_pr_dbg_ps("[Trace]:\033[31m cause: 0x%016llx | epc: 0x%016llx | minstret: 0x%016llx \033[0m\n", bp_cause, bp_epc, bp_eminstret);
+    if((bp_cause & 0xFFFFFFF) != 0xFFFFFFF) { // when '1, not a trap
+      bsg_pr_dbg_ps("[Trace]:\033[31m cause: 0x%016llx | epc: 0x%016llx | minstret: 0x%016llx \033[0m\n", bp_cause, bp_epc, bp_minstret);
       cause.push(bp_cause);
       epc.push(bp_epc);
-      eminstret.push(bp_eminstret);
+      eminstret.push(bp_minstret);
     }
   }
 
@@ -237,26 +236,21 @@ bool dromajo_coemulation(bsg_zynq_pl *zpl) {
     bsg_pr_dbg_ps("[Trace]: frf[%d] = %016llx\n", bp_frd_addr, bp_frd_data);
   }
 
-  //if(dromajo_instret % 0x100000 == 0)
-  //  bsg_pr_info("ps.cpp: minstret: dromajo %08x | bp %016llx\n", dromajo_instret, minstret.front());
-  //else
-  //  bsg_pr_dbg_ps("ps.cpp: minstret: dromajo %08x | bp %016llx\n", dromajo_instret, minstret.front());
-
   // taking trap
-  while(1) // for recursive traps
-    if(!cause.empty() && (minstret.front() == dromajo_instret) && (epc.front() == dromajo_get_pc())) {
-      bsg_pr_info("ps.cpp: Can take trap | eminstret: 0x%x | dromajo_instret: 0x%x | dromajo_instrret: 0x%x\n",eminstret.front() ,dromajo_instret, dromajo_get_minstret());
+  while(1) // while necessary for recursive traps
+    if(!cause.empty() && (minstret.front() == dromajo_get_minstret()) && (epc.front() == dromajo_get_pc())) {
+      bsg_pr_info("ps.cpp: Can take trap | eminstret: 0x%x | coemu_instret: 0x%x | dromajo_instret: 0x%x\n",
+          eminstret.front(), coemu_instret, dromajo_get_minstret());
       if(
-          ( ((eminstret.front()+2)&0xffffff) ==(dromajo_get_minstret()&0xffffff))
-          //( ((eminstret.front()+2)&0xffffff) ==(dromajo_instret&0xffffff))
+          ( ((eminstret.front()+2)&0xffffff) == (dromajo_get_minstret() & 0xffffff))
         ){
-        bsg_pr_info("ps.cpp: minstret right now: %x (should be %x)\n", dromajo_instret, eminstret.front());
+        bsg_pr_info("ps.cpp: minstret right now: %x (should be %x)\n", dromajo_get_minstret(), eminstret.front());
         bsg_pr_info("ps.cpp: Taking the trap now; cause 0x%016llx | epc 0x%016llx!\n", cause.front(), epc.front());
         dromajo_trap(0, cause.front()); // updates virt_machine state
         cause.pop(); epc.pop(); eminstret.pop();
       } else break;
     } else break;
-
+  
   // cosimulating
   if(!insn.empty()) {
     bsg_pr_dbg_ps("ps.cpp: Dromajo expecting to execute PC 0x%016llx\n", dromajo_get_pc());
@@ -270,20 +264,21 @@ bool dromajo_coemulation(bsg_zynq_pl *zpl) {
       // either insn didn't need to wait for any IRF/FRF update, or needed one of those
       bsg_pr_dbg_ps("Cosimulatable because: %d %d %d\n", !(d.idep || d.fdep),
           d.idep && !irf[d.rfaddr].empty(), d.fdep && !frf[d.rfaddr].empty());
+
       if(d.idep) {
         wdata = irf[d.rfaddr].front();
         irf[d.rfaddr].pop();
-        bsg_pr_dbg_ps("[Coemulation]: %016llx | %08x | %016llx | %016llx | i%d %016llx\n",
-            pc.front(), insn.front(), mstatus.front(), dromajo_instret, d.rfaddr, wdata);
+        fprintf(stderr, "[Coemulation]: %016llx | %08x | %016llx | %016llx | i%d %016llx\n",
+            pc.front(), insn.front(), mstatus.front(), coemu_instret, d.rfaddr, wdata);
       } else if(d.fdep) {
         wdata = frf[d.rfaddr].front();
         frf[d.rfaddr].pop();
-        bsg_pr_dbg_ps("[Coemulation]: %016llx | %08x | %016llx | %016llx | f%d %016llx\n",
-            pc.front(), insn.front(), mstatus.front(), dromajo_instret, d.rfaddr, wdata);
+        fprintf(stderr, "[Coemulation]: %016llx | %08x | %016llx | %016llx | f%d %016llx\n",
+            pc.front(), insn.front(), mstatus.front(), coemu_instret, d.rfaddr, wdata);
       } else {
         wdata = 0;
-        bsg_pr_dbg_ps("[Coemulation]: %016llx | %08x | %016llx | %016llx\n",
-            pc.front(), insn.front(), mstatus.front(), dromajo_instret);
+        fprintf(stderr, "[Coemulation]: %016llx | %08x | %016llx | %016llx\n",
+            pc.front(), insn.front(), mstatus.front(), coemu_instret);
       }
 
 #ifdef   ZYNQ_PS_DEBUG
@@ -295,7 +290,7 @@ bool dromajo_coemulation(bsg_zynq_pl *zpl) {
 
 #endif
       if(!cosim_status) {
-        dromajo_instret++;
+        coemu_instret++;
         bsg_pr_dbg_ps("++++++ MATCH ++++++\n");
       } else {
         bsg_pr_info("\033[31m ------ MISMATCH ------ \033[0m\n");

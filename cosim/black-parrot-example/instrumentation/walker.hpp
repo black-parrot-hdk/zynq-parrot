@@ -183,6 +183,18 @@ string getLastWord(const string &input) {
   return input.substr(lastDotPos+1, input.length());
 }
 
+inline bool matchesPattern(const string& test, const string& prefix) {
+  // Check if the text starts with the prefix
+  if (test.substr(0, prefix.size()) == prefix) {
+    // Check if the character immediately following the prefix is '.' or '['
+    char nextChar = test[prefix.size()];
+    if (nextChar == '.' || nextChar == '[') {
+      return true;
+    }
+  }
+  return false;
+}
+
 vector<string> findMatchingStrings(const data_structure &ds, const string &prefix, string indent) {
   vector<string> matchingValues;
 
@@ -207,14 +219,3 @@ vector<string> findMatchingStrings(const data_structure &ds, const string &prefi
   return matchingValues;
 }
 
-inline bool matchesPattern(const string& test, const string& prefix) {
-  // Check if the text starts with the prefix
-  if (test.substr(0, prefix.size()) == prefix) {
-    // Check if the character immediately following the prefix is '.' or '['
-    char nextChar = test[prefix.size()];
-    if (nextChar == '.' || nextChar == '[') {
-      return true;
-    }
-  }
-  return false;
-}
