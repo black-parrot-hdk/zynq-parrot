@@ -26,6 +26,14 @@
 #include "bsg_zynq_pl.h"
 #include "bsg_printing.h"
 
+#ifdef SPIKE_COEMU
+#include "spike_coemulation.hpp"
+#endif
+
+#ifdef DROMAJO_COEMU
+#include "dromajo_coemulation.hpp"
+#endif
+
 #ifndef FREE_DRAM
 #define FREE_DRAM 0
 #endif
@@ -239,7 +247,7 @@ void cov_done(bsg_zynq_pl *zpl) {
   pthread_join(cov_pid, NULL);
 
   // deassert coverage collection
-  bsg_pr_info("ps.cpp: Desserting coverage collection enable\n");
+  bsg_pr_info("ps.cpp: Deasserting coverage collection enable\n");
   zpl->shell_write(GP0_WR_CSR_COV_EN, 0x0, 0xf);
 
   // close DMA and free CMA buffer
@@ -295,10 +303,14 @@ void device_poll(bsg_zynq_pl *zpl) {
     if (zpl->shell_read(GP0_RD_PL2PS_FIFO_0_CTRS) != 0) {
       decode_bp_output(zpl, zpl->shell_read(GP0_RD_PL2PS_FIFO_0_DATA));
     }
+
     // break loop when all cores done
     if (done_vec.all()) {
 #ifdef COV_EN
       cov_done(zpl);
+#endif
+#ifdef COEMU
+      coemu_finish();
 #endif
       break;
     }
@@ -307,12 +319,28 @@ void device_poll(bsg_zynq_pl *zpl) {
     // on Zynq coverage polling is done on a seperate thread
     cov_poll(zpl);
 #endif
+
+#ifdef COEMU
+    if(!coemu_exec(zpl)) {
+#ifdef COV_EN
+      cov_done(zpl);
+#endif
+      coemu_finish();
+      break;
+    }
+#endif
+
   }
 }
 
 int ps_main(int argc, char **argv) {
-
   bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
+  bsg_pr_info("Arguments:\n");
+  for(int i=0; i<argc; i++)
+    bsg_pr_info("%s\n", argv[i]);
+
+  char *nbf_file = argv[1];
+  char *elf_file = argv[2];
 
   int32_t val;
   bsg_pr_info("ps.cpp: reading four base registers\n");
@@ -484,9 +512,9 @@ int ps_main(int argc, char **argv) {
 
   bsg_pr_info("ps.cpp: beginning nbf load\n");
 #ifdef ZYNQ
-  nbf_load(zpl, argv[1], false);
+  nbf_load(zpl, nbf_file, false);
 #else
-  nbf_load(zpl, argv[1], true);
+  nbf_load(zpl, nbf_file, true);
 #endif
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
@@ -511,6 +539,14 @@ int ps_main(int argc, char **argv) {
   pthread_create(&monitor_id, NULL, monitor, NULL);
 #endif
 
+#ifdef COEMU
+  bsg_pr_info("ps.cpp: Coemulation enabled\n");
+  coemu_init(0, 1, 256, elf_file);
+  coemu_failed = true;
+#else
+  bsg_pr_info("ps.cpp: Coemulation not enabled\n");
+#endif
+
   bsg_pr_info("ps.cpp: Starting i/o polling thread\n");
   device_poll(zpl);
 
@@ -521,14 +557,14 @@ int ps_main(int argc, char **argv) {
   // We need some additional toggles for data to propagate through
   btb->idle(50);
 #endif
-  zpl->stop();
 
   unsigned long long mcycle_stop = get_counter_64(zpl, GP0_RD_MCYCLE);
   unsigned long long minstret_stop = get_counter_64(zpl, GP0_RD_MINSTRET);
   unsigned long long mtime_stop = get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
   unsigned long long mtime_delta = mtime_stop - mtime_start;
 
-  report(zpl, argv[1]);
+  report(zpl, nbf_file);
+  zpl->stop();
 
   clock_gettime(CLOCK_MONOTONIC, &end);
   setlocale(LC_NUMERIC, "");
@@ -561,7 +597,7 @@ int ps_main(int argc, char **argv) {
               zpl->shell_read(GP0_RD_MEM_PROF_2),
               zpl->shell_read(GP0_RD_MEM_PROF_1),
               zpl->shell_read(GP0_RD_MEM_PROF_0));
-  btb->idle(500000);
+  btb->idle(5000);
   // in general we do not want to free the dram; the Xilinx allocator has a
   // tendency to
   // fail after many allocate/fail cycle. instead we keep a pointer to the dram
@@ -682,6 +718,7 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename, bool direct) {
     }
   }
   bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
+  nbf_file.close();
 }
 
 bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
@@ -747,7 +784,6 @@ bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
 }
 
 void report(bsg_zynq_pl *zpl, char* nbf_filename) {
-
   char filename[100];
   if(strrchr(nbf_filename, '/') != NULL)
     strcpy(filename, 1 + strrchr(nbf_filename, '/'));
@@ -765,5 +801,5 @@ void report(bsg_zynq_pl *zpl, char* nbf_filename) {
     }
     file.close();
   }
-  else printf("Cannot open report file: %s\n", filename);
+  else bsg_pr_info("Cannot open report file: %s\n", filename);
 }

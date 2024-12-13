@@ -21,6 +21,23 @@ COV_NUM  ?= 4
 else
 COV_NUM  ?= 11
 endif
+ifneq ($(COV_EN),0)
+VDEFINES += COV_EN=1
+VDEFINES += COV_NUM=$(COV_NUM)
+ifneq ($(RAND_COV),0)
+VDEFINES += RAND_COV=1
+endif
+endif
+
+# ISA co-emulation
+ifeq ($(COEMU),1)
+VDEFINES += COEMU=1
+ifeq ($(SPIKE_COEMU),1)
+  VDEFINES += SPIKE_COEMU=1
+else
+  VDEFINES += DROMAJO_COEMU=1
+endif
+endif
 
 #############################
 # Design Defines
@@ -42,20 +59,13 @@ DEFINES += DMA_ENABLE=1
 DEFINES += DMA_DATA_WIDTH=64
 # TODO: infer from Vivado mapping
 DEFINES += DMA_OFFSET=0x10000
-
-ifneq ($(COV_EN),0)
-VDEFINES += COV_EN=1
-VDEFINES += COV_NUM=$(COV_NUM)
-ifneq ($(RAND_COV),0)
-VDEFINES += RAND_COV=1
-endif
-endif
 DEFINES += $(VDEFINES)
 
 #############################
 # Build Collateral
 #############################
 RISCV_OBJCOPY ?= riscv64-unknown-elf-dramfs-objcopy
+RISCV_OBJDUMP ?= riscv64-unknown-elf-dramfs-objdump
 ASCII_TO_ROM ?= $(BASEJUMP_STL_DIR)/bsg_mem/bsg_ascii_to_rom.py
 
 CFG ?= e_bp_unicore_zynqparrot_cfg
@@ -80,6 +90,8 @@ $(CURR_VSRC_DIR)/bsg_bootrom.v: $(CURR_VSRC_DIR)/bsg_bootrom.rom
 
 BUILD_COLLATERAL  = $(CURR_VSRC_DIR)/bsg_blackparrot_pkg.sv
 BUILD_COLLATERAL += $(CURR_VSRC_DIR)/bsg_bootrom.v
+BUILD_COLLATERAL += $(CURR_VSRC_DIR)/bsg_bootrom.rom
+BUILD_COLLATERAL += $(CURR_VSRC_DIR)/bsg_bootrom.bin
 
 #############################
 # Run Collateral
@@ -88,13 +100,14 @@ NBF_NCPUS ?= 1
 
 VPATH := $(wildcard $(BLACKPARROT_SDK_DIR)/prog/*)
 %.nbf: %.riscv
+	cp $< $(CURR)
+	$(RISCV_OBJDUMP) -D $< > $*.dump
 	$(RISCV_OBJCOPY) -O verilog $< $*.mem
 	$(SED) -i "s/@8/@0/g" $*.mem
 	$(PYTHON) $(BP_COMMON_DIR)/software/py/nbf.py \
-		--debug --skip_zeros --config --boot_pc 0x80000000 --mem $*.mem --ncpus $(NBF_NCPUS) > $@
+		--skip_zeros --config --boot_pc 0x80000000 --mem $*.mem --ncpus $(NBF_NCPUS) > $@
 	rm $*.mem
 
-NBF_FILE ?= hello_world.nbf
-ELF_FILE ?= hello_world.riscv
-RUN_COLLATERAL = $(NBF_FILE)
-
+PROG ?= hello_world
+NBF_FILE ?= $(PROG).nbf
+ELF_FILE ?= $(PROG).riscv

@@ -17,6 +17,9 @@ module top_zynq
  #(parameter bp_params_e bp_params_p = bp_cfg_gp
    `declare_bp_proc_params(bp_params_p)
    `declare_bp_bedrock_if_widths(paddr_width_p, lce_id_width_p, cce_id_width_p, did_width_p, lce_assoc_p)
+   `declare_bp_core_if_widths(vaddr_width_p, paddr_width_p, asid_width_p, branch_metadata_fwd_width_p)
+   `declare_bp_be_if_widths(vaddr_width_p, paddr_width_p, asid_width_p, branch_metadata_fwd_width_p, fetch_ptr_p, issue_ptr_p)
+
 `ifdef COV_EN
    , parameter num_cov_p = `COV_NUM
 `endif
@@ -176,12 +179,12 @@ module top_zynq
   `define COREPATH blackparrot.processor.u.unicore.unicore_lite.core_minimal
 
    localparam debug_lp = 0;
- 
+
    localparam bp_axil_addr_width_lp = 32;
    localparam bp_axil_data_width_lp = 32;
    localparam bp_axi_addr_width_lp  = 32;
    localparam bp_axi_data_width_lp  = 64;
- 
+
 `ifdef COV_EN
    localparam num_regs_ps_to_pl_lp  = 6;
 `else
@@ -190,7 +193,12 @@ module top_zynq
    localparam num_regs_pl_to_ps_lp  = 11;
 
    localparam num_fifo_ps_to_pl_lp = 1;
+`ifdef COEMU
+   localparam num_fifo_pl_to_ps_lp = 24;
+`else
    localparam num_fifo_pl_to_ps_lp = 1;
+`endif
+
 
    ///////////////////////////////////////////////////////////////////////////////////////
    // csr_data_lo:
@@ -228,7 +236,7 @@ module top_zynq
    // ps_to_pl_fifo:
    //
    // 0: BP host IO access response
-   // 
+   //
    logic [num_fifo_ps_to_pl_lp-1:0][C_S00_AXI_DATA_WIDTH-1:0] ps_to_pl_fifo_data_lo;
    logic [num_fifo_ps_to_pl_lp-1:0]                           ps_to_pl_fifo_v_lo, ps_to_pl_fifo_ready_li;
 
@@ -427,14 +435,18 @@ module top_zynq
    // Gating Logic
    (* gated_clock = "yes" *) wire bp_clk;
 
+  logic coemu_gate_lo;
+
+  wire cce_gate_lo;
 `ifdef COV_EN
    logic cov_en_sync_li;
    logic [num_cov_p-1:0] cov_gate_lo;
-   wire gate_lo = cov_en_sync_li & (|cov_gate_lo);
+   assign cce_gate_lo = cov_en_sync_li & (|cov_gate_lo);
 `else
-   wire gate_lo = 1'b0;
+   assign cce_gate_lo = 1'b0;
 `endif
 
+  wire gate_lo = cce_gate_lo | coemu_gate_lo;
    // Clock Generation
 `ifdef VIVADO
 `ifdef ULTRASCALE
@@ -461,13 +473,401 @@ module top_zynq
     $error("Unknown device family!");
   end
 `endif
-`else
+`else // verilator
    bsg_icg_pos
     clk_buf
      (.clk_i(ds_clk)
      ,.en_i(~gate_lo)
      ,.clk_o(bp_clk)
      );
+`endif
+
+`ifdef COEMU
+  /* start of Dromajo FPGA-synthesizable co-emulation */
+  `declare_bp_be_if(vaddr_width_p, paddr_width_p, asid_width_p, branch_metadata_fwd_width_p, fetch_ptr_p, issue_ptr_p);
+  bp_be_commit_pkt_s commit_pkt;
+  assign commit_pkt = `COREPATH.be.calculator.commit_pkt_cast_o;
+
+  bp_be_decode_s decode_r;
+  bsg_dff_chain
+   #(.width_p($bits(bp_be_decode_s)), .num_stages_p(4))
+   reservation_pipe
+    (.clk_i(bp_clk)
+     ,.data_i(`COREPATH.be.calculator.dispatch_pkt_cast_i.decode)
+     ,.data_o(decode_r)
+     );
+
+  bp_be_commit_pkt_s commit_pkt_r;
+  logic is_debug_mode_r;
+  bsg_dff_chain
+   #(.width_p(1+$bits(commit_pkt)), .num_stages_p(1))
+   commit_pkt_reg
+    (.clk_i(bp_clk)
+
+     ,.data_i({`COREPATH.be.calculator.pipe_sys.csr.is_debug_mode, commit_pkt})
+     ,.data_o({is_debug_mode_r, commit_pkt_r})
+     );
+
+  logic cache_req_complete_r, cache_req_v_r;
+  wire cache_req_v_li = `COREPATH.be.calculator.pipe_mem.dcache.cache_req_yumi_i
+                        & ~`COREPATH.be.calculator.pipe_mem.dcache.nonblocking_req;
+  bsg_dff_chain
+   #(.width_p(2), .num_stages_p(2))
+   cache_req_reg
+    (.clk_i(bp_clk)
+
+     ,.data_i({`COREPATH.be.calculator.pipe_mem.dcache.complete_recv, cache_req_v_li})
+     ,.data_o({cache_req_complete_r, cache_req_v_r})
+     );
+
+  wire                      freeze_li           = `COREPATH.be.calculator.pipe_sys.csr.cfg_bus_cast_i.freeze;
+  wire                      instret_v_li        = commit_pkt_r.instret;
+  wire                      trap_v_li           = commit_pkt_r.exception | commit_pkt_r._interrupt;
+  wire                      end_li              = '0; // TODO should be triggered when 24'h902000 is written to some special address -- pull this out from BP
+  wire [vaddr_width_p-1:0]  commit_pc_li        = commit_pkt_r.pc;
+  wire [instr_width_gp-1:0] commit_instr_li     = commit_pkt_r.instr;
+  wire                      commit_ird_w_v_li   = instret_v_li & decode_r.irf_w_v;
+  wire                      commit_frd_w_v_li   = instret_v_li & decode_r.frf_w_v;
+  wire                      commit_req_v_li     = instret_v_li & cache_req_v_r;
+  wire [dword_width_gp-1:0] cause_li            = (`COREPATH.be.calculator.pipe_sys.csr.priv_mode_r == `PRIV_MODE_M)
+                                                  ? `COREPATH.be.calculator.pipe_sys.csr.mcause_lo : `COREPATH.be.calculator.pipe_sys.csr.scause_lo;
+  wire [dword_width_gp-1:0] mstatus_li          = `COREPATH.be.calculator.pipe_sys.csr.mstatus_lo;
+  wire [dword_width_gp-1:0] minstret_li         = `COREPATH.be.calculator.pipe_sys.csr.minstret_lo;
+  wire [dword_width_gp-1:0] epc_li              = (`COREPATH.be.calculator.pipe_sys.csr.priv_mode_r == `PRIV_MODE_M)
+                                                  ? `COREPATH.be.calculator.pipe_sys.csr.mepc_lo : `COREPATH.be.calculator.pipe_sys.csr.sepc_lo;
+  wire [dword_width_gp-1:0] mcycle_li           = `COREPATH.be.calculator.pipe_sys.csr.mcycle_lo;
+  wire                      commit_fifo_async_v_li    = (instret_v_li | trap_v_li) & ~end_li;
+  wire                      commit_fifo_async_full_lo;
+
+  wire                      freeze_async_lo;
+  wire                      commit_debug_async_lo;
+  wire                      instret_v_async_lo;
+  wire                      trap_v_async_lo;
+  wire [vaddr_width_p-1:0]  commit_pc_async_lo;
+  rv64_instr_fmatype_s      commit_instr_async_lo;
+  wire                      commit_ird_w_v_async_lo;
+  wire                      commit_frd_w_v_async_lo;
+  wire                      commit_req_v_async_lo;
+  wire [dword_width_gp-1:0] cause_async_lo, mstatus_async_lo, minstret_async_lo, mcycle_async_lo;
+  wire [dword_width_gp-1:0] epc_async_lo;
+  wire                      commit_fifo_v_sync_lo;
+  wire                      commit_fifo_ready_sync_li;
+
+  bsg_async_fifo
+  #(.width_p(4 + vaddr_width_p + instr_width_gp + 3 + 5*dword_width_gp), .lg_size_p(5))
+  commit_fifo_async
+    (.w_clk_i(bp_clk)
+     ,.w_reset_i(bp_async_reset_li) // TODO
+     ,.w_enq_i(commit_fifo_async_v_li & ~commit_fifo_async_full_lo)
+     ,.w_data_i({freeze_li
+                 , is_debug_mode_r
+                 , instret_v_li
+                 , trap_v_li
+                 , commit_pc_li
+                 , commit_instr_li
+                 , commit_ird_w_v_li
+                 , commit_frd_w_v_li
+                 , commit_req_v_li
+                 , cause_li
+                 , mstatus_li
+                 , minstret_li
+                 , epc_li
+                 , mcycle_li})
+     ,.w_full_o(commit_fifo_async_full_lo)
+
+     ,.r_clk_i(aclk)
+     ,.r_reset_i(~aresetn)
+     ,.r_deq_i(commit_fifo_ready_sync_li & commit_fifo_v_sync_lo)
+     ,.r_data_o({freeze_async_lo
+                , commit_debug_async_lo
+                , instret_v_async_lo
+                , trap_v_async_lo
+                , commit_pc_async_lo
+                , commit_instr_async_lo
+                , commit_ird_w_v_async_lo
+                , commit_frd_w_v_async_lo
+                , commit_req_v_async_lo
+                , cause_async_lo
+                , mstatus_async_lo
+                , minstret_async_lo
+                , epc_async_lo
+                , mcycle_async_lo})
+     ,.r_valid_o(commit_fifo_v_sync_lo)
+     );
+
+
+  wire                      freeze_r;
+  wire                      commit_debug_r;
+  wire                      instret_v_r;
+  wire                      trap_v_r;
+  wire [vaddr_width_p-1:0]  commit_pc_r;
+  rv64_instr_fmatype_s      commit_instr_r;
+  wire                      commit_ird_w_v_r;
+  wire                      commit_frd_w_v_r;
+  wire                      commit_req_v_r;
+  wire [dword_width_gp-1:0] cause_r, mstatus_r, minstret_r, mcycle_r;
+  wire [dword_width_gp-1:0] epc_r;
+
+  wire                      commit_fifo_v_lo;
+  wire [11:0]               pl2ps_commit_readies_lo;
+
+  // sync fifo's full signal OR-asserts gate;
+  // prev async also serves to act as buffer to subsequent commits
+  bsg_fifo_1r1w_small
+  #(.width_p(4 + vaddr_width_p + instr_width_gp + 3 + 5*dword_width_gp), .els_p(16))
+    commit_fifo_sync
+    (.clk_i(aclk)
+     , .reset_i(~aresetn)
+
+     , .v_i(commit_fifo_v_sync_lo)
+     , .ready_param_o(commit_fifo_ready_sync_li)
+     , .data_i({freeze_async_lo
+                , commit_debug_async_lo
+                , instret_v_async_lo
+                , trap_v_async_lo
+                , commit_pc_async_lo
+                , commit_instr_async_lo
+                , commit_ird_w_v_async_lo
+                , commit_frd_w_v_async_lo
+                , commit_req_v_async_lo
+                , cause_async_lo
+                , mstatus_async_lo
+                , minstret_async_lo
+                , epc_async_lo
+                , mcycle_async_lo})
+
+     , .v_o(commit_fifo_v_lo)
+     , .data_o({freeze_r
+                , commit_debug_r
+                , instret_v_r
+                , trap_v_r
+                , commit_pc_r
+                , commit_instr_r
+                , commit_ird_w_v_r
+                , commit_frd_w_v_r
+                , commit_req_v_r // TODO not used currently -- analyze if you need it?
+                , cause_r
+                , mstatus_r
+                , minstret_r
+                , epc_r
+                , mcycle_r})
+     , .yumi_i(&pl2ps_commit_readies_lo & commit_fifo_v_lo)
+    );
+
+  wire pl2ps_commit_v_lo  = commit_fifo_v_lo & &pl2ps_commit_readies_lo &
+                              ~commit_debug_r & ~freeze_r & instret_v_r;
+  wire pl2ps_xcpt_v_lo    = commit_fifo_v_lo & &pl2ps_commit_readies_lo &
+                              ~commit_debug_r & ~freeze_r & trap_v_r;
+
+  wire [31:0] metadata_lo; // TODO redundant (dromajo API should provide this)
+  reg end_r;
+  assign metadata_lo = {
+                         mcycle_r[23:0]
+                        , end_r
+                        , commit_instr_r.rd_addr[4:0]
+                        , commit_frd_w_v_r
+                        , commit_ird_w_v_r
+                      };
+
+  wire [63:0] pc_lo = `BSG_SIGN_EXTEND(commit_pc_r, dword_width_gp);
+  wire [63:0] epc_lo = `BSG_SIGN_EXTEND(epc_r, dword_width_gp);
+
+
+  // because we aren't stitching commit_pkt and the corresponding register write,
+  //   the need to store register writes is obviated (it's done in SW)
+  localparam                 rf_els_lp = 2**reg_addr_width_gp;
+  bp_be_int_reg_s            ird_data_r, ird_data_async_lo;
+  bp_be_fp_reg_s             frd_data_r, frd_data_async_lo;
+  logic [reg_addr_width_gp-1:0] ird_addr_r, ird_addr_async_lo, frd_addr_r, frd_addr_async_lo;
+  logic                      ird_sync_ready_li, frd_sync_ready_li;
+  logic                      ird_async_v_lo, frd_async_v_lo;
+  logic                      frd_fifo_full_lo, ird_fifo_full_lo;
+  logic [2:0]                pl2ps_ird_readies_lo, pl2ps_frd_readies_lo;
+  wire                       pl2ps_ird_v_lo, pl2ps_frd_v_lo;
+  logic [int_rec_width_gp-1:0] ird_raw_li;
+  logic [dp_rec_width_gp-1:0]  frd_raw_li;
+
+  bsg_async_fifo
+   #(.width_p($bits(bp_be_int_reg_s) + reg_addr_width_gp), .lg_size_p(5))
+   ird_fifo_async
+    (.w_clk_i(bp_clk)
+     ,.w_reset_i(bp_async_reset_li) //TODO
+     ,.w_enq_i( `COREPATH.be.scheduler.iwb_pkt_cast_i.ird_w_v & ~ird_fifo_full_lo)
+     ,.w_data_i({`COREPATH.be.scheduler.iwb_pkt_cast_i.rd_addr, `COREPATH.be.scheduler.iwb_pkt_cast_i.rd_data[0+:$bits(bp_be_fp_reg_s)]})
+     ,.w_full_o(ird_fifo_full_lo)
+
+     ,.r_clk_i(aclk)
+     ,.r_reset_i(~aresetn)
+     ,.r_deq_i(ird_sync_ready_li & ird_async_v_lo)
+     ,.r_data_o({ird_addr_async_lo, ird_data_async_lo})
+     ,.r_valid_o(ird_async_v_lo)
+     );
+
+  bsg_fifo_1r1w_small
+    #(.width_p($bits(bp_be_int_reg_s) + reg_addr_width_gp), .els_p(16))
+    ird_fifo_sync
+    (.clk_i(aclk)
+      , .reset_i(~aresetn)
+      , .v_i(ird_async_v_lo)
+      , .ready_param_o(ird_sync_ready_li)
+      , .data_i({ird_addr_async_lo, ird_data_async_lo})
+      , .v_o(pl2ps_ird_v_lo)
+      , .data_o({ird_addr_r, ird_data_r})
+      , .yumi_i(&pl2ps_ird_readies_lo & pl2ps_ird_v_lo)
+    );
+
+  bp_be_int_unbox
+   #(.bp_params_p(bp_params_p))
+   int_unbox
+    (.reg_i(ird_data_r)
+     ,.tag_i(e_int_dword)
+     ,.unsigned_i(1'b0)
+     ,.val_o(ird_raw_li)
+     );
+
+  bsg_async_fifo
+   #(.width_p($bits(bp_be_fp_reg_s) + reg_addr_width_gp), .lg_size_p(5))
+   frd_fifo_async
+    (.w_clk_i(bp_clk)
+     ,.w_reset_i(bp_async_reset_li) //TODO
+     ,.w_enq_i(`COREPATH.be.scheduler.fwb_pkt_cast_i.frd_w_v)
+     ,.w_data_i({`COREPATH.be.scheduler.fwb_pkt_cast_i.rd_addr, `COREPATH.be.scheduler.fwb_pkt_cast_i.rd_data})
+     ,.w_full_o(frd_fifo_full_lo)
+
+     ,.r_clk_i(aclk)
+     ,.r_reset_i(~aresetn)
+     ,.r_deq_i(frd_sync_ready_li & frd_async_v_lo)
+     ,.r_data_o({frd_addr_async_lo, frd_data_async_lo})
+     ,.r_valid_o(frd_async_v_lo)
+     );
+
+  bsg_fifo_1r1w_small
+    #(.width_p($bits(bp_be_fp_reg_s) + reg_addr_width_gp), .els_p(16))
+    frd_fifo_sync
+    (.clk_i(aclk)
+      , .reset_i(~aresetn)
+      , .v_i(frd_async_v_lo)
+      , .ready_param_o(frd_sync_ready_li)
+      , .data_i({frd_addr_async_lo, frd_data_async_lo})
+      , .v_o(pl2ps_frd_v_lo)
+      , .data_o({frd_addr_r, frd_data_r})
+      , .yumi_i(&pl2ps_frd_readies_lo & pl2ps_frd_v_lo)
+    );
+
+  bp_be_fp_unbox
+   #(.bp_params_p(bp_params_p))
+   fp_unbox
+    (.reg_i(frd_data_r)
+     ,.tag_i(frd_data_r.tag)
+     ,.raw_i(1'b1)
+     ,.val_o(frd_raw_li)
+     );
+
+
+  // gating contribution
+  reg coemu_gate_r;
+  always @(negedge aclk)
+    if(~aresetn)
+      coemu_gate_r <= '0;
+    else
+      if(~coemu_gate_r & (~commit_fifo_ready_sync_li | ~ird_sync_ready_li | ~frd_sync_ready_li) & cov_en_li) // gate when sync fifos are full & gating enabled(=coverage collection enabled)
+        coemu_gate_r <= '1;
+      else if(coemu_gate_r & (~commit_fifo_v_lo & ~pl2ps_ird_v_lo & ~pl2ps_frd_v_lo) | ~cov_en_li) // ungate after sync fifos are fully drained
+        coemu_gate_r <= '0;
+
+  // ungated_aclk domain
+  bsg_sync_sync
+   #(.width_p(1))
+   gate_cross
+   (.oclk_i(ds_clk)
+   ,.iclk_data_i(coemu_gate_r)
+   ,.oclk_data_o(coemu_gate_lo)
+   );
+
+  // pl_to_ps_fifo valids
+  assign pl_to_ps_fifo_v_li[23] = pl2ps_xcpt_v_lo & &pl2ps_commit_readies_lo;
+  assign pl_to_ps_fifo_v_li[22] = pl2ps_xcpt_v_lo & &pl2ps_commit_readies_lo;
+  assign pl_to_ps_fifo_v_li[21] = pl2ps_xcpt_v_lo & &pl2ps_commit_readies_lo;
+  assign pl_to_ps_fifo_v_li[20] = pl2ps_xcpt_v_lo & &pl2ps_commit_readies_lo;
+
+  assign pl_to_ps_fifo_v_li[19] = pl2ps_frd_v_lo & &pl2ps_frd_readies_lo;
+  assign pl_to_ps_fifo_v_li[18] = pl2ps_frd_v_lo & &pl2ps_frd_readies_lo;
+  assign pl_to_ps_fifo_v_li[17] = pl2ps_frd_v_lo & &pl2ps_frd_readies_lo;
+  assign pl_to_ps_fifo_v_li[16] = pl2ps_frd_v_lo & &pl2ps_frd_readies_lo;
+
+  assign pl_to_ps_fifo_v_li[15] = pl2ps_ird_v_lo & &pl2ps_ird_readies_lo;
+  assign pl_to_ps_fifo_v_li[14] = pl2ps_ird_v_lo & &pl2ps_ird_readies_lo;
+  assign pl_to_ps_fifo_v_li[13] = pl2ps_ird_v_lo & &pl2ps_ird_readies_lo;
+  assign pl_to_ps_fifo_v_li[12] = pl2ps_ird_v_lo & &pl2ps_ird_readies_lo;
+
+  assign pl_to_ps_fifo_v_li[11] = pl2ps_commit_v_lo & &pl2ps_commit_readies_lo;
+  assign pl_to_ps_fifo_v_li[10] = pl2ps_commit_v_lo & &pl2ps_commit_readies_lo;
+  assign pl_to_ps_fifo_v_li[9]  = pl2ps_commit_v_lo & &pl2ps_commit_readies_lo;
+  assign pl_to_ps_fifo_v_li[8]  = pl2ps_commit_v_lo & &pl2ps_commit_readies_lo;
+
+  assign pl_to_ps_fifo_v_li[7]  = pl2ps_commit_v_lo & &pl2ps_commit_readies_lo;
+  assign pl_to_ps_fifo_v_li[6]  = pl2ps_commit_v_lo & &pl2ps_commit_readies_lo;
+  assign pl_to_ps_fifo_v_li[5]  = pl2ps_commit_v_lo & &pl2ps_commit_readies_lo;
+  assign pl_to_ps_fifo_v_li[4]  = pl2ps_commit_v_lo & &pl2ps_commit_readies_lo;
+
+  // spacer for ARM NEON vector loads
+  assign pl_to_ps_fifo_v_li[3] = pl_to_ps_fifo_v_li[0];
+  assign pl_to_ps_fifo_v_li[2] = pl_to_ps_fifo_v_li[0];
+  assign pl_to_ps_fifo_v_li[1] = pl_to_ps_fifo_v_li[0];
+
+  // datas
+  assign pl_to_ps_fifo_data_li[23] = pl2ps_xcpt_v_lo ? epc_lo[63:32] : '1;
+  assign pl_to_ps_fifo_data_li[22] = pl2ps_xcpt_v_lo ? epc_lo[31:0]  : '1;
+  assign pl_to_ps_fifo_data_li[21] = pl2ps_xcpt_v_lo ? cause_r[63:32] : '1;
+  assign pl_to_ps_fifo_data_li[20] = pl2ps_xcpt_v_lo ? cause_r[31:0]  : '1;
+
+  assign pl_to_ps_fifo_data_li[19] = 32'b0;
+  assign pl_to_ps_fifo_data_li[18] = frd_raw_li[63:32];
+  assign pl_to_ps_fifo_data_li[17] = frd_raw_li[31:0];
+  assign pl_to_ps_fifo_data_li[16] = {mcycle_r[23:0], 3'b0, frd_addr_r[4:0]}; // last 27b for synchronizing to mcycle
+
+  assign pl_to_ps_fifo_data_li[15] = 32'b0;
+  assign pl_to_ps_fifo_data_li[14] = ird_raw_li[63:32];
+  assign pl_to_ps_fifo_data_li[13] = ird_raw_li[31:0];
+  assign pl_to_ps_fifo_data_li[12] = {mcycle_r[23:0], 3'b0, ird_addr_r[4:0]};
+
+  assign pl_to_ps_fifo_data_li[11] = minstret_r[63:32];
+  assign pl_to_ps_fifo_data_li[10] = minstret_r[31:0];
+  assign pl_to_ps_fifo_data_li[9]  = mstatus_r[63:32];
+  assign pl_to_ps_fifo_data_li[8]  = mstatus_r[31:0];
+
+  assign pl_to_ps_fifo_data_li[7]  = pc_lo[63:32];
+  assign pl_to_ps_fifo_data_li[6]  = pc_lo[31:0];
+  assign pl_to_ps_fifo_data_li[5]  = metadata_lo[31:0]; // has partial mcycle_r for syncing with ird/frd TODO end_r
+  assign pl_to_ps_fifo_data_li[4]  = commit_instr_r[31:0];
+
+  // pl_to_ps_fifo readies
+  assign pl2ps_commit_readies_lo[11] = pl_to_ps_fifo_ready_lo[23];
+  assign pl2ps_commit_readies_lo[10] = pl_to_ps_fifo_ready_lo[22];
+  assign pl2ps_commit_readies_lo[9] =  pl_to_ps_fifo_ready_lo[21];
+  assign pl2ps_commit_readies_lo[8] =  pl_to_ps_fifo_ready_lo[20];
+                                                                 ;
+  assign pl2ps_frd_readies_lo[2] =     pl_to_ps_fifo_ready_lo[18];
+  assign pl2ps_frd_readies_lo[1] =     pl_to_ps_fifo_ready_lo[17];
+  assign pl2ps_frd_readies_lo[0] =     pl_to_ps_fifo_ready_lo[16];
+                                                                 ;
+  assign pl2ps_ird_readies_lo[2] =     pl_to_ps_fifo_ready_lo[14];
+  assign pl2ps_ird_readies_lo[1] =     pl_to_ps_fifo_ready_lo[13];
+  assign pl2ps_ird_readies_lo[0] =     pl_to_ps_fifo_ready_lo[12];
+                                                                 ;
+  assign pl2ps_commit_readies_lo[7] =  pl_to_ps_fifo_ready_lo[11];
+  assign pl2ps_commit_readies_lo[6] =  pl_to_ps_fifo_ready_lo[10];
+  assign pl2ps_commit_readies_lo[5] =  pl_to_ps_fifo_ready_lo[9];
+  assign pl2ps_commit_readies_lo[4] =  pl_to_ps_fifo_ready_lo[8];
+                                                                ;
+  assign pl2ps_commit_readies_lo[3] =  pl_to_ps_fifo_ready_lo[7];
+  assign pl2ps_commit_readies_lo[2] =  pl_to_ps_fifo_ready_lo[6];
+  assign pl2ps_commit_readies_lo[1] =  pl_to_ps_fifo_ready_lo[5];
+  assign pl2ps_commit_readies_lo[0] =  pl_to_ps_fifo_ready_lo[4];
+
+  /* end of Dromajo co-emulation */
+`else
+  assign coemu_gate_lo = 1'b0;
 `endif
 
    // Address Translation (MBT):
@@ -580,9 +980,9 @@ module top_zynq
       ,.s_axil_rvalid_o(spack_axi_rvalid)
       ,.s_axil_rready_i(spack_axi_rready)
 
-      ,.data_o(pl_to_ps_fifo_data_li)
-      ,.v_o(pl_to_ps_fifo_v_li)
-      ,.ready_i(pl_to_ps_fifo_ready_lo)
+      ,.data_o(pl_to_ps_fifo_data_li[0])
+      ,.v_o(pl_to_ps_fifo_v_li[0])
+      ,.ready_i(pl_to_ps_fifo_ready_lo[0])
 
       ,.data_i(ps_to_pl_fifo_data_lo)
       ,.v_i(ps_to_pl_fifo_v_lo)

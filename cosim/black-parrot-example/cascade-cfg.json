@@ -1,0 +1,17 @@
+{
+    "misaligned_data_supported": false,
+    "privlvs": "msu",
+    "mmu": "sv39",
+    "marchflags": "-march=rv64imafd -mabi=lp64f",
+    "bootaddr": "0x0",
+    "stopsigaddr": "0x102000",
+    "trapsigaddr": "0x8",
+    "regdumpaddr": "0x10",
+    "fpregdumpaddr": "0x18",
+    "bootrom_elf": "",
+    "lead_cycles": 0,
+    "toplevel": "top",
+    "trace_top": "",
+    "verilatorprefix": "top",
+    "memorywordsize": 64
+}

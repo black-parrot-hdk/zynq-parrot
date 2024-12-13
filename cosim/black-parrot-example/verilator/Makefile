@@ -1,3 +1,12 @@
+COEMU ?= 1
+# change SPIKE_COEMU to 0 for DROMAJO_COEMU
+SPIKE_COEMU ?= 1
+ifeq ($(SPIKE_COEMU),1)
+DROMAJO_COEMU ?= 0
+else
+DROMAJO_COEMU ?= 1
+endif
+
 include ../Makefile.design
 
 #############################
@@ -16,6 +25,20 @@ ifeq ($(DROMAJO_COSIM),1)
 CFLAGS += -I$(BP_TOOLS_DIR)/dromajo/include
 endif
 
+MAIN_SDK = $(HOME)/zynq-farm/new/zynq-parrot/import/black-parrot-sdk/install
+
+ifeq ($(COEMU),1)
+  ifeq ($(DROMAJO_COEMU),1)
+    CINCLUDES += -I$(BP_TOOLS_DIR)/dromajo/include
+    LDFLAGS += -L$(BP_TOOLS_DIR)/dromajo/build_x86 -ldromajo_cosim
+  endif
+  ifeq ($(SPIKE_COEMU),1)
+    CINCLUDES += -I$(MAIN_SDK)/include
+    LDFLAGS += -L$(MAIN_SDK)/lib -lriscv -lsoftfloat -lfesvr -Wl,-rpath=$(HOME)/riscv-tools/riscv-isa-sim/build
+  endif
+endif
+
+
 DEFINES += GP0_ADDR_BASE=0x400000000U
 DEFINES += GP0_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil0
 DEFINES += GP1_ADDR_BASE=0x500000000U
@@ -31,7 +54,8 @@ DEFINES += HP1_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil4
 DEFINES += SCRATCHPAD_ENABLE
 DEFINES += DMA_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil5
 
-SIM_ARGS += $(NBF_FILE)
+SIM_ARGS += $(NBF_FILE) $(ELF_FILE)
+RUN_COLLATERAL = $(NBF_FILE) $(ELF_FILE)
 
 # Enable backpressure, emulating context switches
 #CFLAGS += -DSIM_BACKPRESSURE_ENABLE
