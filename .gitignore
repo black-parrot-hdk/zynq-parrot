@@ -4,6 +4,7 @@ obj_dir/
 *.log
 *.str
 *.pyc
+*.rep
 ip_repo/
 vcdplus.vpd
 vc_hdrs.h

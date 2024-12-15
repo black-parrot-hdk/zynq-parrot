@@ -209,7 +209,7 @@ module bsg_cover
      end
 
      always_ff @(negedge ds_clk_i) begin
-       assert(((els_p * width_p) / out_width_p) <= 256);
+       assert(((els_p * width_p) / out_width_p) <= 256)
          else $error("CAM too big for a single transaction: %0d\n", id_p);
      end
    end

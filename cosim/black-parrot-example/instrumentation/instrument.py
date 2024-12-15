@@ -8,16 +8,7 @@ parser.add_argument("-o", "--output",\
                       type=str,\
                         help="output macro file name",\
                           required=True)
-parser.add_argument("-n", "--numgroups",\
-                      type=int,\
-                        help="number of groups")
-parser.add_argument("-g", "--groupsize",\
-                      type=int,\
-                        help="number of signals in a group",\
-                          required=True,
-                            default=32)
 args = parser.parse_args()
-#print(args)
 
 def get_depths(lines):
   return [int(line.rstrip('\n').split(',')[-1]) for line in lines]

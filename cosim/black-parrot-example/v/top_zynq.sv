@@ -370,15 +370,17 @@ module top_zynq
    assign minstret_lo = `COREPATH.be.calculator.pipe_sys.csr.minstret_lo;
 
    assign csr_data_li[0+:4] = mem_profiler_r;
-   assign csr_data_li[4] = bootrom_data_li;
+   //assign csr_data_li[4] = bootrom_data_li;
+   assign csr_data_li[4] = '0;
    assign csr_data_li[5+:2] = cycle_lo;
    assign csr_data_li[7+:2] = mcycle_lo;
    assign csr_data_li[9+:2] = minstret_lo;
-
+/*
    bsg_bootrom
     #(.width_p(bootrom_data_lp), .addr_width_p(bootrom_addr_lp))
     bootrom
      (.addr_i(bootrom_addr_lo), .data_o(bootrom_data_li));
+*/
 
    // Tag bitbang
    logic tag_clk_r_lo, tag_data_r_lo;

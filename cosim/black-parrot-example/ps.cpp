@@ -561,7 +561,8 @@ int ps_main(int argc, char **argv) {
               zpl->shell_read(GP0_RD_MEM_PROF_2),
               zpl->shell_read(GP0_RD_MEM_PROF_1),
               zpl->shell_read(GP0_RD_MEM_PROF_0));
-  btb->idle(500000);
+  //btb->idle(500000);
+  btb->idle(50);
   // in general we do not want to free the dram; the Xilinx allocator has a
   // tendency to
   // fail after many allocate/fail cycle. instead we keep a pointer to the dram
