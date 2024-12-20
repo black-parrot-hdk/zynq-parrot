@@ -15,15 +15,8 @@ using namespace std;
 #define debug(x)
 #endif
 
-
-void walker_warn(string s) {
-  debug("WARN: " << s << endl);
-}
-
-void walker_error(string s) {
-  cout << "ERROR: " << s << endl;
-  exit(0);
-}
+#define walker_warn(x) debug("WARN: " << x << endl)
+#define walker_error(x) debug("ERROR: " << x << endl); exit(0)
 
 // functions declarations
 string visitbit_sel(vpiHandle);

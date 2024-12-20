@@ -75,8 +75,9 @@ void parse_module(vpiHandle module, vpiHandle p_in, bool genScope = false, strin
       name = vpi_get_str(vpiFullName, module);
   }
 
-  if(name == nullptr)
+  if(name == NULL) {
     walker_error("Name can't be found\n");
+  }
 
   //if already parsed, do not parse again
   if(!genScope && module_ds_map.find(name) != module_ds_map.end()) {
@@ -88,7 +89,8 @@ void parse_module(vpiHandle module, vpiHandle p_in, bool genScope = false, strin
 
   data_structure ds;
   ds.parent = p_in;
-  // params resolutoin
+
+  // params resolution
   if(vpiHandle pai = vpi_iterate(vpiParameter, module)) {
     debug("Found params\n");
     while(vpiHandle p = vpi_scan(pai)) {
@@ -107,10 +109,9 @@ void parse_module(vpiHandle module, vpiHandle p_in, bool genScope = false, strin
     visitParamAssignment(pai);
   } else { debug("No paramAssign found in current module\n"); }
 
-  //debug("\nFinal list of params:\n");
-  //map<string, int>::iterator pitr;
-  //for (pitr = params.begin(); pitr != params.end(); ++pitr)
-  //  debug(pitr->first << " = " << pitr->second << endl);
+  debug("\nFinal list of params:\n");
+  for (map<string, int>::iterator pitr = params.begin(); pitr != params.end(); ++pitr)
+    debug(pitr->first << " = " << pitr->second << endl);
 
   // submodIn_net mapping
   // net_submodOut mapping
@@ -995,7 +996,7 @@ list <string> visitExpr(vpiHandle h, bool retainConsts, bool& constOnly) {
       break;
     }
     case UHDM::uhdmenum_typespec : {
-
+      //FARZAM: no break? what is this type?
     }
     case UHDM::uhdmenum_const :
     case UHDM::uhdmconstant :
@@ -1089,6 +1090,7 @@ list <string> visitExpr(vpiHandle h, bool retainConsts, bool& constOnly) {
     }
     case UHDM::uhdmsys_func_call : {
       string fname = vpi_get_str(vpiName, h);
+      debug("function call: " << fname << endl);
       if(retainConsts) {
         string tmp = fname + "(";
         if(vpiHandle itr = vpi_iterate(vpiArgument, h)) {
@@ -1107,6 +1109,9 @@ list <string> visitExpr(vpiHandle h, bool retainConsts, bool& constOnly) {
           if(vpiHandle itr = vpi_iterate(vpiArgument, h))
             while(vpiHandle i = vpi_scan(itr))
               out.push_back(visitExpr(i, retainConsts, constOnly).front());
+        } else {
+          debug("Ignoring\n");
+          out.push_back("IGNORED");
         }
       }
       break;
@@ -1117,9 +1122,9 @@ list <string> visitExpr(vpiHandle h, bool retainConsts, bool& constOnly) {
       break;
     }
     default :
-      if(char *c = vpi_get_str(vpiFullName, h))
+      /*if(char *c = vpi_get_str(vpiFullName, h))
         out.push_back(c);
-      else walker_error("UNKNOWN node at leaf; type: " +
+      else*/ walker_error("UNKNOWN node at leaf; type: " +
           UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)h)->type));
       break;
   }
@@ -1237,7 +1242,7 @@ tuple <bool, list <string>> visitOperation(vpiHandle h) {
     case 71 : symbol += " ,  "; break; //streaming left to right
     case 72 : symbol += " ,  "; break; //streaming right to left
     case 95 : symbol += " ,  "; break; 
-    default : symbol += " UNKNOWN_OP(" + to_string(type) + ") " ; break;
+    default : walker_error(" UNKNOWN_OP(" + to_string(type) + ") "); break;
   }
 
   debug("Found symbol\n");
@@ -1280,15 +1285,18 @@ tuple <bool, list <string>> visitOperation(vpiHandle h) {
         }
         opCnt++;
       } else {
-        if(opCnt == 1) 
+        if(opCnt == 1) {
           if(type == 32)
             out += " ? ";
           else if(type == 95)
             out += " inside { ";
           else out += symbol;
-        else    
+        }
+        else {
           out += symbol;
+        }
         opCnt++;
+
         if(((const uhdm_handle *)oph)->type == UHDM::uhdmoperation) {
           out += "(";
           list <string> tmp;
@@ -1315,13 +1323,14 @@ tuple <bool, list <string>> visitOperation(vpiHandle h) {
         type == 72)
       out += " }";
 
-    if(constantsOnly) 
-      { debug("Operation is constants-only: " << out << endl); }
+    if(constantsOnly)
+      walker_warn("Operation is constants-only: " << out << endl);
+
     debug("Inserting Operation\n");
     current.push_front(out);
 
   } else {
-    debug("Couldn't iterate on operands! Iterator type: " <<  UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)ops)->type) << endl);
+    walker_error("Couldn't iterate on operands! Iterator type: " <<  UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)ops)->type) << endl);
   }
 
   vpi_release_handle(ops);
@@ -1497,6 +1506,7 @@ void visitTernary(vpiHandle h, list<string> &current) {
 int evalExpr(vpiHandle h, bool& found) {
   debug("In evalExpr | type: " << UHDM::UhdmName((UHDM::UHDM_OBJECT_TYPE)((const uhdm_handle *)h)->type) << endl);
 
+  // check in running constants
   if(char *c = vpi_get_str(vpiName, h)) {
     debug("Looking up: " << c << endl);
     auto range = running_const.find(c);
@@ -1508,6 +1518,7 @@ int evalExpr(vpiHandle h, bool& found) {
     } else { debug("Not found in running_const\n"); }
   }
 
+  // check in params
   if(char *c = vpi_get_str(vpiFullName, h)) {
     debug("Looking up: " << c << endl);
     auto range = params.find(c);
@@ -1519,30 +1530,31 @@ int evalExpr(vpiHandle h, bool& found) {
     } else { debug("Not found in param\n"); }
   }
 
+  // check for actual obj
   if(vpiHandle actual = vpi_handle(vpiActual, h)) {
     debug("Found actual; recursing" << endl);
     return evalExpr(actual, found);
   }
-  else  {
-    if(const char *tmp = vpi_get_str(vpiDecompile, h)) {
-      debug("Found non-actual " << tmp << endl);
-      s_vpi_value value;
-      vpi_get_value(h, &value);
-      found = true;
-      if(value.format) {
-        return value.value.integer;
-      } else
-        return stoi(string(tmp));
+
+  // evaluate number
+  if(const char *tmp = vpi_get_str(vpiDecompile, h)) {
+    debug("Found decompile " << tmp << endl);
+    s_vpi_value value;
+    vpi_get_value(h, &value);
+    found = true;
+    if(value.format) {
+      return value.value.integer;
+    } else {
+      //FARZAM: check this
+      walker_warn("using decompile string: " << tmp << endl);
+      return stoi(string(tmp));
     }
-    else {
-      //walker_error("Actual doesn't exists, no decompile"); // MAJOR TODO happens when parsing pipe_mem 
-      // "~/zynq-farm/zynq-parrot/cosim/import/black-parrot/bp_common/src/v/bp_tlb.sv" +211
-      return 0;
-    }
+  }
+  else {
+    walker_error("No decompile!");
   }
 
   walker_error("Unable to resolve consant");
-  return 0;
 }
 
 string evalOperation(vpiHandle h) {
@@ -1560,15 +1572,15 @@ string evalOperation(vpiHandle h) {
             *op = stoi(evalOperation(oph));
             op++;
             break;
-          case UHDM::uhdmsys_func_call :
-            *op = 0; //TODO fix this
+          case UHDM::uhdmsys_func_call:
+            //FARZAM: fix this, maybe just call visitExpr on the entire op?
+            walker_error("function call in evalOperation");
             op++;
             break;
           default:
             *op = evalExpr(oph, found);
-            if(!found) {
-              //walker_error("Did not really evaluate the function, check `found`");
-            }
+            if(!found)
+              walker_error("Did not evaluate the operation");
             op++;
             break;
         }
@@ -1602,7 +1614,7 @@ string evalOperation(vpiHandle h) {
   } else {
     result = evalExpr(h, found);
     if(!found)
-      walker_warn("Did not really evaluate the function, check `found`");
+      walker_error("Did not evaluate the operation");
   }
   debug("Done evaluating operation\n");
 
@@ -1632,8 +1644,7 @@ void visitParamAssignment(vpiHandle p) {
       debug("\t" << name << endl);
       vpi_release_handle(l);
     } else {
-      debug("Unable to find name of param\n");
-      name = "UNKNOWN";
+      walker_error("Unable to find name of param\n");
     }
     if(vpiHandle r = vpi_handle(vpiRhs, h)) {
       //debug("Found a handle " << ((const uhdm_handle *)r)->type << "\n");
@@ -1645,14 +1656,14 @@ void visitParamAssignment(vpiHandle p) {
             debug("\t\tFound const assignment: " << to_string(value.value.integer) << endl);
             params.insert(pair<string, int>(name, value.value.integer));
           } else
-            { debug("Unable to resolve constant\n"); }
+            { walker_error("Unable to resolve constant\n"); }
           break;
         } 
         case UHDM::uhdmparameter: {
           map <string, int>::iterator it;
           it = params.find(name);
           if(it == params.end()) {
-            debug("Can't find definition of param: " << name << endl);
+            walker_warn("Can't find definition of param: " << name << endl);
             params.insert(pair<string, int>(name, 0));
           } else {
             debug("Found existing param: " << it->second << endl);
@@ -1661,16 +1672,17 @@ void visitParamAssignment(vpiHandle p) {
           break;
         }
         case UHDM::uhdmoperation:  {
-          debug("Unexpected operation in parameter assignment\n");
+          walker_error("Unexpected operation in parameter assignment\n");
+          break;
         }
         default: {
-          debug("Didn't find a constant of param in param assignment\n");
+          walker_error("Didn't find a constant of param in param assignment\n");
           break;
         }
       }
       vpi_release_handle(r);
     } else {
-      debug("Didn't find RHS of param assignment!!\n");
+      walker_error("Didn't find RHS of param assignment!!\n");
     }
   }
   return;
@@ -1739,9 +1751,6 @@ void visitTopModules(vpiHandle ti) {
           debug("Precision coverage dump:\n");
           print_unordered_set(covs, true, outputDir / "cp.csv");
         }
-
-
-
 
         // Accumulate variables:
         paramsAll.insert(params.begin(), params.end());
