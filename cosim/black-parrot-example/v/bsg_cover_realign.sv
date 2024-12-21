@@ -41,6 +41,9 @@ module bsg_cover_realign
 
    // synopsys translate_off
    if(debug_p) begin: debug
+     wire [(8 * `BSG_CDIV(num_p,8))-1 : 0] data_li = {{8{1'b0}}, data_i};
+     wire [(8 * `BSG_CDIV(num_p,8))-1 : 0] data_lo = {{8{1'b0}}, data_o};
+
      integer f_raw, f_align;
      string fn_raw, fn_align;
      initial begin
@@ -52,8 +55,14 @@ module bsg_cover_realign
 
      always_ff @(negedge clk_i) begin
        if(~reset_i & v_i) begin
-         $fwrite(f_raw, "%x\n", data_i);
-         $fwrite(f_align, "%x\n", data_o);
+         for(int i = `BSG_CDIV(num_p,8)-1; i >= 0; i--) begin: wr
+           $fwrite(f_raw, "%02x", data_li[i*8 +: 8]);
+           $fwrite(f_align, "%02x", data_lo[i*8 +: 8]);
+         end
+         $fwrite(f_raw, "\n");
+         $fwrite(f_align, "\n");
+         $fflush(f_raw);
+         $fflush(f_align);
        end
      end
    end
