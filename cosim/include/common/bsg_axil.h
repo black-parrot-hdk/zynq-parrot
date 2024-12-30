@@ -3,28 +3,30 @@
 #define BSG_AXIL_H
 
 #include <cassert>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string>
-#include <functional>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
 #include <svdpi.h>
 #include <unistd.h>
-#include <string>
 
 #include <boost/coroutine2/all.hpp>
 
 #include "bsg_nonsynth_dpi_gpio.hpp"
+#include "bsg_pin.h"
 #include "bsg_printing.h"
 
 #ifndef ZYNQ_AXI_TIMEOUT
-#define ZYNQ_AXI_TIMEOUT 50000
+#define ZYNQ_AXI_TIMEOUT 1000
 #endif
 
-extern "C" { int bsg_dpi_time(); }
+extern "C" {
+int bsg_dpi_time();
+}
 using namespace std;
 using namespace bsg_nonsynth_dpi;
 using namespace boost::coroutines2;
@@ -33,49 +35,19 @@ using namespace std::placeholders;
 typedef coroutine<void>::pull_type coro_t;
 typedef coroutine<void>::push_type yield_t;
 
-// W = width of pin
-template <unsigned int W>
-class pin {
-    std::unique_ptr<dpi_gpio<W>> gpio;
-
-public:
-    pin(const string &hierarchy) {
-        gpio = std::make_unique<dpi_gpio<W>>(hierarchy);
-    }
-
-    void set(const unsigned int val) {
-        unsigned int bval = 0;
-        for (int i = 0; i < W; i++) {
-            bval = (val & (1 << i)) >> i;
-            gpio->set(i, bval);
-        }
-    }
-
-    void operator=(const unsigned int val) { set(val); }
-
-    int get() const {
-        unsigned int N = 0;
-        for (int i = 0; i < W; i++) {
-            N |= gpio->get(i) << i;
-        }
-
-        return N;
-    }
-
-    operator int() const { return get(); }
-};
-
 class s_axil_device {
-public:
+  public:
     virtual bool is_read(uintptr_t address) = 0;
+    virtual bool can_read(uintptr_t address) = 0;
     virtual int32_t read(uintptr_t address) = 0;
 
     virtual bool is_write(uintptr_t address) = 0;
+    virtual bool can_write(uintptr_t address) = 0;
     virtual void write(uintptr_t address, int32_t data) = 0;
 };
 
 class m_axil_device {
-public:
+  public:
     virtual bool pending_read(uintptr_t *address) = 0;
     virtual void return_read(int32_t data) = 0;
 
@@ -86,9 +58,8 @@ public:
 
 // A = axil address width
 // D = axil data width
-template <unsigned int A, unsigned int D>
-class axilm {
-private:
+template <unsigned int A, unsigned int D> class maxil {
+  private:
     string base;
 
     pin<1> p_aclk;
@@ -130,10 +101,9 @@ private:
         mutex = 0;
     }
 
-public:
-    axilm(const string &base)
-        : base(base),
-          p_aclk(string(base) + string(".aclk_gpio")),
+  public:
+    maxil(const string &base)
+        : base(base), p_aclk(string(base) + string(".aclk_gpio")),
           p_aresetn(string(base) + string(".aresetn_gpio")),
           p_awaddr(string(base) + string(".awaddr_gpio")),
           p_awprot(string(base) + string(".awprot_gpio")),
@@ -153,8 +123,7 @@ public:
           p_rdata(string(base) + string(".rdata_gpio")),
           p_rresp(string(base) + string(".rresp_gpio")),
           p_rvalid(string(base) + string(".rvalid_gpio")),
-          p_rready(string(base) + string(".rready_gpio")),
-          mutex(0) {
+          p_rready(string(base) + string(".rready_gpio")), mutex(0) {
         std::cout << "Instantiating AXIL at " << base << std::endl;
     }
 
@@ -294,9 +263,8 @@ public:
 
 // A = axil address width
 // D = axil data width
-template <unsigned int A, unsigned int D>
-class axils {
-private:
+template <unsigned int A, unsigned int D> class saxil {
+  private:
     pin<1> p_aclk;
     pin<1> p_aresetn;
 
@@ -336,8 +304,8 @@ private:
         mutex = 0;
     }
 
-public:
-    axils(const string &base)
+  public:
+    saxil(const string &base)
         : p_aclk(string(base) + string(".aclk_gpio")),
           p_aresetn(string(base) + string(".aresetn_gpio")),
           p_awaddr(string(base) + string(".awaddr_gpio")),
@@ -514,103 +482,4 @@ public:
     }
 };
 
-class s_axis_device {
-public:
-    virtual bool full() = 0;
-    virtual int read(int32_t* data) = 0;
-    virtual void write(int32_t data, bool last) = 0;
-};
-
-// D = axis data width
-template <unsigned int D>
-class axiss {
-private:
-    pin<1> p_aclk;
-    pin<1> p_aresetn;
-
-    pin<1> p_tready;
-    pin<1> p_tvalid;
-    pin<D> p_tdata;
-    pin<D / 8> p_tkeep;
-    pin<1> p_tlast;
-
-    // We use a boolean instead of true mutex so that we can check it
-    bool mutex = 0;
-
-    void lock(yield_t &yield) {
-        do {
-            yield();
-        } while (mutex);
-        mutex = 1;
-    }
-
-    void unlock(yield_t &yield) {
-        yield();
-        mutex = 0;
-    }
-
-public:
-    axiss(const string &base)
-        : p_aclk(string(base) + string(".aclk_gpio")),
-          p_aresetn(string(base) + string(".aresetn_gpio")),
-          p_tready(string(base) + string(".tready_gpio")),
-          p_tvalid(string(base) + string(".tvalid_gpio")),
-          p_tdata(string(base) + string(".tdata_gpio")),
-          p_tkeep(string(base) + string(".tkeep_gpio")),
-          p_tlast(string(base) + string(".tlast_gpio")) {
-        std::cout << "Instantiating AXIS at " << base << std::endl;
-    }
-
-    // Wait for (low true) reset to be asserted by the testbench
-    void reset(yield_t &yield) {
-        printf("bsg_zynq_pl: Entering reset\n");
-        lock(yield);
-        while (this->p_aresetn == 0) {
-            yield();
-        }
-        unlock(yield);
-        printf("bsg_zynq_pl: Exiting reset\n");
-    }
-
-    bool axis_has_write(s_axis_device *p) {
-        bool tv = this->p_tvalid;
-        bool full = p->full();
-        return tv && !full && !mutex;
-    }
-
-    void axis_write_helper(s_axis_device *p, yield_t &yield) {
-        lock(yield);
-        int timeout_counter = 0;
-
-        bool t_done = false;
-        int tdata;
-        bool tlast;
-
-        this->p_tready = 1;
-        do {
-            if (timeout_counter++ == ZYNQ_AXI_TIMEOUT) {
-                bsg_pr_err("bsg_zynq_pl: AXISS read request timeout\n");
-                timeout_counter = 0;
-            }
-
-            if (this->p_tvalid == 1) {
-                tdata = this->p_tdata;
-                tlast = this->p_tlast;
-                t_done = true;
-            }
-
-            yield();
-
-            if (t_done) {
-                this->p_tready = 0;
-                p->write(tdata, tlast);
-            }
-        } while (!t_done);
-
-        unlock(yield);
-        return;
-    }
-};
-
 #endif
-

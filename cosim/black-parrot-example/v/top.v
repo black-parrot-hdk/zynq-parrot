@@ -11,7 +11,7 @@ module top
     , parameter integer C_M00_AXI_ADDR_WIDTH = 32
     , parameter integer C_M01_AXI_DATA_WIDTH = 32
     , parameter integer C_M01_AXI_ADDR_WIDTH = 32
-    , parameter integer C_DMA_AXIS_DATA_WIDTH = 64
+    , parameter integer C_MP0_AXI_DATA_WIDTH = 64
     , parameter integer __DUMMY = 0
     )
    (
@@ -151,11 +151,11 @@ module top
     ,input wire                                  m01_axi_rvalid
     ,output wire                                 m01_axi_rready
 
-    ,input wire                                  dma_axis_tready
-    ,output wire                                 dma_axis_tvalid
-    ,output wire [C_DMA_AXIS_DATA_WIDTH-1 : 0]   dma_axis_tdata
-    ,output wire [(C_DMA_AXIS_DATA_WIDTH/8)-1:0] dma_axis_tkeep
-    ,output wire                                 dma_axis_tlast
+    ,input wire                                  mp0_axi_tready
+    ,output wire                                 mp0_axi_tvalid
+    ,output wire [C_MP0_AXI_DATA_WIDTH-1 : 0]    mp0_axi_tdata
+    ,output wire [(C_MP0_AXI_DATA_WIDTH/8)-1:0]  mp0_axi_tkeep
+    ,output wire                                 mp0_axi_tlast
     );
 
    top_zynq #
@@ -169,7 +169,7 @@ module top
       ,.C_M00_AXI_ADDR_WIDTH(C_M00_AXI_ADDR_WIDTH)
       ,.C_M01_AXI_DATA_WIDTH(C_M01_AXI_DATA_WIDTH)
       ,.C_M01_AXI_ADDR_WIDTH(C_M01_AXI_ADDR_WIDTH)
-      ,.C_DMA_AXIS_DATA_WIDTH(C_DMA_AXIS_DATA_WIDTH)
+      ,.C_DMA_AXIS_DATA_WIDTH(C_MP0_AXI_DATA_WIDTH)
       )
      top_fpga_inst
      (.aclk            (aclk)
@@ -304,11 +304,11 @@ module top
       ,.m01_axi_rvalid (m01_axi_rvalid)
       ,.m01_axi_rready (m01_axi_rready)
 
-      ,.dma_axis_tready(dma_axis_tready)
-      ,.dma_axis_tvalid(dma_axis_tvalid)
-      ,.dma_axis_tdata (dma_axis_tdata)
-      ,.dma_axis_tkeep (dma_axis_tkeep)
-      ,.dma_axis_tlast (dma_axis_tlast)
+      ,.dma_axis_tready(mp0_axi_tready)
+      ,.dma_axis_tvalid(mp0_axi_tvalid)
+      ,.dma_axis_tdata (mp0_axi_tdata)
+      ,.dma_axis_tkeep (mp0_axi_tkeep)
+      ,.dma_axis_tlast (mp0_axi_tlast)
       );
 
 `ifdef DROMAJO_COSIM

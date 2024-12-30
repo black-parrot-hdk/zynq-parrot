@@ -46,12 +46,12 @@ typedef uint32_t uint32x4_t[4];
 #endif
 #define GP0_ADDR_SIZE_BYTES (1ULL << GP0_ADDR_WIDTH)
 #endif
-static uintptr_t gp0_addr_size_bytes = (uintptr_t) GP0_ADDR_SIZE_BYTES;
+static uintptr_t gp0_addr_size_bytes = (uintptr_t)GP0_ADDR_SIZE_BYTES;
 
 #ifndef GP0_ADDR_BASE
 #error GP0_ADDR_BASE must be defined
 #endif
-static uintptr_t gp0_addr_base = (uintptr_t) GP0_ADDR_BASE;
+static uintptr_t gp0_addr_base = (uintptr_t)GP0_ADDR_BASE;
 
 #ifndef GP0_DATA_WIDTH
 #error GP0_DATA_WIDTH must be defined
@@ -76,12 +76,12 @@ static uintptr_t gp0_addr_base = (uintptr_t) GP0_ADDR_BASE;
 #endif
 #define GP1_ADDR_SIZE_BYTES (1ULL << GP1_ADDR_WIDTH)
 #endif
-static uintptr_t gp1_addr_size_bytes = (uintptr_t) GP1_ADDR_SIZE_BYTES;
+static uintptr_t gp1_addr_size_bytes = (uintptr_t)GP1_ADDR_SIZE_BYTES;
 
 #ifndef GP1_ADDR_BASE
 #error GP1_ADDR_BASE must be defined
 #endif
-static uintptr_t gp1_addr_base = (uintptr_t) GP1_ADDR_BASE;
+static uintptr_t gp1_addr_base = (uintptr_t)GP1_ADDR_BASE;
 
 #ifndef GP1_DATA_WIDTH
 #error GP1_DATA_WIDTH must be defined
@@ -94,11 +94,15 @@ static uintptr_t gp1_addr_base = (uintptr_t) GP1_ADDR_BASE;
 #endif
 
 #ifdef GP0_ENABLE
-#define AXI_ENABLE
+#define AXIL_ENABLE
 #endif
 
 #ifdef GP1_ENABLE
-#define AXI_ENABLE
+#define AXIL_ENABLE
+#endif
+
+#ifdef GP2_ENABLE
+#define AXIL_ENABLE
 #endif
 
 #ifndef GP2_ENABLE
@@ -114,12 +118,12 @@ static uintptr_t gp1_addr_base = (uintptr_t) GP1_ADDR_BASE;
 #endif
 #define GP2_ADDR_SIZE_BYTES (1ULL << GP2_ADDR_WIDTH)
 #endif
-static uintptr_t gp2_addr_size_bytes = (uintptr_t) GP2_ADDR_SIZE_BYTES;
+static uintptr_t gp2_addr_size_bytes = (uintptr_t)GP2_ADDR_SIZE_BYTES;
 
 #ifndef GP2_ADDR_BASE
 #error GP2_ADDR_BASE must be defined
 #endif
-static uintptr_t gp2_addr_base = (uintptr_t) GP2_ADDR_BASE;
+static uintptr_t gp2_addr_base = (uintptr_t)GP2_ADDR_BASE;
 
 #ifndef GP2_DATA_WIDTH
 #error GP2_DATA_WIDTH must be defined
@@ -132,7 +136,7 @@ static uintptr_t gp2_addr_base = (uintptr_t) GP2_ADDR_BASE;
 #endif
 
 #ifndef HP0_ENABLE
-#define HP0_ADDR_WIDTH 0 
+#define HP0_ADDR_WIDTH 0
 #define HP0_DATA_WIDTH 0
 #define HP0_ADDR_BASE 0
 #define HP0_HIER_BASE ""
@@ -144,12 +148,12 @@ static uintptr_t gp2_addr_base = (uintptr_t) GP2_ADDR_BASE;
 #endif
 #define HP0_ADDR_SIZE_BYTES (1ULL << HP0_ADDR_WIDTH)
 #endif
-static uintptr_t hp0_addr_size_bytes = (uintptr_t) HP0_ADDR_SIZE_BYTES;
+static uintptr_t hp0_addr_size_bytes = (uintptr_t)HP0_ADDR_SIZE_BYTES;
 
 #ifndef HP0_ADDR_BASE
 #error HP0_ADDR_BASE must be defined
 #endif
-static uintptr_t hp0_addr_base = (uintptr_t) HP0_ADDR_BASE;
+static uintptr_t hp0_addr_base = (uintptr_t)HP0_ADDR_BASE;
 
 #ifndef HP0_DATA_WIDTH
 #error HP0_DATA_WIDTH must be defined
@@ -176,12 +180,12 @@ static uintptr_t hp0_addr_base = (uintptr_t) HP0_ADDR_BASE;
 #endif
 #define HP1_ADDR_SIZE_BYTES (1ULL << HP1_ADDR_WIDTH)
 #endif
-static uintptr_t hp1_addr_size_bytes = (uintptr_t) HP1_ADDR_SIZE_BYTES;
+static uintptr_t hp1_addr_size_bytes = (uintptr_t)HP1_ADDR_SIZE_BYTES;
 
 #ifndef HP1_ADDR_BASE
 #error HP1_ADDR_BASE must be defined
 #endif
-static uintptr_t hp1_addr_base = (uintptr_t) HP1_ADDR_BASE;
+static uintptr_t hp1_addr_base = (uintptr_t)HP1_ADDR_BASE;
 
 #ifndef HP1_DATA_WIDTH
 #error HP1_DATA_WIDTH must be defined
@@ -193,23 +197,140 @@ static uintptr_t hp1_addr_base = (uintptr_t) HP1_ADDR_BASE;
 #endif
 #endif
 
-#ifndef DMA_ENABLE
-#define DMA_DATA_WIDTH 0
-#define DMA_HIER_BASE ""
+#ifndef HP2_ENABLE
+#define HP2_ADDR_WIDTH 0
+#define HP2_DATA_WIDTH 0
+#define HP2_ADDR_BASE 0
+#define HP2_HIER_BASE ""
 #endif
 
-#ifndef DMA_DATA_WIDTH
-#error DMA_DATA_WIDTH must be defined
+#ifndef HP2_ADDR_SIZE_BYTES
+#ifndef HP2_ADDR_WIDTH
+#error HP2_ADDR_WIDTH must be defined
+#endif
+#define HP2_ADDR_SIZE_BYTES (1ULL << HP2_ADDR_WIDTH)
+#endif
+static uintptr_t hp2_addr_size_bytes = (uintptr_t)HP2_ADDR_SIZE_BYTES;
+
+#ifndef HP2_ADDR_BASE
+#error HP2_ADDR_BASE must be defined
+#endif
+static uintptr_t hp2_addr_base = (uintptr_t)HP2_ADDR_BASE;
+
+#ifndef HP2_DATA_WIDTH
+#error HP2_DATA_WIDTH must be defined
 #endif
 
-#ifndef DMA_HIER_BASE
+#ifndef HP2_HIER_BASE
 #ifdef SIMULATION
-#error DMA_HIER_BASE must be defined
+#error HP2_HIER_BASE must be defined
+#endif
+#endif
+
+#ifdef SP0_ENABLE
+#define AXIS_ENABLE
+#endif
+
+#ifdef SP1_ENABLE
+#define AXIS_ENABLE
+#endif
+
+#ifdef SP2_ENABLE
+#define AXIS_ENABLE
+#endif
+
+#ifndef SP0_ENABLE
+#define SP0_DATA_WIDTH 0
+#define SP0_HIER_BASE ""
+#endif
+
+#ifndef SP0_DATA_WIDTH
+#error SP0_DATA_WIDTH must be defined
+#endif
+
+#ifndef SP0_HIER_BASE
+#ifdef SIMULATION
+#error SP0_HIER_BASE must be defined
+#endif
+#endif
+
+#ifndef SP1_ENABLE
+#define SP1_DATA_WIDTH 0
+#define SP1_HIER_BASE ""
+#endif
+
+#ifndef SP1_DATA_WIDTH
+#error SP1_DATA_WIDTH must be defined
+#endif
+
+#ifndef SP1_HIER_BASE
+#ifdef SIMULATION
+#error SP1_HIER_BASE must be defined
+#endif
+#endif
+
+#ifndef SP2_ENABLE
+#define SP2_DATA_WIDTH 0
+#define SP2_HIER_BASE ""
+#endif
+
+#ifndef SP2_DATA_WIDTH
+#error SP2_DATA_WIDTH must be defined
+#endif
+
+#ifndef SP2_HIER_BASE
+#ifdef SIMULATION
+#error SP2_HIER_BASE must be defined
+#endif
+#endif
+
+#ifndef MP0_ENABLE
+#define MP0_DATA_WIDTH 0
+#define MP0_HIER_BASE ""
+#endif
+
+#ifndef MP0_DATA_WIDTH
+#error MP0_DATA_WIDTH must be defined
+#endif
+
+#ifndef MP0_HIER_BASE
+#ifdef SIMULATION
+#error MP0_HIER_BASE must be defined
+#endif
+#endif
+
+#ifndef MP1_ENABLE
+#define MP1_DATA_WIDTH 0
+#define MP1_HIER_BASE ""
+#endif
+
+#ifndef MP1_DATA_WIDTH
+#error MP1_DATA_WIDTH must be defined
+#endif
+
+#ifndef MP1_HIER_BASE
+#ifdef SIMULATION
+#error MP1_HIER_BASE must be defined
+#endif
+#endif
+
+#ifndef MP2_ENABLE
+#define MP2_DATA_WIDTH 0
+#define MP2_HIER_BASE ""
+#endif
+
+#ifndef MP2_DATA_WIDTH
+#error MP2_DATA_WIDTH must be defined
+#endif
+
+#ifndef MP2_HIER_BASE
+#ifdef SIMULATION
+#error MP2_HIER_BASE must be defined
 #endif
 #endif
 
 #ifndef UART_ENABLE
-#define UART_DEV /dev/null
+#define UART_DEV / dev / null
 #define UART_DEV_STR ""
 #define UART_BAUD 0
 #else
@@ -226,11 +347,10 @@ static uintptr_t hp1_addr_base = (uintptr_t) HP1_ADDR_BASE;
 #endif
 #else
 #define UART_DEV_STR STRINGIFY(UART_DEV)
-#define PPCAT_NX(A, B) A ## B
+#define PPCAT_NX(A, B) A##B
 #define PPCAT(A, B) PPCAT_NX(A, B)
 #define UART_BAUD_ENUM PPCAT(B, UART_BAUD)
 #endif
 #endif
 
 #endif
-

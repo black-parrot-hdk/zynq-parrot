@@ -24,8 +24,8 @@ module bsg_nonsynth_zynq_testbench;
   localparam C_M01_AXI_DATA_WIDTH = `HP1_DATA_WIDTH;
   localparam C_M01_AXI_ADDR_WIDTH = `HP1_ADDR_WIDTH;
 `endif
-`ifdef DMA_ENABLE
-  localparam C_DMA_AXIS_DATA_WIDTH = `DMA_DATA_WIDTH;
+`ifdef MP0_ENABLE
+  localparam C_MP0_AXI_DATA_WIDTH = `MP0_DATA_WIDTH;
 `endif
 
   localparam aclk_period_lp = 50000;
@@ -354,21 +354,22 @@ module bsg_nonsynth_zynq_testbench;
      );
 `endif
 
-`ifdef DMA_ENABLE
-  logic dma_axis_tready, dma_axis_tvalid, dma_axis_tlast;
-  logic [C_DMA_AXIS_DATA_WIDTH-1:0] dma_axis_tdata;
-  logic [(C_DMA_AXIS_DATA_WIDTH/8)-1:0] dma_axis_tkeep;
+`ifdef MP0_ENABLE
+  logic mp0_axi_tvalid, mp0_axi_tready;
+  logic [C_MP0_AXI_DATA_WIDTH-1:0] mp0_axi_tdata;
+  logic [(C_MP0_AXI_DATA_WIDTH/8)-1:0] mp0_axi_tkeep;
+  logic mp0_axi_tlast;
   bsg_nonsynth_axis_to_dpi
-   #(.data_width_p(C_DMA_AXIS_DATA_WIDTH))
-   axil5
+   #(.data_width_p(C_MP0_AXI_DATA_WIDTH))
+   axis9
     (.aclk_i(aclk)
      ,.aresetn_i(aresetn)
 
-     ,.tready_o(dma_axis_tready)
-     ,.tvalid_i(dma_axis_tvalid)
-     ,.tdata_i(dma_axis_tdata)
-     ,.tkeep_i(dma_axis_tkeep)
-     ,.tlast_i(dma_axis_tlast)
+     ,.tdata_i(mp0_axi_tdata)
+     ,.tvalid_i(mp0_axi_tvalid)
+     ,.tkeep_i(mp0_axi_tkeep)
+     ,.tready_o(mp0_axi_tready)
+     ,.tlast_i(mp0_axi_tlast)
      );
 `endif
 
@@ -393,8 +394,8 @@ module bsg_nonsynth_zynq_testbench;
      .C_M01_AXI_DATA_WIDTH(C_M01_AXI_DATA_WIDTH),
      .C_M01_AXI_ADDR_WIDTH(C_M01_AXI_ADDR_WIDTH),
 `endif
-`ifdef DMA_ENABLE
-     .C_DMA_AXIS_DATA_WIDTH(C_DMA_AXIS_DATA_WIDTH),
+`ifdef MP0_ENABLE
+     .C_MP0_AXI_DATA_WIDTH(C_MP0_AXI_DATA_WIDTH),
 `endif
      .__DUMMY(0)
      )

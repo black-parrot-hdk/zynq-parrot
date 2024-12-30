@@ -231,7 +231,7 @@ void cov_start(bsg_zynq_pl *zpl) {
   PYNQ_allocatedSharedMemory(&cov_buff, sizeof(dma_t) * COV_BUF_LEN, 0);
 
   bsg_pr_info("ps.cpp: openning DMA device\n");
-  PYNQ_openDMA(&dma, GP0_DMA_ADDR, true, false, sizeof(dma_t) * COV_BUF_LEN);
+  PYNQ_openDMA(&dma, GP0_DMA_ADDR+1, true, false, sizeof(dma_t) * COV_BUF_LEN);
 
   // assert coverage collection
   bsg_pr_info("ps.cpp: Asserting coverage collection enable\n");
@@ -265,8 +265,8 @@ dma_t cov_buff[COV_BUF_LEN];
 void cov_poll(bsg_zynq_pl *zpl) {
   // check if a complete DMA packet is available
   int len = 0;
-  if(zpl->dma_has_read())
-    len = zpl->dma_read((int32_t *)cov_buff);
+  if(zpl->buffer_has_read()) // buffer was previously DMA
+    len = zpl->buffer_read((int32_t *)cov_buff);
   else
     return;
 
@@ -564,7 +564,6 @@ int ps_main(int argc, char **argv) {
   unsigned long long mtime_delta = mtime_stop - mtime_start;
 
   report(zpl, nbf_file);
-  zpl->stop();
 
   clock_gettime(CLOCK_MONOTONIC, &end);
   setlocale(LC_NUMERIC, "");
@@ -611,6 +610,7 @@ int ps_main(int argc, char **argv) {
     zpl->shell_write(GP0_WR_CSR_DRAM_INITED, 0x0, 0xf);
   }
 
+  zpl->stop();
   zpl->done();
   delete zpl;
   return 0;

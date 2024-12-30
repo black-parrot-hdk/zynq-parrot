@@ -1568,7 +1568,7 @@ string evalOperation(vpiHandle h) {
           default:
             *op = evalExpr(oph, found);
             if(!found) {
-              //walker_error("Did not really evaluate the function, check `found`");
+              walker_warn("Did not really evaluate the function, check `found`");
             }
             op++;
             break;

@@ -37,3 +37,4 @@
 [submodule "cosim/black-parrot-example/cascade-meta"]
 	path = cosim/black-parrot-example/cascade-meta
 	url = https://github.com/black-parrot-hdk/cascade-meta.git
+  branch = hfcov
