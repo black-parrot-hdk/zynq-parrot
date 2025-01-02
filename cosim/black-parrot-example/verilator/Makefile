@@ -17,12 +17,20 @@ DROMAJO_COSIM ?= 0
 
 BP_NCPUS ?= 1
 
-#CFLAGS += -DDRAM_TEST
-#CFLAGS += -DZYNQ_PL_DEBUG
-CFLAGS += -DZYNQ_PS_DEBUG
+ZYNQ_PL_DEBUG ?= 0
+ZYNQ_PS_DEBUG ?= 1
+
 CFLAGS += -DBP_NCPUS=$(BP_NCPUS)
 ifeq ($(DROMAJO_COSIM),1)
 CFLAGS += -I$(BP_TOOLS_DIR)/dromajo/include
+endif
+# DRAM Test
+ifneq ($(DRAM_TEST),)
+CFLAGS += -DDRAM_TEST
+endif
+# Zero DRAM
+ifneq ($(ZERO_DRAM),)
+CFLAGS += -DZERO_DRAM
 endif
 
 MAIN_SDK = $(HOME)/zynq-farm/new/zynq-parrot/import/black-parrot-sdk/install
@@ -38,22 +46,21 @@ ifeq ($(COEMU),1)
   endif
 endif
 
-
 DEFINES += GP0_ADDR_BASE=0x400000000U
 DEFINES += GP0_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil0
 DEFINES += GP1_ADDR_BASE=0x500000000U
 DEFINES += GP1_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil1
 DEFINES += GP2_ADDR_BASE=0x800000000U
 DEFINES += GP2_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil2
-DEFINES += HP0_ADDR_BASE=0x0000000U
 # watchdog cannot function if clock gating is enabled
 #DEFINES += WATCHDOG_ENABLE
+DEFINES += HP0_ADDR_BASE=0x0000000U
 DEFINES += AXI_MEM_ENABLE
 DEFINES += HP1_ADDR_BASE=0x1000000U
 DEFINES += HP1_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil4
 DEFINES += SCRATCHPAD_ENABLE
-DEFINES += BUFFER_ENABLE
 DEFINES += MP0_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axis9
+DEFINES += BUFFER_ENABLE
 
 SIM_ARGS += $(NBF_FILE) $(ELF_FILE)
 RUN_COLLATERAL = $(NBF_FILE) $(ELF_FILE)
@@ -103,5 +110,7 @@ $(FLIST): $(BP_FLIST) $(BASE_FLIST)
 		cp $(ELF_FILE) prog.elf; \
 	fi
 
-include ../Makefile.cov
+bootrom: $(CURR_VSRC_DIR)/bsg_bootrom.v
+
 include $(TOP)/cosim/mk/Makefile.verilator
+

@@ -13,11 +13,20 @@ VV_OPTS += $(addprefix +define+,$(DEFINES))
 CFLAGS += -DVERILATOR
 CFLAGS += -DHOST_$(call upper,$(HOST))
 CFLAGS += $(addprefix -D,$(DEFINES))
-CFLAGS += -std=c++14
+CFLAGS += -std=c++17
+# PL Debug
+ifeq ($(ZYNQ_PL_DEBUG),1)
+CFLAGS += -DZYNQ_PL_DEBUG
+endif
+# PS Debug
+ifeq ($(ZYNQ_PS_DEBUG),1)
+CFLAGS += -DZYNQ_PS_DEBUG
+endif
 
 LDFLAGS += -L$(BP_SDK_INSTALL_DIR)/lib
 LDFLAGS += -lboost_coroutine -lboost_context -lboost_system
 
+CINCLUDES += -I$(BLACKPARROT_SUB_DIR)/blackparrot/src
 CINCLUDES += -I$(BP_SDK_INSTALL_DIR)/include
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
 CINCLUDES += -I$(COSIM_INCLUDE_DIR)/verilator
@@ -32,7 +41,7 @@ all:
 
 RUN_LOG ?= run.log
 run: obj_dir/V$(TB_MODULE) $(RUN_COLLATERAL)
-	LD_LIBRARY_PATH=$(BP_SDK_LIB_DIR) \
+	LD_LIBRARY_PATH=$(BP_SDK_LIB_DIR):$(COSIM_MK_DIR)/../../import/black-parrot-sdk/install/lib \
 		$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
 
 BUILD_LOG ?= build.log
@@ -43,15 +52,15 @@ obj_dir/V$(TB_MODULE): $(FLIST) $(BUILD_COLLATERAL)
 
 clean:
 	rm -rf flist*.vcs
-	rm -rf obj_dir/ *~
+	rm -rf obj_dir/ *~ trace.fst
 	rm -rf build.log
 	rm -rf run.log
-	#rm -rf *.nbf
-	#rm -rf *.elf
-	#rm -rf *.trace
-	#rm -rf *.riscv*
+	rm -rf *.nbf
+	rm -rf *.elf
+	rm -rf *.trace
+	rm -rf *.riscv*
 	rm -rf *.rv*o*
-	#rm -rf *.dump*
+	rm -rf *.dump*
 	rm -rf $(BUILD_COLLATERAL) $(SIM_COLLATERAL)
 
 view:

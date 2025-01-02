@@ -52,13 +52,13 @@ DEFINES += HP0_ENABLE=1
 DEFINES += HP0_ADDR_WIDTH=32 HP0_DATA_WIDTH=64
 DEFINES += HP1_ENABLE=1
 DEFINES += HP1_ADDR_WIDTH=32 HP1_DATA_WIDTH=32
+DEFINES += MP0_ENABLE=1
+DEFINES += MP0_DATA_WIDTH=64
+# TODO: infer from Vivado mapping
 DEFINES += ACLK_MHZ=160
 DEFINES += DSCLK_MHZ=40
 DEFINES += ASYNC_ACLK_CORE_CLK
 DEFINES += RTCLK_MHZ=8
-DEFINES += MP0_ENABLE=1
-DEFINES += MP0_DATA_WIDTH=64
-# TODO: infer from Vivado mapping
 DEFINES += DMA_OFFSET=0x10000
 DEFINES += $(VDEFINES)
 
@@ -101,14 +101,16 @@ NBF_NCPUS ?= 1
 
 VPATH := $(wildcard $(BLACKPARROT_SDK_DIR)/prog/*)
 %.nbf: %.riscv
-	cp $< $(CURR)
+	cp $< $(CURR)/
 	$(RISCV_OBJDUMP) -D $< > $*.dump
 	$(RISCV_OBJCOPY) -O verilog $< $*.mem
 	$(SED) -i "s/@8/@0/g" $*.mem
 	$(PYTHON) $(BP_COMMON_DIR)/software/py/nbf.py \
-		--skip_zeros --config --boot_pc 0x80000000 --mem $*.mem --ncpus $(NBF_NCPUS) > $@
+		--debug --skip_zeros --config --boot_pc 0x80000000 --mem $*.mem --ncpus $(NBF_NCPUS) > $@
 	rm $*.mem
 
 PROG ?= hello_world
 NBF_FILE ?= $(PROG).nbf
 ELF_FILE ?= $(PROG).riscv
+
+prog: $(NBF_FILE) $(ELF_FILE)

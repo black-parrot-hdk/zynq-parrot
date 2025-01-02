@@ -662,9 +662,9 @@ module top_zynq
     );
 
   wire pl2ps_commit_v_lo  = commit_fifo_v_lo & &pl2ps_commit_readies_lo &
-                              ~commit_debug_r & ~freeze_r & instret_v_r;
+                              commit_debug_r & ~freeze_r & instret_v_r;
   wire pl2ps_xcpt_v_lo    = commit_fifo_v_lo & &pl2ps_commit_readies_lo &
-                              ~commit_debug_r & ~freeze_r & trap_v_r;
+                              commit_debug_r & ~freeze_r & trap_v_r;
 
   wire [31:0] metadata_lo; // TODO redundant (dromajo API should provide this)
   reg end_r;

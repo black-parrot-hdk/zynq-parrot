@@ -4,45 +4,26 @@
 // the API we provide abstracts away the
 // communication plumbing differences.
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <locale.h>
-#include <time.h>
-#include <queue>
-#include <unistd.h>
-#include <bitset>
+#ifdef DROMAJO_COEMU
 #include <cstdint>
 #include <iostream>
 #include <iomanip>
 #include <unordered_set>
-#ifdef ZYNQ
-#include <pynq_api.h>
-#endif
 
-#include "ps.hpp"
-
-#include "bsg_tag_bitbang.h"
-#include "bsg_zynq_pl.h"
-#include "bsg_printing.h"
-
-#ifndef ZYNQ_PL_DEBUG
-#define ZYNQ_PL_DEBUG 0
-#endif
-
-// Dromajo globals
-#ifdef DROMAJO_COEMU
 #include "dromajo_cosim.h"
-// this is needed for peeking into dromajo_cosim_state to extract PC for precisely trapping exceptions
 #include "riscv_machine.h"
 #include "riscv_cpu.h"
+
+// Dromajo globals
 #define MAX_INSNS 0x7fff'ffff'ffff'ffffull
-long long         max_insns_cnt = MAX_INSNS;
+long long             max_insns_cnt = MAX_INSNS;
 dromajo_cosim_state_t *dromajo_pointer;
 bool                  coemu_failed;
 bool                  coemu_inited = false;
 std::vector<bool>*    coemu_finished;
 long long int         coemu_start_time = 0; // start time of dromajo
 long long int         coemu_instret = 0;
+
 // ignores the first 14 (or more) insns while dromajo executes setup code
 #ifdef FPGA
 int                   dromajo_ignore_setup_insns = 0;
@@ -62,7 +43,7 @@ void coemu_init(int hartid, int ncpus, int memory_size, std::string _prog_str) {
   sprintf(ncpus_str, "--ncpus=%d", ncpus);
   char memsize_str[50];
   sprintf(memsize_str, "--memory_size=%d", memory_size);
-  //TODO: integrate this for easy checkpointing during fuzzing!
+  //TODO: integrate this for checkpointing during fuzzing
   //char load_str[50];
   //sprintf(load_str, "--load=prog");
   char trace_str[50]; // reserved for later
