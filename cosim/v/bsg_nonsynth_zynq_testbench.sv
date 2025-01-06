@@ -61,7 +61,7 @@ module bsg_nonsynth_zynq_testbench;
    #(.cycle_time_p(core_clk_period_lp))
    core_clk_gen
     (.o(core_clk));
-`elsif
+`else
   assign core_clk = aclk;
 `endif
 

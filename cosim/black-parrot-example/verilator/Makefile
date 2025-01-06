@@ -8,6 +8,7 @@ DROMAJO_COEMU ?= 1
 endif
 
 include ../Makefile.design
+include ../Makefile.cov
 
 #############################
 # Accelerator Software Settings
