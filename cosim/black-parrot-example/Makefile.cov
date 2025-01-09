@@ -102,7 +102,7 @@ UNIMPLEMENTED = \
 
 collect_sigs: $(subst sigs,fsigs,$(shell find . -name *.sigs $(SURELOG_RUN_DIR)))
 
-INSTRUMENTATION_OPTS +=  -s $(INSTRUMENTATION_DIR)/../cp_fpga.csv
+INSTRUMENTATION_OPTS +=  -s $(INSTRUMENTATION_DIR)/../cp.csv
 INSTRUMENTATION_OPTS +=  -o $(INSTRUMENTATION_DIR)/macro
 
 instrument: collect_sigs

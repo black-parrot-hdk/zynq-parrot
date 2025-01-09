@@ -1,0 +1,2 @@
+((1 &  ( ~  `COREPATH.fe.instr_scan.scan_full)) &  `COREPATH.fe.instr_scan.scan_clow), 0
+(((1 &  ( ~  `COREPATH.fe.instr_scan.scan_full)) &  ( ~  `COREPATH.fe.instr_scan.scan_clow)) &  `COREPATH.fe.instr_scan.scan_chigh), 0

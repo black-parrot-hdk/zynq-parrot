@@ -1,0 +1,8 @@
+(`COREPATH.fe.immu.entry_reg.bypass.data_reg.dff.en_i), 0
+`COREPATH.fe.immu.tlb.one_hot_sel_high.sel_one_hot_i, 0
+`COREPATH.fe.immu.tlb.one_hot_sel_low.sel_one_hot_i, 0
+`COREPATH.fe.immu.w_v_i, 1
+(`COREPATH.fe.immu.tlb.vtag_reg.en_i), 0
+`COREPATH.fe.immu.entry_reg.bypass.data_reg.en_i, 0
+`COREPATH.fe.immu.tlb.one_hot_sel_med.sel_one_hot_i, 0
+`COREPATH.fe.immu.trans_r, 0
