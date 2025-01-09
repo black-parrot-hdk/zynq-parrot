@@ -64,7 +64,7 @@ def cov_tail(i, gsize):
     ,.ds_reset_i       (ds_reset_li) \n\
     ,.axi_clk_i        (aclk) \n\
     ,.axi_reset_i      (bp_async_reset_li) \n\
-    ,.v_i              (cov_en_sync_li) \n\
+    ,.v_i              (1'b0 /*cov_en_sync_li*/) \n\
     ,.data_i           (cov_{i}_lo) \n\
     ,.ready_o          () \n\
     ,.gate_o           (cov_gate_lo[{i}]) \n\
