@@ -10,19 +10,13 @@
 #define ZYNQ_AXI_TIMEOUT 1000
 #endif
 
-extern "C" {
-int bsg_zynq_dpi_time();
-}
-using namespace bsg_nonsynth_dpi;
-using namespace boost::coroutines2;
-
 // W = width of pin
 template <unsigned int W> class pin {
-    std::unique_ptr<dpi_gpio<W>> gpio;
+    std::unique_ptr<bsg_nonsynth_dpi::dpi_gpio<W>> gpio;
 
   public:
     pin(const std::string &hierarchy) {
-        gpio = std::make_unique<dpi_gpio<W>>(hierarchy);
+        gpio = std::make_unique<bsg_nonsynth_dpi::dpi_gpio<W>>(hierarchy);
     }
 
     void set(const unsigned int val) {

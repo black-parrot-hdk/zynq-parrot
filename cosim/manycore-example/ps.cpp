@@ -193,7 +193,7 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
     int pos = 0;
     long unsigned int base_addr;
     int data;
-    ifstream nbf_file(nbf_filename);
+    std::ifstream nbf_file(nbf_filename);
 
     if (!nbf_file.is_open()) {
         bsg_pr_err("ps.cpp: error opening nbf file.\n");

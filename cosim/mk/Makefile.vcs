@@ -47,5 +47,5 @@ endif
 build: ## builds the simv executable
 build: simv
 simv: $(BUILD_COLLATERAL)
-	$(VCS) $(VCS_BUILD_OPTS) $(BUILD_ARGS) 2>&1 | $(TEE_I) build.log
+	@$(VCS) $(VCS_BUILD_OPTS) $(BUILD_ARGS) 2>&1 | $(TEE_I) build.log
 

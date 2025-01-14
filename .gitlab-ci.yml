@@ -18,10 +18,12 @@ stages:
     name: $CI_JOB_ID
   dependencies: []
   before_script:
-    - git submodule update --init --checkout --recursive cosim/import/black-parrot
-    - git submodule update --init --checkout --recursive cosim/import/black-parrot-subsystems
-    - git submodule update --init --checkout --recursive cosim/import/basejump_stl
-    - git submodule update --init --checkout --recursive cosim/import/bsg_manycore
+    - git submodule update --init --checkout --recursive import/black-parrot
+    - git submodule update --init --checkout --recursive import/black-parrot-sdk
+    - git submodule update --init --checkout --recursive import/black-parrot-subsystems
+    - git submodule update --init --checkout --recursive import/black-parrot-tools
+    - git submodule update --init --checkout --recursive import/bsg_manycore
+    - git submodule update --init --checkout --recursive import/bsg_replicant
 
 simple-example-verilator:
   <<: *job_definition
