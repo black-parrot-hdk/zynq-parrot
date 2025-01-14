@@ -2,7 +2,6 @@
 VV_BUILD_OPTS += --cc --sv
 VV_BUILD_OPTS += --no-timing --build --exe
 VV_BUILD_OPTS += -Wno-fatal -Wall
-#VV_BUILD_OPTS += --timescale=1ps/1ps
 VV_BUILD_OPTS += -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTEMPTY -Wno-UNUSED -Wno-GENUNNAMED
 VV_BUILD_OPTS += -top-module $(TB_MODULE)
 VV_BUILD_OPTS += $(addprefix +define+,$(filter-out VERILATOR,$(DEFINES)))
@@ -25,8 +24,7 @@ endif
 
 run: ## runs the verilated executable
 run: obj_dir/V$(TB_MODULE) $(RUN_COLLATERAL)
-	./$< $(VV_RUN_OPTS) $(RUN_ARGS) \
-		2>&1 | $(TEE_I) run.log
+	./$< $(VV_RUN_OPTS) $(RUN_ARGS) 2>&1 | $(TEE_I) run.log
 
 ifneq (,$(TRACE))
 BUILD_ARGS += --trace-fst --trace-structs
@@ -35,8 +33,7 @@ endif
 build: ## builds the verilated executable
 build: %/V$(TB_MODULE)
 %/V$(TB_MODULE): $(BUILD_COLLATERAL)
-	@$(VERILATOR) $(VV_BUILD_OPTS) $(BUILD_ARGS) \
-		2>&1 | $(TEE_I) verilate.log
+	@$(VERILATOR) $(VV_BUILD_OPTS) $(BUILD_ARGS) 2>&1 | $(TEE_I) build.log
 
 view: ## View the dump with GTKwave
 view:

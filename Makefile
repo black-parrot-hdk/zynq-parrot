@@ -12,7 +12,7 @@ checkout: ## checkout submodules, but not recursively
 	@$(MAKE) -C $(ZP_BP_SDK_DIR) checkout
 	@$(MAKE) -C $(ZP_BP_SUB_DIR) checkout
 	@$(MAKE) -C $(ZP_BSG_MANYCORE_DIR) checkout_submodules
-	@$(MAKE) -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools checkout-all
+	@$(MAKE) -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools checkout-repos
 
 apply_patches: ## applies patches to submodules
 apply_patches: build.patch
@@ -22,7 +22,8 @@ $(eval $(call bsg_fn_build_if_new,patch,$(CURDIR),$(ZP_TOUCH_DIR)))
 	@$(MAKE) -C $(ZP_BP_TOOLS_DIR) apply_patches
 	@$(MAKE) -C $(ZP_BP_SDK_DIR) apply_patches
 	@$(MAKE) -C $(ZP_BP_SUB_DIR) apply_patches
-	@$(MAKE) -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools build-deps
+	# If autotools is not available
+	#@$(MAKE) -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools build-deps
 
 prep_lite: ## Minimal preparation for simulation
 prep_lite: apply_patches
@@ -52,4 +53,20 @@ prep_bsg: prep
 	@$(MAKE) -C $(ZP_BP_SDK_DIR) prog_bsg
 	@$(MAKE) -C $(ZP_BP_SUB_DIR) gen_bsg
 	@$(MAKE) -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools build-llvm
+
+
+################################################
+# Test CI EXPERIMENTAL
+################################################
+ci_eval:
+	$(eval export CI_EVAL_DIR := $@)
+	$(eval export RUNNER_FLAGS := --builds-dir $(CI_EVAL_DIR)/builddir)
+	$(eval export RUNNER_FLAGS += --cache-dir $(CI_EVAL_DIR)/buildcache)
+	$(eval export RUNNER_FLAGS += --env CI_BSG_CADENV_DIR=$(CI_EVAL_DIR)/bsg_cadenv)
+	$(eval export RUNNER_FLAGS += --env CI_CORES_PER_JOB=4)
+	$(eval export RUNNER_FLAGS += --env CI_MAX_CORES=64)
+	$(eval export RUNNER_FLAGS += --env CI_COMMIT_REF_NAME=dev)
+	$(eval export RUNNER_FLAGS += --timeout 10800)
+	gitlab-runner exec shell $(RUNNER_FLAGS) check_cache
+	gitlab-runner exec shell $(RUNNER_FLAGS) shell-example-verilator
 

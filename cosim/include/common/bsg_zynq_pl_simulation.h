@@ -33,9 +33,6 @@
 #include "bsg_printing.h"
 #include "zynq_headers.h"
 
-using namespace bsg_nonsynth_dpi;
-using namespace boost::coroutines2;
-
 // Copy this to C++14 so we don't have to upgrade
 // https://stackoverflow.com/questions/3424962/where-is-erase-if
 // for std::vector

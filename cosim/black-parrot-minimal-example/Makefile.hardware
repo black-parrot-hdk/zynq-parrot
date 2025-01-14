@@ -148,7 +148,7 @@ VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_misc/bsg_nor2.sv
 VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_misc/bsg_nor3.sv
 VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_misc/bsg_nand.sv
 #VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_misc/bsg_popcount.sv
-VSOURCES += $(DESIGN_VSRC_DIR)/bsg_popcount.sv
+VSOURCES += $(COSIM_VSRC_DIR)/bsg_popcount.sv
 VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_misc/bsg_priority_encode.sv
 VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_misc/bsg_priority_encode_one_hot_out.sv
 VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_misc/bsg_reduce.sv
@@ -350,4 +350,8 @@ VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_tag/bsg_tag_bitbang.sv
 VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_tag/bsg_tag_client.sv
 
 VSOURCES += $(DESIGN_VSRC_DIR)/bsg_bootrom.sv
+
+VSOURCES  += $(COSIM_VSRC_DIR)/bsg_zynq_pl_shell.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top_zynq.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top.v
 

@@ -15,6 +15,9 @@ BASENAME   ?= blackparrot
 MAIN_PROGRAM ?= $(COSIM_CSRC_DIR)/main.cpp
 HOST_PROGRAM ?= $(DESIGN_DIR)/ps.cpp
 
+ZYNQ_PL_DEBUG ?= 0
+ZYNQ_PS_DEBUG ?= 0
+
 DROMAJO_COSIM ?= 0
 BP_NCPUS ?= 1
 

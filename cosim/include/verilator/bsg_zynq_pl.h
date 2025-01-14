@@ -22,7 +22,7 @@
 #include "verilated.h"
 
 extern "C" {
-    extern int bsg_zynq_dpi_time();
+    int bsg_dpi_time();
 }
 
 class bsg_zynq_pl : public bsg_zynq_pl_simulation {
@@ -63,9 +63,9 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
     //   at the least.
     void tick(void) override {
         tb->eval();
-        bsg_timekeeper::next();
+        bsg_nonsynth_dpi::bsg_timekeeper::next();
         tb->eval();
-        bsg_timekeeper::next();
+        bsg_nonsynth_dpi::bsg_timekeeper::next();
     }
 
     void done(void) override {
@@ -84,6 +84,7 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
 
     void free_dram(void *virtual_ptr) {
         printf("bsg_zynq_pl: Freeing dummy DRAM\n");
+        free(virtual_ptr);
     }
 };
 

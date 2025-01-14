@@ -148,6 +148,13 @@ ZP_HARDFLOAT_DIR     ?= $(ZP_BP_RTL_DIR)/external/HardFloat
 
 BSG_CADENV_DIR ?= $(ZP_IMPORT_DIR)/bsg_cadenv
 
+# override submodule installations
+export BP_RTL_INSTALL_DIR := $(ZP_INSTALL_DIR)
+export BP_TOOLS_INSTALL_DIR := $(ZP_INSTALL_DIR)
+export BP_SDK_INSTALL_DIR := $(ZP_INSTALL_DIR)
+export BP_SUB_INSTALL_DIR := $(ZP_INSTALL_DIR)
+export RISCV_INSTALL_DIR := $(ZP_INSTALL_DIR)
+
 # Exported for historical reasons, remove later
 export BP_SDK_DIR := $(ZP_BP_SDK_DIR)
 

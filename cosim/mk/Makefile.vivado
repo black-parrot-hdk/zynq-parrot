@@ -9,7 +9,6 @@ export THREADS ?= 8
 export BOARDNAME
 export BASENAME
 export PART
-export TOP_MODULE
 
 export VPACKAGES
 export VSOURCES
@@ -30,7 +29,7 @@ fpga_build: ## creates an FPGA bitstream
 fpga_build: $(BASENAME)_bd_proj.xpr
 $(BASENAME)_bd_proj.xpr: ip_repo
 	$(eval TIMING_RPT := $(BASENAME)_bd_proj.runs/impl_1/$(BASENAME)_bd_1_wrapper_timing_summary_routed.rpt)
-	$(VIVADO_RUN) -source vivado-build-bd.tcl
+	$(VIVADO_RUN) -source $(COSIM_TCL_DIR)/vivado-build-bd.tcl
 	-@grep --color "CRITICAL WARNING:" vivado.log || true
 	-@grep --color "ERROR:" vivado.log || true
 	-@tail -n5 vivado.log

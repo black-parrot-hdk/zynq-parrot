@@ -51,7 +51,6 @@ vivado_create_ip_proj ${proj_name} ${proj_bd} ${ip_name} ${part} ${ip_script} \
     ${hp0_enable} \
     ${hp0_data_width} \
     ${hp0_addr_width}
-puts "HELLO2"
 vivado_package_ip ${proj_bd} ${ip_name} ${ip_script}
 vivado_customize_ip ${proj_bd} ${ip_name} ${ip_script}
 

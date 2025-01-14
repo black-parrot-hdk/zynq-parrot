@@ -1,7 +1,6 @@
 
 
 module top_zynq
- import zynq_pkg::*;
  #(// Parameters of Axi Slave Bus Interface S00_AXI
    parameter integer C_GP0_AXI_DATA_WIDTH     = 32
 
@@ -33,10 +32,10 @@ module top_zynq
    , input wire                                  gp0_axi_rready
    );
 
-   localparam num_regs_ps_to_pl_lp = GP0_SHELL_PS2PL_REGS;
-   localparam num_fifo_ps_to_pl_lp = GP0_SHELL_PS2PL_FIFOS;
-   localparam num_fifo_pl_to_ps_lp = GP0_SHELL_PL2PS_FIFOS;
-   localparam num_regs_pl_to_ps_lp = GP0_SHELL_PL2PS_REGS;
+   localparam num_regs_ps_to_pl_lp = 4;
+   localparam num_fifo_ps_to_pl_lp = 4;
+   localparam num_fifo_pl_to_ps_lp = 2;
+   localparam num_regs_pl_to_ps_lp = 1;
 
    wire [num_fifo_pl_to_ps_lp-1:0][C_GP0_AXI_DATA_WIDTH-1:0] pl_to_ps_fifo_data_li;
    wire [num_fifo_pl_to_ps_lp-1:0]                           pl_to_ps_fifo_v_li;

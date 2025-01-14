@@ -15,6 +15,9 @@ BASENAME   ?= axis
 MAIN_PROGRAM ?= $(COSIM_CSRC_DIR)/main.cpp
 HOST_PROGRAM ?= $(DESIGN_DIR)/ps.cpp
 
+ZYNQ_PL_DEBUG ?= 0
+ZYNQ_PS_DEBUG ?= 0
+
 #############################
 # Design Defines
 #############################
@@ -27,8 +30,6 @@ DEFINES += MP0_ENABLE=1
 DEFINES += MP0_DATA_WIDTH=32
 DEFINES += ACLK_MHZ=55
 DEFINES += RTCLK_MHZ=8
-DEFINES += ZYNQ_PL_DEBUG
-DEFINES += ZYNQ_PS_DEBUG
 
 include $(COSIM_MK_DIR)/Makefile.$(TOOL)
 

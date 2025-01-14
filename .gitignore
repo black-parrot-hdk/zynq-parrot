@@ -6,7 +6,7 @@ obj_dir/
 *.str
 *.pyc
 ip_repo/
-vcdplus.vpd
+*.vpd
 vc_hdrs.h
 ucli.key
 simv*
@@ -21,6 +21,7 @@ control-program
 sds_trace_data.dat
 xcelium.d/
 .simvision/
+run.tcl
 *.shm/
 *.fst
 *.mem
@@ -43,7 +44,6 @@ bsg_manycore_machine.h
 *_bd_1.map
 *_bd_1.bit
 *_bd_1.hwh
-boost/
 .Xil/
 bsg_bootrom.*
 NA/
@@ -51,5 +51,7 @@ xrun.key
 prog.elf
 *.trace
 install/
-bsg_popcount.sv
 zynq_pkgdef.svh
+novas.*
+verdiLog
+ci_eval/

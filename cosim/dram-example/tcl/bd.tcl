@@ -1,6 +1,14 @@
 source $::env(COSIM_TCL_DIR)/vivado-utils.tcl
 source $::env(COSIM_TCL_DIR)/bsg-utils.tcl
 
+proc init { cellpath otherInfo } {
+
+}
+
+proc post_propagate { cellpath otherInfo } {
+    # standard parameter propagation here
+}
+
 proc vivado_create_ip { args } {
     set vpackages [lindex [lindex ${args} 0] 0]
     set vsources [lindex [lindex ${args} 0] 1]

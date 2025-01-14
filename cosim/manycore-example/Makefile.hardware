@@ -34,3 +34,7 @@ VSOURCES += $(BLACKPARROT_SUB_DIR)/manycore/v/bsg_manycore_endpoint_to_fifos.sv
 VSOURCES += $(COSIM_VSRC_DIR)/bsg_zynq_pl_shell.sv
 VSOURCES += $(DESIGN_VSRC_DIR)/bsg_bladerunner_configuration.sv
 
+VSOURCES  += $(COSIM_VSRC_DIR)/bsg_zynq_pl_shell.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top_zynq.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top.v
+

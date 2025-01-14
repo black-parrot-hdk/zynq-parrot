@@ -124,17 +124,20 @@ proc vivado_add_bd_parameter { name def } {
 }
 
 
-proc vivado_create_design { vpackages vsources vincludes vdefines } {
+proc vivado_create_design { vpackages vsources vincludes } {
     # TODO: Hardcoded BASEJUMP_STL_DIR
     set hard_root $::env(BASEJUMP_STL_DIR)/hard/ultrascale_plus
 
-    set include_dirs {}
-    lappend include_dirs ${vincludes}
+    set include_dirs ${vincludes}
     lappend include_dirs ${hard_root}/bsg_async
     lappend include_dirs ${hard_root}/bsg_link
     lappend include_dirs ${hard_root}/bsg_mem
     lappend include_dirs ${hard_root}/bsg_misc
     set_property include_dirs ${include_dirs} [get_filesets sources_1]
+
+    foreach i ${include_dirs} {
+        puts "BSG-INFO: include directory $i"
+    }
 
     set final_vsources ${vpackages}
     foreach f ${vsources} {
@@ -156,7 +159,7 @@ proc vivado_create_design { vpackages vsources vincludes vdefines } {
        }
     }
 
-    add_files -fileset sources_1 -scan_for_includes ${final_vsources}
+    add_files -norecurse -fileset sources_1 -scan_for_includes ${final_vsources}
 
     set_property -quiet file_type "SystemVerilog" [get_files -quiet *pkg*]
     set_property -quiet file_type "SystemVerilog" [get_files -quiet *.v]
@@ -166,7 +169,8 @@ proc vivado_create_design { vpackages vsources vincludes vdefines } {
     set_property -quiet file_type "Verilog Header" [get_files -quiet *.svh]
     set_property -quiet file_type "Verilog" [get_files -quiet top.v]
 
-    update_compile_order -quiet -fileset sources_1
+    set_property top top [get_filesets sources_1]
+    update_compile_order -verbose -fileset sources_1
 }
 
 proc vivado_customize_ip { proj_bd ip_name ip_script args } {

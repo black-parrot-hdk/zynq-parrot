@@ -21,9 +21,6 @@ VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_noc/bsg_mesh_router_pkg.sv
 VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_noc/bsg_noc_pkg.sv
 VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_noc/bsg_wormhole_router_pkg.sv
 
-VSOURCES  += $(COSIM_VSRC_DIR)/bsg_zynq_pl_shell.sv
-VSOURCES  += $(DESIGN_VSRC_DIR)/top_zynq.sv
-VSOURCES  += $(DESIGN_VSRC_DIR)/top.v
 VINCLUDES += $(COSIM_INCLUDE_DIR)/$(TOOL)
 VINCLUDES += $(DESIGN_VSRC_DIR)
 VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_async
@@ -44,7 +41,7 @@ CINCLUDES += $(BLACKPARROT_SUB_DIR)/blackparrot/src
 CINCLUDES += $(BSG_REPLICANT_DIR)/libraries
 CFLAGS    +=
 
-BUILD_COLLATERAL += $(DESIGN_VSRC_DIR)/zynq_pkgdef.svh
+BUILD_COLLATERAL +=
 RUN_COLLATERAL   +=
 
 BUILD_ARGS +=
@@ -53,48 +50,6 @@ RUN_ARGS   +=
 #############################
 # Common targets
 #############################
-%/zynq_pkgdef.svh:
-	@$(ECHO) "\`ifndef ZYNQ_PKGDEF_SVH"  > $@
-	@$(ECHO) "\`define ZYNQ_PKGDEF_SVH" >> $@
-	@$(ECHO) "$(bsg_var_tab)\`include \"bsg_defines.sv\"" >> $@
-	@for def in $(DEFINES); do \
-		if echo $$def | grep -q '='; then \
-			name=$$(echo $$def | cut -d= -f1); \
-			value=$$(echo $$def | cut -d= -f2); \
-			hvalue=$$(echo $$def | cut -d= -f2 | sed "s/^0x/'h/"); \
-			if echo $$value | grep -Eq '^0x[0-9a-fA-F]+$$'; then \
-				$(ECHO) "$(bsg_var_tab)localparam $$name=$$hvalue;" >> $@; \
-			elif echo $$value | grep -Eq '^[0-9]+$$'; then \
-				$(ECHO) "$(bsg_var_tab)localparam $$name=$$value;" >> $@; \
-			else \
-				$(ECHO) "$(bsg_var_tab)localparam $$name=\"$$value\";" >> $@; \
-			fi; \
-		else \
-			$(ECHO) "$(bsg_var_tab)localparam $$def=\"defined\";" >> $@; \
-		fi; \
-	done
-	@$(ECHO) "\`endif" >> $@
-
-#%/zynq_pkgdef.svh:
-#	$(ECHO) "\`ifndef ZYNQ_PKGDEF_SVH"  > $@
-#	$(ECHO) "\`define ZYNQ_PKGDEF_SVH" >> $@
-#	@for def in $(DEFINES); do \
-#		if echo $$def | grep -q '='; then \
-#			name=$$(echo $$def | cut -d= -f1); \
-#			value=$$(echo $$def | cut -d= -f2); \
-#			if echo $$value | grep -Eq '^0x[0-9a-fA-F]+$$'; then \
-#				hex_value=$$(echo $$value | sed 's/^0x/\'h/'); \
-#				$(ECHO) "localparam $$name=$$hex_value;" >> $@; \
-#			elif echo $$value | grep -Eq '^[0-9]+$$'; then \
-#				$(ECHO) "localparam $$name=$$value;" >> $@; \
-#			else \
-#				$(ECHO) "localparam $$name=\"$$value\";" >> $@; \
-#			fi; \
-#		else \
-#			$(ECHO) "localparam $$def=\"defined\";" >> $@; \
-#		fi; \
-#	done
-#	$(ECHO) "\`endif" >> $@
 
 clean: ## cleans the working directory
 clean:
@@ -127,6 +82,9 @@ clean:
 	@$(RMRF) *_bd_1.map
 	@$(RMRF) DVEfiles
 	@$(RMRF) ip_repo
+	@$(RMRF) *_ip_proj.*
+	@$(RMRF) *_bd_proj.*
+	@$(RMRF) NA/ .Xil/
 	@$(RMRF) control-program
 	@$(RMRF) $(DESIGN_DIR)/*.o
 	@$(RMRF) $(COSIM_CSRC_DIR)/*.o

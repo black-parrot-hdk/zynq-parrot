@@ -5,6 +5,7 @@ VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_fifo_1r1w_small.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_fifo_1r1w_small_unhardened.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_fifo_tracker.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_flow_counter.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_two_fifo.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_circular_ptr.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_counter_up_down.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_decode_with_v.sv
@@ -16,4 +17,8 @@ VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_mux_one_hot.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_mem/bsg_mem_1r1w.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_mem/bsg_mem_1r1w_synth.sv
 VSOURCES += $(BLACKPARROT_SUB_DIR)/axi/v/bsg_axil_fifo_master.sv
+
+VSOURCES  += $(COSIM_VSRC_DIR)/bsg_zynq_pl_shell.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top_zynq.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top.v
 

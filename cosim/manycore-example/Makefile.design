@@ -15,6 +15,9 @@ BASENAME   ?= manycore
 MAIN_PROGRAM ?= $(COSIM_CSRC_DIR)/main.cpp
 HOST_PROGRAM ?= $(DESIGN_DIR)/ps.cpp
 
+ZYNQ_PL_DEBUG ?= 0
+ZYNQ_PS_DEBUG ?= 0
+
 RUN_ARGS += +c_args=$(NBF_FILE)
 
 #############################
@@ -81,7 +84,7 @@ ipoly_hashing              ?= 0
 NBF_SCRIPT ?= $(BSG_MANYCORE_DIR)/software/py/nbf.py
 %.nbf: %.riscv32
 	$(eval include $(BSG_MACHINE_PATH)/Makefile.machine.include)
-	$(eval export RISCV_BIN_DIR=$(BSG_MANYCORE_SOFTWARE_DIR)/riscv-tools/riscv-install/bin)
+	$(eval export RISCV_BIN_DIR=$(RISCV_INSTALL_DIR)/bin)
 	@$(PYTHON2) $(NBF_SCRIPT) \
 		$< \
 		$(BSG_MACHINE_GLOBAL_X) $(BSG_MACHINE_GLOBAL_Y) \

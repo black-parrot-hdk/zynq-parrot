@@ -4,21 +4,20 @@
 // the API we provide abstracts away the
 // communication plumbing differences.
 
-#include "bsg_assert.h"
 #include "bsg_argparse.h"
 #include "bsg_printing.h"
 #include "bsg_zynq_pl.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ps.hpp"
-
 #include <sys/time.h>
+
+#include "ps.hpp"
 
 #define DRAM_ALLOC_SIZE_BYTES 16384
 
 int ps_main(int argc, char **argv) {
-    bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
+    std::unique_ptr<bsg_zynq_pl> zpl = std::make_unique<bsg_zynq_pl>(argc, argv);
 
     // the read memory map is essentially
     //
@@ -42,37 +41,35 @@ int ps_main(int argc, char **argv) {
 
     // write to two registers, checking our address snoop to see
     // actual address that was received over the AXI bus
-    zpl->shell_write(GP0_WR_CSR_0, val1, mask1);
-    assert(zpl->shell_read(GP0_RD_CSR_4) == 0x0);
-    zpl->shell_write(GP0_WR_CSR_1, val2, mask2);
-    assert(zpl->shell_read(GP0_RD_CSR_4) == 0x4);
+    zpl->shell_write(0x0 + GP0_ADDR_BASE, val1, mask1);
+    assert(zpl->shell_read(0x30 + GP0_ADDR_BASE) == 0x0);
+    zpl->shell_write(0x4 + GP0_ADDR_BASE, val2, mask2);
+    assert(zpl->shell_read(0x30 + GP0_ADDR_BASE) == 0x4);
     // 8,12
 
     // check output fifo counters
-    assert((zpl->shell_read(GP0_RD_FIFO_4_CTRS) == 0));
-    assert((zpl->shell_read(GP0_RD_FIFO_5_CTRS) == 0));
+    assert((zpl->shell_read(0x18 + GP0_ADDR_BASE) == 0));
+    assert((zpl->shell_read(0x1C + GP0_ADDR_BASE) == 0));
 
     // check input fifo counters
-    assert((zpl->shell_read(GP0_RD_FIFO_0_CTRS) == 4));
-    assert((zpl->shell_read(GP0_RD_FIFO_1_CTRS) == 4));
-    assert((zpl->shell_read(GP0_RD_FIFO_2_CTRS) == 4));
-    assert((zpl->shell_read(GP0_RD_FIFO_3_CTRS) == 4));
+    bsg_pr_dbg_ps("%d\n", zpl->shell_read(0x20 + GP0_ADDR_BASE));
+    assert((zpl->shell_read(0x20 + GP0_ADDR_BASE) == 4));
+    assert((zpl->shell_read(0x24 + GP0_ADDR_BASE) == 4));
+    assert((zpl->shell_read(0x28 + GP0_ADDR_BASE) == 4));
+    assert((zpl->shell_read(0x2C + GP0_ADDR_BASE) == 4));
+
+    // write to fifos
+    zpl->shell_write(0x10 + GP0_ADDR_BASE, val3, mask1);
+
+    // checker counters
+    assert((zpl->shell_read(0x20 + GP0_ADDR_BASE) == (3)));
+    assert((zpl->shell_read(0x24 + GP0_ADDR_BASE) == (4)));
 
     // write to fifo
-    zpl->shell_write(GP0_WR_FIFO_0_DATA, val3, mask1);
-
-    // check counters
-    assert((zpl->shell_read(GP0_RD_FIFO_0_CTRS) == (3)));
-    assert((zpl->shell_read(GP0_RD_FIFO_1_CTRS) == (4)));
-
-
-    // WORKS TIL HERE
-    // write to fifo
-    zpl->shell_write(GP0_WR_FIFO_0_DATA, val1, mask1);
-
-    // check counters
-    assert((zpl->shell_read(GP0_RD_FIFO_4_CTRS) == (2)));
-    assert((zpl->shell_read(GP0_RD_FIFO_5_CTRS) == (4)));
+    zpl->shell_write(0x10 + GP0_ADDR_BASE, val1, mask1);
+    // checker counters
+    assert((zpl->shell_read(0x20 + GP0_ADDR_BASE) == (2)));
+    assert((zpl->shell_read(0x24 + GP0_ADDR_BASE) == (4)));
 
     zpl->shell_write(0x14 + GP0_ADDR_BASE, val4, mask2);
     zpl->shell_write(0x14 + GP0_ADDR_BASE, val2, mask2);
@@ -112,9 +109,22 @@ int ps_main(int argc, char **argv) {
     assert((zpl->shell_read(0x18 + GP0_ADDR_BASE) == (0)));
     assert((zpl->shell_read(0x1C + GP0_ADDR_BASE) == (0)));
 
+    // DRAM test
+    unsigned long phys_ptr;
+    volatile int *buf;
+
+    buf = (volatile int *)zpl->allocate_dram(DRAM_ALLOC_SIZE_BYTES, &phys_ptr);
+
+    // write all of the dram
+    for (int i = 0; i < DRAM_ALLOC_SIZE_BYTES / 4; i++)
+        buf[i] = i;
+
+    // read all of the dram
+    for (int i = 0; i < DRAM_ALLOC_SIZE_BYTES / 4; i++)
+        assert(buf[i] == i);
+
     printf("## everything passed; at end of test\n");
     zpl->done();
 
-    delete zpl;
     return 0;
 }
