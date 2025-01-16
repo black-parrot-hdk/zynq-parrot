@@ -1,8 +1,6 @@
 variables:
-  GIT_STRATEGY: fetch
+  GIT_STRATEGY: clone
   GIT_SUBMODULE_STRATEGY: none
-
-variables:
   VIVADO_MODE: "batch"
   VIVADO_VERSION: "2022.1"
   BOARDNAME: "pynqz2"
