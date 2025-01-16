@@ -26,12 +26,12 @@ check_cache:
   stage: check_cache
   script:
     # Check if the cache directory exists
-    - if [ ! -f "${CACHE_FILE}" ]; then \
-        echo "Cache not found, generating..."; \
-        make -j ${CORES_PER_JOB} prep; \
-        touch ${CACHE_FILE}; \
-      else \
-        echo "Cache found, skipping generation..."; \
+    - if [ ! -f "${CACHE_FILE}" ]; then
+        echo "Cache not found, generating...";
+        make -j ${CORES_PER_JOB} prep;
+        touch ${CACHE_FILE};
+      else
+        echo "Cache found, skipping generation...";
       fi
   cache:
     <<: *global_cache
