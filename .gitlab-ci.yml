@@ -26,7 +26,7 @@ cache: &global_cache
   artifacts:
     name: ${CI_JOB_ID}
   dependencies: []
-  pre_script:
+  before_script:
     - . ~/.bashrc
   cache:
     <<: *global_cache
