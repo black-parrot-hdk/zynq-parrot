@@ -4,7 +4,7 @@ variables:
   BSG_CADENV_DIR: "${CI_BSG_CADENV_DIR}"
   CORES_PER_JOB: "${CI_CORES_PER_JOB}"
   MAX_CORES: "${CI_MAX_CORES}"
-  TOP: "${CI_PROJECT_DIR}"
+  ZP_TOP: "${CI_PROJECT_DIR}"
 
 stages:
   - check_cache
@@ -31,7 +31,7 @@ check_cache:
     # Check if the cache directory exists
     - if [ ! -f "${CACHE_FILE}" ]; then
         echo "Cache not found, generating...";
-        make -C ${TOP} bleach_all;
+        make -C ${ZP_TOP} bleach_all;
         make -j ${MAX_CORES} prep_lite;
         touch ${CACHE_FILE};
       else
@@ -59,7 +59,7 @@ check_cache:
 #
 #shell-example-verilator:
 #  <<: *verilator_definition
-#  script: ${TOP}/ci/run_example.sh 
+#  script: ${ZP_TOP}/ci/run_example.sh 
 #    - make -C cosim/simple-example/verilator/ run
 #    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/simple-example/verilator/run.log
 #  artifacts:
