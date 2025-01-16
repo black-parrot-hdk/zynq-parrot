@@ -4,7 +4,6 @@ variables:
   BSG_CADENV_DIR: "${CI_BSG_CADENV_DIR}"
   CORES_PER_JOB: "${CI_CORES_PER_JOB}"
   MAX_CORES: "${CI_MAX_CORES}"
-  ZP_TOP: "${CI_PROJECT_DIR}"
 
 stages:
   - check_cache
@@ -23,7 +22,17 @@ cache: &global_cache
     - ./import/black-parrot-tools/install
   policy: pull
 
+.job_template: &job_definition
+  artifacts:
+    name: ${CI_JOB_ID}
+  dependencies: []
+  pre_script:
+    - . ~/.bashrc
+  cache:
+    <<: *global_cache
+
 check_cache:
+  <<: *job_definition
   stage: check_cache
   variables:
     CACHE_FILE: "install/cachefile"
@@ -31,8 +40,8 @@ check_cache:
     # Check if the cache directory exists
     - if [ ! -f "${CACHE_FILE}" ]; then
         echo "Cache not found, generating...";
-        make -C ${ZP_TOP} bleach_all > bleach_all.log;
-        make -C ${ZP_TOP} -j ${MAX_CORES} prep_lite > prep_lite.log;
+        make bleach_all > bleach_all.log;
+        make -j ${MAX_CORES} prep_lite > prep_lite.log;
         touch ${CACHE_FILE};
       else
         echo "Cache found, skipping generation...";
@@ -41,13 +50,6 @@ check_cache:
     <<: *global_cache
     policy: pull-push
 
-#.job_template: &job_definition
-#  when: manual
-#  artifacts:
-#    name: $CI_JOB_ID
-#  dependencies: []
-#  cache:
-#    <<: *global_cache
 #
 #.verilator_template: &verilator_definition
 #    <<: *job_definition
