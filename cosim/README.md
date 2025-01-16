@@ -15,6 +15,7 @@ Design have a standard structure designed to click into the ZynqParrot build sys
 
 - README.md: Description of the design
 - Makefile.design: Design-specific settings and configurations for all backends
+- Makefile.hardware: Design-specific verilog files for compiling the design
 - ps.cpp: Co-simulation code that runs on PS on FPGA or in simulation to control the accelerator
 - flist.vcs: SystemVerilog files used to build the design
 - v/: Source files for this specific design
@@ -33,12 +34,10 @@ Designs can run in hardware or co-simulation by entering the appropriate backend
 - verilator: FOSS SystemVerilog simulator https://github.com/verilator/verilator
 - vcs: Synopsys SystemVerilog simulator
 - xcelium: Cadence SystemVerilog simulator
-- bridge: Experimental UART bridge, not supported
 
 ### Hardware Backends
 
 - zynq: Runs PS code on ARM PS of Zynq chips
-- bridge: Runs PS code over UART channel (Experimental!!)
 
 # Provided Examples
 
@@ -47,7 +46,7 @@ Designs can run in hardware or co-simulation by entering the appropriate backend
 - **double-shell-example**: two shells that talk to each other, demonstrating both ports on the Zynq chip.
 - **dram-example**: tests the software running on ARM that allocates DRAM space out of the ARM Linux available memory for the PL.
 - **axi3-perf-example**: tests the speedup achieved by using AXI3 directly instead of converting to AXI4.
-- **axis-perf-example**: Demonstration of AXIS interface for high performance PS communication.
+- **axis-example**: Demonstration of AXIS interface for high performance PS communication.
 - **blackparrot-minimal-example**: working example of BlackParrot using a non-blocking FIFO interface for I/O.
 - **blackparrot-example**: working example of BlackParrot using blocking interfaces on I/O.
 - **manycore-example**: example of a small manycore driven by the zynq shell
