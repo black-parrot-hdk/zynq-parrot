@@ -22,17 +22,8 @@ cache: &global_cache
     - ./import/black-parrot-tools/install
   policy: pull
 
-.job_template: &job_definition
-  artifacts:
-    name: ${CI_JOB_ID}
-  dependencies: []
-  before_script:
-    - . ~/.bashrc
-  cache:
-    <<: *global_cache
 
 check_cache:
-  <<: *job_definition
   stage: check_cache
   variables:
     CACHE_FILE: "install/cachefile"
@@ -50,7 +41,13 @@ check_cache:
     <<: *global_cache
     policy: pull-push
 
-#
+.job_template: &job_definition
+  artifacts:
+    name: ${CI_JOB_ID}
+  dependencies: []
+  cache:
+    <<: *global_cache
+
 #.verilator_template: &verilator_definition
 #    <<: *job_definition
 #    variables:
