@@ -12,7 +12,7 @@ checkout: ## checkout submodules, but not recursively
 	@$(MAKE) -C $(ZP_BP_SDK_DIR) checkout
 	@$(MAKE) -C $(ZP_BP_SUB_DIR) checkout
 	@$(MAKE) -C $(ZP_BSG_MANYCORE_DIR) checkout_submodules
-	@$(MAKE) -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools checkout-all
+	@$(MAKE) -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools checkout-repos
 
 apply_patches: ## applies patches to submodules
 apply_patches: build.patch
