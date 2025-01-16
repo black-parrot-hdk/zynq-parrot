@@ -22,7 +22,8 @@ $(eval $(call bsg_fn_build_if_new,patch,$(CURDIR),$(ZP_TOUCH_DIR)))
 	@$(MAKE) -C $(ZP_BP_TOOLS_DIR) apply_patches
 	@$(MAKE) -C $(ZP_BP_SDK_DIR) apply_patches
 	@$(MAKE) -C $(ZP_BP_SUB_DIR) apply_patches
-	@$(MAKE) -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools build-deps
+	# If autotools is not available
+	#@$(MAKE) -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools build-deps
 
 prep_lite: ## Minimal preparation for simulation
 prep_lite: apply_patches
