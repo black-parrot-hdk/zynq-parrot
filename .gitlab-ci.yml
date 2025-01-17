@@ -22,16 +22,17 @@ cache: &global_cache
     - ./import/black-parrot-tools/install
   policy: pull
 
-
 check_cache:
   stage: check_cache
   variables:
     CACHE_FILE: "install/cachefile"
+    LOG_FILE: "check_cache.log"
   script:
     # Check if the cache directory exists
     - if [ ! -f "${CACHE_FILE}" ]; then
         echo "Cache not found, generating...";
-        make -j ${MAX_CORES} prep_lite &> prep_lite.log;
+        make apply_patches >> ${LOG_FILE} 2>&1;
+        make -j ${MAX_CORES} prep_lite >> ${LOG_FILE} 2>&1;
         touch ${CACHE_FILE};
       else
         echo "Cache found, skipping generation...";
@@ -39,13 +40,17 @@ check_cache:
   cache:
     <<: *global_cache
     policy: pull-push
-
-.job_template: &job_definition
   artifacts:
-    name: ${CI_JOB_ID}
-  dependencies: []
-  cache:
-    <<: *global_cache
+    when: always
+    paths:
+      - ${LOG_FILE}
+
+#.job_template: &job_definition
+#  artifacts:
+#    name: ${CI_JOB_ID}
+#  dependencies: []
+#  cache:
+#    <<: *global_cache
 
 #.verilator_template: &verilator_definition
 #    <<: *job_definition
