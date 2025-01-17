@@ -1,12 +1,14 @@
 ###################################################
 ## GitLab Setup and CI variables
 ###################################################
+
 variables:
   # GitLab variables
-  GIT_STRATEGY: fetch
-  GIT_SUBMODULE_STRATEGY: recursive
-  GIT_SUBMODULE_PATHS: import/black-parrot import/bsg_manycore import/black-parrot-subsystems
-  GIT_SUBMODULE_UPDATE_FLAGS: --jobs 4
+  GIT_STRATEGY: "fetch"
+  GIT_SUBMODULE_STRATEGY: "recursive"
+  GIT_SUBMODULE_PATHS: "import/black-parrot import/bsg_manycore import/black-parrot-subsystems"
+  GIT_SUBMODULE_UPDATE_FLAGS: "--jobs 4"
+  GIT_SUBMODULE_FORCE_HTTPS: "true"
   # CI variables made local
   BSG_CADENV_DIR: "${CI_BSG_CADENV_DIR}"
   CORES_PER_JOB: "${CI_CORES_PER_JOB}"
