@@ -71,9 +71,9 @@ check_cache:
       - touch ${SUBMODULE_LOCKFILE}
         exec {FD}<>${SUBMODULE_LOCKFILE}
         if [ ! flock -x -n $FD ]; then
-          echo "${SUBMODULE_LOCKFILE} not acquired; waiting..."
+          echo "${SUBMODULE_LOCKFILE} not acquired; waiting...";
           until [ -e "${SUBMODULE_FINIFILE}" ]; do
-            echo "${SUBMODULE_FINIFILE} not acquired; sleeping..."
+            echo "${SUBMODULE_FINIFILE} not acquired; sleeping...";
             sleep 5;
           done
           echo "${SUBMODULE_FINIFILE} acquired; proceeding...";
