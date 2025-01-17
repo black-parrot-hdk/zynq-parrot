@@ -1,3 +1,6 @@
+###################################################
+## GitLab Setup and CI variables
+###################################################
 variables:
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: none
@@ -5,6 +8,8 @@ variables:
   CORES_PER_JOB: "${CI_CORES_PER_JOB}"
   MAX_CORES: "${CI_MAX_CORES}"
 
+# We stage by tool, but there are theoretically no dependencies
+#   except for vivado/zynq
 stages:
   - default
   - verilator
@@ -22,18 +27,12 @@ cache: &cache_definition
     - ./import/black-parrot-tools/install
   policy: pull
 
-.job_template:
+###################################################
+## Cache Management
+###################################################
+check_cache:
   stage: default
   dependencies: []
-  cache:
-    <<: *cache_definition
-  artifacts:
-    when: always
-    paths:
-      - ${LOG_FILE}
-
-check_cache:
-  extends: .job_template
   variables:
     CACHE_FILE: "install/cachefile"
     LOG_FILE: "check_cache.log"
@@ -52,11 +51,28 @@ check_cache:
   cache:
     <<: *cache_definition
     policy: pull-push
+  artifacts:
+    when: always
+    paths:
+      - ${LOG_FILE}
+
+###################################################
+## Simulation Job Templates 
+###################################################
+.job_template:
+  stage: default
+  dependencies: []
+  cache:
+    <<: *cache_definition
+  artifacts:
+    when: always
+    paths:
+      - ${LOG_FILE}
 
 .example_template:
   extends: .job_template
   variables:
-    LOG_FILE: "cosim/${EXAMPLE}-example/${TOOL}/*.log"
+    LOG_FILE: "cosim/${EXAMPLE}/${TOOL}/*.log"
   script:
     - ./ci/run_example.sh ${EXAMPLE} ${TOOL}
   tags:
@@ -80,6 +96,27 @@ check_cache:
   variables:
     TOOL: "xcelium"
 
+###################################################
+## Simple Example
+###################################################
+simple-example-verilator:
+  extends: .verilator_template
+  variables:
+    EXAMPLE: "simple-example"
+
+simple-example-vcs:
+  extends: .vcs_template
+  variables:
+    EXAMPLE: "simple-example"
+
+simple-example-xcelium:
+  extends: .xcelium_template
+  variables:
+    EXAMPLE: "simple-example"
+
+###################################################
+## Shell Example
+###################################################
 shell-example-verilator:
   extends: .verilator_template
   variables:
@@ -95,29 +132,78 @@ shell-example-xcelium:
   variables:
     EXAMPLE: "shell-example"
 
-##shell-example-verilator:
-##  <<: *verilator_definition
-##  script: ${ZP_TOP}/ci/run_example.sh 
-##    - make -C cosim/simple-example/verilator/ run
-##    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/simple-example/verilator/run.log
-##  artifacts:
-##    paths:
-##      - cosim/simple-example/verilator/run.log
+###################################################
+## Double Shell Example
+###################################################
+double-shell-example-verilator:
+  extends: .verilator_template
+  variables:
+    EXAMPLE: "double-shell-example"
 
-##simple-example-vcs:
-##  <<: *job_definition
-##  stage: vcs
-##  tags:
-##    - vcs
-##  script:
-##    - export BASENAME="simple"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-##    - export EXAMPLE_NAME="simple-example"
-##    - make -C cosim/simple-example/vcs/ run
-##    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/simple-example/vcs/run.log
-##  artifacts:
-##    paths:
-##      - cosim/simple-example/vcs/run.log
-##
+double-shell-example-vcs:
+  extends: .vcs_template
+  variables:
+    EXAMPLE: "double-shell-example"
+
+double-shell-example-xcelium:
+  extends: .xcelium_template
+  variables:
+    EXAMPLE: "double-shell-example"
+
+###################################################
+## Dram Example
+###################################################
+dram-example-verilator:
+  extends: .verilator_template
+  variables:
+    EXAMPLE: "dram-example"
+
+dram-example-vcs:
+  extends: .vcs_template
+  variables:
+    EXAMPLE: "dram-example"
+
+dram-example-xcelium:
+  extends: .xcelium_template
+  variables:
+    EXAMPLE: "dram-example"
+
+###################################################
+## AXI3 Example
+###################################################
+axi3-example-verilator:
+  extends: .verilator_template
+  variables:
+    EXAMPLE: "axi3-example"
+
+axi3-example-vcs:
+  extends: .vcs_template
+  variables:
+    EXAMPLE: "axi3-example"
+
+axi3-example-xcelium:
+  extends: .xcelium_template
+  variables:
+    EXAMPLE: "axi3-example"
+
+###################################################
+## AXIS Example
+###################################################
+axis-example-verilator:
+  extends: .verilator_template
+  variables:
+    EXAMPLE: "axis-example"
+
+axis-example-vcs:
+  extends: .vcs_template
+  variables:
+    EXAMPLE: "axis-example"
+
+axis-example-xcelium:
+  extends: .xcelium_template
+  variables:
+    EXAMPLE: "axis-example"
+
 ##simple-example-vivado-pynqz2:
 ##  <<: *job_definition
 ##  stage: vivado

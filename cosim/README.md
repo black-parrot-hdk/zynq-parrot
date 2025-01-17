@@ -45,7 +45,7 @@ Designs can run in hardware or co-simulation by entering the appropriate backend
 - **shell-example**: basic example of the BSG Zynq Shell.
 - **double-shell-example**: two shells that talk to each other, demonstrating both ports on the Zynq chip.
 - **dram-example**: tests the software running on ARM that allocates DRAM space out of the ARM Linux available memory for the PL.
-- **axi3-perf-example**: tests the speedup achieved by using AXI3 directly instead of converting to AXI4.
+- **axi3-example**: tests the speedup achieved by using AXI3 directly instead of converting to AXI4.
 - **axis-example**: Demonstration of AXIS interface for high performance PS communication.
 - **blackparrot-minimal-example**: working example of BlackParrot using a non-blocking FIFO interface for I/O.
 - **blackparrot-example**: working example of BlackParrot using blocking interfaces on I/O.
