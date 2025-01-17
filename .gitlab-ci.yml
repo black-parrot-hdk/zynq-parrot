@@ -7,6 +7,7 @@ variables:
   BSG_CADENV_DIR: "${CI_BSG_CADENV_DIR}"
   CORES_PER_JOB: "${CI_CORES_PER_JOB}"
   MAX_CORES: "${CI_MAX_CORES}"
+  BRANCH: "{CI_COMMIT_REF_NAME}"
 
 # We stage by tool, but there are theoretically no dependencies
 #   except for vivado/zynq
@@ -19,6 +20,7 @@ stages:
   - zynq
 
 cache: &cache_definition
+  key: zynq-parrot-${BRANCH}
   paths:
     - ./install
     - ./import/black-parrot/install
@@ -37,7 +39,8 @@ check_cache:
     CACHE_FILE: "install/cachefile"
     LOG_FILE: "check_cache.log"
   script:
-    - echo "Applying patches...";
+    - echo "Checkout submodules...";
+      echo "Applying patches...";
       make apply_patches >> ${LOG_FILE} 2>&1;
       if [ ! -f "${CACHE_FILE}" ]; then
         echo "Cache not found, generating...";
@@ -63,6 +66,15 @@ check_cache:
   dependencies: []
   cache:
     <<: *cache_definition
+  before_script:
+      # Recursively fetch RTL submodules
+      - git submodule update --init --recursive import/black-parrot
+      - git submodule update --init --recursive import/bsg_manycore
+      - git submodule update --init --recursive import/black-parrot-subsystems
+      # Should already be built
+      #- git submodule update --init import/black-parrot-sdk
+      #- git submodule update --init import/black-parrot-tools
+      #- git submodule update --init import/bsg_replicant
   artifacts:
     when: always
     paths:
