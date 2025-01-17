@@ -35,7 +35,7 @@ check_cache:
         make -j ${MAX_CORES} prep_lite >> ${LOG_FILE} 2>&1;
         touch ${CACHE_FILE};
       else
-        echo "Cache found, skipping generation...";
+        echo "Cache found, skipping generation..." | tee -i ${LOG_FILE};
       fi
   cache:
     <<: *global_cache
