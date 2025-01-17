@@ -5,10 +5,7 @@
 variables:
   # GitLab variables
   GIT_STRATEGY: "fetch"
-  GIT_SUBMODULE_STRATEGY: "recursive"
-  GIT_SUBMODULE_PATHS: "import/black-parrot import/bsg_manycore import/black-parrot-subsystems"
-  GIT_SUBMODULE_UPDATE_FLAGS: "--jobs 4"
-  GIT_SUBMODULE_FORCE_HTTPS: "true"
+  GIT_SUBMODULE_STRATEGY: "none" # We manage these manually to handle the concurrency
   # CI variables made local
   BSG_CADENV_DIR: "${CI_BSG_CADENV_DIR}"
   CORES_PER_JOB: "${CI_CORES_PER_JOB}"
@@ -66,8 +63,32 @@ check_cache:
 .job_template:
   stage: default
   dependencies: []
+  variables:
+    SUBMODULE_LOCKFILE: "submodule.lock"
+    SUBMODULE_FINIFILE: "submodule.fini"
+    SUBMODULE_TIMEOUT:  "300"
   cache:
     <<: *cache_definition
+  before_script:
+      - touch ${SUBMODULE_LOCKFILE}
+        exec {FD}<>${SUBMODULE_LOCKFILE}
+        if [ ! flock -x -n $FD ]; then
+          echo "${SUBMODULE_LOCKFILE} not acquired; waiting..."
+          until [ -e "${SUBMODULE_FINIFILE}" ]; do
+            echo "${SUBMODULE_FINIFILE} not acquired; sleeping..."
+            sleep 5;
+          done
+          echo "${SUBMODULE_FINIFILE} acquired; proceeding...";
+        else
+          echo "${SUBMODULE_LOCKFILE} acquired; cloning submodules...";
+          git submodule update --init import/;
+          git submodule update --init --recursive import/black-parrot;
+          git submodule update --init --recursive import/black-parrot-subsystems;
+          git submodule update --init --recursive import/bsg_manycore;
+          echo "Submodules updated, releasing ${SUBMODULE_LOCKFILE}...";
+          echo "...And creating ${SUBMODULE_FINIFILE}";
+        fi
+
   artifacts:
     when: always
     paths:
