@@ -3,7 +3,7 @@
 ###################################################
 variables:
   GIT_STRATEGY: fetch
-  GIT_SUBMODULE_STRATEGY: normal
+  GIT_SUBMODULE_STRATEGY: none
   BSG_CADENV_DIR: "${CI_BSG_CADENV_DIR}"
   CORES_PER_JOB: "${CI_CORES_PER_JOB}"
   MAX_CORES: "${CI_MAX_CORES}"
