@@ -66,34 +66,34 @@ check_cache:
   extends: .example_template
   stage: verilator
   variables:
-      TOOL: "verilator"
+    TOOL: "verilator"
 
 .vcs_template:
   extends: .example_template
   stage: vcs
   variables:
-      TOOL: "vcs"
+    TOOL: "vcs"
 
 .xcelium_template:
   extends: .example_template
   stage: xcelium
   variables:
-      TOOL: "xcelium"
+    TOOL: "xcelium"
 
 shell-example-verilator:
   extends: .verilator_template
   variables:
-    EXAMPLE: "shell"
+    EXAMPLE: "shell-example"
 
 shell-example-vcs:
   extends: .vcs_template
   variables:
-    EXAMPLE: "shell"
+    EXAMPLE: "shell-example"
 
 shell-example-xcelium:
   extends: .xcelium_template
   variables:
-    EXAMPLE: "shell"
+    EXAMPLE: "shell-example"
 
 ##shell-example-verilator:
 ##  <<: *verilator_definition
