@@ -3,7 +3,7 @@
 ###################################################
 variables:
   GIT_STRATEGY: fetch
-  GIT_SUBMODULE_STRATEGY: none
+  GIT_SUBMODULE_STRATEGY: normal
   BSG_CADENV_DIR: "${CI_BSG_CADENV_DIR}"
   CORES_PER_JOB: "${CI_CORES_PER_JOB}"
   MAX_CORES: "${CI_MAX_CORES}"
@@ -37,17 +37,16 @@ check_cache:
     CACHE_FILE: "install/cachefile"
     LOG_FILE: "check_cache.log"
   script:
-    - if [ ! -f "${CACHE_FILE}" ]; then
+    - echo "Applying patches...";
+      make apply_patches >> ${LOG_FILE} 2>&1;
+      if [ ! -f "${CACHE_FILE}" ]; then
         echo "Cache not found, generating...";
-        echo "Applying patches...";
-        make apply_patches >> ${LOG_FILE} 2>&1;
-        echo "Preparing subdirectories...";
         make -j ${MAX_CORES} prep_lite >> ${LOG_FILE} 2>&1;
-        echo "Creating touchfile...";
-        touch ${CACHE_FILE};
       else
-        echo "Cache found, skipping generation..." | tee -i ${LOG_FILE};
+        echo "Cache found, skipping generation...";
       fi
+      echo "Creating touchfile...";
+      touch ${CACHE_FILE};
   cache:
     <<: *cache_definition
     policy: pull-push
