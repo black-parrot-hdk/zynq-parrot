@@ -6,14 +6,14 @@ variables:
   MAX_CORES: "${CI_MAX_CORES}"
 
 stages:
-  - check_cache
+  - default
   - verilator
   - vcs
   - xcelium
   - vivado
   - zynq
 
-cache: &global_cache
+cache: &cache_definition
   paths:
     - ./install
     - ./import/black-parrot/install
@@ -22,52 +22,87 @@ cache: &global_cache
     - ./import/black-parrot-tools/install
   policy: pull
 
-check_cache:
-  stage: check_cache
-  variables:
-    CACHE_FILE: "install/cachefile"
-    LOG_FILE: "check_cache.log"
-  script:
-    # Check if the cache directory exists
-    - if [ ! -f "${CACHE_FILE}" ]; then
-        echo "Cache not found, generating...";
-        make apply_patches >> ${LOG_FILE} 2>&1;
-        make -j ${MAX_CORES} prep_lite >> ${LOG_FILE} 2>&1;
-        touch ${CACHE_FILE};
-      else
-        echo "Cache found, skipping generation..." | tee -i ${LOG_FILE};
-      fi
+.job_template:
+  stage: default
+  dependencies: []
   cache:
-    <<: *global_cache
-    policy: pull-push
+    <<: *cache_definition
   artifacts:
     when: always
     paths:
       - ${LOG_FILE}
 
-#.job_template: &job_definition
-#  artifacts:
-#    name: ${CI_JOB_ID}
-#  dependencies: []
-#  cache:
-#    <<: *global_cache
+check_cache:
+  extends: .job_template
+  variables:
+    CACHE_FILE: "install/cachefile"
+    LOG_FILE: "check_cache.log"
+  script:
+    - if [ ! -f "${CACHE_FILE}" ]; then
+        echo "Cache not found, generating...";
+        echo "Applying patches...";
+        make apply_patches >> ${LOG_FILE} 2>&1;
+        echo "Preparing subdirectories...";
+        make -j ${MAX_CORES} prep_lite >> ${LOG_FILE} 2>&1;
+        echo "Creating touchfile...";
+        touch ${CACHE_FILE};
+      else
+        echo "Cache found, skipping generation..." | tee -i ${LOG_FILE};
+      fi
+  cache:
+    <<: *cache_definition
+    policy: pull-push
 
-#.verilator_template: &verilator_definition
-#    <<: *job_definition
-#    variables:
-#        TOOL: "verilator"
-#    stage: verilator
-#    tags:
-#      - verilator
-#
-#shell-example-verilator:
-#  <<: *verilator_definition
-#  script: ${ZP_TOP}/ci/run_example.sh 
-#    - make -C cosim/simple-example/verilator/ run
-#    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/simple-example/verilator/run.log
-#  artifacts:
-#    paths:
-#      - cosim/simple-example/verilator/run.log
+.example_template:
+  extends: .job_template
+  stage: ${TOOL}
+  dependencies:
+    - default
+  variables:
+    LOG_FILE: "cosim/${EXAMPLE}-example/${TOOL}/*.log"
+  script:
+    - ./ci/run_example.sh ${EXAMPLE} ${TOOL}
+  tags:
+    - ${TOOL}
+
+.verilator_template:
+  extends: .example_template
+  variables:
+      TOOL: "verilator"
+
+.vcs_template:
+  extends: .example_template
+  variables:
+      TOOL: "vcs"
+
+.xcelium_template:
+  extends: .example_template
+  variables:
+      TOOL: "xcelium"
+
+shell-example-verilator:
+  extends: .verilator_template
+  variables:
+    EXAMPLE: "shell"
+
+shell-example-vcs:
+  extends: .vcs_template
+  variables:
+    EXAMPLE: "shell"
+
+shell-example-xcelium:
+  extends: .xcelium_template
+  variables:
+    EXAMPLE: "shell"
+
+##shell-example-verilator:
+##  <<: *verilator_definition
+##  script: ${ZP_TOP}/ci/run_example.sh 
+##    - make -C cosim/simple-example/verilator/ run
+##    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/simple-example/verilator/run.log
+##  artifacts:
+##    paths:
+##      - cosim/simple-example/verilator/run.log
 
 ##simple-example-vcs:
 ##  <<: *job_definition
