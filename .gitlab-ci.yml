@@ -55,9 +55,6 @@ check_cache:
 
 .example_template:
   extends: .job_template
-  stage: ${TOOL}
-  dependencies:
-    - default
   variables:
     LOG_FILE: "cosim/${EXAMPLE}-example/${TOOL}/*.log"
   script:
@@ -67,16 +64,19 @@ check_cache:
 
 .verilator_template:
   extends: .example_template
+  stage: verilator
   variables:
       TOOL: "verilator"
 
 .vcs_template:
   extends: .example_template
+  stage: vcs
   variables:
       TOOL: "vcs"
 
 .xcelium_template:
   extends: .example_template
+  stage: xcelium
   variables:
       TOOL: "xcelium"
 
@@ -533,4 +533,5 @@ shell-example-xcelium:
 ##      - cosim/black-parrot-minimal-example/zynq/run.log
 ##  dependencies:
 ##    - black-parrot-minimal-example-vivado-ultra96v2
+
 
