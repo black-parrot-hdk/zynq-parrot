@@ -31,7 +31,6 @@ check_cache:
     # Check if the cache directory exists
     - if [ ! -f "${CACHE_FILE}" ]; then
         echo "Cache not found, generating...";
-        make bleach_all;
         make -j ${MAX_CORES} prep_lite &> prep_lite.log;
         touch ${CACHE_FILE};
       else
