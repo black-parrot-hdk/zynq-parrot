@@ -42,11 +42,11 @@ check_cache:
       if [ ! -f "${CACHE_FILE}" ]; then
         echo "Cache not found, generating...";
         make -j ${MAX_CORES} prep_lite >> ${LOG_FILE} 2>&1;
+        echo "Creating touchfile...";
+        touch ${CACHE_FILE};
       else
         echo "Cache found, skipping generation...";
       fi
-      echo "Creating touchfile...";
-      touch ${CACHE_FILE};
   cache:
     <<: *cache_definition
     policy: pull-push
