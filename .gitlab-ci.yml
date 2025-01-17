@@ -39,8 +39,6 @@ check_cache:
     LOG_FILE: "check_cache.log"
   script:
     - echo "Checkout submodules...";
-      echo "Applying patches...";
-      make apply_patches >> ${LOG_FILE} 2>&1;
       if [ ! -f "${CACHE_FILE}" ]; then
         echo "Cache not found, generating...";
         make -j ${MAX_CORES} prep_lite >> ${LOG_FILE} 2>&1;
