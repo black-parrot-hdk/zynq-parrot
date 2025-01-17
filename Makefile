@@ -66,5 +66,7 @@ ci_eval:
 	$(eval export RUNNER_FLAGS += --env CI_CORES_PER_JOB=4)
 	$(eval export RUNNER_FLAGS += --env CI_MAX_CORES=64)
 	$(eval export RUNNER_FLAGS += --env CI_COMMIT_REF_NAME=dev)
+	$(eval export RUNNER_FLAGS += --timeout 10800)
 	gitlab-runner exec shell $(RUNNER_FLAGS) check_cache
+	gitlab-runner exec shell $(RUNNER_FLAGS) shell-example-verilator
 

@@ -68,9 +68,10 @@ check_cache:
     <<: *cache_definition
   before_script:
       # Recursively fetch RTL submodules
-      - git submodule update --init --recursive import/black-parrot
-      - git submodule update --init --recursive import/bsg_manycore
-      - git submodule update --init --recursive import/black-parrot-subsystems
+      - echo "Updating RTL modules"
+      - git submodule update --force --init --recursive import/black-parrot
+      - git submodule update --force --init --recursive import/bsg_manycore
+      - git submodule update --force --init --recursive import/black-parrot-subsystems
       # Should already be built
       #- git submodule update --init import/black-parrot-sdk
       #- git submodule update --init import/black-parrot-tools
