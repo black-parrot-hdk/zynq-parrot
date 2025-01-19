@@ -75,6 +75,7 @@ check_cache:
           until [ -e "${SUBMODULE_FINIFILE}" ]; do
             echo "${SUBMODULE_FINIFILE} not acquired; sleeping...";
             sleep 5;
+            echo "Trying to acquire ${SUBMODULE_FINIFILE}...";
           done;
           echo "${SUBMODULE_FINIFILE} acquired; proceeding...";
         else
