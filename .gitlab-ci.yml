@@ -70,7 +70,7 @@ check_cache:
   before_script:
       - touch ${SUBMODULE_LOCKFILE};
         exec {FD}<>${SUBMODULE_LOCKFILE};
-        if [ ! flock -x -n $FD ]; then
+        if ! flock -x -n $FD ; then
           echo "${SUBMODULE_LOCKFILE} not acquired; waiting...";
           until [ -e "${SUBMODULE_FINIFILE}" ]; do
             echo "${SUBMODULE_FINIFILE} not acquired; sleeping...";
