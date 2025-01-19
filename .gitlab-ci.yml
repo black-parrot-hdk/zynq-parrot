@@ -68,8 +68,8 @@ check_cache:
   cache:
     <<: *cache_definition
   before_script:
-      - touch ${SUBMODULE_LOCKFILE}
-        exec {FD}<>${SUBMODULE_LOCKFILE}
+      - touch ${SUBMODULE_LOCKFILE};
+        exec {FD}<>${SUBMODULE_LOCKFILE};
         if [ ! flock -x -n $FD ]; then
           echo "${SUBMODULE_LOCKFILE} not acquired; waiting...";
           until [ -e "${SUBMODULE_FINIFILE}" ]; do
