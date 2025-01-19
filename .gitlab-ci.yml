@@ -75,7 +75,7 @@ check_cache:
           until [ -e "${SUBMODULE_FINIFILE}" ]; do
             echo "${SUBMODULE_FINIFILE} not acquired; sleeping...";
             sleep 5;
-          done
+          done;
           echo "${SUBMODULE_FINIFILE} acquired; proceeding...";
         else
           echo "${SUBMODULE_LOCKFILE} acquired; cloning submodules...";
@@ -85,7 +85,7 @@ check_cache:
           git submodule update --init --recursive import/bsg_manycore;
           echo "Submodules updated, releasing ${SUBMODULE_LOCKFILE}...";
           echo "...And creating ${SUBMODULE_FINIFILE}";
-        fi
+        fi;
 
   artifacts:
     when: always
