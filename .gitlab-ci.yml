@@ -3,19 +3,21 @@
 ###################################################
 
 variables:
-  # GitLab variables
-  # We manage these manually to handle the concurrency
-  GIT_STRATEGY: "fetch"
-  GIT_SUBMODULE_STRATEGY: "none"
-  GIT_CLONE_PATH: "${CI_BUILDS_DIR}/zynq-parrot"
-  GIT_CHECKOUT: "false"
-  GIT_CLEAN_FLAGS: "none"
   # CI variables made local
   BSG_CADENV_DIR: "${CI_BSG_CADENV_DIR}"
   CORES_PER_JOB: "${CI_CORES_PER_JOB}"
   MAX_CORES: "${CI_MAX_CORES}"
   BRANCH: "${CI_COMMIT_REF_NAME}"
   HASH: "${CI_COMMIT_SHA}"
+  REPO_URL: "${CI_REPOSITORY_URL}"
+  REPO_NAME: "${CI_PROJECT_NAME}"
+  CACHE_KEY: "${REPO_NAME}-${BRANCH}" # Cache per-branch
+  # GitLab variables
+  GIT_STRATEGY: "none"
+  GIT_SUBMODULE_STRATEGY: "none"
+  GIT_CHECKOUT: "false"
+  GIT_CLEAN_FLAGS: "none"
+  GIT_CLONE_PATH: "${CI_BUILDS_DIR}/${REPO_NAME}-${CI_COMMIT_SHA}" # Build directory shared for a commit
 
 # We stage by tool, but there are theoretically no dependencies
 #   except for vivado/zynq
@@ -27,25 +29,24 @@ stages:
   - vivado
   - zynq
 
-cache: &cache_definition
-  key: zynq-parrot-${BRANCH}
-  paths:
-    - ./install
-  policy: pull
-
 ###################################################
-## Cache Management
+## Creating the ${REPO_NAME} repo
 ###################################################
-check_cache:
+create_repo:
   stage: default
   dependencies: []
   variables:
-    CACHE_FILE: "install/cachefile"
+    GIT_STRATEGY: "clone"
+    CACHE_FILE: "cachefile"
     LOG_FILE: "check_cache.log"
   script:
-    - echo "Checkout submodules...";
-      if [ ! -f "${CACHE_FILE}" ]; then
-        echo "Cache not found, generating...";
+    - if [ ! -f "${CACHE_FILE}" ]; then
+        #echo "Cache not found, generating...";
+        #echo "Cloning repo ${REPO_URL} at ${HASH}";
+        #git clone ${REPO_URL} ${GIT_CLONE_PATH};
+        #make -C ${GIT_CLONE_PATH} -j ${MAX_CORES} prep_lite >> ${LOG_FILE} 2>&1;
+        #echo "Moving install/ directory to caching location";
+        #mv 
         make -j ${MAX_CORES} prep_lite >> ${LOG_FILE} 2>&1;
         echo "Creating touchfile...";
         touch ${CACHE_FILE};
@@ -53,7 +54,9 @@ check_cache:
         echo "Cache found, skipping generation...";
       fi
   cache:
-    <<: *cache_definition
+    key: ${REPO_NAME}-${BRANCH}
+    paths:
+      - ./install
     policy: pull-push
   artifacts:
     when: always
@@ -67,11 +70,9 @@ check_cache:
   stage: default
   dependencies: []
   variables:
-    SUBMODULE_LOCKFILE: "/tmp/zynq-parrot-${HASH}.submodule.lock"
-    SUBMODULE_FINIFILE: "/tmp/zynq-parrot-${HASH}.submodule.fini"
+    SUBMODULE_LOCKFILE: "/tmp/${REPO_NAME}-${HASH}.submodule.lock"
+    SUBMODULE_FINIFILE: "/tmp/${REPO_NAME}-${HASH}.submodule.fini"
     SUBMODULE_TIMEOUT:  "300"
-  cache:
-    <<: *cache_definition
   before_script:
       - touch ${SUBMODULE_LOCKFILE};
         exec {FD}<>${SUBMODULE_LOCKFILE};
