@@ -41,12 +41,6 @@ create_repo:
     LOG_FILE: "check_cache.log"
   script:
     - if [ ! -f "${CACHE_FILE}" ]; then
-        #echo "Cache not found, generating...";
-        #echo "Cloning repo ${REPO_URL} at ${HASH}";
-        #git clone ${REPO_URL} ${GIT_CLONE_PATH};
-        #make -C ${GIT_CLONE_PATH} -j ${MAX_CORES} prep_lite >> ${LOG_FILE} 2>&1;
-        #echo "Moving install/ directory to caching location";
-        #mv 
         make -j ${MAX_CORES} prep_lite >> ${LOG_FILE} 2>&1;
         echo "Creating touchfile...";
         touch ${CACHE_FILE};
