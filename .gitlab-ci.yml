@@ -6,6 +6,7 @@ variables:
   # GitLab variables
   GIT_STRATEGY: "fetch"
   GIT_SUBMODULE_STRATEGY: "none" # We manage these manually to handle the concurrency
+  GIT_CLONE_PATH: "${CI_BUILDS_DIR}/zynq-parrot"
   # CI variables made local
   BSG_CADENV_DIR: "${CI_BSG_CADENV_DIR}"
   CORES_PER_JOB: "${CI_CORES_PER_JOB}"
@@ -88,6 +89,7 @@ check_cache:
           git submodule update --init --recursive import/bsg_manycore;
           echo "Submodules updated, releasing ${SUBMODULE_LOCKFILE}...";
           echo "...And creating ${SUBMODULE_FINIFILE}";
+          touch ${SUBMODULE_FINIFILE};
         fi;
 
   artifacts:
