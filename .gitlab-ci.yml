@@ -79,7 +79,9 @@ check_cache:
           done;
           echo "${SUBMODULE_FINIFILE} acquired; proceeding...";
         else
-          echo "${SUBMODULE_LOCKFILE} acquired; cloning submodules...";
+          echo "${SUBMODULE_LOCKFILE} acquired; clearing out submodules...";
+          git submodule deinit --force import/;
+          echo "cloning submodules...";
           git submodule update --init import/;
           git submodule update --init --recursive import/black-parrot;
           git submodule update --init --recursive import/black-parrot-subsystems;
