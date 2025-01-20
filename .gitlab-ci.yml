@@ -43,11 +43,14 @@ create_repo:
     LOG_FILE: "check_cache.log"
   script:
     - if [ ! -f "${CACHE_FILE}" ]; then
+        echo "[CI] Doing checkout...";
+        make -j ${MAX_CORES} checkout >> ${LOG_FILE} 2>&1;
+        echo "[CI] Running prep...";
         make -j ${MAX_CORES} prep_lite >> ${LOG_FILE} 2>&1;
-        echo "Creating touchfile...";
+        echo "[CI] Creating touchfile...";
         touch ${CACHE_FILE};
       else
-        echo "Cache found, skipping generation...";
+        echo "[CI] Cache found, skipping generation...";
       fi
   cache:
     key: ${REPO_NAME}-${BRANCH}
@@ -65,36 +68,6 @@ create_repo:
 .job_template:
   stage: default
   dependencies: []
-  variables:
-    SUBMODULE_LOCKFILE: "/tmp/${REPO_NAME}-${HASH}.submodule.lock"
-    SUBMODULE_FINIFILE: "/tmp/${REPO_NAME}-${HASH}.submodule.fini"
-    SUBMODULE_TIMEOUT:  "300"
-  before_script:
-      - touch ${SUBMODULE_LOCKFILE};
-        exec {FD}<>${SUBMODULE_LOCKFILE};
-        if ! flock -x -n $FD ; then
-          echo "${SUBMODULE_LOCKFILE} not acquired; waiting...";
-          until [ -e "${SUBMODULE_FINIFILE}" ]; do
-            echo "${SUBMODULE_FINIFILE} not acquired; sleeping...";
-            sleep 5;
-            echo "Trying to acquire ${SUBMODULE_FINIFILE}...";
-          done;
-          echo "${SUBMODULE_FINIFILE} acquired; proceeding...";
-        else
-          echo "Checking out ${HASH}";
-          git checkout ${HASH};
-          echo "${SUBMODULE_LOCKFILE} acquired; clearing out submodules...";
-          git submodule deinit --force import/;
-          echo "cloning submodules...";
-          git submodule update --init import/;
-          git submodule update --init --recursive import/black-parrot;
-          git submodule update --init --recursive import/black-parrot-subsystems;
-          git submodule update --init --recursive import/bsg_manycore;
-          echo "Submodules updated, releasing ${SUBMODULE_LOCKFILE}...";
-          echo "...And creating ${SUBMODULE_FINIFILE}";
-          touch ${SUBMODULE_FINIFILE};
-        fi;
-
   artifacts:
     when: always
     paths:
