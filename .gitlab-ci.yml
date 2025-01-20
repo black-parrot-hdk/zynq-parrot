@@ -62,8 +62,8 @@ check_cache:
   stage: default
   dependencies: []
   variables:
-    SUBMODULE_LOCKFILE: "submodule.lock"
-    SUBMODULE_FINIFILE: "submodule.fini"
+    SUBMODULE_LOCKFILE: "/tmp/zynq-parrot-${CI_COMMIT_REF_NAME}.submodule.lock"
+    SUBMODULE_FINIFILE: "/tmp/zynq-parrot-${CI_COMMIT_REF_NAME}.submodule.fini"
     SUBMODULE_TIMEOUT:  "300"
   cache:
     <<: *cache_definition

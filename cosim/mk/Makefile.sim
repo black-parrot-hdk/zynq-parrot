@@ -32,9 +32,7 @@ CINCLUDES += $(ZP_BASEJUMP_STL_DIR)/bsg_test
 
 CFLAGS += -D_DEFAULT_SOURCE -D_BSD_SOURCE
 
-CLIBDIRS += $(ZP_BP_RTL_DIR)/install/lib
-CLIBDIRS += $(ZP_BP_TOOLS_DIR)/install/lib
-CLIBDIRS += $(ZP_BP_SDK_DIR)/install/lib
+CLIBDIRS += $(ZP_INSTALL_DIR)/lib
 
 CLIBS += dramsim3
 CLIBS += boost_coroutine

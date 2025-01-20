@@ -28,6 +28,7 @@ $(eval $(call bsg_fn_build_if_new,patch,$(CURDIR),$(ZP_TOUCH_DIR)))
 prep_lite: ## Minimal preparation for simulation
 prep_lite: apply_patches
 	@$(eval export PLATFORM := zynqparrot)
+	@$(eval export RISCV_INSTALL_DIR := $(ZP_INSTALL_DIR))
 	@$(MAKE) -C $(ZP_BP_RTL_DIR) libs_lite
 	@$(MAKE) -C $(ZP_BP_TOOLS_DIR) tools_lite
 	@$(MAKE) -C $(ZP_BP_SDK_DIR) sdk_lite
@@ -37,6 +38,7 @@ prep_lite: apply_patches
 prep: ## Standard preparation for simulation
 prep: prep_lite
 	@$(eval export PLATFORM := zynqparrot)
+	@$(eval export RISCV_INSTALL_DIR := $(ZP_INSTALL_DIR))
 	@$(MAKE) -C $(ZP_BP_RTL_DIR) libs
 	@$(MAKE) -C $(ZP_BP_TOOLS_DIR) tools
 	@$(MAKE) -C $(ZP_BP_SDK_DIR) sdk
@@ -47,6 +49,7 @@ prep: prep_lite
 prep_bsg: ## Extra preparation for BSG users
 prep_bsg: prep
 	@$(eval export PLATFORM := zynqparrot)
+	@$(eval export RISCV_INSTALL_DIR := $(ZP_INSTALL_DIR))
 	@$(MAKE) -C $(ZP_BP_RTL_DIR) libs_bsg
 	@$(MAKE) -C $(ZP_BP_TOOLS_DIR) tools_bsg
 	@$(MAKE) -C $(ZP_BP_SDK_DIR) sdk_bsg
