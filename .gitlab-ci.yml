@@ -18,6 +18,7 @@ variables:
   GIT_CHECKOUT: "false"
   GIT_CLEAN_FLAGS: "none"
   GIT_CLONE_PATH: "${CI_BUILDS_DIR}/${REPO_NAME}-${CI_COMMIT_SHA}" # Build directory shared for a commit
+  GIT_FETCH_EXTRA_FLAGS: "--no-tags"
 
 # We stage by tool, but there are theoretically no dependencies
 #   except for vivado/zynq
@@ -37,6 +38,7 @@ create_repo:
   dependencies: []
   variables:
     GIT_STRATEGY: "clone"
+    GIT_CHECKOUT: "true"
     CACHE_FILE: "cachefile"
     LOG_FILE: "check_cache.log"
   script:
