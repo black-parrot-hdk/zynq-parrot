@@ -4,14 +4,18 @@
 
 variables:
   # GitLab variables
+  # We manage these manually to handle the concurrency
   GIT_STRATEGY: "fetch"
-  GIT_SUBMODULE_STRATEGY: "none" # We manage these manually to handle the concurrency
+  GIT_SUBMODULE_STRATEGY: "none"
   GIT_CLONE_PATH: "${CI_BUILDS_DIR}/zynq-parrot"
+  GIT_CHECKOUT: "false"
+  GIT_CLEAN_FLAGS: "none"
   # CI variables made local
   BSG_CADENV_DIR: "${CI_BSG_CADENV_DIR}"
   CORES_PER_JOB: "${CI_CORES_PER_JOB}"
   MAX_CORES: "${CI_MAX_CORES}"
-  BRANCH: "{CI_COMMIT_REF_NAME}"
+  BRANCH: "${CI_COMMIT_REF_NAME}"
+  HASH: "${CI_COMMIT_SHA}"
 
 # We stage by tool, but there are theoretically no dependencies
 #   except for vivado/zynq
@@ -63,8 +67,8 @@ check_cache:
   stage: default
   dependencies: []
   variables:
-    SUBMODULE_LOCKFILE: "/tmp/zynq-parrot-${CI_COMMIT_REF_NAME}.submodule.lock"
-    SUBMODULE_FINIFILE: "/tmp/zynq-parrot-${CI_COMMIT_REF_NAME}.submodule.fini"
+    SUBMODULE_LOCKFILE: "/tmp/zynq-parrot-${HASH}.submodule.lock"
+    SUBMODULE_FINIFILE: "/tmp/zynq-parrot-${HASH}.submodule.fini"
     SUBMODULE_TIMEOUT:  "300"
   cache:
     <<: *cache_definition
@@ -80,6 +84,8 @@ check_cache:
           done;
           echo "${SUBMODULE_FINIFILE} acquired; proceeding...";
         else
+          echo "Checking out ${HASH}";
+          git checkout ${HASH};
           echo "${SUBMODULE_LOCKFILE} acquired; clearing out submodules...";
           git submodule deinit --force import/;
           echo "cloning submodules...";
