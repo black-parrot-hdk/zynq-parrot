@@ -13,12 +13,11 @@ variables:
   REPO_NAME: "${CI_PROJECT_NAME}"
   CACHE_KEY: "${REPO_NAME}-${BRANCH}" # Cache per-branch
   # GitLab variables
+  GIT_CLONE_PATH: "${CI_BUILDS_DIR}/${REPO_NAME}-${CI_COMMIT_SHA}" # Build directory shared for a commit
   GIT_STRATEGY: "none"
   GIT_SUBMODULE_STRATEGY: "none"
   GIT_CHECKOUT: "false"
   GIT_CLEAN_FLAGS: "none"
-  GIT_CLONE_PATH: "${CI_BUILDS_DIR}/${REPO_NAME}-${CI_COMMIT_SHA}" # Build directory shared for a commit
-  GIT_FETCH_EXTRA_FLAGS: "--no-tags"
 
 # We stage by tool, but there are theoretically no dependencies
 #   except for vivado/zynq
@@ -37,14 +36,20 @@ create_repo:
   stage: default
   dependencies: []
   variables:
-    GIT_STRATEGY: "clone"
+    GIT_STRATEGY: "fetch"
+    GIT_FETCH_EXTRA_FLAGS: "--no-tags"
     GIT_CHECKOUT: "true"
+    GIT_CLEAN_FLAGS: "-ffdx"
+    GIT_SUBMODULE_STRATEGY: "recursive"
+    GIT_SUBMODULE_UPDATE_FLAGS: "--jobs ${CI_CORES_PER_JOB} --force"
     CACHE_FILE: "cachefile"
-    LOG_FILE: "check_cache.log"
+    LOG_FILE: "create_repo.log"
   script:
     - if [ ! -f "${CACHE_FILE}" ]; then
         echo "[CI] Doing checkout...";
         make -j ${MAX_CORES} checkout >> ${LOG_FILE} 2>&1;
+        echo "[CI] Applying patches...";
+        make -j ${MAX_CORES} apply_patches >> ${LOG_FILE} 2>&1;
         echo "[CI] Running prep...";
         make -j ${MAX_CORES} prep_lite >> ${LOG_FILE} 2>&1;
         echo "[CI] Creating touchfile...";
