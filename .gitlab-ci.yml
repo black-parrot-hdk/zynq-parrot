@@ -3,7 +3,16 @@
 ###################################################
 
 variables:
-  # CI variables made local
+  # GitLab variables
+  GIT_CLONE_PATH: "${CI_BUILDS_DIR}/${CI_PROJECT_NAME}-${CI_COMMIT_SHA}" # Build directory shared for a commit
+  GIT_STRATEGY: "none"
+  GIT_SUBMODULE_STRATEGY: "none"
+  GIT_CHECKOUT: "false"
+  GIT_CLEAN_FLAGS: "none"
+  FF_USE_FASTZIP: "true"
+  ARTIFACT_COMPRESSION_LEVEL: "fastest"
+  CACHE_COMPRESSION_LEVEL: "fastest"
+  # Other varibles
   BSG_CADENV_DIR: "${CI_BSG_CADENV_DIR}"
   CORES_PER_JOB: "${CI_CORES_PER_JOB}"
   MAX_CORES: "${CI_MAX_CORES}"
@@ -13,18 +22,7 @@ variables:
   REPO_NAME: "${CI_PROJECT_NAME}"
   JOB_NAME: "${CI_JOB_NAME}"
   CACHE_KEY: "${REPO_NAME}-${BRANCH}" # Cache per-branch
-  # GitLab variables
-  GIT_CLONE_PATH: "${CI_BUILDS_DIR}/${REPO_NAME}-${CI_COMMIT_SHA}" # Build directory shared for a commit
-  GIT_STRATEGY: "none"
-  GIT_SUBMODULE_STRATEGY: "none"
-  GIT_CHECKOUT: "false"
-  GIT_CLEAN_FLAGS: "none"
-  FF_USE_FASTZIP: "true"
-  ARTIFACT_COMPRESSION_LEVEL: "fastest"
-  CACHE_COMPRESSION_LEVEL: "fastest"
 
-# We stage by tool, but there are theoretically no dependencies
-#   except for vivado/zynq
 stages:
   - repo
   - cosim
@@ -36,6 +34,7 @@ create_repo:
   stage: repo
   dependencies: []
   variables:
+    # GitLab variables
     GIT_STRATEGY: "fetch"
     GIT_FETCH_EXTRA_FLAGS: "--no-tags"
     GIT_CHECKOUT: "true"
@@ -74,8 +73,10 @@ create_repo:
     when: always
     paths:
       - ${LOG_FILE}
+  tags:
+    - ${TOOL}
 
-.example_template:
+.cosim_template:
   stage: cosim
   extends: .job_template
   variables:
@@ -84,147 +85,52 @@ create_repo:
   script:
     - echo "[CI] Running ${EXAMPLE}-${TOOL}"
     - ./ci/run_example.sh ${EXAMPLE} ${TOOL}
-  tags:
-    - ${TOOL}
-
-#.verilator_template:
-#  extends: .example_template
-#  variables:
-#    TOOL: "verilator"
-#
-#.vcs_template:
-#  extends: .example_template
-#  variables:
-#    TOOL: "vcs"
-#
-#.xcelium_template:
-#  extends: .example_template
-#  variables:
-#    TOOL: "xcelium"
+  parallel:
+    matrix:
+      - TOOL: ["verilator", "vcs", "xcelium"]
 
 ###################################################
 ## Simple Example
 ###################################################
 simple-example:
+  extends: .cosim_template
   needs: repo
-  parallel:
-    matrix:
-      - TOOL: ["verilator", "vcs", "xcelium"]
-
-#simple-example-verilator:
-#  extends: .verilator_template
-#  variables:
-#    EXAMPLE: "simple-example"
-#
-#simple-example-vcs:
-#  extends: .vcs_template
-#  variables:
-#    EXAMPLE: "simple-example"
-#
-#simple-example-xcelium:
-#  extends: .xcelium_template
-#  variables:
-#    EXAMPLE: "simple-example"
 
 #####################################################
 #### Shell Example
 #####################################################
 shell-example:
+  extends: .cosim_template
   needs: simple-example
-  parallel:
-    matrix:
-      - TOOL: ["verilator", "vcs", "xcelium"]
 
-#####################################################
-#### Shell Example
-#####################################################
-##shell-example-verilator:
-##  extends: .verilator_template
-##  variables:
-##    EXAMPLE: "shell-example"
-##
-##shell-example-vcs:
-##  extends: .vcs_template
-##  variables:
-##    EXAMPLE: "shell-example"
-##
-##shell-example-xcelium:
-##  extends: .xcelium_template
-##  variables:
-##    EXAMPLE: "shell-example"
-##
 #####################################################
 #### Double Shell Example
 #####################################################
-##double-shell-example-verilator:
-##  extends: .verilator_template
-##  variables:
-##    EXAMPLE: "double-shell-example"
-##
-##double-shell-example-vcs:
-##  extends: .vcs_template
-##  variables:
-##    EXAMPLE: "double-shell-example"
-##
-##double-shell-example-xcelium:
-##  extends: .xcelium_template
-##  variables:
-##    EXAMPLE: "double-shell-example"
-##
+double-shell-example:
+  extends: .cosim_template
+  needs: shell-example
+
 #####################################################
 #### Dram Example
 #####################################################
-##dram-example-verilator:
-##  extends: .verilator_template
-##  variables:
-##    EXAMPLE: "dram-example"
-##
-##dram-example-vcs:
-##  extends: .vcs_template
-##  variables:
-##    EXAMPLE: "dram-example"
-##
-##dram-example-xcelium:
-##  extends: .xcelium_template
-##  variables:
-##    EXAMPLE: "dram-example"
-##
-#####################################################
-#### AXI3 Example
-#####################################################
-##axi3-example-verilator:
-##  extends: .verilator_template
-##  variables:
-##    EXAMPLE: "axi3-example"
-##
-##axi3-example-vcs:
-##  extends: .vcs_template
-##  variables:
-##    EXAMPLE: "axi3-example"
-##
-##axi3-example-xcelium:
-##  extends: .xcelium_template
-##  variables:
-##    EXAMPLE: "axi3-example"
-##
+dram-example:
+  extends: .cosim_template
+  needs: double-shell-example
+
 #####################################################
 #### AXIS Example
 #####################################################
-##axis-example-verilator:
-##  extends: .verilator_template
-##  variables:
-##    EXAMPLE: "axis-example"
-##
-##axis-example-vcs:
-##  extends: .vcs_template
-##  variables:
-##    EXAMPLE: "axis-example"
-##
-##axis-example-xcelium:
-##  extends: .xcelium_template
-##  variables:
-##    EXAMPLE: "axis-example"
-##
+axis-example:
+  extends: .cosim_template
+  needs: dram-example
+
+#####################################################
+#### AXI3 Example
+#####################################################
+axi3-example:
+  extends: .cosim_template
+  needs: axis-example
+
 ####simple-example-vivado-pynqz2:
 ####  <<: *job_definition
 ####  stage: vivado
