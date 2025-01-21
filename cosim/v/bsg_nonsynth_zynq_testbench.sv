@@ -256,6 +256,7 @@ module bsg_nonsynth_zynq_testbench;
   logic                                 hp0_axi_rlast;
   logic [1:0]                           hp0_axi_rresp;
 
+`ifdef AXI_MEM_ENABLE
   bsg_nonsynth_axi_mem
     #(.axi_id_width_p(6)
       ,.axi_addr_width_p(C_HP0_AXI_ADDR_WIDTH)
