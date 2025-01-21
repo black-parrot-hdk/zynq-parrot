@@ -89,8 +89,6 @@ create_repo:
     matrix:
       - TOOL: ["verilator", "vcs", "xcelium"]
 
-      [CI] Running simple-example: [vcs]-vcs
-
 ###################################################
 ## Simple Example
 ###################################################
