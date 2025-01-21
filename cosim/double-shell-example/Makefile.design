@@ -21,8 +21,6 @@ ZYNQ_PS_DEBUG ?= 0
 #############################
 # Design Defines
 #############################
-DEFINES += ZYNQ_PL_DEBUG
-DEFINES += ZYNQ_PS_DEBUG
 DEFINES += GP0_ENABLE=1
 DEFINES += GP0_ADDR_WIDTH=5 GP0_DATA_WIDTH=32
 DEFINES += GP1_ENABLE=1
