@@ -80,7 +80,6 @@ create_repo:
   stage: cosim
   extends: .job_template
   variables:
-    EXAMPLE: "${JOB_NAME}"
     LOG_FILE: "cosim/${EXAMPLE}/${TOOL}/*.log"
   script:
     - echo "[CI] Running ${EXAMPLE}-${TOOL}"
@@ -93,6 +92,8 @@ create_repo:
 ## Simple Example
 ###################################################
 simple-example:
+  variables:
+    EXAMPLE: "simple-example"
   extends: .cosim_template
   needs: ["create_repo"]
 
@@ -100,6 +101,8 @@ simple-example:
 #### Shell Example
 #####################################################
 shell-example:
+  variables:
+    EXAMPLE: "shell-example"
   extends: .cosim_template
   needs: ["simple-example"]
 
@@ -107,6 +110,8 @@ shell-example:
 #### Double Shell Example
 #####################################################
 double-shell-example:
+  variables:
+    EXAMPLE: "double-shell-example"
   extends: .cosim_template
   needs: ["shell-example"]
 
@@ -114,6 +119,8 @@ double-shell-example:
 #### Dram Example
 #####################################################
 dram-example:
+  variables:
+    EXAMPLE: "dram-example"
   extends: .cosim_template
   needs: ["double-shell-example"]
 
@@ -121,6 +128,8 @@ dram-example:
 #### AXIS Example
 #####################################################
 axis-example:
+  variables:
+    EXAMPLE: "axis-example"
   extends: .cosim_template
   needs: ["dram-example"]
 
@@ -128,6 +137,8 @@ axis-example:
 #### AXI3 Example
 #####################################################
 axi3-example:
+  variables:
+    EXAMPLE: "axi3-example"
   extends: .cosim_template
   needs: ["axis-example"]
 
