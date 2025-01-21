@@ -94,42 +94,42 @@ create_repo:
 ###################################################
 simple-example:
   extends: .cosim_template
-  needs: repo
+  needs: ["create_repo"]
 
 #####################################################
 #### Shell Example
 #####################################################
 shell-example:
   extends: .cosim_template
-  needs: simple-example
+  needs: ["simple-example"]
 
 #####################################################
 #### Double Shell Example
 #####################################################
 double-shell-example:
   extends: .cosim_template
-  needs: shell-example
+  needs: ["shell-example"]
 
 #####################################################
 #### Dram Example
 #####################################################
 dram-example:
   extends: .cosim_template
-  needs: double-shell-example
+  needs: ["double-shell-example"]
 
 #####################################################
 #### AXIS Example
 #####################################################
 axis-example:
   extends: .cosim_template
-  needs: dram-example
+  needs: ["dram-example"]
 
 #####################################################
 #### AXI3 Example
 #####################################################
 axi3-example:
   extends: .cosim_template
-  needs: axis-example
+  needs: ["axis-example"]
 
 ####simple-example-vivado-pynqz2:
 ####  <<: *job_definition
