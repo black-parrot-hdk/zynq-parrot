@@ -16,11 +16,11 @@ variables:
   BSG_CADENV_DIR: "${CI_BSG_CADENV_DIR}"
   CORES_PER_JOB: "${CI_CORES_PER_JOB}"
   MAX_CORES: "${CI_MAX_CORES}"
-  BRANCH: "${CI_COMMIT_REF_NAME}"
+  BRANCH: "${CI_COMMIT_REF_SLUG}"
   HASH: "${CI_COMMIT_SHA}"
   REPO_URL: "${CI_REPOSITORY_URL}"
   REPO_NAME: "${CI_PROJECT_NAME}"
-  JOB_NAME: "${CI_JOB_NAME}"
+  JOB_NAME: "${CI_JOB_NAME_SLUG}"
   CACHE_KEY: "${REPO_NAME}-${BRANCH}" # Cache per-branch
 
 stages:
@@ -88,6 +88,8 @@ create_repo:
   parallel:
     matrix:
       - TOOL: ["verilator", "vcs", "xcelium"]
+
+      [CI] Running simple-example: [vcs]-vcs
 
 ###################################################
 ## Simple Example
