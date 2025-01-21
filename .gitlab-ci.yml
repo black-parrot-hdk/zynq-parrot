@@ -95,7 +95,6 @@ create_repo:
 ###################################################
 simple-example-cosim:
   extends: .cosim_template
-  needs: ["create_repo"]
   variables:
     EXAMPLE: "simple-example"
 
@@ -104,7 +103,7 @@ simple-example-cosim:
 #####################################################
 shell-example-cosim:
   extends: .cosim_template
-  needs: ["simple-example"]
+  needs: ["simple-example-cosim"]
   variables:
     EXAMPLE: "shell-example"
 
@@ -113,7 +112,7 @@ shell-example-cosim:
 #####################################################
 double-shell-example-cosim:
   extends: .cosim_template
-  needs: ["shell-example"]
+  needs: ["shell-example-cosim"]
   variables:
     EXAMPLE: "double-shell-example"
 
@@ -122,7 +121,7 @@ double-shell-example-cosim:
 #####################################################
 dram-example-cosim:
   extends: .cosim_template
-  needs: ["double-shell-example"]
+  needs: ["double-shell-example-cosim"]
   variables:
     EXAMPLE: "dram-example"
 
@@ -131,7 +130,7 @@ dram-example-cosim:
 #####################################################
 axis-example-cosim:
   extends: .cosim_template
-  needs: ["dram-example"]
+  needs: ["dram-example-cosim"]
   variables:
     EXAMPLE: "axis-example"
 
@@ -140,7 +139,7 @@ axis-example-cosim:
 #####################################################
 axi3-example-cosim:
   extends: .cosim_template
-  needs: ["axis-example"]
+  needs: ["axis-example-cosim"]
   variables:
     EXAMPLE: "axi3-example"
   # This example does not simulate correctly
@@ -185,14 +184,16 @@ simple-example-bitstream:
 ###################################################
 shell-example-bitstream:
   extends: .bitstream_template
+  needs: ["simple-example-bitstream"]
   variables:
     EXAMPLE: "shell-example"
 
 ###################################################
 ## Double Shell Bitstream
 ###################################################
-shell-example-bitstream:
+double-shell-example-bitstream:
   extends: .bitstream_template
+  needs: ["shell-example-bitstream"]
   variables:
     EXAMPLE: "double-shell-example"
 
