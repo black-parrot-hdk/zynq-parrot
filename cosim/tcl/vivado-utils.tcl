@@ -124,7 +124,7 @@ proc vivado_add_bd_parameter { name def } {
 }
 
 
-proc vivado_create_design { vpackages vsources vincludes vdefines } {
+proc vivado_create_design { vpackages vsources vincludes } {
     # TODO: Hardcoded BASEJUMP_STL_DIR
     set hard_root $::env(BASEJUMP_STL_DIR)/hard/ultrascale_plus
 

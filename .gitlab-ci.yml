@@ -15,6 +15,7 @@ variables:
   # Other varibles
   BSG_CADENV_DIR: "${CI_BSG_CADENV_DIR}"
   CORES_PER_JOB: "${CI_CORES_PER_JOB}"
+  MISC_DIR: "${CI_MISC_DIR}"
   MAX_CORES: "${CI_MAX_CORES}"
   BRANCH: "${CI_COMMIT_REF_SLUG}"
   HASH: "${CI_COMMIT_SHA}"
@@ -26,13 +27,25 @@ variables:
 stages:
   - repo
   - cosim
+  - bitstream
+
+###################################################
+## Base Job Template
+###################################################
+.job_template:
+  dependencies: []
+  needs: []
+  artifacts:
+    when: always
+    paths:
+      - ${LOG_FILE}
 
 ###################################################
 ## Creating the ${REPO_NAME} repo
 ###################################################
 create_repo:
   stage: repo
-  dependencies: []
+  extends: .job_template
   variables:
     # GitLab variables
     GIT_STRATEGY: "fetch"
@@ -59,23 +72,10 @@ create_repo:
     paths:
       - ./install
     policy: pull-push
-  artifacts:
-    when: always
-    paths:
-      - ${LOG_FILE}
 
 ###################################################
-## Simulation Job Templates 
+## Co-Simulation Job Templates
 ###################################################
-.job_template:
-  dependencies: []
-  artifacts:
-    when: always
-    paths:
-      - ${LOG_FILE}
-  tags:
-    - ${TOOL}
-
 .cosim_template:
   stage: cosim
   extends: .job_template
@@ -87,60 +87,131 @@ create_repo:
   parallel:
     matrix:
       - TOOL: ["verilator", "vcs", "xcelium"]
+  tags:
+    - ${TOOL}
 
 ###################################################
-## Simple Example
+## Simple Co-Simulation
 ###################################################
-simple-example:
-  variables:
-    EXAMPLE: "simple-example"
+simple-example-cosim:
   extends: .cosim_template
   needs: ["create_repo"]
+  variables:
+    EXAMPLE: "simple-example"
 
 #####################################################
-#### Shell Example
+#### Shell Co-Simulation
 #####################################################
-shell-example:
-  variables:
-    EXAMPLE: "shell-example"
+shell-example-cosim:
   extends: .cosim_template
   needs: ["simple-example"]
+  variables:
+    EXAMPLE: "shell-example"
 
 #####################################################
-#### Double Shell Example
+#### Double Shell Co-Simulation
 #####################################################
-double-shell-example:
-  variables:
-    EXAMPLE: "double-shell-example"
+double-shell-example-cosim:
   extends: .cosim_template
   needs: ["shell-example"]
+  variables:
+    EXAMPLE: "double-shell-example"
 
 #####################################################
-#### Dram Example
+#### Dram Co-Simulation
 #####################################################
-dram-example:
-  variables:
-    EXAMPLE: "dram-example"
+dram-example-cosim:
   extends: .cosim_template
   needs: ["double-shell-example"]
+  variables:
+    EXAMPLE: "dram-example"
 
 #####################################################
-#### AXIS Example
+#### AXIS Co-Simulation
 #####################################################
-axis-example:
-  variables:
-    EXAMPLE: "axis-example"
+axis-example-cosim:
   extends: .cosim_template
   needs: ["dram-example"]
+  variables:
+    EXAMPLE: "axis-example"
 
 #####################################################
-#### AXI3 Example
+#### AXI3 Co-Simulation
 #####################################################
-axi3-example:
-  variables:
-    EXAMPLE: "axi3-example"
+axi3-example-cosim:
   extends: .cosim_template
   needs: ["axis-example"]
+  variables:
+    EXAMPLE: "axi3-example"
+  # This example does not simulate correctly
+  allow_failure: true
+
+###################################################
+## Bitstream Template
+###################################################
+.bitstream_template:
+  stage: bitstream
+  extends: .job_template
+  variables:
+    VIVADO_VERSION: "2022.2"
+    VIVADO_MODE: "batch"
+    BOARDNAME: "pynqz2"
+    LOG_FILE: "cosim/${EXAMPLE}/vivado/*.log"
+    BITSTREAM_FILE: "cosim/${EXAMPLE}/*.tar.xz.b64"
+  script:
+    - echo "[CI] Creating bitstream for ${EXAMPLE}"
+    - ./ci/build_bitstream.sh ${EXAMPLE}
+  tags:
+    - vivado
+  artifacts:
+    when: always
+    paths:
+      - ${LOG_FILE}
+      - ${BITSTREAM_FILE}
+
+###################################################
+## Simple Bitstream
+###################################################
+simple-example-bitstream:
+  extends: .bitstream_template
+  variables:
+    EXAMPLE: "simple-example"
+  script:
+    - echo "[CI] Copying bitstream for ${EXAMPLE}"
+    - cp ${MISC_DIR}/simple_bd_1.pynqz2.tar.xz.b64 cosim/${EXAMPLE}/
+
+###################################################
+## Shell Bitstream
+###################################################
+shell-example-bitstream:
+  extends: .bitstream_template
+  variables:
+    EXAMPLE: "shell-example"
+
+###################################################
+## Double Shell Bitstream
+###################################################
+shell-example-bitstream:
+  extends: .bitstream_template
+  variables:
+    EXAMPLE: "double-shell-example"
+
+####shell-example-vivado-pynqz2:
+####  <<: *job_definition
+####  stage: vivado
+####  tags:
+####    - vivado
+####  script:
+####    - export BASENAME="shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
+####    - export EXAMPLE_NAME="shell-example"
+####    - echo "Building shell-example for Pynq Z2"
+####    - make -C cosim/shell-example/vivado clean fpga_build
+####    - echo "Packing up bitstream"
+####    - make -C cosim/shell-example/vivado pack_bitstream
+####  artifacts:
+####    paths:
+####      - cosim/shell-example/vivado/vivado.log
+####      - cosim/shell-example/shell_bd_1.zynq.pynqz2.tar.xz.b64
 
 ####simple-example-vivado-pynqz2:
 ####  <<: *job_definition

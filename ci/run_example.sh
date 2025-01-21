@@ -18,6 +18,8 @@ fi
 example_name="$1"
 tool_name="$2"
 
+run_path=$example_name/$tool_name
+
 # Validate arguments
 if [ -z "$example_name" ] || [ -z "$tool_name" ]; then
     echo "Error: Both arguments must be non-empty"
@@ -34,18 +36,18 @@ echo "Tool Name: $tool_name"
     echo "Current directory: $(pwd)"
     echo "Running command with arguments: $@"
 
-    if ! make -C $1/$2 clean build; then
+    if ! make -C $run_path clean build; then
         echo "Error: 'make clean build' failed."
         exit 1
     fi
 
-    if ! make -C $1/$2 run; then
+    if ! make -C $run_path run; then
         echo "Error: 'make run' failed."
         exit 1
     fi
 
     # Check if run.log exists and contains the required string
-    log_file="$1/$2/run.log"
+    log_file="$run_path/run.log"
     search_string="done() called"
 
     # Check if run.log exists and contains the required string
