@@ -21,9 +21,6 @@ VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_noc/bsg_mesh_router_pkg.sv
 VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_noc/bsg_noc_pkg.sv
 VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_noc/bsg_wormhole_router_pkg.sv
 
-VSOURCES  += $(COSIM_VSRC_DIR)/bsg_zynq_pl_shell.sv
-VSOURCES  += $(DESIGN_VSRC_DIR)/top_zynq.sv
-VSOURCES  += $(DESIGN_VSRC_DIR)/top.v
 VINCLUDES += $(COSIM_INCLUDE_DIR)/$(TOOL)
 VINCLUDES += $(DESIGN_VSRC_DIR)
 VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_async
@@ -85,6 +82,9 @@ clean:
 	@$(RMRF) *_bd_1.map
 	@$(RMRF) DVEfiles
 	@$(RMRF) ip_repo
+	@$(RMRF) *_ip_proj.*
+	@$(RMRF) *_bd_proj.*
+	@$(RMRF) NA/ .Xil/
 	@$(RMRF) control-program
 	@$(RMRF) $(DESIGN_DIR)/*.o
 	@$(RMRF) $(COSIM_CSRC_DIR)/*.o

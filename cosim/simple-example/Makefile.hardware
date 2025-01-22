@@ -1,5 +1,8 @@
 
 VPACKAGES += $(DESIGN_VSRC_DIR)/zynq_pkg.sv
 
-VSOURCES += $(DESIGN_VSRC_DIR)/example_axi_v1_0_S00_AXI.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/example_axi_v1_0_S00_AXI.sv
+VSOURCES  += $(COSIM_VSRC_DIR)/bsg_zynq_pl_shell.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top_zynq.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top.v
 

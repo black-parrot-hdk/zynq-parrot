@@ -19,6 +19,6 @@ VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_misc/bsg_counter_clear_up.sv
 
 VSOURCES += $(ZP_BP_SUB_DIR)/zynq/v/bsg_axis_fifo.sv
 
-VSOURCES += $(DESIGN_VSRC_DIR)/top_zynq.sv
-VSOURCES += $(DESIGN_VSRC_DIR)/top.v
-
+VSOURCES  += $(COSIM_VSRC_DIR)/bsg_zynq_pl_shell.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top_zynq.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top.v
