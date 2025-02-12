@@ -31,11 +31,12 @@ define build_surelog
     git checkout e181f1241be19270f9b95d3a8ad1d986af7104d7; \
 		git submodule update --init --recursive
 	cp $(INSTRUMENTATION_DIR)/walker.cpp $(BLACKPARROT_TOOLS_DIR)/Surelog/src/
+	cp $(INSTRUMENTATION_DIR)/walker.hpp $(BLACKPARROT_TOOLS_DIR)/Surelog/include/
 	$(if $(shell grep walker $(BLACKPARROT_TOOLS_DIR)/Surelog/CMakeLists.txt), @echo CMakeLists.txt already updated, $(call URELOGupdateTarget, $(BLACKPARROT_TOOLS_DIR)/Surelog/CMakeLists.txt))
 	make -C $(BLACKPARROT_TOOLS_DIR)/Surelog/
 endef
 
-build_surelog: $(INSTRUMENTATION_DIR)/walker.cpp
+build_surelog: $(INSTRUMENTATION_DIR)/walker.cpp $(INSTRUMENTATION_DIR)/walker.hpp
 	$(call build_surelog)
 
 SURELOG_OPTS += -sverilog
@@ -51,7 +52,7 @@ SURELOG_OPTS += -mp 12
 SURELOG_OPTS += -nobuiltin
 SURELOG_OPTS += --top-module $(SURELOG_TOP_MODULE)
 SURELOG_OPTS += -f $(SURELOG_FLIST)
-SURELOG_OPTS += -std=c++11
+#SURELOG_OPTS += -std=c++11
 SURELOG_OPTS += -o $(SURELOG_RUN_DIR)
 SURELOG      ?= $(BLACKPARROT_TOOLS_DIR)/Surelog/build/bin/$(WALKER)
 
