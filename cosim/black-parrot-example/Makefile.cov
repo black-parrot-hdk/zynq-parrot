@@ -6,7 +6,7 @@ INSTRUMENTATION_DIR = $(CURR)/../instrumentation
 WALKER              = walker
 SURELOG_RUN_DIR     = $(abspath $(INSTRUMENTATION_DIR)/surelog.run)
 SURELOG_FLIST       = $(SURELOG_RUN_DIR)/flist
-SURELOG_TOP_MODULE  ?= bp_be_top
+SURELOG_TOP_MODULE  ?= bp_be_scheduler
 
 $(SURELOG_FLIST): $(FLIST)
 	mkdir -p $(SURELOG_RUN_DIR)
@@ -31,11 +31,12 @@ define build_surelog
     git checkout e181f1241be19270f9b95d3a8ad1d986af7104d7; \
 		git submodule update --init --recursive
 	cp $(INSTRUMENTATION_DIR)/walker.cpp $(BLACKPARROT_TOOLS_DIR)/Surelog/src/
-	$(if $(shell grep walker $(BLACKPARROT_TOOLS_DIR)/Surelog/CMakeLists.txt), @echo CMakeLists.txt already updated, $(call URELOGupdateTarget, $(BLACKPARROT_TOOLS_DIR)/Surelog/CMakeLists.txt))
-	make -C $(BLACKPARROT_TOOLS_DIR)/Surelog/
+	cp $(INSTRUMENTATION_DIR)/walker.hpp $(BLACKPARROT_TOOLS_DIR)/Surelog/include/
+	$(if $(shell grep walker $(BLACKPARROT_TOOLS_DIR)/Surelog/CMakeLists.txt), @echo CMakeLists.txt already updated, $(call updateTarget, $(BLACKPARROT_TOOLS_DIR)/Surelog/CMakeLists.txt))
+	make -j -C $(BLACKPARROT_TOOLS_DIR)/Surelog/
 endef
 
-build_surelog: $(INSTRUMENTATION_DIR)/walker.cpp
+build_surelog: $(INSTRUMENTATION_DIR)/walker.cpp $(INSTRUMENTATION_DIR)/walker.hpp
 	$(call build_surelog)
 
 SURELOG_OPTS += -sverilog
@@ -51,15 +52,15 @@ SURELOG_OPTS += -mp 12
 SURELOG_OPTS += -nobuiltin
 SURELOG_OPTS += --top-module $(SURELOG_TOP_MODULE)
 SURELOG_OPTS += -f $(SURELOG_FLIST)
-SURELOG_OPTS += -std=c++11
+#SURELOG_OPTS += -std=c++11
 SURELOG_OPTS += -o $(SURELOG_RUN_DIR)
 SURELOG      ?= $(BLACKPARROT_TOOLS_DIR)/Surelog/build/bin/$(WALKER)
 
 analyze_rtl: build_surelog $(SURELOG_FLIST) $(BUILD_COLLATERAL)
-	$(SURELOG) $(SURELOG_OPTS) 2>$(SURELOG_RUN_DIR)/stderr 1> $(SURELOG_RUN_DIR)/stdout
+	$(SURELOG) $(SURELOG_OPTS) #2>$(SURELOG_RUN_DIR)/stderr 1> $(SURELOG_RUN_DIR)/stdout
 
 # these need to be debugged as the wires tapped into paths containing these fail synthesis and hang verilator (?)
-UNIMPLEMENTED = \
+#UNIMPLEMENTED = \
   UNKNOWN_NODE \
   genblk \
   ptr_wrap \
@@ -100,7 +101,7 @@ UNIMPLEMENTED = \
 	sed -i '/reset/Id' $@
 	sort -u -o $@ $@
 
-collect_sigs: $(subst sigs,fsigs,$(shell find . -name *.sigs $(SURELOG_RUN_DIR)))
+collect_sigs: $(subst sigs,fsigs,$(shell find $(SURELOG_RUN_DIR) -name *.sigs 2>/dev/null))
 
 INSTRUMENTATION_OPTS +=  -s $(INSTRUMENTATION_DIR)/../cp_fpga.csv
 INSTRUMENTATION_OPTS +=  -o $(INSTRUMENTATION_DIR)/macro
@@ -112,6 +113,7 @@ instrument: collect_sigs
 clean.build_surelog:
 	cd $(BLACKPARROT_TOOLS_DIR)/Surelog && git checkout CMakeLists.txt
 	rm -rf $(SURELOG_RUN_DIR)
+	rm -rf $(SURELOG)
 
 clean.instrument:
 	rm -rf $(SURELOG_RUN_DIR) *fsigs $(INSTRUMENTATION_DIR)/{macro,instrumented_top_zynq.sv}
