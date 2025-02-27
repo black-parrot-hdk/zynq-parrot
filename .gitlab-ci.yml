@@ -1,469 +1,290 @@
+###################################################
+## GitLab Setup and CI variables
+###################################################
+
 variables:
-  GIT_STRATEGY: clone
-  GIT_SUBMODULE_STRATEGY: none
+  # GitLab variables
+  GIT_CLONE_PATH: "${CI_BUILDS_DIR}/${CI_PROJECT_NAME}-${CI_COMMIT_SHA}" # Build directory shared for a commit
+  GIT_STRATEGY: "none"
+  GIT_SUBMODULE_STRATEGY: "none"
+  GIT_CHECKOUT: "false"
+  GIT_CLEAN_FLAGS: "none"
+  FF_USE_FASTZIP: "true"
+  ARTIFACT_COMPRESSION_LEVEL: "fastest"
+  CACHE_COMPRESSION_LEVEL: "fastest"
+  # Other varibles
+  BSG_CADENV_DIR: "${CI_BSG_CADENV_DIR}"
+  CORES_PER_JOB: "${CI_CORES_PER_JOB}"
+  MISC_DIR: "${CI_MISC_DIR}"
+  MAX_CORES: "${CI_MAX_CORES}"
+  BRANCH: "${CI_COMMIT_REF_SLUG}"
+  HASH: "${CI_COMMIT_SHA}"
+  REPO_URL: "${CI_REPOSITORY_URL}"
+  REPO_NAME: "${CI_PROJECT_NAME}"
+  JOB_NAME: "${CI_JOB_NAME_SLUG}"
+  CACHE_KEY: "${REPO_NAME}-${BRANCH}" # Cache per-branch
 
 stages:
-  - verilator
-  - vcs
-  - xcelium
-  - vivado
-  - zynq
-  - all
+  - repo
+  - cosim-level1
+  - bitstream-level1
+  - cosim-level2
+  - bitstream-level2
 
-.job_template: &job_definition
-  when: manual
+###################################################
+## Base Job Template
+###################################################
+.job_template:
+  dependencies: []
+  needs: []
+  artifacts:
+    when: always
+    paths:
+      - ${LOG_FILE}
+
+###################################################
+## Creating the ${REPO_NAME} repo
+###################################################
+create_repo:
+  stage: repo
+  extends: .job_template
   variables:
+    # GitLab variables
+    GIT_STRATEGY: "fetch"
+    GIT_FETCH_EXTRA_FLAGS: "--no-tags"
+    GIT_CHECKOUT: "true"
+    GIT_CLEAN_FLAGS: "-ffdx"
+    CACHE_FILE: "cachefile"
+    LOG_FILE: "${JOB_NAME}.log"
+  script:
+    - if [ ! -f "${CACHE_FILE}" ]; then
+        echo "[CI] Doing checkout...";
+        make -j ${MAX_CORES} checkout >> ${LOG_FILE} 2>&1;
+        echo "[CI] Applying patches...";
+        make -j ${MAX_CORES} apply_patches >> ${LOG_FILE} 2>&1;
+        echo "[CI] Cache not found, generating...";
+        make -j ${MAX_CORES} prep_lite >> ${LOG_FILE} 2>&1;
+        echo "[CI] Creating touchfile...";
+        touch ${CACHE_FILE};
+      else
+        echo "[CI] Cache found, skipping generation...";
+        echo "[CI] Cloning RTL directories";
+        git submodule update --init --recursive import/black-parrot;
+        git submodule update --init --recursive import/black-parrot-subsystems;
+        git submodule update --init --recursive import/bsg_manycore;
+      fi
+  cache:
+    key: ${REPO_NAME}-${BRANCH}
+    paths:
+      - ./install
+    policy: pull-push
+
+###################################################
+## Co-Simulation Job Templates
+###################################################
+.cosim_template:
+  extends: .job_template
+  variables:
+    LOG_FILE: "cosim/${EXAMPLE}/${TOOL}/*.log"
+  script:
+    - echo "[CI] Running ${EXAMPLE}-${TOOL}"
+    - ./ci/run_example.sh ${EXAMPLE} ${TOOL}
+  parallel:
+    matrix:
+      - TOOL: ["verilator", "vcs", "xcelium"]
+  tags:
+    - ${TOOL}
+
+.cosim_level1_template:
+  stage: cosim-level1
+  extends: .cosim_template
+
+.cosim_level2_template:
+  stage: cosim-level2
+  extends: .cosim_template
+
+###################################################
+###################################################
+#### Level 1 Co-Simulations
+###################################################
+###################################################
+
+###################################################
+## Simple Co-Simulation
+###################################################
+simple-example-cosim:
+  extends: .cosim_level1_template
+  needs: ["create_repo"]
+  variables:
+    EXAMPLE: "simple-example"
+
+#####################################################
+## Shell Co-Simulation
+#####################################################
+shell-example-cosim:
+  extends: .cosim_level1_template
+  needs: ["simple-example-cosim"]
+  variables:
+    EXAMPLE: "shell-example"
+
+#####################################################
+## Double Shell Co-Simulation
+#####################################################
+double-shell-example-cosim:
+  extends: .cosim_level1_template
+  needs: ["shell-example-cosim"]
+  variables:
+    EXAMPLE: "double-shell-example"
+
+#####################################################
+## Dram Co-Simulation
+#####################################################
+dram-example-cosim:
+  extends: .cosim_level1_template
+  needs: ["double-shell-example-cosim"]
+  variables:
+    EXAMPLE: "dram-example"
+
+#####################################################
+## AXIS Co-Simulation
+#####################################################
+axis-example-cosim:
+  extends: .cosim_level1_template
+  needs: ["dram-example-cosim"]
+  variables:
+    EXAMPLE: "axis-example"
+
+#####################################################
+## AXI3 Co-Simulation
+#####################################################
+axi3-example-cosim:
+  extends: .cosim_level1_template
+  needs: ["axis-example-cosim"]
+  variables:
+    EXAMPLE: "axi3-example"
+  # This example does not simulate correctly
+  allow_failure: true
+
+###################################################
+## Bitstream Template
+###################################################
+.bitstream_template:
+  stage: bitstream
+  extends: .job_template
+  variables:
+    VIVADO_VERSION: "2022.2"
     VIVADO_MODE: "batch"
-  artifacts:
-    name: $CI_JOB_ID
-  dependencies: []
-  before_script:
-    - git submodule update --init --checkout --recursive cosim/import/black-parrot
-    - git submodule update --init --checkout --recursive cosim/import/black-parrot-subsystems
-    - git submodule update --init --checkout --recursive cosim/import/basejump_stl
-    - git submodule update --init --checkout --recursive cosim/import/bsg_manycore
-
-simple-example-verilator:
-  <<: *job_definition
-  stage: verilator
-  tags:
-    - verilator
+    BOARDNAME: "pynqz2"
+    LOG_FILE: "cosim/${EXAMPLE}/vivado/*.log"
+    BITSTREAM_FILE: "cosim/${EXAMPLE}/*.tar.xz.b64"
   script:
-    - export BASENAME="simple"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="simple-example"
-    - make -C cosim/simple-example/verilator/ run
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/simple-example/verilator/run.log
-  artifacts:
-    paths:
-      - cosim/simple-example/verilator/run.log
-
-simple-example-vcs:
-  <<: *job_definition
-  stage: vcs
-  tags:
-    - vcs
-  script:
-    - export BASENAME="simple"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="simple-example"
-    - make -C cosim/simple-example/vcs/ run
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/simple-example/vcs/run.log
-  artifacts:
-    paths:
-      - cosim/simple-example/vcs/run.log
-
-simple-example-vivado-pynqz2:
-  <<: *job_definition
-  stage: vivado
+    - echo "[CI] Creating bitstream for ${EXAMPLE}"
+    - ./ci/build_bitstream.sh ${EXAMPLE}
   tags:
     - vivado
-  script:
-    - export BASENAME="simple"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="simple-example"
-    - echo "Simple example does not have a vivado script, copying from local copy"
-    - cp $CI_MISC_DIR/simple_bd_1.zynq.pynqz2.tar.xz.b64 cosim/simple-example/simple_bd_1.zynq.pynqz2.tar.xz.b64
   artifacts:
+    when: always
     paths:
-      - cosim/simple-example/simple_bd_1.zynq.pynqz2.tar.xz.b64
+      - ${LOG_FILE}
+      - ${BITSTREAM_FILE}
 
-simple-example-zynq-pynqz2:
-  <<: *job_definition
-  stage: zynq
-  tags:
-    - zynq
-  resource_group: zynq
-  script:
-    - export BASENAME="simple"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="simple-example"
-    - $CI_PROJECT_DIR/ci/fpga-setup.sh
-    - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/simple-example/simple_bd_1.zynq.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/simple-example/simple_bd_1.zynq.pynqz2.tar.xz.b64
-    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/simple-example/zynq/run.log $CI_PROJECT_DIR/cosim/simple-example/zynq/run.log
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/simple-example/zynq/run.log
-  artifacts:
-    paths:
-      - cosim/simple-example/zynq/run.log
-  dependencies:
-    - simple-example-vivado-pynqz2
+.bitstream_level1_template:
+  stage: bitstream-level1
+  extends: .bitstream_template
 
-shell-example-verilator:
-  <<: *job_definition
-  stage: verilator
-  tags:
-    - verilator
-  script:
-    - export BASENAME="shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="shell-example"
-    - make -C cosim/shell-example/verilator/ run
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/shell-example/verilator/run.log
-  artifacts:
-    paths:
-      - cosim/shell-example/verilator/run.log
+.bitstream_level2_template:
+  stage: bitstream-level2
+  extends: .bitstream_template
 
-shell-example-vcs:
-  <<: *job_definition
-  stage: vcs
-  tags:
-    - vcs
-  script:
-    - export BASENAME="shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="shell-example"
-    - make -C cosim/shell-example/vcs/ run
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/shell-example/vcs/run.log
-  artifacts:
-    paths:
-      - cosim/shell-example/vcs/run.log
+###################################################
+###################################################
+#### Level 1 Bitstreams
+###################################################
+###################################################
 
-shell-example-xcelium:
-  <<: *job_definition
-  stage: xcelium
-  tags:
-    - xcelium
+###################################################
+## Simple Bitstream
+###################################################
+simple-example-bitstream:
+  extends: .bitstream_level1_template
+  needs: ["axis-example-cosim"]
+  variables:
+    EXAMPLE: "simple-example"
   script:
-    - export BASENAME="shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="shell-example"
-    - make -C cosim/shell-example/xcelium/ run
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/shell-example/xcelium/run.log
-  artifacts:
-    paths:
-      - cosim/shell-example/xcelium/run.log
+    - echo "[CI] Copying bitstream for ${EXAMPLE}"
+    - cp ${MISC_DIR}/simple_bd_1.pynqz2.tar.xz.b64 cosim/${EXAMPLE}/
 
-shell-example-vivado-pynqz2:
-  <<: *job_definition
-  stage: vivado
-  tags:
-    - vivado
-  script:
-    - export BASENAME="shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="shell-example"
-    - echo "Building shell-example for Pynq Z2"
-    - make -C cosim/shell-example/vivado clean fpga_build
-    - echo "Packing up bitstream"
-    - make -C cosim/shell-example/vivado pack_bitstream
-  artifacts:
-    paths:
-      - cosim/shell-example/vivado/vivado.log
-      - cosim/shell-example/shell_bd_1.zynq.pynqz2.tar.xz.b64
+###################################################
+## Shell Bitstream
+###################################################
+shell-example-bitstream:
+  extends: .bitstream_level1_template
+  needs: ["simple-example-bitstream"]
+  variables:
+    EXAMPLE: "shell-example"
 
-shell-example-zynq-pynqz2:
-  <<: *job_definition
-  stage: zynq
-  tags:
-    - zynq
-  resource_group: zynq
-  script:
-    - export BASENAME="shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="shell-example"
-    - $CI_PROJECT_DIR/ci/fpga-setup.sh
-    - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/shell-example/shell_bd_1.zynq.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/shell-example/shell_bd_1.zynq.pynqz2.tar.xz.b64
-    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/shell-example/zynq/run.log $CI_PROJECT_DIR/cosim/shell-example/zynq/run.log
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/shell-example/zynq/run.log
-  artifacts:
-    paths:
-      - cosim/shell-example/zynq/run.log
-  dependencies:
-    - shell-example-vivado-pynqz2
+###################################################
+## Double Shell Bitstream
+###################################################
+double-shell-example-bitstream:
+  extends: .bitstream_level1_template
+  needs: ["shell-example-bitstream"]
+  variables:
+    EXAMPLE: "double-shell-example"
 
-double-shell-example-verilator:
-  <<: *job_definition
-  stage: verilator
-  tags:
-    - verilator
-  script:
-    - export BASENAME="double_shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2020.1"
-    - export EXAMPLE_NAME="double-shell-example"
-    - make -C cosim/double-shell-example/verilator/ run
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/double-shell-example/verilator/run.log
-  artifacts:
-    paths:
-      - cosim/double-shell-example/verilator/run.log
+#####################################################
+## Dram Bitstream
+#####################################################
+dram-example-bitstream:
+  extends: .bitstream_level1_template
+  needs: ["double-shell-example-bitstream"]
+  variables:
+    EXAMPLE: "dram-example"
 
-double-shell-example-vcs:
-  <<: *job_definition
-  stage: vcs
-  tags:
-    - vcs
-  script:
-    - export BASENAME="double_shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2020.1"
-    - export EXAMPLE_NAME="double-shell-example"
-    - make -C cosim/double-shell-example/vcs/ run
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/double-shell-example/vcs/run.log
-  artifacts:
-    paths:
-      - cosim/double-shell-example/vcs/run.log
+#####################################################
+## AXIS Bitstream
+#####################################################
+axis-example-bitstream:
+  extends: .bitstream_level1_template
+  needs: ["dram-example-bitstream"]
+  variables:
+    EXAMPLE: "axis-example"
 
-double-shell-example-vivado-pynqz2:
-  <<: *job_definition
-  stage: vivado
-  tags:
-    - vivado
-  script:
-    - export BASENAME="double_shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2020.1"
-    - export EXAMPLE_NAME="double-shell-example"
-    - echo "Building double-shell-example for Pynq Z2"
-    - make -C cosim/double-shell-example/vivado clean fpga_build
-    - echo "Packing up bitstream"
-    - make -C cosim/double-shell-example/vivado pack_bitstream
-  artifacts:
-    paths:
-      - cosim/double-shell-example/vivado/vivado.log
-      - cosim/double-shell-example/double_shell_bd_1.zynq.pynqz2.tar.xz.b64
+#####################################################
+## AXI3 Bitstream
+#####################################################
+axi3-example-bitstream:
+  extends: .bitstream_level1_template
+  needs: ["axis-example-bitstream"]
+  variables:
+    EXAMPLE: "axi3-example"
 
-double-shell-example-zynq-pynqz2:
-  <<: *job_definition
-  stage: zynq
-  tags:
-    - zynq
-  resource_group: zynq
-  script:
-    - export BASENAME="double_shell"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2020.1"
-    - export EXAMPLE_NAME="double-shell-example"
-    - $CI_PROJECT_DIR/ci/fpga-setup.sh
-    - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/double-shell-example/double_shell_bd_1.zynq.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/double-shell-example/double_shell_bd_1.zynq.pynqz2.tar.xz.b64
-    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/double-shell-example/zynq/run.log $CI_PROJECT_DIR/cosim/double-shell-example/zynq/run.log
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/double-shell-example/zynq/run.log
-  artifacts:
-    paths:
-      - cosim/double-shell-example/zynq/run.log
-  dependencies:
-    - double-shell-example-vivado-pynqz2
+###################################################
+###################################################
+#### Level 2 Co-Simulations
+###################################################
+###################################################
+black-parrot-minimal-example-cosim:
+  extends: .cosim_level2_template
+  needs: ["axi3-example-bitstream"]
+  variables:
+    EXAMPLE: "black-parrot-minimal-example"
 
-dram-example-zynq-pynqz2:
-  <<: *job_definition
-  stage: zynq
-  tags:
-    - zynq
-  resource_group: zynq
-  script:
-    - export BASENAME="dram"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="dram-example"
-    - $CI_PROJECT_DIR/ci/fpga-setup.sh
-    - cat $CI_PROJECT_DIR/ci/dram-run.sh | envsubst > $CI_PROJECT_DIR/ci/dram-run-envsubst.sh
-    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/dram-run-envsubst.sh
-    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/dram-example/zynq/run.log $CI_PROJECT_DIR/cosim/dram-example/zynq/run.log
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/dram-example/zynq/run.log
-  artifacts:
-    paths:
-      - cosim/dram-example/zynq/run.log
-  dependencies: []
+black-parrot-example-cosim:
+  extends: .cosim_level2_template
+  needs: ["axi3-example-bitstream"]
+  variables:
+    EXAMPLE: "black-parrot-example"
 
-black-parrot-example-verilator:
-  <<: *job_definition
-  stage: verilator
-  tags:
-    - verilator
-  script:
-    - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="black-parrot-example"
-    - make -C cosim/black-parrot-example/verilator/ run NBF_FILE=$SOFTWARE_NBF_DIR/bp-tests/hello_world.nbf
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/verilator/run.log
-  artifacts:
-    paths:
-      - cosim/black-parrot-example/verilator/run.log
+manycore-example-cosim:
+  extends: .cosim_level2_template
+  needs: ["axi3-example-bitstream"]
+  variables:
+    EXAMPLE: "manycore-example"
 
-black-parrot-example-vcs:
-  <<: *job_definition
-  stage: vcs
-  tags:
-    - vcs
-  script:
-    - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="black-parrot-example"
-    - make -C cosim/black-parrot-example/vcs/ run NBF_FILE=$SOFTWARE_NBF_DIR/bp-tests/hello_world.nbf
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/vcs/run.log
-  artifacts:
-    paths:
-      - cosim/black-parrot-example/vcs/run.log
-
-black-parrot-example-vivado-pynqz2:
-  <<: *job_definition
-  stage: vivado
-  tags:
-    - vivado
-  script:
-    - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="black-parrot-example"
-    - echo "Building black-parrot-example for Pynq Z2"
-    - make -C cosim/black-parrot-example/vivado clean fpga_build
-    - echo "Packing up bitstream"
-    - make -C cosim/black-parrot-example/vivado pack_bitstream
-  artifacts:
-    paths:
-      - cosim/black-parrot-example/vivado/vivado.log
-      - cosim/black-parrot-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64
-
-black-parrot-example-zynq-pynqz2:
-  <<: *job_definition
-  stage: zynq
-  tags:
-    - zynq
-  resource_group: zynq
-  script:
-    - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="black-parrot-example"
-    - export NBF_FILE=/home/xilinx/mnt/zynqparrot_nbf/bp-tests/hello_world.nbf
-    - $CI_PROJECT_DIR/ci/fpga-setup.sh
-    - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/black-parrot-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64
-    - cp -r $SOFTWARE_NBF_DIR $CI_MOUNT_DIR/zynqparrot_nbf
-    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/zynq/run.log $CI_PROJECT_DIR/cosim/black-parrot-example/zynq/run.log
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/zynq/run.log
-  artifacts:
-    paths:
-      - cosim/black-parrot-example/zynq/run.log
-  dependencies:
-    - black-parrot-example-vivado-pynqz2
-
-black-parrot-example-vivado-ultra96v2:
-  <<: *job_definition
-  stage: vivado
-  tags:
-    - vivado
-  script:
-    - export BASENAME="blackparrot"; export BOARDNAME="ultra96v2"; export VIVADO_VERSION="2020.1"
-    - export EXAMPLE_NAME="black-parrot-example"
-    - echo "Building black-parrot-example for Ultra96v2"
-    - make -C cosim/black-parrot-example/vivado clean fpga_build
-    - echo "Packing up bitstream"
-    - make -C cosim/black-parrot-example/vivado pack_bitstream
-  artifacts:
-    paths:
-      - cosim/black-parrot-example/vivado/vivado.log
-      - cosim/black-parrot-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64
-
-black-parrot-example-zynq-ultra96v2:
-  <<: *job_definition
-  stage: zynq
-  tags:
-    - zynq
-  resource_group: zynq
-  script:
-    - export BASENAME="blackparrot"; export BOARDNAME="ultra96v2"; export VIVADO_VERSION="2020.1"
-    - export EXAMPLE_NAME="black-parrot-example"
-    - export NBF_FILE=/home/xilinx/mnt/zynqparrot_nbf/bp-tests/hello_world.nbf
-    - $CI_PROJECT_DIR/ci/fpga-setup.sh
-    - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/black-parrot-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64
-    - cp -r $SOFTWARE_NBF_DIR $CI_MOUNT_DIR/zynqparrot_nbf
-    - ssh xilinx@$CI_ULTRA96V2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-example/zynq/run.log $CI_PROJECT_DIR/cosim/black-parrot-example/zynq/run.log
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/black-parrot-example/zynq/run.log
-  artifacts:
-    paths:
-      - cosim/black-parrot-example/zynq/run.log
-  dependencies:
-    - black-parrot-example-vivado-ultra96v2
-
-black-parrot-minimal-example-verilator:
-  <<: *job_definition
-  stage: verilator
-  tags:
-    - verilator
-  script:
-    - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="black-parrot-minimal-example"
-    - make -C cosim/black-parrot-minimal-example/verilator/ run NBF_FILE=$SOFTWARE_NBF_DIR/bp-tests/hello_world.nbf
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/black-parrot-minimal-example/verilator/run.log
-  artifacts:
-    paths:
-      - cosim/black-parrot-minimal-example/verilator/run.log
-
-black-parrot-minimal-example-vcs:
-  <<: *job_definition
-  stage: vcs
-  tags:
-    - vcs
-  script:
-    - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="black-parrot-minimal-example"
-    - make -C cosim/black-parrot-minimal-example/vcs/ run NBF_FILE=$SOFTWARE_NBF_DIR/bp-tests/hello_world.nbf
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/black-parrot-minimal-example/vcs/run.log
-  artifacts:
-    paths:
-      - cosim/black-parrot-minimal-example/vcs/run.log
-
-black-parrot-minimal-example-vivado-pynqz2:
-  <<: *job_definition
-  stage: vivado
-  tags:
-    - vivado
-  script:
-    - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="black-parrot-minimal-example"
-    - echo "Building black-parrot-minimal-example for Pynq Z2"
-    - make -C cosim/black-parrot-minimal-example/vivado clean fpga_build
-    - echo "Packing up bitstream"
-    - make -C cosim/black-parrot-minimal-example/vivado pack_bitstream
-  artifacts:
-    paths:
-      - cosim/black-parrot-minimal-example/vivado/vivado.log
-      - cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64
-
-black-parrot-minimal-example-zynq-pynqz2:
-  <<: *job_definition
-  stage: zynq
-  tags:
-    - zynq
-  resource_group: zynq
-  script:
-    - export BASENAME="blackparrot"; export BOARDNAME="pynqz2"; export VIVADO_VERSION="2022.1"
-    - export EXAMPLE_NAME="black-parrot-minimal-example"
-    - export NBF_FILE=/home/xilinx/mnt/zynqparrot_nbf/bp-tests/hello_world.nbf
-    - $CI_PROJECT_DIR/ci/fpga-setup.sh
-    - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.pynqz2.tar.xz.b64
-    - cp -r $SOFTWARE_NBF_DIR $CI_MOUNT_DIR/zynqparrot_nbf
-    - ssh xilinx@$CI_PYNQZ2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/zynq/run.log $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/zynq/run.log
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/black-parrot-minimal-example/zynq/run.log
-  artifacts:
-    paths:
-      - cosim/black-parrot-minimal-example/zynq/run.log
-  dependencies:
-    - black-parrot-minimal-example-vivado-pynqz2
-
-black-parrot-minimal-example-vivado-ultra96v2:
-  <<: *job_definition
-  stage: vivado
-  tags:
-    - vivado
-  script:
-    - export BASENAME="blackparrot"; export BOARDNAME="ultra96v2"; export VIVADO_VERSION="2020.1"
-    - export EXAMPLE_NAME="black-parrot-minimal-example"
-    - echo "Building black-parrot-minimal-example for Ultra96v2"
-    - make -C cosim/black-parrot-minimal-example/vivado clean fpga_build
-    - echo "Packing up bitstream"
-    - make -C cosim/black-parrot-minimal-example/vivado pack_bitstream
-  artifacts:
-    paths:
-      - cosim/black-parrot-minimal-example/vivado/vivado.log
-      - cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64
-
-black-parrot-minimal-example-zynq-ultra96v2:
-  <<: *job_definition
-  stage: zynq
-  tags:
-    - zynq
-  resource_group: zynq
-  script:
-    - export BASENAME="blackparrot"; export BOARDNAME="ultra96v2"; export VIVADO_VERSION="2020.1"
-    - export EXAMPLE_NAME="black-parrot-minimal-example"
-    - export NBF_FILE=/home/xilinx/mnt/zynqparrot_nbf/bp-tests/hello_world.nbf
-    - $CI_PROJECT_DIR/ci/fpga-setup.sh
-    - cat $CI_PROJECT_DIR/ci/fpga-run.sh | envsubst > $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64 $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/blackparrot_bd_1.zynq.ultra96v2.tar.xz.b64
-    - cp -r $SOFTWARE_NBF_DIR $CI_MOUNT_DIR/zynqparrot_nbf
-    - ssh xilinx@$CI_ULTRA96V2_IP 'bash -s ' < $CI_PROJECT_DIR/ci/fpga-run-envsubst.sh
-    - cp $CI_MOUNT_DIR/zynq-parrot/cosim/black-parrot-minimal-example/zynq/run.log $CI_PROJECT_DIR/cosim/black-parrot-minimal-example/zynq/run.log
-    - grep "bsg_zynq_pl:.*done() called, exiting" cosim/black-parrot-minimal-example/zynq/run.log
-  artifacts:
-    paths:
-      - cosim/black-parrot-minimal-example/zynq/run.log
-  dependencies:
-    - black-parrot-minimal-example-vivado-ultra96v2
+hammerblade-example-cosim:
+  extends: .cosim_level2_template
+  needs: ["axi3-example-bitstream"]
+  variables:
+    EXAMPLE: "hammerblade-example"
 

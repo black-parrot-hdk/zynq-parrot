@@ -1,15 +1,9 @@
-include ../Makefile.design
 
 #############################
 # Accelerator Software Settings
 #############################
-CFLAGS += -DZYNQ_PS_DEBUG
 
-ifeq ($(BOARDNAME),pynqz2)
-DEFINES += GP0_ADDR_BASE=0x40000000
-else ifeq ($(BOARDNAME),ultra96v2)
-DEFINES += GP0_ADDR_BASE=0xA0000000
-endif
+DEFINES += GP0_ADDR_SIZE_BYTES=4096
 
-include $(TOP)/cosim/mk/Makefile.zynq
+include ../Makefile.design
 

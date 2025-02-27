@@ -1,7 +1,10 @@
-TOP  := $(shell git rev-parse --show-toplevel)
-CURR := $(shell pwd)
+TOP ?= $(shell git rev-parse --show-toplevel)
 include $(TOP)/Makefile.common
-include $(TOP)/Makefile.config
+include $(TOP)/Makefile.env
+
+include $(COSIM_MK_DIR)/Makefile.common
+include $(COSIM_MK_DIR)/Makefile.env
+include $(DESIGN_DIR)/Makefile.hardware
 
 #############################
 # Design Settings
@@ -10,7 +13,18 @@ TB_MODULE  ?= bsg_nonsynth_zynq_testbench
 BASENAME   ?= blackparrot
 
 MAIN_PROGRAM ?= $(COSIM_CSRC_DIR)/main.cpp
-HOST_PROGRAM ?= $(CURR_DESIGN_DIR)/ps.cpp
+HOST_PROGRAM ?= $(DESIGN_DIR)/ps.cpp
+
+ZYNQ_PL_DEBUG ?= 0
+ZYNQ_PS_DEBUG ?= 0
+
+DROMAJO_COSIM ?= 0
+BP_NCPUS ?= 1
+
+PROG ?= hello_world
+NBF_FILE ?= $(PROG).nbf
+
+RUN_ARGS += +c_args=$(NBF_FILE)
 
 #############################
 # Design Defines
@@ -19,7 +33,7 @@ DEFINES += GP0_ENABLE=1
 DEFINES += GP0_ADDR_WIDTH=10 GP0_DATA_WIDTH=32
 DEFINES += HP0_ENABLE=1
 DEFINES += HP0_DATA_WIDTH=32 HP0_ADDR_WIDTH=32
-DEFINES += ACLK_MHZ=25
+DEFINES += ACLK_MHZ=20
 DEFINES += RTCLK_MHZ=8
 
 #############################
@@ -29,7 +43,7 @@ RISCV_OBJCOPY ?= riscv64-unknown-elf-dramfs-objcopy
 ASCII_TO_ROM ?= $(BASEJUMP_STL_DIR)/bsg_mem/bsg_ascii_to_rom.py
 
 CFG ?= e_bp_unicore_zynqparrot_cfg
-$(CURR_VSRC_DIR)/bsg_blackparrot_pkg.sv:
+$(DESIGN_VSRC_DIR)/bsg_blackparrot_pkg.sv:
 	echo "package bsg_blackparrot_pkg;" >> $@
 	echo >> $@
 	echo "import bp_common_pkg::*;" >> $@
@@ -39,32 +53,35 @@ $(CURR_VSRC_DIR)/bsg_blackparrot_pkg.sv:
 	echo "endpackage" >> $@
 	echo >> $@
 
-$(CURR_VSRC_DIR)/bsg_bootrom.bin: $(BP_SDK_DIR)/prog/bootrom/bootrom.riscv
+%/bsg_bootrom.bin: $(ZP_BP_SDK_DIR)/install/riscv/prog/bootrom/bootrom.riscv
 	$(RISCV_OBJCOPY) -O binary $< $@
 
-$(CURR_VSRC_DIR)/bsg_bootrom.rom: $(CURR_VSRC_DIR)/bsg_bootrom.bin
+%/bsg_bootrom.rom: %/bsg_bootrom.bin
 	$(XXD) -b -g4 -c4 $< | $(AWK) '{print $$2}' > $@
 
-$(CURR_VSRC_DIR)/bsg_bootrom.v: $(CURR_VSRC_DIR)/bsg_bootrom.rom
-	$(PYTHON) $(ASCII_TO_ROM) $< bsg_bootrom zero > $@
+%/bsg_bootrom.sv: %/bsg_bootrom.rom
+	$(PYTHON2) $(ASCII_TO_ROM) $< bsg_bootrom zero > $@
 
-BUILD_COLLATERAL  = $(CURR_VSRC_DIR)/bsg_blackparrot_pkg.sv
-BUILD_COLLATERAL += $(CURR_VSRC_DIR)/bsg_bootrom.v
+BUILD_COLLATERAL  = $(DESIGN_VSRC_DIR)/bsg_blackparrot_pkg.sv
+BUILD_COLLATERAL += $(DESIGN_VSRC_DIR)/bsg_bootrom.sv
 
 #############################
 # Run Collateral
 #############################
-NBF_NCPUS ?= 1
 
-NBF_FILE ?= hello_world.nbf
-ELF_FILE ?= hello_world.elf
-VPATH := $(wildcard $(BLACKPARROT_SDK_DIR)/prog/*)
-%.nbf: %.riscv
-	$(RISCV_OBJCOPY) -O verilog $< $*.mem
-	$(SED) -i "s/@8/@0/g" $*.mem
-	$(PYTHON) $(BP_COMMON_DIR)/software/py/nbf.py \
-		--skip_zeros --mem $*.mem --ncpus $(NBF_NCPUS) > $@
-	rm $*.mem
+VPATH := $(wildcard $(ZP_BP_SDK_DIR)/install/riscv/prog/*)
+%.mem: %.riscv
+	# Cosim file must be called prog.riscv
+	@$(CP) $< prog.riscv
+	@$(RISCV_OBJCOPY) -O verilog $< $@
+	@$(SED) -i "s/@8/@0/g" $@
+
+BP_NBF_SCRIPT ?= $(ZP_BP_RTL_DIR)/bp_common/software/py/nbf.py
+%.nbf: %.mem
+	@$(PYTHON) $(BP_NBF_SCRIPT) \
+		--skip_zeros --mem $*.mem --ncpus $(BP_NCPUS) > $@
 
 RUN_COLLATERAL = $(NBF_FILE)
+
+include $(COSIM_MK_DIR)/Makefile.$(TOOL)
 

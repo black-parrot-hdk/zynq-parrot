@@ -1,6 +1,4 @@
 
-`timescale 1 ps / 1 ps
-
 `include "bsg_manycore_defines.svh"
 `include "bsg_cache.svh"
 

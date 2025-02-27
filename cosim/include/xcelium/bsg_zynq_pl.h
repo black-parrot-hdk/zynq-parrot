@@ -20,8 +20,6 @@
 
 extern "C" {
 void bsg_dpi_next();
-}
-extern "C" {
 int bsg_dpi_time();
 }
 

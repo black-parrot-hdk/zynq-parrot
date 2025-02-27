@@ -20,7 +20,7 @@ proc vivado_create_ip { args } {
 
     set BASEJUMP_STL_DIR $::env(BASEJUMP_STL_DIR)
     set BLACKPARROT_SUB_DIR $::env(BLACKPARROT_SUB_DIR)
-    set CURR_VSRC_DIR $::env(CURR_VSRC_DIR)
+    set DESIGN_VSRC_DIR $::env(DESIGN_VSRC_DIR)
     set COSIM_VSRC_DIR $::env(COSIM_VSRC_DIR)
 
     lappend dir_list "${BASEJUMP_STL_DIR}/bsg_misc"
@@ -41,7 +41,7 @@ proc vivado_create_ip { args } {
     lappend file_list "${BASEJUMP_STL_DIR}/bsg_misc/bsg_mux2_gatestack.sv"
     lappend file_list "${BASEJUMP_STL_DIR}/bsg_tag/bsg_tag_master_decentralized.sv"
     lappend file_list "${BASEJUMP_STL_DIR}/bsg_tag/bsg_tag_client.sv"
-    lappend file_list "${CURR_VSRC_DIR}/zynq_pkg.sv"
+    lappend file_list "${DESIGN_VSRC_DIR}/zynq_pkg.sv"
     lappend file_list "${BLACKPARROT_SUB_DIR}/axi/v/bsg_axil_fifo_master.sv"
     lappend file_list "${BLACKPARROT_SUB_DIR}/zynq/v/bsg_axil_watchdog.sv"
 

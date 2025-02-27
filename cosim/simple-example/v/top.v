@@ -1,7 +1,4 @@
 
-`timescale 1 ps / 1 ps
-`include "bsg_zynq_pl.vh"
-
     module top #
     (
         // Users to add parameters here

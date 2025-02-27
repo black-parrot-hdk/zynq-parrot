@@ -1,0 +1,24 @@
+
+VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_misc/bsg_defines.sv
+VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_dataflow/bsg_fifo_1r1w_small.sv
+VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_dataflow/bsg_fifo_1r1w_small_hardened.sv
+VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_dataflow/bsg_fifo_1r1w_small_unhardened.sv
+VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_dataflow/bsg_fifo_tracker.sv
+VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_dataflow/bsg_flow_counter.sv
+VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_dataflow/bsg_two_fifo.sv
+VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_misc/bsg_circular_ptr.sv
+VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_misc/bsg_counter_up_down.sv
+VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_misc/bsg_decode.sv
+VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_misc/bsg_decode_with_v.sv
+VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_misc/bsg_dff_reset_en.sv
+VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_misc/bsg_mux_one_hot.sv
+VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_mem/bsg_mem_1r1w.sv
+VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_mem/bsg_mem_1r1w_synth.sv
+VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_misc/bsg_dff_reset_set_clear.sv
+VSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_misc/bsg_counter_clear_up.sv
+
+VSOURCES += $(ZP_BP_SUB_DIR)/zynq/v/bsg_axis_fifo.sv
+
+VSOURCES  += $(COSIM_VSRC_DIR)/bsg_zynq_pl_shell.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top_zynq.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top.v

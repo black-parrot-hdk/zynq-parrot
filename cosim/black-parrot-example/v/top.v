@@ -304,14 +304,12 @@ module top
     (.o(cosim_clk));
 
   logic cosim_reset;
-  bsg_nonsynth_reset_gen
-   #(.num_clocks_p(1)
-     ,.reset_cycles_lo_p(0)
-     ,.reset_cycles_hi_p(10)
-     )
-   cosim_reset_gen
-    (.clk_i(cosim_clk)
-     ,.async_reset_o(cosim_reset)
+  bsg_sync_sync
+   #(.width_p(1))
+   bss
+    (.oclk_i(cosim_clk)
+     ,.iclk_data_i(~sys_resetn)
+     ,.oclk_data_o(cosim_reset)
      );
 
    bind bp_be_top
@@ -320,19 +318,10 @@ module top
       cosim
        (.clk_i(clk_i)
         ,.reset_i(reset_i)
-        ,.freeze_i(calculator.pipe_sys.csr.cfg_bus_cast_i.freeze)
-
-        // We hardcode these for now, integrate more cosim features later
-        ,.num_core_i(num_core_p)
-        ,.cosim_en_i(1'b1)
-        ,.amo_en_i(1'b1)
-        ,.trace_en_i('0)
-        ,.checkpoint_i('0)
         ,.mhartid_i(calculator.pipe_sys.csr.cfg_bus_cast_i.core_id)
-        ,.config_file_i('0)
-        ,.instr_cap_i(0)
-        ,.memsize_i(256)
-        ,.finish_i('0)
+
+        ,.trace_en_i(1'b1)
+        ,.checkpoint_i(1'b0)
 
         ,.decode_i(calculator.dispatch_pkt_cast_i.decode)
 

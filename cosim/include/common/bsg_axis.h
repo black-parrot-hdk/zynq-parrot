@@ -26,13 +26,9 @@
 extern "C" {
 int bsg_dpi_time();
 }
-using namespace std;
-using namespace bsg_nonsynth_dpi;
-using namespace boost::coroutines2;
-using namespace std::placeholders;
 
-typedef coroutine<void>::pull_type coro_t;
-typedef coroutine<void>::push_type yield_t;
+typedef boost::coroutines2::coroutine<void>::pull_type coro_t;
+typedef boost::coroutines2::coroutine<void>::push_type yield_t;
 
 class s_axis_device {
   public:

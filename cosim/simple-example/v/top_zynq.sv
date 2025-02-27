@@ -1,5 +1,6 @@
 
 module top_zynq
+ import zynq_pkg::*;
  #(// Parameters of Axi Slave Bus Interface S00_AXI
    parameter integer C_GP0_AXI_DATA_WIDTH     = 32
 

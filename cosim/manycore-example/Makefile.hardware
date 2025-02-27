@@ -1,0 +1,40 @@
+
+include $(BSG_MANYCORE_DIR)/machines/arch_filelist.mk
+
+VPACKAGES += $(filter %_pkg.sv,$(VHEADERS))
+VPACKAGES += $(BSG_MANYCORE_DIR)/testbenches/common/v/bsg_manycore_network_cfg_pkg.sv
+VPACKAGES += $(BSG_MANYCORE_DIR)/testbenches/common/v/bsg_manycore_mem_cfg_pkg.sv
+VPACKAGES += $(DESIGN_VSRC_DIR)/bsg_bladerunner_pkg.sv
+VPACKAGES += $(DESIGN_VSRC_DIR)/zynq_pkg.sv
+
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_tag/bsg_tag_master_decentralized.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_tag/bsg_tag_bitbang.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_tag/bsg_tag_client.sv
+VSOURCES += $(BSG_MANYCORE_DIR)/testbenches/common/v/bsg_nonsynth_manycore_tag_master.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_cache/bsg_wormhole_to_cache_dma_fanout.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_serial_in_parallel_out_full.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_round_robin_1_to_n.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_flow_counter.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_one_fifo.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_tag/bsg_tag_trace_replay.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_tag/bsg_tag_master.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_trace_replay.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_cache/bsg_cache_to_axi.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_cache/bsg_cache_to_axi_ordering.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_cache/bsg_cache_to_axi_rx.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_cache/bsg_cache_to_axi_tx.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_mem/bsg_cam_1r1w_tag_array.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_counter_clear_up_one_hot.sv
+VSOURCES += $(BLACKPARROT_SUB_DIR)/axi/v/bsg_axil_fifo_client.sv
+VSOURCES += $(BLACKPARROT_SUB_DIR)/axi/v/bsg_axil_fifo_master.sv
+VSOURCES += $(BLACKPARROT_SUB_DIR)/axi/v/bsg_axil_store_packer.sv
+VSOURCES += $(BLACKPARROT_SUB_DIR)/axi/v/bsg_axil_demux.sv
+VSOURCES += $(BLACKPARROT_SUB_DIR)/axi/v/bsg_axil_mux.sv
+VSOURCES += $(BLACKPARROT_SUB_DIR)/manycore/v/bsg_manycore_endpoint_to_fifos.sv
+VSOURCES += $(COSIM_VSRC_DIR)/bsg_zynq_pl_shell.sv
+VSOURCES += $(DESIGN_VSRC_DIR)/bsg_bladerunner_configuration.sv
+
+VSOURCES  += $(COSIM_VSRC_DIR)/bsg_zynq_pl_shell.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top_zynq.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top.v
+

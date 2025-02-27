@@ -49,8 +49,6 @@ void _xlnk_reset();
 
 #include "bsg_zynq_pl_hardware.h"
 
-using namespace std;
-
 class bsg_zynq_pl : public bsg_zynq_pl_hardware {
   public:
     bsg_zynq_pl(int argc, char *argv[]) {

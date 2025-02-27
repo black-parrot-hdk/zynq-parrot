@@ -12,10 +12,12 @@
 
 #include <sys/time.h>
 
+#include "ps.hpp"
+
 #define DRAM_ALLOC_SIZE_BYTES 16384
 
 int ps_main(int argc, char **argv) {
-    bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
+    std::unique_ptr<bsg_zynq_pl> zpl = std::make_unique<bsg_zynq_pl>(argc, argv);
 
     // the read memory map is essentially
     //
@@ -124,6 +126,5 @@ int ps_main(int argc, char **argv) {
     printf("## everything passed; at end of test\n");
     zpl->done();
 
-    delete zpl;
     return 0;
 }

@@ -1,76 +1,41 @@
 
-include $(COSIM_MK_DIR)/Makefile.env
+VV_BUILD_OPTS += --cc --sv
+VV_BUILD_OPTS += --no-timing --build --exe
+VV_BUILD_OPTS += -Wno-fatal -Wall
+VV_BUILD_OPTS += -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTEMPTY -Wno-UNUSED -Wno-GENUNNAMED
+VV_BUILD_OPTS += -top-module $(TB_MODULE)
+VV_BUILD_OPTS += $(addprefix +define+,$(filter-out VERILATOR,$(DEFINES)))
+VV_BUILD_OPTS += $(addprefix +incdir+,$(VINCLUDES))
+VV_BUILD_OPTS += $(call bsg_fn_uniq,$(VPACKAGES))
+VV_BUILD_OPTS += $(call bsg_fn_uniq,$(VSOURCES))
+VV_BUILD_OPTS += -CFLAGS "$(CFLAGS)"
+VV_BUILD_OPTS += -CFLAGS "$(addprefix -D,$(DEFINES))"
+VV_BUILD_OPTS += -CFLAGS "$(addprefix -I,$(CINCLUDES))"
+VV_BUILD_OPTS += -LDFLAGS "$(addprefix -L,$(CLIBDIRS))"
+VV_BUILD_OPTS += -LDFLAGS "$(addprefix -Wl$(bsg_var_comma)-rpath=,$(CLIBDIRS))"
+VV_BUILD_OPTS += -LDFLAGS "$(addprefix -l,$(CLIBS))"
+VV_BUILD_OPTS += $(call bsg_fn_uniq,$(CSOURCES))
 
-VV_OPTS += --cc --sv
-VV_OPTS += --trace-fst --trace-structs
-VV_OPTS += --no-timing --build --exe
-VV_OPTS += -Wno-fatal -Wall -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTEMPTY -Wno-UNUSED
-VV_OPTS += -f flist.vcs
-VV_OPTS += -top-module $(TB_MODULE)
-VV_OPTS += +incdir+$(COSIM_DIR)/include/verilator
-VV_OPTS += $(addprefix +define+,$(DEFINES))
+VV_RUN_OPTS +=
 
-CFLAGS += -DVERILATOR
-CFLAGS += -DHOST_$(call upper,$(HOST))
-CFLAGS += $(addprefix -D,$(DEFINES))
-CFLAGS += -std=c++14
-# PL Debug
-ifeq ($(ZYNQ_PL_DEBUG),1)
-CFLAGS += -DZYNQ_PL_DEBUG
+ifneq (,$(TRACE))
+RUN_ARGS += +bsg_trace
 endif
-# PS Debug
-ifeq ($(ZYNQ_PS_DEBUG),1)
-CFLAGS += -DZYNQ_PS_DEBUG
-endif
 
-LDFLAGS += -L$(BP_SDK_INSTALL_DIR)/lib
-LDFLAGS += -lboost_coroutine -lboost_context -lboost_system
-
-CINCLUDES += -I$(BLACKPARROT_SUB_DIR)/blackparrot/src
-CINCLUDES += -I$(BP_SDK_INSTALL_DIR)/include
-CINCLUDES += -I$(COSIM_INCLUDE_DIR)/common
-CINCLUDES += -I$(COSIM_INCLUDE_DIR)/verilator
-CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_mem
-CINCLUDES += -I$(BASEJUMP_STL_DIR)/bsg_test
-CINCLUDES += -I$(CURR_DESIGN_DIR)
-
-TRACE ?= +bsg_trace
-
-all:
-	@echo "## See the makefile for the fun things you can do in this directory"
-
-RUN_LOG ?= run.log
+run: ## runs the verilated executable
 run: obj_dir/V$(TB_MODULE) $(RUN_COLLATERAL)
-	LD_LIBRARY_PATH=$(BP_SDK_LIB_DIR) \
-		$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
+	./$< $(VV_RUN_OPTS) $(RUN_ARGS) 2>&1 | $(TEE_I) run.log
 
-BUILD_LOG ?= build.log
-obj_dir/V$(TB_MODULE): $(FLIST) $(BUILD_COLLATERAL)
-	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" \
-		-LDFLAGS "$(LDFLAGS)" $(MAIN_PROGRAM) $(HOST_PROGRAM) \
-		2>&1 | tee -i $(BUILD_LOG)
+ifneq (,$(TRACE))
+BUILD_ARGS += --trace-fst --trace-structs
+BUILD_ARGS += +define+FSTON
+endif
+build: ## builds the verilated executable
+build: %/V$(TB_MODULE)
+%/V$(TB_MODULE): $(BUILD_COLLATERAL)
+	@$(VERILATOR) $(VV_BUILD_OPTS) $(BUILD_ARGS) 2>&1 | $(TEE_I) build.log
 
-clean:
-	rm -rf flist*.vcs
-	rm -rf obj_dir/ *~ trace.fst
-	rm -rf build.log
-	rm -rf run.log
-	rm -rf *.nbf
-	rm -rf *.elf
-	rm -rf *.trace
-	rm -rf *.riscv*
-	rm -rf *.rv*o*
-	rm -rf *.dump*
-	rm -rf $(BUILD_COLLATERAL) $(SIM_COLLATERAL)
-
+view: ## View the dump with GTKwave
 view:
-	gtkwave -f trace.fst
-
-help:
-	@echo -e "Usage: make"
-	@echo -e "\tclean - Cleans directory"
-	@echo -e "\tview - Open waveform in gtkwave"
-	@echo -e "\tall - Runs the current test"
-	@echo -e "Options"
-	@echo -e "\tTRACE = whether to dump a .fst waveform"
+	@$(GTKWAVE) -f dump.fst
 

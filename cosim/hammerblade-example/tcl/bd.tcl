@@ -2,9 +2,12 @@ source $::env(COSIM_TCL_DIR)/vivado-utils.tcl
 source $::env(COSIM_TCL_DIR)/bsg-utils.tcl
 
 proc vivado_create_ip { args } {
-    set flist [lindex [lindex ${args} 0] 0]
-    set aclk_freq_mhz [lindex [lindex ${args} 0] 1]
-    set rtclk_freq_mhz [lindex [lindex ${args} 0] 2]
+
+    set vpackages [lindex [lindex ${args} 0] 0]
+    set vsources [lindex [lindex ${args} 0] 1]
+    set vincludes [lindex [lindex ${args} 0] 2]
+    set aclk_freq_mhz [lindex [lindex ${args} 0] 3]
+    set rtclk_freq_mhz [lindex [lindex ${args} 0] 4]
 
     set aclk_freq_hz [expr round(${aclk_freq_mhz}*1e6)]
     set rtclk_freq_hz [expr round(${rtclk_freq_mhz}*1e6)]

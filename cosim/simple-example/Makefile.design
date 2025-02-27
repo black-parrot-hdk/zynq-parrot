@@ -1,7 +1,10 @@
-TOP  := $(shell git rev-parse --show-toplevel)
-CURR := $(shell pwd)
+TOP ?= $(shell git rev-parse --show-toplevel)
 include $(TOP)/Makefile.common
-include $(TOP)/Makefile.config
+include $(TOP)/Makefile.env
+
+include $(COSIM_MK_DIR)/Makefile.common
+include $(COSIM_MK_DIR)/Makefile.env
+include $(DESIGN_DIR)/Makefile.hardware
 
 #############################
 # Design Settings
@@ -10,13 +13,20 @@ TB_MODULE  ?= bsg_nonsynth_zynq_testbench
 BASENAME   ?= simple
 
 MAIN_PROGRAM ?= $(COSIM_CSRC_DIR)/main.cpp
-HOST_PROGRAM ?= $(CURR_DESIGN_DIR)/ps.cpp
+HOST_PROGRAM ?= $(DESIGN_DIR)/ps.cpp
+
+ZYNQ_PL_DEBUG ?= 0
+ZYNQ_PS_DEBUG ?= 0
 
 #############################
 # Design Defines
 # #############################
 DEFINES += GP0_ENABLE=1
-DEFINES += GP0_DATA_WIDTH=32  GP0_ADDR_WIDTH=6
-DEFINES += ACLK_MHZ=55
-DEFINES += RTCLK_MHZ=8
+DEFINES += GP0_DATA_WIDTH=32 GP0_ADDR_WIDTH=6
+DEFINES += GP0_SHELL_PS2PL_REGS=4
+DEFINES += GP0_SHELL_PL2PS_REGS=1
+DEFINES += GP0_SHELL_PS2PL_FIFO=1
+DEFINES += GP0_SHELL_PL2PS_FIFO=1
+
+include $(COSIM_MK_DIR)/Makefile.$(TOOL)
 
