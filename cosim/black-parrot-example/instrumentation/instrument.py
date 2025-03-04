@@ -11,10 +11,10 @@ parser.add_argument("-o", "--output",\
 args = parser.parse_args()
 
 def get_depths(lines):
-  return [int(line.rstrip('\n').split(',')[-1]) for line in lines]
+  return [int(line.rstrip('\n').split(':')[-1]) for line in lines]
 
 def sort_lines(lines):
-  line_tuples = [(line.rstrip('\n'), int(line.rstrip('\n').split(',')[-1])) for line in lines]
+  line_tuples = [(line.rstrip('\n'), int(line.rstrip('\n').split(':')[-1])) for line in lines]
   sorted_lines = sorted(line_tuples, key=lambda x: x[1])
   sorted_lines = [line[0] for line in sorted_lines]
   return sorted_lines
@@ -84,8 +84,8 @@ import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 lines=[]
-for f in files:
-  fname = dir_path + '/../' + f
+for fname in files:
+  #fname = dir_path + '/../' + f
   file = open(fname[:-1], 'r')
   lines.append(file.readlines())
   file.close()
@@ -128,7 +128,7 @@ with open(args.output, 'w') as f:
     f.write(cov_head(gid, gsize, l, ostr, dstr))
     comma = ' '
     for k in range(gsize):
-      cpos = group_lines[k].rfind(',')
+      cpos = group_lines[k].rfind(':')
       f.write(f'\t\t\t\t{comma} ( ' + group_lines[k][0:cpos] + " )\n")
       comma = ','
     f.write(cov_tail(gid, gsize))

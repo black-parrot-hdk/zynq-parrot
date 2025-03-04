@@ -10,7 +10,7 @@ SURELOG_TOP_MODULE  ?= bp_be_scheduler
 
 $(SURELOG_FLIST): $(FLIST)
 	mkdir -p $(SURELOG_RUN_DIR)
-	grep -v -e "^\#" $(FLIST) >> $@
+	grep -v -e "^\#" $(FLIST) > $@
 	echo +incdir+$(COSIM_DIR)/include/verilator >> $@
 	sed -i '/top_zynq/d' $@
 
@@ -53,11 +53,11 @@ SURELOG_OPTS += -nobuiltin
 SURELOG_OPTS += --top-module $(SURELOG_TOP_MODULE)
 SURELOG_OPTS += -f $(SURELOG_FLIST)
 #SURELOG_OPTS += -std=c++11
-SURELOG_OPTS += -o $(SURELOG_RUN_DIR)
+SURELOG_OPTS += -o $(INSTRUMENTATION_DIR)
 SURELOG      ?= $(BLACKPARROT_TOOLS_DIR)/Surelog/build/bin/$(WALKER)
 
-analyze_rtl: build_surelog $(SURELOG_FLIST) $(BUILD_COLLATERAL)
-	$(SURELOG) $(SURELOG_OPTS) #2>$(SURELOG_RUN_DIR)/stderr 1> $(SURELOG_RUN_DIR)/stdout
+$(INSTRUMENTATION_DIR)/$(SURELOG_TOP_MODULE).sigs: | $(SURELOG_FLIST) $(BUILD_COLLATERAL)
+	$(SURELOG) $(SURELOG_OPTS)
 
 # these need to be debugged as the wires tapped into paths containing these fail synthesis and hang verilator (?)
 #UNIMPLEMENTED = \
@@ -101,12 +101,20 @@ analyze_rtl: build_surelog $(SURELOG_FLIST) $(BUILD_COLLATERAL)
 	sed -i '/reset/Id' $@
 	sort -u -o $@ $@
 
-collect_sigs: $(subst sigs,fsigs,$(shell find $(SURELOG_RUN_DIR) -name *.sigs 2>/dev/null))
+%.cov: %.sigs
+	sort -o $@ -u $<
+	sed -i '/work@/!d' $@
+	sed -i "s/work@$(SURELOG_TOP_MODULE)./\`COREPATH.$(INSTANCE)./g" $@
+	for i in $(FILTER); do \
+		sed -i "/$${i}/d" $@; \
+	done
 
-INSTRUMENTATION_OPTS +=  -s $(INSTRUMENTATION_DIR)/../cp_fpga.csv
+gen_cov: $(INSTRUMENTATION_DIR)/$(SURELOG_TOP_MODULE).cov
+
+INSTRUMENTATION_OPTS +=  -s $(INSTRUMENTATION_DIR)/../cp.csv
 INSTRUMENTATION_OPTS +=  -o $(INSTRUMENTATION_DIR)/macro
 
-instrument: collect_sigs
+instrument: $(INSTRUMENTATION_DIR)/../cp.csv
 	python3 $(INSTRUMENTATION_DIR)/instrument.py $(INSTRUMENTATION_OPTS)
 	sed -e '/COVERAGE_MACRO/{r $(INSTRUMENTATION_DIR)/macro' -e 'd}' ../v/top_zynq.sv > $(INSTRUMENTATION_DIR)/instrumented_top_zynq.sv
 
@@ -115,5 +123,7 @@ clean.build_surelog:
 	rm -rf $(SURELOG_RUN_DIR)
 	rm -rf $(SURELOG)
 
-clean.instrument:
-	rm -rf $(SURELOG_RUN_DIR) *fsigs $(INSTRUMENTATION_DIR)/{macro,instrumented_top_zynq.sv}
+clean.instrument: clean.build_surelog
+	rm -rf $(INSTRUMENTATION_DIR)/*.sigs
+	rm -rf $(INSTRUMENTATION_DIR)/*.cov
+	rm -rf $(INSTRUMENTATION_DIR)/{macro,instrumented_top_zynq.sv}

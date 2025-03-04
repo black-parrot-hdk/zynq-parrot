@@ -1,2 +1,6 @@
-instrumented_*
+instrumented_top_zynq.sv
 macro
+*.cov
+*.sigs
+slpp_unit
+surelog.run
