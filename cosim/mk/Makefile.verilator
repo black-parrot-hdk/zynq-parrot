@@ -32,14 +32,15 @@ all:
 
 RUN_LOG ?= run.log
 run: obj_dir/V$(TB_MODULE) $(RUN_COLLATERAL)
-	LD_LIBRARY_PATH=$(BP_SDK_LIB_DIR) \
-		$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
+	$< $(SIM_ARGS) $(TRACE) 2>&1 | tee -i $(RUN_LOG)
 
 BUILD_LOG ?= build.log
 obj_dir/V$(TB_MODULE): $(FLIST) $(BUILD_COLLATERAL)
 	$(VERILATOR) $(VV_OPTS) -CFLAGS "$(CFLAGS)" -CFLAGS "$(CINCLUDES)" \
 		-LDFLAGS "$(LDFLAGS)" $(MAIN_PROGRAM) $(HOST_PROGRAM) \
 		2>&1 | tee -i $(BUILD_LOG)
+
+build: obj_dir/V$(TB_MODULE)
 
 clean:
 	rm -rf flist*.vcs
