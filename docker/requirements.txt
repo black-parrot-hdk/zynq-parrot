@@ -1,0 +1,6 @@
+orderedmultidict
+wheel
+setuptools>=58
+setuptools-rust
+markupsafe
+pyyaml
