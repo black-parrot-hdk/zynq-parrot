@@ -156,6 +156,10 @@ gather-tools:
   extends: [.gather_tools_job]
   needs: [{job: build-image, optional: true}]
 
+gather-sdk:
+  extends: [.gather_sdk_job]
+  needs: [{job: build-image, optional: true}]
+
 gather-riscv:
   extends: [.gather_riscv_job]
   needs: [{job: build-image, optional: true}]
