@@ -15,7 +15,7 @@ prep_lite:
 	@$(MAKE) -C $(ZP_BP_TOOLS_DIR) tools_lite
 	@$(MAKE) -C $(ZP_BP_SDK_DIR) tools_lite
 	@$(MAKE) -C $(ZP_BP_SDK_DIR) prog_lite
-	@$(MAKE) -C $(ZP_BP_SUB_DIR) gen_lite
+	@$(MAKE) -C $(ZP_BP_SUBSYSTEMS_DIR) gen_lite
 
 prep: ## Standard preparation for simulation
 prep: prep_lite
