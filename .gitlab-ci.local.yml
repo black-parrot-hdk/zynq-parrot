@@ -166,5 +166,5 @@ gather-riscv:
 
 smoke:
   extends: [.smoke_job]
-  needs: [gather-libs, gather-tools, gather-riscv]
+  needs: [gather-libs, gather-tools, gather-sdk, gather-riscv]
 
