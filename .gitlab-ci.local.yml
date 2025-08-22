@@ -138,11 +138,26 @@ build-image:
 .smoke_job:
   extends: [.project_template]
   script:
-    - echo "[CI] checking installation"
-    - ls $COMMON_LIBS_DIR && ls $COMMON_LIBS_DIR/*
-    - ls $COMMON_TOOLS_DIR && ls $COMMON_TOOLS_DIR/*
-    - ls $COMMON_SDK_DIR && ls $COMMON_SDK_DIR/*
-    - ls $COMMON_RISCV_DIR && ls $COMMON_RISCV_DIR/*
+    - echo "[CI] checking installation" | tee -a ${JOB_LOG}
+    - ls $COMMON_LIBS_DIR && ls $COMMON_LIBS_DIR/* | tee -a ${JOB_LOG}
+    - ls $COMMON_TOOLS_DIR && ls $COMMON_TOOLS_DIR/* | tee -a ${JOB_LOG}
+    - ls $COMMON_SDK_DIR && ls $COMMON_SDK_DIR/* | tee -a ${JOB_LOG}
+    - ls $COMMON_RISCV_DIR && ls $COMMON_RISCV_DIR/* | tee -a ${JOB_LOG}
+    - echo "[CI] checking symlinks" | tee -a ${JOB_LOG}
+    - ls $BP_LIBS_INSTALL_DIR && ls $BP_LIBS_INSTALL_DIR/* | tee -a ${JOB_LOG}
+    - ls $BP_TOOLS_INSTALL_DIR && ls $BP_TOOLS_INSTALL_DIR/* | tee -a ${JOB_LOG}
+    - ls $BP_SDK_INSTALL_DIR && ls $BP_SDK_INSTALL_DIR/* | tee -a ${JOB_LOG}
+    - ls $BP_RISCV_DIR && ls $BP_RISCV_DIR/* | tee -a ${JOB_LOG}
+    - echo "[CI] doing makefile checkout" | tee -a ${JOB_LOG}
+    - make -j${BSG_CI_CORES_PER_JOB} checkout >> ${JOB_LOG} 2>&1
+    - export SUITE=bp-tests
+    - export PROG=hello_world
+    - export DROMAJO_COSIM=1
+    - export DISASSEMBLE=1
+    - make -C import/black-parrot/bp_top/verilator build.verilator sim.verilator
+    - find import/black-parrot/bp_top/verilator -name "*.log" -exec cp {} ${JOB_SUCCESS_ROOT}
+    - find import/black-parrot/bp_top/verilator -name "*.trace" -exec cp {} ${JOB_SUCCESS_ROOT}
+    - find import/black-parrot/bp_top/verilator -name "*.dump" -exec cp {} ${JOB_SUCCESS_ROOT}
 
 ###################################################
 ## Actual Jobs
