@@ -155,9 +155,9 @@ build-image:
     - export DROMAJO_COSIM=1
     - export DISASSEMBLE=1
     - make -C import/black-parrot/bp_top/verilator build.verilator sim.verilator
-    - find import/black-parrot/bp_top/verilator -name "*.log" -exec cp {} ${JOB_SUCCESS_ROOT}
-    - find import/black-parrot/bp_top/verilator -name "*.trace" -exec cp {} ${JOB_SUCCESS_ROOT}
-    - find import/black-parrot/bp_top/verilator -name "*.dump" -exec cp {} ${JOB_SUCCESS_ROOT}
+    - find import/black-parrot/bp_top/verilator -name "*.log" -exec cp {} ${JOB_SUCCESS_ROOT} \;
+    - find import/black-parrot/bp_top/verilator -name "*.trace" -exec cp {} ${JOB_SUCCESS_ROOT} \;
+    - find import/black-parrot/bp_top/verilator -name "*.dump" -exec cp {} ${JOB_SUCCESS_ROOT} \;
 
 ###################################################
 ## Actual Jobs
