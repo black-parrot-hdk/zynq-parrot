@@ -25,5 +25,6 @@ DEFINES += GP0_ADDR_WIDTH=6 GP0_DATA_WIDTH=32
 DEFINES += ACLK_MHZ=55
 DEFINES += RTCLK_MHZ=8
 
+include $(COSIM_MK_DIR)/Makefile.hardware
 include $(COSIM_MK_DIR)/Makefile.$(TOOL)
 

@@ -42,6 +42,8 @@ define bsg_var_lower
 	$(shell echo $(1) | tr A-Z a-z)
 endef
 
+bsg_var_comma :=,
+
 #############################
 # function templates
 #############################
