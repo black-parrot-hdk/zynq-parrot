@@ -51,8 +51,8 @@ RUN_ARGS   +=
 # Common targets
 #############################
 
-clean: ## cleans the working directory
-clean:
+clean:: ## cleans the working directory
+clean::
 	@$(RMRF) obj_dir
 	@$(RMRF) trace.fst
 	@$(RMRF) *.log

@@ -3,7 +3,6 @@ include $(TOP)/Makefile.common
 include $(TOP)/Makefile.env
 
 include $(COSIM_MK_DIR)/Makefile.common
-include $(COSIM_MK_DIR)/Makefile.env
 include $(DESIGN_DIR)/Makefile.hardware
 
 #############################
