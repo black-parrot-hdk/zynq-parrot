@@ -24,9 +24,17 @@ VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv
 
 VINCLUDES +=
 
-CSOURCES += $(ZP_BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp
+CSOURCES  += $(ZP_BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp
+CSOURCES  += $(MAIN_PROGRAM)
+CSOURCES  += $(HOST_PROGRAM)
 
-CINCLUDES +=
+CINCLUDES += $(COSIM_INCLUDE_DIR)/common
+CINCLUDES += $(COSIM_INCLUDE_DIR)/$(TOOL)
+CINCLUDES += $(BP_SDK_INSTALL_DIR)/include
+CINCLUDES += $(BP_TOOLS_INSTALL_DIR)/include
+CINCLUDES += $(ZP_BASEJUMP_STL_DIR)/bsg_mem
+CINCLUDES += $(BLACKPARROT_SUB_DIR)/blackparrot/src
+CINCLUDES += $(BSG_REPLICANT_DIR)/libraries
 CINCLUDES += $(ZP_BASEJUMP_STL_DIR)/bsg_test
 
 CFLAGS += -D_DEFAULT_SOURCE -D_BSD_SOURCE
