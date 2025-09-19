@@ -203,8 +203,8 @@ gather-riscv:
   extends: [.gather_riscv_job]
   needs: [{job: build-image, optional: true}]
 
-gather-mc-tools:
-  extends: [.gather_mc_tools_job]
+gather-mc:
+  extends: [.gather_mc_job]
   needs: [{job: build-image, optional: true}]
 
 smoke:
