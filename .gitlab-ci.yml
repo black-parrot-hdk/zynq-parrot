@@ -25,7 +25,7 @@ spec:
       default: "master"
     mc_branch:
       type: string
-      default: "ci_2025"
+      default: "ci_update_2025" # temp until https://github.com/bespoke-silicon-group/bsg_manycore/pull/765
 ---
 
 ###################################################
