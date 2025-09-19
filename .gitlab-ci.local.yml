@@ -5,6 +5,7 @@ spec:
     bp_rtl_branch:
     bp_sdk_branch:
     bp_tools_branch:
+    mc_branch:
 ---
 
 ###################################################
@@ -53,6 +54,9 @@ build-image:
     SDK_PACKAGE: "tools-${DOCKER_PLATFORM}"
     SDK_PACKAGE_VER: "$[[ inputs.bp_sdk_branch ]]"
     SDK_PROJECT_ID: "27392985"
+    MC_PACKAGE: "riscv-install"
+    MC_PACKAGE_VER: "$[[ inputs.mc_branch ]]"
+    MC_PROJECT_ID: "14940225"
     # exported to make sure things go in the right place
     BP_WORK_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/zp-work"
     BP_INSTALL_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/zp-install"
@@ -60,12 +64,14 @@ build-image:
     BP_TOOLS_INSTALL_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/bp-tools-install"
     BP_SDK_INSTALL_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/bp-sdk-install"
     BP_RISCV_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/bp-riscv"
+    MC_INSTALL_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/riscv-install"
   before_script:
     - !reference [.job_template, before_script]
     - COMMON_LIBS_DIR="${JOB_COMMON_ROOT}/$(basename ${BP_LIBS_INSTALL_DIR})"
     - COMMON_TOOLS_DIR="${JOB_COMMON_ROOT}/$(basename ${BP_TOOLS_INSTALL_DIR})"
     - COMMON_SDK_DIR="${JOB_COMMON_ROOT}/$(basename ${BP_SDK_INSTALL_DIR})"
     - COMMON_RISCV_DIR="${JOB_COMMON_ROOT}/$(basename ${BP_RISCV_DIR})"
+    - COMMON_MC_DIR="${JOB_COMMON_ROOT}/$(basename ${MC_INSTALL_DIR})"
     - if [ -d "${COMMON_LIBS_DIR}" ]; then
         ln -nsf "${COMMON_LIBS_DIR}" "${BP_LIBS_INSTALL_DIR}";
       fi
@@ -77,6 +83,9 @@ build-image:
       fi
     - if [ -d "${COMMON_RISCV_DIR}" ]; then
         ln -nsf "${COMMON_RISCV_DIR}" "${BP_RISCV_DIR}";
+      fi
+    - if [ -d "${COMMON_MC_DIR}" ]; then
+        ln -nsf "${COMMON_MC_DIR}" "${MC_INSTALL_DIR}}";
       fi
 
 ###################################################
@@ -135,6 +144,19 @@ build-image:
     - mkdir -p ${COMMON_RISCV_DIR}
     - mv ${API_DOWNLOAD_ROOT}/* ${COMMON_RISCV_DIR}/
 
+.gather_mc_job:
+  extends: [.project_template, .api_mixin]
+  variables:
+    # template variables
+    API_PACKAGE_NAME: "${MC_PACKAGE}"
+    API_PACKAGE_VER: "${MC_PACKAGE_VER}"
+    API_PROJECT_ID: "${MC_PROJECT_ID}"
+  script:
+    - echo "[CI] scattering outputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
+    - !reference [.api_anchors, api_download]
+    - mkdir -p ${COMMON_RISCV_DIR}
+    - mv ${API_DOWNLOAD_ROOT}/* ${COMMON_MC_DIR}/
+
 .smoke_job:
   extends: [.project_template]
   script:
@@ -143,11 +165,13 @@ build-image:
     - ls $COMMON_TOOLS_DIR && ls $COMMON_TOOLS_DIR/* | tee -a ${JOB_LOG}
     - ls $COMMON_SDK_DIR && ls $COMMON_SDK_DIR/* | tee -a ${JOB_LOG}
     - ls $COMMON_RISCV_DIR && ls $COMMON_RISCV_DIR/* | tee -a ${JOB_LOG}
+    - ls $COMMON_MC_DIR && ls $COMMON_MC_DIR/* | tee -a ${JOB_LOG}
     - echo "[CI] checking symlinks" | tee -a ${JOB_LOG}
     - ls $BP_LIBS_INSTALL_DIR && ls $BP_LIBS_INSTALL_DIR/* | tee -a ${JOB_LOG}
     - ls $BP_TOOLS_INSTALL_DIR && ls $BP_TOOLS_INSTALL_DIR/* | tee -a ${JOB_LOG}
     - ls $BP_SDK_INSTALL_DIR && ls $BP_SDK_INSTALL_DIR/* | tee -a ${JOB_LOG}
     - ls $BP_RISCV_DIR && ls $BP_RISCV_DIR/* | tee -a ${JOB_LOG}
+    - ls $MC_INSTALL_DIR && ls $MC_INSTALL_DIR/* | tee -a ${JOB_LOG}
     - echo "[CI] doing makefile checkout" | tee -a ${JOB_LOG}
     - make -j${BSG_CI_CORES_PER_JOB} checkout >> ${JOB_LOG} 2>&1
     - export SUITE=bp-tests
@@ -177,6 +201,10 @@ gather-sdk:
 
 gather-riscv:
   extends: [.gather_riscv_job]
+  needs: [{job: build-image, optional: true}]
+
+gather-mc-tools:
+  extends: [.gather_mc_tools_job]
   needs: [{job: build-image, optional: true}]
 
 smoke:

@@ -14,7 +14,6 @@ spec:
       type: string
       options: ["never", "on_event", "on_success"]
       default: "on_success"
-    # TODO: input as part of this parent trigger
     bp_rtl_branch:
       type: string
       default: "master"
@@ -24,6 +23,9 @@ spec:
     bp_sdk_branch:
       type: string
       default: "master"
+    mc_branch:
+      type: string
+      default: "ci_2025"
 ---
 
 ###################################################
@@ -46,6 +48,7 @@ trigger_job:
           bp_rtl_branch : $[[ inputs.bp_rtl_branch ]]
           bp_sdk_branch : $[[ inputs.bp_sdk_branch ]]
           bp_tools_branch : $[[ inputs.bp_tools_branch ]]
+          mc_branch : $[[ inputs.mc_branch ]]
   parallel:
     matrix:
       - DOCKER_PLATFORM: $[[ inputs.platforms ]]
