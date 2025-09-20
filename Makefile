@@ -8,7 +8,15 @@ checkout::
 	@$(MAKE) -C $(ZP_BP_SDK_DIR) checkout
 	@$(MAKE) -C $(ZP_BP_SUB_DIR) checkout
 	@$(MAKE) -C $(ZP_BSG_MANYCORE_DIR) checkout_submodules
-	@$(MAKE) -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools checkout-repos
+	@# workaround for missing qemu upstream
+	@git clone https://github.com/bespoke-silicon-group/riscv-gnu-toolchain $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain
+	@git -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain checkout bsg_custom_git_modules
+	@git -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain submodule update --init riscv-binutils
+	@git -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain submodule update --init riscv-glibc
+	@git -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain submodule update --init riscv-gcc
+	@git -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain submodule update --init riscv-newlib
+	@git -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain config submodule.qemu.update none
+	@$(MAKE) -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools checkout-llvm
 
 prep_lite: ## Minimal preparation for simulation
 prep_lite:
