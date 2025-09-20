@@ -54,7 +54,7 @@ build-image:
     SDK_PACKAGE: "tools-${DOCKER_PLATFORM}"
     SDK_PACKAGE_VER: "$[[ inputs.bp_sdk_branch ]]"
     SDK_PROJECT_ID: "27392985"
-    MC_PACKAGE: "riscv-install"
+    MC_PACKAGE: "riscv-install-${DOCKER_PLATFORM}"
     MC_PACKAGE_VER: "$[[ inputs.mc_branch ]]"
     MC_PROJECT_ID: "14940225"
     # exported to make sure things go in the right place
