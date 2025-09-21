@@ -156,6 +156,7 @@ build-image:
     - !reference [.api_anchors, api_download]
     - mkdir -p ${COMMON_MC_DIR}
     - mv ${API_DOWNLOAD_ROOT}/* ${COMMON_MC_DIR}/
+    - echo $COMMON_MC_DIR && ls $COMMON_MC_DIR
 
 .smoke_job:
   extends: [.project_template]
