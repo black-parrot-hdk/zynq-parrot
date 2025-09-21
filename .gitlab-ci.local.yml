@@ -154,7 +154,7 @@ build-image:
   script:
     - echo "[CI] scattering outputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
     - !reference [.api_anchors, api_download]
-    - mkdir -p ${COMMON_RISCV_DIR}
+    - mkdir -p ${COMMON_MC_DIR}
     - mv ${API_DOWNLOAD_ROOT}/* ${COMMON_MC_DIR}/
 
 .smoke_job:
