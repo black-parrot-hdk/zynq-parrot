@@ -158,7 +158,7 @@ build-image:
     - mv ${API_DOWNLOAD_ROOT}/* ${COMMON_MC_DIR}/
     - echo $COMMON_MC_DIR && ls $COMMON_MC_DIR
 
-.smoke_job:
+.gather_job:
   extends: [.project_template]
   script:
     - echo "[CI] checking installation" | tee -a ${JOB_LOG}
@@ -173,16 +173,19 @@ build-image:
     - ls $BP_SDK_INSTALL_DIR && ls $BP_SDK_INSTALL_DIR/* | tee -a ${JOB_LOG}
     - ls $BP_RISCV_DIR && ls $BP_RISCV_DIR/* | tee -a ${JOB_LOG}
     - ls $MC_INSTALL_DIR && ls $MC_INSTALL_DIR/* | tee -a ${JOB_LOG}
+
+.sim_job:
+  extends: [.project_template]
+  variables:
+    TOOL: "setme"
+    EXAMPLE: "setme"
+    RUN_SCRIPT: "./ci/common/run-ci.sh"
+    SIM_SCRIPT: "./ci/sim-example.sh"
+  script:
     - echo "[CI] doing makefile checkout" | tee -a ${JOB_LOG}
     - make -j${BSG_CI_CORES_PER_JOB} checkout >> ${JOB_LOG} 2>&1
-    - export SUITE=bp-tests
-    - export PROG=hello_world
-    - export DROMAJO_COSIM=1
-    - export DISASSEMBLE=1
-    - make -C import/black-parrot/bp_top/verilator build.verilator sim.verilator
-    - find import/black-parrot/bp_top/verilator -name "*.log" -exec cp {} ${JOB_SUCCESS_ROOT} \;
-    - find import/black-parrot/bp_top/verilator -name "*.trace" -exec cp {} ${JOB_SUCCESS_ROOT} \;
-    - find import/black-parrot/bp_top/verilator -name "*.dump" -exec cp {} ${JOB_SUCCESS_ROOT} \;
+    - echo "[CI] Simulating $EXAMPLE with $TOOL"
+    - ${RUN_SCRIPT} ${SIM_SCRIPT} ${TOOL} ${EXAMPLE}
 
 ###################################################
 ## Actual Jobs
@@ -208,7 +211,15 @@ gather-mc:
   extends: [.gather_mc_job]
   needs: [{job: build-image, optional: true}]
 
-smoke:
-  extends: [.smoke_job]
+gather:
+  extends: [.gather_job]
   needs: [gather-libs, gather-tools, gather-sdk, gather-riscv, gather-mc]
+
+sim:
+  extends: [.sim_job]
+  parallel:
+    matrix:
+      - TOOL: ["vcs", "verilator"]
+        EXAMPLE: ["shell"]
+  needs: [smoke]
 

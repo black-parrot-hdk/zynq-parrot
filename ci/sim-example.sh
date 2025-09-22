@@ -6,5 +6,8 @@ example=$2
 
 simdir=$bsg_top/cosim/$example-example/$tool
 
-make -C $simdir run
+bsg_run_task "Building the simulation model" make -C $simdir build
+bsg_run_task "Runnin the simulation model" make -C $simdir run
+
+bsg_pass $(basename $0)
 
