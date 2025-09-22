@@ -221,5 +221,5 @@ sim:
     matrix:
       - TOOL: ["vcs", "verilator"]
         EXAMPLE: ["shell"]
-  needs: [smoke]
+  needs: [gather]
 
