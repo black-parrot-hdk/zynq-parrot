@@ -192,11 +192,27 @@ smoke:
   extends: [.smoke_job]
   needs: [gather-libs, gather-tools, gather-sdk, gather-riscv, gather-mc]
 
-sim:
+sim-basic:
   extends: [.sim_job]
   parallel:
     matrix:
       - TOOL: ["vcs", "verilator"]
-        EXAMPLE: ["shell"]
+        EXAMPLE: ["simple", "shell", "double-shell" "dram", "axis", "axi3"]
   needs: [smoke]
 
+sim-bp:
+  extends: [.sim_job]
+  parallel:
+    matrix:
+      - TOOL: ["vcs", "verilator"]
+        EXAMPLE: ["black-parrot-minimal", "black-parrot"]
+  needs: [smoke]
+         
+sim-mc:
+  extends: [.sim_job]
+  parallel:
+    matrix:
+      - TOOL: ["vcs", "verilator"]
+        EXAMPLE: ["manycore", "hammerblade"]
+  needs: [smoke]
+         
