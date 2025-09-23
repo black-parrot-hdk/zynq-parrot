@@ -60,32 +60,16 @@ build-image:
     # exported to make sure things go in the right place
     BP_WORK_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/zp-work"
     BP_INSTALL_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/zp-install"
-    BP_LIBS_INSTALL_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/bp-rtl-install"
-    BP_TOOLS_INSTALL_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/bp-tools-install"
-    BP_SDK_INSTALL_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/bp-sdk-install"
-    BP_RISCV_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/bp-riscv"
-    MC_INSTALL_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/riscv-install"
+    BP_RISCV_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/zp-riscv"
   before_script:
     - !reference [.job_template, before_script]
-    - COMMON_LIBS_DIR="${JOB_COMMON_ROOT}/$(basename ${BP_LIBS_INSTALL_DIR})"
-    - COMMON_TOOLS_DIR="${JOB_COMMON_ROOT}/$(basename ${BP_TOOLS_INSTALL_DIR})"
-    - COMMON_SDK_DIR="${JOB_COMMON_ROOT}/$(basename ${BP_SDK_INSTALL_DIR})"
+    - COMMON_INSTALL_DIR="${JOB_COMMON_ROOT}/$(basename ${BP_INSTALL_DIR})"
     - COMMON_RISCV_DIR="${JOB_COMMON_ROOT}/$(basename ${BP_RISCV_DIR})"
-    - COMMON_MC_DIR="${JOB_COMMON_ROOT}/$(basename ${MC_INSTALL_DIR})"
-    - if [ -d "${COMMON_LIBS_DIR}" ]; then
-        ln -nsf "${COMMON_LIBS_DIR}" "${BP_LIBS_INSTALL_DIR}";
-      fi
-    - if [ -d "${COMMON_TOOLS_DIR}" ]; then
-        ln -nsf "${COMMON_TOOLS_DIR}" "${BP_TOOLS_INSTALL_DIR}";
-      fi
-    - if [ -d "${COMMON_SDK_DIR}" ]; then
-        ln -nsf "${COMMON_SDK_DIR}" "${BP_SDK_INSTALL_DIR}";
+    - if [ -d "${COMMON_INSTALL_DIR}" ]; then
+        ln -nsf "${COMMON_INSTALL_DIR}" "${BP_INSTALL_DIR}";
       fi
     - if [ -d "${COMMON_RISCV_DIR}" ]; then
         ln -nsf "${COMMON_RISCV_DIR}" "${BP_RISCV_DIR}";
-      fi
-    - if [ -d "${COMMON_MC_DIR}" ]; then
-        ln -nsf "${COMMON_MC_DIR}" "${MC_INSTALL_DIR}";
       fi
 
 ###################################################
@@ -102,8 +86,8 @@ build-image:
   script:
     - echo "[CI] scattering outputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
     - !reference [.api_anchors, api_download]
-    - mkdir -p ${COMMON_LIBS_DIR}
-    - mv ${API_DOWNLOAD_ROOT}/* ${COMMON_LIBS_DIR}/
+    - mkdir -p ${COMMON_INSTALL_DIR}
+    - rsync -a --remove-source-files ${API_DOWNLOAD_ROOT}/ ${COMMON_INSTALL_DIR}
 
 .gather_tools_job:
   extends: [.project_template, .api_mixin]
@@ -115,8 +99,8 @@ build-image:
   script:
     - echo "[CI] scattering outputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
     - !reference [.api_anchors, api_download]
-    - mkdir -p ${COMMON_TOOLS_DIR}
-    - mv ${API_DOWNLOAD_ROOT}/* ${COMMON_TOOLS_DIR}/
+    - mkdir -p ${COMMON_INSTALL_DIR}
+    - rsync -a --remove-source-files ${API_DOWNLOAD_ROOT}/ ${COMMON_INSTALL_DIR}
 
 .gather_sdk_job:
   extends: [.project_template, .api_mixin]
@@ -128,8 +112,8 @@ build-image:
   script:
     - echo "[CI] scattering outputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
     - !reference [.api_anchors, api_download]
-    - mkdir -p ${COMMON_SDK_DIR}
-    - mv ${API_DOWNLOAD_ROOT}/* ${COMMON_SDK_DIR}/
+    - mkdir -p ${COMMON_INSTALL_DIR}
+    - rsync -a --remove-source-files ${API_DOWNLOAD_ROOT}/ ${COMMON_INSTALL_DIR}
 
 .gather_riscv_job:
   extends: [.project_template, .api_mixin]
@@ -142,7 +126,7 @@ build-image:
     - echo "[CI] scattering outputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
     - !reference [.api_anchors, api_download]
     - mkdir -p ${COMMON_RISCV_DIR}
-    - mv ${API_DOWNLOAD_ROOT}/* ${COMMON_RISCV_DIR}/
+    - rsync -a --remove-source-files ${API_DOWNLOAD_ROOT}/ ${COMMON_RISCV_DIR}
 
 .gather_mc_job:
   extends: [.project_template, .api_mixin]
@@ -154,25 +138,18 @@ build-image:
   script:
     - echo "[CI] scattering outputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
     - !reference [.api_anchors, api_download]
-    - mkdir -p ${COMMON_MC_DIR}
-    - mv ${API_DOWNLOAD_ROOT}/* ${COMMON_MC_DIR}/
-    - echo $COMMON_MC_DIR && ls $COMMON_MC_DIR
+    - mkdir -p ${COMMON_INSTALL_DIR}
+    - rsync -a --remove-source-files ${API_DOWNLOAD_ROOT}/ ${COMMON_INSTALL_DIR}
 
-.gather_job:
+.smoke_job:
   extends: [.project_template]
   script:
     - echo "[CI] checking installation" | tee -a ${JOB_LOG}
-    - ls $COMMON_LIBS_DIR && ls $COMMON_LIBS_DIR/* | tee -a ${JOB_LOG}
-    - ls $COMMON_TOOLS_DIR && ls $COMMON_TOOLS_DIR/* | tee -a ${JOB_LOG}
-    - ls $COMMON_SDK_DIR && ls $COMMON_SDK_DIR/* | tee -a ${JOB_LOG}
+    - ls $COMMON_INSTALL_DIR && ls $COMMON_INSTALL_DIR/* | tee -a ${JOB_LOG}
     - ls $COMMON_RISCV_DIR && ls $COMMON_RISCV_DIR/* | tee -a ${JOB_LOG}
-    - ls $COMMON_MC_DIR && ls $COMMON_MC_DIR/* | tee -a ${JOB_LOG}
     - echo "[CI] checking symlinks" | tee -a ${JOB_LOG}
-    - ls $BP_LIBS_INSTALL_DIR && ls $BP_LIBS_INSTALL_DIR/* | tee -a ${JOB_LOG}
-    - ls $BP_TOOLS_INSTALL_DIR && ls $BP_TOOLS_INSTALL_DIR/* | tee -a ${JOB_LOG}
-    - ls $BP_SDK_INSTALL_DIR && ls $BP_SDK_INSTALL_DIR/* | tee -a ${JOB_LOG}
+    - ls $BP_INSTALL_DIR && ls $BP_INSTALL_DIR/* | tee -a ${JOB_LOG}
     - ls $BP_RISCV_DIR && ls $BP_RISCV_DIR/* | tee -a ${JOB_LOG}
-    - ls $MC_INSTALL_DIR && ls $MC_INSTALL_DIR/* | tee -a ${JOB_LOG}
 
 .sim_job:
   extends: [.project_template]
@@ -211,8 +188,8 @@ gather-mc:
   extends: [.gather_mc_job]
   needs: [{job: build-image, optional: true}]
 
-gather:
-  extends: [.gather_job]
+smoke:
+  extends: [.smoke_job]
   needs: [gather-libs, gather-tools, gather-sdk, gather-riscv, gather-mc]
 
 sim:
@@ -221,5 +198,5 @@ sim:
     matrix:
       - TOOL: ["vcs", "verilator"]
         EXAMPLE: ["shell"]
-  needs: [gather]
+  needs: [smoke]
 
