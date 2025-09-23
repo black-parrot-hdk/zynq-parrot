@@ -1,4 +1,6 @@
 
+include $(COSIM_MK_DIR)/Makefile.sim
+
 VCS_VFLAGS += $(addprefix +define+,$(DEFINES))
 VCS_VFLAGS += $(addprefix +incdir+,$(VINCLUDES))
 

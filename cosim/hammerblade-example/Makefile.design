@@ -38,7 +38,7 @@ DEFINES += NUM_BP_FINISH=1
 DEFINES += NUM_MC_FINISH=1
 DEFINES += BSG_MANYCORE_MACHINE_LOADER_COORD_X=2 BSG_MANYCORE_MACHINE_LOADER_COORD_Y=0
 
-CFLAGS += -I$(ZP_BSG_REPLICANT_DIR)/libraries
+CFLAGS += -I$(BSG_REPLICANT_DIR)/libraries
 
 #############################
 # Build Collateral
@@ -89,7 +89,7 @@ BUILD_COLLATERAL += $(DESIGN_VSRC_DIR)/bsg_blackparrot_pkg.sv
 		clean main.riscv
 	@$(MV) $(BSG_MANYCORE_SOFTWARE_DIR)/spmd/$*/main.riscv $@
 
-VPATH := $(wildcard $(ZP_BP_SDK_DIR)/install/riscv/prog/*)
+VPATH := $(wildcard $(BP_SDK_DIR)/install/riscv/prog/*)
 %.riscv64: %.riscv
 	@$(CP) $< $@
 
