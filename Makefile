@@ -9,7 +9,7 @@ checkout::
 	@$(MAKE) -C $(ZP_BP_SUB_DIR) checkout
 	@$(MAKE) -C $(ZP_BSG_MANYCORE_DIR) checkout_submodules
 	@# workaround for missing qemu upstream
-	@git clone https://github.com/bespoke-silicon-group/riscv-gnu-toolchain $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain
+	@git clone https://github.com/bespoke-silicon-group/riscv-gnu-toolchain $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain || :
 	@git -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain checkout bsg_custom_git_modules
 	@git -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain submodule update --init riscv-binutils
 	@git -C $(ZP_BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain submodule update --init riscv-glibc
