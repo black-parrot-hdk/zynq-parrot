@@ -10,6 +10,10 @@ checkout::
 	@$(MAKE) -C $(BP_SDK_DIR) checkout
 	@$(MAKE) -C $(BP_SUB_DIR) checkout
 	@$(MAKE) -C $(BSG_MANYCORE_DIR) checkout_submodules
+	@# initialize basejump_stl
+	@git -C $(BASEJUMP_STL_DIR) submodule update --init --recursive
+	@$(MAKE) -C $(BSG_MANYCORE_DIR)/software/riscv-tools checkout-riscv-gnu-tools
+	@$(MAKE) -C $(BSG_MANYCORE_DIR)/software/riscv-tools checkout-llvm
 
 prep_lite: ## Minimal preparation for simulation
 prep_lite:
@@ -30,17 +34,7 @@ prep: prep_lite
 	@$(MAKE) -C $(BP_SDK_DIR) tools
 	@$(MAKE) -C $(BP_SDK_DIR) prog
 	@$(MAKE) -C $(BP_SUB_DIR) gen
-	@# initialize basejump_stl
-	@git -C $(BASEJUMP_STL_DIR) submodule update --init --recursive
-	@# workaround for missing qemu upstream
-	@[ ! -d $(BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain ] && git clone https://github.com/bespoke-silicon-group/riscv-gnu-toolchain
-	@git -C $(BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain checkout bsg_custom_git_modules
-	@git -C $(BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain submodule update --init riscv-binutils
-	@git -C $(BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain submodule update --init riscv-glibc
-	@git -C $(BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain submodule update --init riscv-gcc
-	@git -C $(BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain submodule update --init riscv-newlib
-	@git -C $(BSG_MANYCORE_DIR)/software/riscv-tools/riscv-gnu-toolchain config submodule.qemu.update none
-	@$(MAKE) -C $(BSG_MANYCORE_DIR)/software/riscv-tools build-riscv-gnu-tools
+	$(MAKE) -C $(BSG_MANYCORE_DIR)/software/riscv-tools build-riscv-gnu-tools
 
 prep_bsg: ## Extra preparation for BSG users
 prep_bsg: prep
@@ -51,7 +45,6 @@ prep_bsg: prep
 	@$(MAKE) -C $(BP_SDK_DIR) tools_bsg
 	@$(MAKE) -C $(BP_SDK_DIR) prog_bsg
 	@$(MAKE) -C $(BP_SUB_DIR) gen_bsg
-	@$(MAKE) -C $(BSG_MANYCORE_DIR)/software/riscv-tools checkout-llvm
 	@$(MAKE) -C $(BSG_MANYCORE_DIR)/software/riscv-tools build-llvm
 
 
