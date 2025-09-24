@@ -1,3 +1,6 @@
+TOP ?= $(shell git rev-parse --show-toplevel)
+include $(TOP)/Makefile.common
+include $(TOP)/Makefile.env
 
 #############################
 # Accelerator Software Settings
@@ -16,5 +19,6 @@ DEFINES += HP1_ADDR_BASE=0x1000000U
 DEFINES += HP1_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axil4
 DEFINES += SCRATCHPAD_ENABLE
 
-include ../Makefile.design
+include $(DESIGN_DIR)/Makefile.design
+include $(COSIM_MK_DIR)/Makefile.verilator
 

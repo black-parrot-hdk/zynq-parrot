@@ -1,3 +1,6 @@
+TOP ?= $(shell git rev-parse --show-toplevel)
+include $(TOP)/Makefile.common
+include $(TOP)/Makefile.env
 
 #############################
 # Accelerator Software Settings
@@ -10,4 +13,6 @@ DEFINES += AXI_MEM_ENABLE
 
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_axi_mem.sv
 
-include ../Makefile.design
+include $(DESIGN_DIR)/Makefile.design
+include $(COSIM_MK_DIR)/Makefile.vcs
+

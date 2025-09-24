@@ -197,7 +197,7 @@ sim-basic:
   parallel:
     matrix:
       - TOOL: ["vcs", "verilator"]
-        EXAMPLE: ["simple", "shell", "double-shell", "dram", "axis", "axi3"]
+        EXAMPLE: ["simple", "dram", "axis", "axi3", "shell", "double-shell"]
   needs: [smoke]
 
 sim-bp:
