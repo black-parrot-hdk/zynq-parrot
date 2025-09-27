@@ -55,6 +55,12 @@ WORKDIR $WORKDIR
 # Set the current user
 USER $USER_NAME
 
+# Install boost
+RUN mkdir build && cd build && \
+    wget -qO- https://sourceforge.net/projects/boost/files/boost/1.82.0/boost_1_82_0.tar.gz | tar xz --strip-components=1 && \
+    ./bootstrap.sh --prefix=/opt/boost && ./b2 --prefix=/opt/boost toolset=gcc install && \
+    cd - && rm -rf build
+
 # Create a python virtualenv
 ENV VIRTUAL_ENV=/opt/venv
 RUN python3 -m venv $VIRTUAL_ENV

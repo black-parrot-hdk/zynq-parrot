@@ -12,10 +12,12 @@ export PATH=/opt/opam/bin:$PATH
 
 # Add boost variables
 export BOOST_ROOT=/opt/boost
-export BOOST_INCLUDEDIR=/opt/boost/include
-export BOOST_LIBRARYDIR=/opt/boost/lib
-export CPATH=/opt/boost/include:$CPATH
-export LIBRARY_PATH=/opt/boost/lib:$LIBRARY_PATH
+export BOOST_INCLUDEDIR=$BOOST_ROOT/include
+export BOOST_LIBRARYDIR=$BOOST_ROOT/lib
+
+export CPATH=$BOOST_INCLUDEDIR:$CPATH
+export LIBRARY_PATH=$BOOST_LIBRARYDIR:$LIBRARY_PATH
+export LD_LIBRARY_PATH=$BOOST_LIBRARYDIR:$LD_LIBRARY_PATH
 
 # Set opam
 eval $(opam env --set-root --root=/opt/opam)
