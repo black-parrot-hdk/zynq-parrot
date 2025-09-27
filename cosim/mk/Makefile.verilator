@@ -1,4 +1,6 @@
 
+include $(COSIM_MK_DIR)/Makefile.sim
+
 VV_VFLAGS += $(addprefix +define+,$(filter-out VERILATOR,$(DEFINES)))
 VV_VFLAGS += $(addprefix +incdir+,$(VINCLUDES))
 
@@ -38,7 +40,6 @@ endif
 build: ## builds the verilated executable
 build: %/V$(TB_MODULE)
 %/V$(TB_MODULE): $(BUILD_COLLATERAL)
-	echo "$(VERILATOR) $(VV_BUILD_OPTS) $(BUILD_ARGS)" > cmd.txt
 	$(VERILATOR) $(VV_BUILD_OPTS) $(BUILD_ARGS) 2>&1 | $(TEE_I) build.log
 
 view: ## View the dump with GTKwave

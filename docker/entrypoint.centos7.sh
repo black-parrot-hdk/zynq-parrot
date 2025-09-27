@@ -14,6 +14,8 @@ export PATH=/opt/opam/bin:$PATH
 export BOOST_ROOT=/opt/boost
 export BOOST_INCLUDEDIR=/opt/boost/include
 export BOOST_LIBRARYDIR=/opt/boost/lib
+export CPATH=/opt/boost/include:$CPATH
+export LIBRARY_PATH=/opt/boost/lib:$LIBRARY_PATH
 
 # Set opam
 eval $(opam env --set-root --root=/opt/opam)
