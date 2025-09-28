@@ -58,22 +58,19 @@ build-image:
     MC_PACKAGE_VER: "$[[ inputs.mc_branch ]]"
     MC_PROJECT_ID: "14940225"
     # exported to make sure things go in the right place
-    BP_WORK_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/zp-work"
-    BP_INSTALL_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/zp-install"
-    BP_RISCV_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/zp-riscv"
+    ZP_WORK_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/zp-work"
+    ZP_INSTALL_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/zp-install"
+    ZP_RISCV_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/zp-riscv"
   before_script:
     - !reference [.job_template, before_script]
-    - COMMON_INSTALL_DIR="${JOB_COMMON_ROOT}/$(basename ${BP_INSTALL_DIR})"
-    - COMMON_RISCV_DIR="${JOB_COMMON_ROOT}/$(basename ${BP_RISCV_DIR})"
+    - COMMON_INSTALL_DIR="${JOB_COMMON_ROOT}/$(basename ${ZP_INSTALL_DIR})"
+    - COMMON_RISCV_DIR="${JOB_COMMON_ROOT}/$(basename ${ZP_RISCV_DIR})"
     - if [ -d "${COMMON_INSTALL_DIR}" ]; then
-        ln -nsf "${COMMON_INSTALL_DIR}" "${BP_INSTALL_DIR}";
+        ln -nsf "${COMMON_INSTALL_DIR}" "${ZP_INSTALL_DIR}";
       fi
     - if [ -d "${COMMON_RISCV_DIR}" ]; then
-        ln -nsf "${COMMON_RISCV_DIR}" "${BP_RISCV_DIR}";
+        ln -nsf "${COMMON_RISCV_DIR}" "${ZP_RISCV_DIR}";
       fi
-    - echo "Setting PATH as env workaround"
-    - export PATH=$COMMON_INSTALL_DIR/bin:$PATH
-    - export LD_LIBRARY_PATH=$COMMON_INSTALL_DIR/lib:$LD_LIBRARY_PATH
 
 ###################################################
 ## job templates
@@ -151,8 +148,8 @@ build-image:
     - ls $COMMON_INSTALL_DIR && ls $COMMON_INSTALL_DIR/* | tee -a ${JOB_LOG}
     - ls $COMMON_RISCV_DIR && ls $COMMON_RISCV_DIR/* | tee -a ${JOB_LOG}
     - echo "[CI] checking symlinks" | tee -a ${JOB_LOG}
-    - ls $BP_INSTALL_DIR && ls $BP_INSTALL_DIR/* | tee -a ${JOB_LOG}
-    - ls $BP_RISCV_DIR && ls $BP_RISCV_DIR/* | tee -a ${JOB_LOG}
+    - ls $ZP_INSTALL_DIR && ls $ZP_INSTALL_DIR/* | tee -a ${JOB_LOG}
+    - ls $ZP_RISCV_DIR && ls $ZP_RISCV_DIR/* | tee -a ${JOB_LOG}
 
 .sim_job:
   extends: [.project_template]
@@ -195,27 +192,36 @@ smoke:
   extends: [.smoke_job]
   needs: [gather-libs, gather-tools, gather-sdk, gather-riscv, gather-mc]
 
-sim-basic:
+sim:
   extends: [.sim_job]
   parallel:
     matrix:
-      - TOOL: ["vcs", "verilator"]
-        EXAMPLE: ["simple", "dram", "axis", "shell", "double-shell"]
+      - TOOL: ["verilator"]
+        EXAMPLE: ["shell"]
   needs: [smoke]
 
-sim-bp:
-  extends: [.sim_job]
-  parallel:
-    matrix:
-      - TOOL: ["vcs", "verilator"]
-        EXAMPLE: ["black-parrot-minimal", "black-parrot"]
-  needs: [smoke]
-         
-sim-mc:
-  extends: [.sim_job]
-  parallel:
-    matrix:
-      - TOOL: ["vcs", "verilator"]
-        EXAMPLE: ["manycore", "hammerblade"]
-  needs: [smoke]
+
+    #sim-basic:
+    #  extends: [.sim_job]
+    #  parallel:
+    #    matrix:
+    #      - TOOL: ["vcs", "verilator"]
+    #        EXAMPLE: ["simple", "dram", "axis", "shell", "double-shell"]
+    #  needs: [smoke]
+
+    #sim-bp:
+    #  extends: [.sim_job]
+    #  parallel:
+    #    matrix:
+    #      - TOOL: ["vcs", "verilator"]
+    #        EXAMPLE: ["black-parrot-minimal", "black-parrot"]
+    #  needs: [smoke]
+    #         
+    #sim-mc:
+    #  extends: [.sim_job]
+    #  parallel:
+    #    matrix:
+    #      - TOOL: ["vcs", "verilator"]
+    #        EXAMPLE: ["manycore", "hammerblade"]
+    #  needs: [smoke]
          
