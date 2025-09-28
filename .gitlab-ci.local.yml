@@ -159,8 +159,11 @@ build-image:
     RUN_SCRIPT: "./ci/common/run-ci.sh"
     SIM_SCRIPT: "./ci/sim-example.sh"
   script:
-    - echo "[CI] doing makefile checkout" | tee -a ${JOB_LOG}
-    - make -j${BSG_CI_CORES_PER_JOB} checkout >> ${JOB_LOG} 2>&1
+    - echo "[CI] Checking out submodules" | tee -a ${JOB_LOG}
+    - git submodule update --init --recursive import/basejump_stl
+    - git submodule update --init --recursive import/black-parrot
+    - git submodule update --init --recursive import/black-parrot-subsystems
+    - git submodule update --init --recursive import/bsg_manycore
     - echo "[CI] Simulating $EXAMPLE with $TOOL"
     - ${RUN_SCRIPT} ${SIM_SCRIPT} ${TOOL} ${EXAMPLE}
 
