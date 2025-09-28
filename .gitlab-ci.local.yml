@@ -73,6 +73,7 @@ build-image:
       fi
     - echo "Setting PATH as env workaround"
     - export PATH=$COMMON_INSTALL_DIR/bin:$PATH
+    - export LD_LIBRARY_PATH=$COMMON_INSTALL_DIR/lib:$LD_LIBRARY_PATH
 
 ###################################################
 ## job templates
