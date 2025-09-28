@@ -82,11 +82,11 @@ BUILD_COLLATERAL += $(DESIGN_VSRC_DIR)/bsg_blackparrot_pkg.sv
 		clean main.riscv
 	@$(MV) $(BSG_MANYCORE_SOFTWARE_DIR)/spmd/$*/main.riscv $@
 
-VPATH := $(wildcard $(BP_SDK_DIR)/install/riscv/prog/*)
+VPATH := $(wildcard $(ZP_RISCV_DIR)/*)
 %.riscv64: %.riscv
 	@$(CP) $< $@
 
-RISCV_OBJCOPY ?= riscv64-unknown-elf-dramfs-objcopy
+RISCV_OBJCOPY ?= riscv64-unknown-elf-objcopy
 %.rv64o: %.riscv
 	@$(RISCV_OBJCOPY) -O binary $< $@
 
@@ -120,7 +120,7 @@ ipoly_hashing              ?= 0
 NBF_SCRIPT ?= $(BSG_MANYCORE_DIR)/software/py/nbf.py
 %.nbf: $(COMBINED_PROG)
 	$(eval include $(BSG_MACHINE_PATH)/Makefile.machine.include)
-	$(eval export RISCV_BIN_DIR=$(BSG_MANYCORE_SOFTWARE_DIR)/riscv-tools/riscv-install/bin)
+	$(eval export RISCV_BIN_DIR=$(ZP_INSTALL_DIR)/bin)
 	@$(PYTHON2) $(NBF_SCRIPT) \
 		$< \
 		$(BSG_MACHINE_GLOBAL_X) $(BSG_MACHINE_GLOBAL_Y) \
