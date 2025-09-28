@@ -71,6 +71,8 @@ build-image:
     - if [ -d "${COMMON_RISCV_DIR}" ]; then
         ln -nsf "${COMMON_RISCV_DIR}" "${BP_RISCV_DIR}";
       fi
+    - echo "Setting PATH as env workaround"
+    - export PATH=$COMMON_INSTALL_DIR/bin:$PATH
 
 ###################################################
 ## job templates
