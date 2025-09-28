@@ -49,6 +49,8 @@ $(DESIGN_VSRC_DIR)/bsg_blackparrot_pkg.sv:
 
 BSG_MACHINE_PATH ?= $(BSG_REPLICANT_DIR)/machines/pod_X1Y1_mesh_X2Y2_hbm_one_pseudo_channel
 %/bsg_bladerunner_pkg.sv:
+	BASEJUMP_STL_DIR=$(BASEJUMP_STL_DIR) \
+	BSG_MANYCORE_DIR=$(BSG_MANYCORE_DIR) \
 	BSG_MACHINE_PATH=$(BSG_MACHINE_PATH) \
 	BSG_F1_DIR=$(BSG_REPLICANT_DIR) \
 		$(MAKE) -C $(BSG_REPLICANT_DIR)/hardware $(BSG_MACHINE_PATH)/$(@F)
@@ -57,6 +59,8 @@ BSG_MACHINE_PATH ?= $(BSG_REPLICANT_DIR)/machines/pod_X1Y1_mesh_X2Y2_hbm_one_pse
 %/bsg_bladerunner_configuration.sv:
 	@$(eval ASCII_TO_ROM_PY := $(BASEJUMP_STL_DIR)/bsg_mem/bsg_ascii_to_rom.py)
 	@$(eval ROM_NAME := $(subst .sv,.rom,$(@F)))
+	BASEJUMP_STL_DIR=$(BASEJUMP_STL_DIR) \
+	BSG_MANYCORE_DIR=$(BSG_MANYCORE_DIR) \
 	BSG_MACHINE_PATH=$(BSG_MACHINE_PATH) \
 	BSG_F1_DIR=$(BSG_REPLICANT_DIR) \
 		$(MAKE) -C $(BSG_REPLICANT_DIR)/hardware $(BSG_MACHINE_PATH)/$(ROM_NAME)
@@ -64,6 +68,8 @@ BSG_MACHINE_PATH ?= $(BSG_REPLICANT_DIR)/machines/pod_X1Y1_mesh_X2Y2_hbm_one_pse
 	@$(SED) -i "/parameter int bsg_machine_hetero_type_vec_gp/d" $@
 
 %/bsg_manycore_machine.h:
+	BASEJUMP_STL_DIR=$(BASEJUMP_STL_DIR) \
+	BSG_MANYCORE_DIR=$(BSG_MANYCORE_DIR) \
 	BSG_MACHINE_PATH=$(BSG_MACHINE_PATH) \
 	BSG_F1_DIR=$(BSG_REPLICANT_DIR) \
 		$(MAKE) -C $(BSG_REPLICANT_DIR)/hardware $(BSG_MACHINE_PATH)/$(@F)
@@ -146,5 +152,4 @@ NBF_FILE ?= $(addsuffix .nbf,$(MC_PROG).$(BP_PROG))
 RUN_COLLATERAL = $(NBF_FILE)
 
 include $(DESIGN_DIR)/Makefile.hardware
-include $(COSIM_MK_DIR)/Makefile.hardware
 

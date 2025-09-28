@@ -19,5 +19,4 @@ DEFINES += GP0_ADDR_WIDTH=6 GP0_DATA_WIDTH=32
 DEFINES += ACLK_MHZ=200
 
 include $(DESIGN_DIR)/Makefile.hardware
-include $(COSIM_MK_DIR)/Makefile.hardware
 

@@ -4,10 +4,12 @@ include $(COSIM_MK_DIR)/Makefile.sim
 VV_VFLAGS += $(addprefix +define+,$(filter-out VERILATOR,$(DEFINES)))
 VV_VFLAGS += $(addprefix +incdir+,$(VINCLUDES))
 
+VV_CFLAGS += $(CFLAGS)
 VV_CFLAGS += $(addprefix -D,$(filter-out VERILATOR,$(DEFINES)))
 VV_CFLAGS += $(addprefix -I,$(CINCLUDES))
 VV_CFLAGS += $(addprefix -L,$(CLIBDIRS))
 
+VV_LDFLAGS += $(LDFLAGS)
 VV_LDFLAGS += $(addprefix -L,$(CLIBDIRS))
 VV_LDFLAGS += $(addprefix -l,$(CLIBS))
 

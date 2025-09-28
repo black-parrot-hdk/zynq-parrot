@@ -4,11 +4,13 @@ include $(COSIM_MK_DIR)/Makefile.sim
 VCS_VFLAGS += $(addprefix +define+,$(DEFINES))
 VCS_VFLAGS += $(addprefix +incdir+,$(VINCLUDES))
 
+VCS_CFLAGS += $(CFLAGS)
 VCS_CFLAGS += -fPIC -std=c++14
 VCS_CFLAGS += $(addprefix -D,$(DEFINES))
 VCS_CFLAGS += $(addprefix -I,$(CINCLUDES))
 VCS_CFLAGS += $(addprefix -L,$(CLIBDIRS))
 
+VCS_LDFLAGS += $(LDFLAGS)
 VCS_LDFLAGS += -lpthread
 VCS_LDFLAGS += $(addprefix -L,$(CLIBDIRS))
 VCS_LDFLAGS += $(addprefix -l,$(CLIBS))

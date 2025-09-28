@@ -93,5 +93,4 @@ BP_NBF_SCRIPT ?= $(BP_RTL_DIR)/bp_common/software/py/nbf.py
 RUN_COLLATERAL = $(NBF_FILE) $(COSIM_FILE)
 
 include $(DESIGN_DIR)/Makefile.hardware
-include $(COSIM_MK_DIR)/Makefile.hardware
 

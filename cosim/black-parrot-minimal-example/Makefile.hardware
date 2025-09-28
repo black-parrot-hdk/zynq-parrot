@@ -1,4 +1,6 @@
 
+include $(COSIM_MK_DIR)/Makefile.hardware
+
 VPACKAGES += $(DESIGN_VSRC_DIR)/zynq_pkg.sv
 
 # BlackParrot hardware import
@@ -19,8 +21,6 @@ VINCLUDES += $(BP_RTL_DIR)/bp_be/src/include
 VINCLUDES += $(BP_RTL_DIR)/bp_me/src/include
 VINCLUDES += $(BP_RTL_DIR)/bp_top/src/include
 
-VPACKAGES += $(BP_RTL_DIR)/external/basejump_stl/bsg_axi/bsg_axi_pkg.sv
-VPACKAGES += $(BP_RTL_DIR)/external/basejump_stl/bsg_cache/bsg_cache_pkg.sv
 VPACKAGES += $(BP_RTL_DIR)/external/basejump_stl/bsg_noc/bsg_noc_pkg.sv
 VPACKAGES += $(BP_RTL_DIR)/external/basejump_stl/bsg_noc/bsg_wormhole_router_pkg.sv
 
@@ -191,7 +191,6 @@ VSOURCES += $(BP_RTL_DIR)/external/HardFloat/source/recFNToIN.v
 VSOURCES += $(BP_RTL_DIR)/external/HardFloat/source/recFNToRecFN.v
 VSOURCES += $(BP_RTL_DIR)/external/HardFloat/source/RISCV/HardFloat_specialize.v
 
-VSOURCES += $(BP_RTL_DIR)/bp_common/src/v/bsg_fifo_1r1w_rolly.sv
 VSOURCES += $(BP_RTL_DIR)/bp_common/src/v/bsg_bus_pack.sv
 VSOURCES += $(BP_RTL_DIR)/bp_common/src/v/bp_mmu.sv
 VSOURCES += $(BP_RTL_DIR)/bp_common/src/v/bp_pma.sv
@@ -326,6 +325,7 @@ VSOURCES += $(BP_RTL_DIR)/bp_top/src/v/bp_processor.sv
 VSOURCES += $(BP_RTL_DIR)/bp_common/src/v/bsg_async_noc_link.sv
 VSOURCES += $(BP_RTL_DIR)/bp_common/src/v/bsg_dff_sync_read.sv
 VSOURCES += $(BP_RTL_DIR)/bp_common/src/v/bsg_rom_param.sv
+VSOURCES += $(BP_RTL_DIR)/bp_common/src/v/bsg_fifo_1r1w_edge.sv
 
 VSOURCES += $(BP_RTL_DIR)/external/basejump_stl/bsg_cache/bsg_cache_to_axi.sv
 VSOURCES += $(BP_RTL_DIR)/external/basejump_stl/bsg_cache/bsg_cache_to_axi_ordering.sv

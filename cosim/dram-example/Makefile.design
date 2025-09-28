@@ -22,5 +22,4 @@ DEFINES += ACLK_MHZ=55
 DEFINES += RTCLK_MHZ=8
 
 include $(DESIGN_DIR)/Makefile.hardware
-include $(COSIM_MK_DIR)/Makefile.hardware
 

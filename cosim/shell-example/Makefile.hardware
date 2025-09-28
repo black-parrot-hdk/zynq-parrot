@@ -1,4 +1,6 @@
 
+include $(COSIM_MK_DIR)/Makefile.hardware
+
 VPACKAGES += $(DESIGN_VSRC_DIR)/zynq_pkg.sv
 
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_fifo_1r1w_small.sv
