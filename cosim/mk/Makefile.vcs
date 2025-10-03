@@ -21,15 +21,10 @@ VCS_BUILD_OPTS += -V
 VCS_BUILD_OPTS += +v2k -sverilog
 VCS_BUILD_OPTS += -assert svaext
 VCS_BUILD_OPTS += +noportcoerce
-VCS_BUILD_OPTS += -timescale=1ps/1ps
-VCS_BUILD_OPTS += -diag timescale
 VCS_BUILD_OPTS += +vcs+lic+wait
 VCS_BUILD_OPTS += -CFLAGS "$(VCS_CFLAGS)"
 VCS_BUILD_OPTS += -LDFLAGS "$(VCS_LDFLAGS)"
 VCS_BUILD_OPTS += $(VCS_VFLAGS)
-VCS_BUILD_OPTS += $(VPACKAGES)
-VCS_BUILD_OPTS += $(VSOURCES)
-VCS_BUILD_OPTS += $(CSOURCES)
 
 VCS_BUILD_OPTS += -top $(TB_MODULE)
 VCS_BUILD_OPTS += -o simv
@@ -55,5 +50,6 @@ endif
 build: ## builds the simv executable
 build: simv
 simv: $(BUILD_COLLATERAL)
-	$(VCS) $(VCS_BUILD_OPTS) $(BUILD_ARGS) 2>&1 | $(TEE_I) build.log
+simv: $(VPACKAGES) $(VSOURCES) $(CSOURCES)
+	@$(VCS) $(VCS_BUILD_OPTS) $(BUILD_ARGS) $^ 2>&1 | $(TEE_I) build.log
 

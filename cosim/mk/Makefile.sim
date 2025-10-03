@@ -3,10 +3,11 @@
 # Common variables
 #############################
 
-DEFINES +=
+DEFINES += BSG_NO_TIMESCALE
 
 VPACKAGES +=
 
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_cycle_counter.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_clock_gen.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_reset_gen.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.sv
@@ -20,6 +21,8 @@ VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axil.sv
 VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_axil_to_dpi.sv
 VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axis.sv
 VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_axis_to_dpi.sv
+VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axi4.sv
+VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_axi4_to_dpi.sv
 VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv
 
 VINCLUDES +=
@@ -40,7 +43,6 @@ CFLAGS += -D_DEFAULT_SOURCE -D_BSD_SOURCE
 
 CLIBDIRS += $(ZP_INSTALL_DIR)/lib
 
-CLIBS += dramsim3
 CLIBS += boost_coroutine
 CLIBS += boost_context
 CLIBS += boost_system

@@ -54,7 +54,7 @@ module top_zynq
    , output wire [C_HP0_AXI_ADDR_WIDTH-1:0]      hp0_axi_awaddr
    , output wire                                 hp0_axi_awvalid
    , input wire                                  hp0_axi_awready
-   , output wire [5:0]                           hp0_axi_awid
+   , output wire [0:0]                           hp0_axi_awid
    , output wire                                 hp0_axi_awlock
    , output wire [3:0]                           hp0_axi_awcache
    , output wire [2:0]                           hp0_axi_awprot
@@ -66,19 +66,18 @@ module top_zynq
    , output wire [C_HP0_AXI_DATA_WIDTH-1:0]      hp0_axi_wdata
    , output wire                                 hp0_axi_wvalid
    , input wire                                  hp0_axi_wready
-   , output wire [5:0]                           hp0_axi_wid
    , output wire                                 hp0_axi_wlast
    , output wire [(C_HP0_AXI_DATA_WIDTH/8)-1:0]  hp0_axi_wstrb
 
    , input wire                                  hp0_axi_bvalid
    , output wire                                 hp0_axi_bready
-   , input wire [5:0]                            hp0_axi_bid
+   , input wire [0:0]                            hp0_axi_bid
    , input wire [1:0]                            hp0_axi_bresp
 
    , output wire [C_HP0_AXI_ADDR_WIDTH-1:0]      hp0_axi_araddr
    , output wire                                 hp0_axi_arvalid
    , input wire                                  hp0_axi_arready
-   , output wire [5:0]                           hp0_axi_arid
+   , output wire [0:0]                           hp0_axi_arid
    , output wire                                 hp0_axi_arlock
    , output wire [3:0]                           hp0_axi_arcache
    , output wire [2:0]                           hp0_axi_arprot
@@ -90,7 +89,7 @@ module top_zynq
    , input wire [C_HP0_AXI_DATA_WIDTH-1:0]       hp0_axi_rdata
    , input wire                                  hp0_axi_rvalid
    , output wire                                 hp0_axi_rready
-   , input wire [5:0]                            hp0_axi_rid
+   , input wire [0:0]                            hp0_axi_rid
    , input wire                                  hp0_axi_rlast
    , input wire [1:0]                            hp0_axi_rresp
    );
@@ -501,7 +500,6 @@ module top_zynq
    assign hp0_axi_wdata = m_axil_wdata;
    assign hp0_axi_wvalid = m_axil_wvalid;
    assign m_axil_wready = hp0_axi_wready;
-   assign hp0_axi_wid = '0;
    assign hp0_axi_wlast = 1'b1;
    assign hp0_axi_wstrb = m_axil_wstrb;
 

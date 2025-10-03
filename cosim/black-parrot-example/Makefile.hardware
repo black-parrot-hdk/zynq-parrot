@@ -21,8 +21,6 @@ VINCLUDES += $(BP_RTL_DIR)/bp_be/src/include
 VINCLUDES += $(BP_RTL_DIR)/bp_me/src/include
 VINCLUDES += $(BP_RTL_DIR)/bp_top/src/include
 
-VPACKAGES += $(BP_RTL_DIR)/external/basejump_stl/bsg_noc/bsg_wormhole_router_pkg.sv
-
 #VPACKAGES += VSOURCES += $(BP_RTL_DIR)/bp_common/src/include/bp_common_pkg.sv
 VPACKAGES += $(DESIGN_VSRC_DIR)/bp_common_pkg.sv
 VPACKAGES += $(BP_RTL_DIR)/bp_fe/src/include/bp_fe_pkg.sv
@@ -326,17 +324,14 @@ VSOURCES += $(BP_RTL_DIR)/bp_common/src/v/bsg_dff_sync_read.sv
 VSOURCES += $(BP_RTL_DIR)/bp_common/src/v/bsg_rom_param.sv
 VSOURCES += $(BP_RTL_DIR)/bp_common/src/v/bsg_fifo_1r1w_edge.sv
 
-VSOURCES += $(BP_RTL_DIR)/external/basejump_stl/bsg_cache/bsg_cache_to_axi.sv
 VSOURCES += $(BP_RTL_DIR)/external/basejump_stl/bsg_cache/bsg_cache_to_axi_ordering.sv
 VSOURCES += $(BP_RTL_DIR)/external/basejump_stl/bsg_cache/bsg_cache_to_axi_tx.sv
 VSOURCES += $(BP_RTL_DIR)/external/basejump_stl/bsg_cache/bsg_cache_to_axi_rx.sv
 VSOURCES += $(BP_RTL_DIR)/external/basejump_stl/bsg_cache/bsg_cache_to_axi.sv
-VSOURCES += $(BP_RTL_DIR)/external/basejump_stl/bsg_dataflow/bsg_fifo_reorder.sv
 
 VSOURCES += $(BP_SUB_DIR)/blackparrot/v/bp_axi_top.sv
 VSOURCES += $(BP_SUB_DIR)/blackparrot/v/bp_axil_master.sv
 VSOURCES += $(BP_SUB_DIR)/blackparrot/v/bp_axil_client.sv
-VSOURCES += $(BP_SUB_DIR)/blackparrot/v/bp_axi_top.sv
 VSOURCES += $(BP_SUB_DIR)/axi/v/bsg_axil_fifo_client.sv
 VSOURCES += $(BP_SUB_DIR)/axi/v/bsg_axil_fifo_master.sv
 VSOURCES += $(BP_SUB_DIR)/axi/v/bsg_axil_store_packer.sv

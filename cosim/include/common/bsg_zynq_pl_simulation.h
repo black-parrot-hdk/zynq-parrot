@@ -577,7 +577,7 @@ class bsg_zynq_pl_simulation {
     }
 
   public:
-    void shell_write(uintptr_t addr, int32_t data, uint8_t wstrb) {
+    void shell_write(uintptr_t addr, int32_t data, uint8_t wstrb=0xf) {
         shell_write_fn(addr, data, wstrb);
     }
 

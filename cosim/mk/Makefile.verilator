@@ -21,9 +21,6 @@ VV_BUILD_OPTS += -top-module $(TB_MODULE)
 VV_BUILD_OPTS += -CFLAGS "$(VV_CFLAGS)"
 VV_BUILD_OPTS += -LDFLAGS "$(VV_LDFLAGS)"
 VV_BUILD_OPTS += $(VV_VFLAGS)
-VV_BUILD_OPTS += $(VPACKAGES)
-VV_BUILD_OPTS += $(VSOURCES)
-VV_BUILD_OPTS += $(CSOURCES)
 
 VV_RUN_OPTS +=
 
@@ -33,7 +30,7 @@ endif
 
 run: ## runs the verilated executable
 run: obj_dir/V$(TB_MODULE) $(RUN_COLLATERAL)
-	./$< $(VV_RUN_OPTS) $(RUN_ARGS) 2>&1 | $(TEE_I) run.log
+	@./$< $(VV_RUN_OPTS) $(RUN_ARGS) 2>&1 | $(TEE_I) run.log
 
 ifneq (,$(TRACE))
 BUILD_ARGS += --trace-fst --trace-structs
@@ -42,7 +39,8 @@ endif
 build: ## builds the verilated executable
 build: %/V$(TB_MODULE)
 %/V$(TB_MODULE): $(BUILD_COLLATERAL)
-	$(VERILATOR) $(VV_BUILD_OPTS) $(BUILD_ARGS) 2>&1 | $(TEE_I) build.log
+%/V$(TB_MODULE): $(VPACKAGES) $(VSOURCES) $(CSOURCES)
+	@$(VERILATOR) $(VV_BUILD_OPTS) $(BUILD_ARGS) 2>&1 | $(TEE_I) build.log
 
 view: ## View the dump with GTKwave
 view:

@@ -6,44 +6,86 @@ module bsg_nonsynth_zynq_testbench;
 `ifdef GP0_ENABLE
   localparam C_GP0_AXI_DATA_WIDTH = `GP0_DATA_WIDTH;
   localparam C_GP0_AXI_ADDR_WIDTH = `GP0_ADDR_WIDTH;
+  localparam C_GP0_AXI_STRB_WIDTH = C_GP0_AXI_DATA_WIDTH >> 3;
 `endif
 `ifdef GP1_ENABLE
   localparam C_GP1_AXI_DATA_WIDTH = `GP1_DATA_WIDTH;
   localparam C_GP1_AXI_ADDR_WIDTH = `GP1_ADDR_WIDTH;
+  localparam C_GP1_AXI_STRB_WIDTH = C_GP1_AXI_DATA_WIDTH >> 3;
 `endif
 `ifdef GP2_ENABLE
   localparam C_GP2_AXI_DATA_WIDTH = `GP2_DATA_WIDTH;
   localparam C_GP2_AXI_ADDR_WIDTH = `GP2_ADDR_WIDTH;
+  localparam C_GP2_AXI_STRB_WIDTH = C_GP2_AXI_DATA_WIDTH >> 3;
+`endif
+`ifdef IP0_ENABLE
+  localparam C_IP0_AXI_DATA_WIDTH = `IP0_DATA_WIDTH;
+  localparam C_IP0_AXI_ADDR_WIDTH = `IP0_ADDR_WIDTH;
+  localparam C_IP0_AXI_STRB_WIDTH = C_IP0_AXI_DATA_WIDTH >> 3;
+`endif
+`ifdef IP1_ENABLE
+  localparam C_IP1_AXI_DATA_WIDTH = `IP1_DATA_WIDTH;
+  localparam C_IP1_AXI_ADDR_WIDTH = `IP1_ADDR_WIDTH;
+  localparam C_IP1_AXI_STRB_WIDTH = C_IP1_AXI_DATA_WIDTH >> 3;
+`endif
+`ifdef IP2_ENABLE
+  localparam C_IP2_AXI_DATA_WIDTH = `IP2_DATA_WIDTH;
+  localparam C_IP2_AXI_ADDR_WIDTH = `IP2_ADDR_WIDTH;
+  localparam C_IP2_AXI_STRB_WIDTH = C_IP2_AXI_DATA_WIDTH >> 3;
+`endif
+`ifdef BP0_ENABLE
+  localparam C_BP0_AXI_DATA_WIDTH = `BP0_DATA_WIDTH;
+  localparam C_BP0_AXI_ADDR_WIDTH = `BP0_ADDR_WIDTH;
+  localparam C_BP0_AXI_STRB_WIDTH = C_BP0_AXI_DATA_WIDTH >> 3;
+`endif
+`ifdef BP1_ENABLE
+  localparam C_BP1_AXI_DATA_WIDTH = `BP1_DATA_WIDTH;
+  localparam C_BP1_AXI_ADDR_WIDTH = `BP1_ADDR_WIDTH;
+  localparam C_BP1_AXI_STRB_WIDTH = C_BP1_AXI_DATA_WIDTH >> 3;
+`endif
+`ifdef BP2_ENABLE
+  localparam C_BP2_AXI_DATA_WIDTH = `BP2_DATA_WIDTH;
+  localparam C_BP2_AXI_ADDR_WIDTH = `BP2_ADDR_WIDTH;
+  localparam C_BP2_AXI_STRB_WIDTH = C_BP2_AXI_DATA_WIDTH >> 3;
 `endif
 `ifdef HP0_ENABLE
   localparam C_HP0_AXI_DATA_WIDTH = `HP0_DATA_WIDTH;
   localparam C_HP0_AXI_ADDR_WIDTH = `HP0_ADDR_WIDTH;
+  localparam C_HP0_AXI_STRB_WIDTH = C_HP0_AXI_DATA_WIDTH >> 3;
 `endif
 `ifdef HP1_ENABLE
   localparam C_HP1_AXI_DATA_WIDTH = `HP1_DATA_WIDTH;
   localparam C_HP1_AXI_ADDR_WIDTH = `HP1_ADDR_WIDTH;
+  localparam C_HP1_AXI_STRB_WIDTH = C_HP1_AXI_DATA_WIDTH >> 3;
 `endif
 `ifdef HP2_ENABLE
   localparam C_HP2_AXI_DATA_WIDTH = `HP2_DATA_WIDTH;
   localparam C_HP2_AXI_ADDR_WIDTH = `HP2_ADDR_WIDTH;
+  localparam C_HP2_AXI_STRB_WIDTH = C_HP2_AXI_DATA_WIDTH >> 3;
 `endif
 `ifdef SP0_ENABLE
   localparam C_SP0_AXI_DATA_WIDTH = `SP0_DATA_WIDTH;
+  localparam C_SP0_AXI_STRB_WIDTH = C_SP0_AXI_DATA_WIDTH >> 3;
 `endif
 `ifdef SP1_ENABLE
   localparam C_SP1_AXI_DATA_WIDTH = `SP1_DATA_WIDTH;
+  localparam C_SP1_AXI_STRB_WIDTH = C_SP1_AXI_DATA_WIDTH >> 3;
 `endif
 `ifdef SP2_ENABLE
   localparam C_SP2_AXI_DATA_WIDTH = `SP2_DATA_WIDTH;
+  localparam C_SP2_AXI_STRB_WIDTH = C_SP2_AXI_DATA_WIDTH >> 3;
 `endif
 `ifdef MP0_ENABLE
   localparam C_MP0_AXI_DATA_WIDTH = `MP0_DATA_WIDTH;
+  localparam C_MP0_AXI_STRB_WIDTH = C_MP0_AXI_DATA_WIDTH >> 3;
 `endif
 `ifdef MP1_ENABLE
   localparam C_MP1_AXI_DATA_WIDTH = `MP1_DATA_WIDTH;
+  localparam C_MP1_AXI_STRB_WIDTH = C_MP1_AXI_DATA_WIDTH >> 3;
 `endif
 `ifdef MP2_ENABLE
   localparam C_MP2_AXI_DATA_WIDTH = `MP2_DATA_WIDTH;
+  localparam C_MP2_AXI_STRB_WIDTH = C_MP2_AXI_DATA_WIDTH >> 3;
 `endif
 
   localparam aclk_period_lp = 50000;
@@ -82,15 +124,13 @@ module bsg_nonsynth_zynq_testbench;
 
 `ifdef GP0_ENABLE
   logic [C_GP0_AXI_ADDR_WIDTH-1:0] gp0_axi_awaddr;
-  logic [2:0] gp0_axi_awprot;
   logic gp0_axi_awvalid, gp0_axi_awready;
   logic [C_GP0_AXI_DATA_WIDTH-1:0] gp0_axi_wdata;
-  logic [(C_GP0_AXI_DATA_WIDTH/8)-1:0] gp0_axi_wstrb;
+  logic [C_GP0_AXI_STRB_WIDTH-1:0] gp0_axi_wstrb;
   logic gp0_axi_wvalid, gp0_axi_wready;
   logic [1:0] gp0_axi_bresp;
   logic gp0_axi_bvalid, gp0_axi_bready;
   logic [C_GP0_AXI_ADDR_WIDTH-1:0] gp0_axi_araddr;
-  logic [2:0] gp0_axi_arprot;
   logic gp0_axi_arvalid, gp0_axi_arready;
   logic [C_GP0_AXI_DATA_WIDTH-1:0] gp0_axi_rdata;
   logic [1:0] gp0_axi_rresp;
@@ -102,7 +142,6 @@ module bsg_nonsynth_zynq_testbench;
      ,.aresetn_i(aresetn)
 
      ,.awaddr_o(gp0_axi_awaddr)
-     ,.awprot_o(gp0_axi_awprot)
      ,.awvalid_o(gp0_axi_awvalid)
      ,.awready_i(gp0_axi_awready)
      ,.wdata_o(gp0_axi_wdata)
@@ -114,7 +153,6 @@ module bsg_nonsynth_zynq_testbench;
      ,.bready_o(gp0_axi_bready)
 
      ,.araddr_o(gp0_axi_araddr)
-     ,.arprot_o(gp0_axi_arprot)
      ,.arvalid_o(gp0_axi_arvalid)
      ,.arready_i(gp0_axi_arready)
      ,.rdata_i(gp0_axi_rdata)
@@ -126,15 +164,13 @@ module bsg_nonsynth_zynq_testbench;
 
 `ifdef GP1_ENABLE
   logic [C_GP1_AXI_ADDR_WIDTH-1:0] gp1_axi_awaddr;
-  logic [2:0] gp1_axi_awprot;
   logic gp1_axi_awvalid, gp1_axi_awready;
   logic [C_GP1_AXI_DATA_WIDTH-1:0] gp1_axi_wdata;
-  logic [(C_GP1_AXI_DATA_WIDTH/8)-1:0] gp1_axi_wstrb;
+  logic [C_GP1_AXI_STRB_WIDTH-1:0] gp1_axi_wstrb;
   logic gp1_axi_wvalid, gp1_axi_wready;
   logic [1:0] gp1_axi_bresp;
   logic gp1_axi_bvalid, gp1_axi_bready;
   logic [C_GP1_AXI_ADDR_WIDTH-1:0] gp1_axi_araddr;
-  logic [2:0] gp1_axi_arprot;
   logic gp1_axi_arvalid, gp1_axi_arready;
   logic [C_GP1_AXI_DATA_WIDTH-1:0] gp1_axi_rdata;
   logic [1:0] gp1_axi_rresp;
@@ -146,7 +182,6 @@ module bsg_nonsynth_zynq_testbench;
      ,.aresetn_i(aresetn)
 
      ,.awaddr_o(gp1_axi_awaddr)
-     ,.awprot_o(gp1_axi_awprot)
      ,.awvalid_o(gp1_axi_awvalid)
      ,.awready_i(gp1_axi_awready)
      ,.wdata_o(gp1_axi_wdata)
@@ -158,7 +193,6 @@ module bsg_nonsynth_zynq_testbench;
      ,.bready_o(gp1_axi_bready)
 
      ,.araddr_o(gp1_axi_araddr)
-     ,.arprot_o(gp1_axi_arprot)
      ,.arvalid_o(gp1_axi_arvalid)
      ,.arready_i(gp1_axi_arready)
      ,.rdata_i(gp1_axi_rdata)
@@ -170,15 +204,13 @@ module bsg_nonsynth_zynq_testbench;
 
 `ifdef GP2_ENABLE
   logic [C_GP2_AXI_ADDR_WIDTH-1:0] gp2_axi_awaddr;
-  logic [2:0] gp2_axi_awprot;
   logic gp2_axi_awvalid, gp2_axi_awready;
   logic [C_GP2_AXI_DATA_WIDTH-1:0] gp2_axi_wdata;
-  logic [(C_GP2_AXI_DATA_WIDTH/8)-1:0] gp2_axi_wstrb;
+  logic [C_GP2_AXI_STRB_WIDTH-1:0] gp2_axi_wstrb;
   logic gp2_axi_wvalid, gp2_axi_wready;
   logic [1:0] gp2_axi_bresp;
   logic gp2_axi_bvalid, gp2_axi_bready;
   logic [C_GP2_AXI_ADDR_WIDTH-1:0] gp2_axi_araddr;
-  logic [2:0] gp2_axi_arprot;
   logic gp2_axi_arvalid, gp2_axi_arready;
   logic [C_GP2_AXI_DATA_WIDTH-1:0] gp2_axi_rdata;
   logic [1:0] gp2_axi_rresp;
@@ -190,7 +222,6 @@ module bsg_nonsynth_zynq_testbench;
      ,.aresetn_i(aresetn)
 
      ,.awaddr_o(gp2_axi_awaddr)
-     ,.awprot_o(gp2_axi_awprot)
      ,.awvalid_o(gp2_axi_awvalid)
      ,.awready_i(gp2_axi_awready)
      ,.wdata_o(gp2_axi_wdata)
@@ -202,7 +233,6 @@ module bsg_nonsynth_zynq_testbench;
      ,.bready_o(gp2_axi_bready)
 
      ,.araddr_o(gp2_axi_araddr)
-     ,.arprot_o(gp2_axi_arprot)
      ,.arvalid_o(gp2_axi_arvalid)
      ,.arready_i(gp2_axi_arready)
      ,.rdata_i(gp2_axi_rdata)
@@ -212,228 +242,575 @@ module bsg_nonsynth_zynq_testbench;
      );
 `endif
 
-`ifdef HP0_ENABLE
-  logic [C_HP0_AXI_ADDR_WIDTH-1:0]      hp0_axi_awaddr;
-  logic                                 hp0_axi_awvalid;
-  logic                                 hp0_axi_awready;
-  logic [5:0]                           hp0_axi_awid;
-  logic                                 hp0_axi_awlock;
-  logic [3:0]                           hp0_axi_awcache;
-  logic [2:0]                           hp0_axi_awprot;
-  logic [7:0]                           hp0_axi_awlen;
-  logic [2:0]                           hp0_axi_awsize;
-  logic [1:0]                           hp0_axi_awburst;
-  logic [3:0]                           hp0_axi_awqos;
-
-  logic [C_HP0_AXI_DATA_WIDTH-1:0]      hp0_axi_wdata;
-  logic                                 hp0_axi_wvalid;
-  logic                                 hp0_axi_wready;
-  logic [5:0]                           hp0_axi_wid;
-  logic                                 hp0_axi_wlast;
-  logic [(C_HP0_AXI_DATA_WIDTH/8)-1:0]  hp0_axi_wstrb;
-
-  logic                                 hp0_axi_bvalid;
-  logic                                 hp0_axi_bready;
-  logic [5:0]                           hp0_axi_bid;
-  logic [1:0]                           hp0_axi_bresp;
-
-  logic [C_HP0_AXI_ADDR_WIDTH-1:0]      hp0_axi_araddr;
-  logic                                 hp0_axi_arvalid;
-  logic                                 hp0_axi_arready;
-  logic [5:0]                           hp0_axi_arid;
-  logic                                 hp0_axi_arlock;
-  logic [3:0]                           hp0_axi_arcache;
-  logic [2:0]                           hp0_axi_arprot;
-  logic [7:0]                           hp0_axi_arlen;
-  logic [2:0]                           hp0_axi_arsize;
-  logic [1:0]                           hp0_axi_arburst;
-  logic [3:0]                           hp0_axi_arqos;
-
-  logic [C_HP0_AXI_DATA_WIDTH-1:0]      hp0_axi_rdata;
-  logic                                 hp0_axi_rvalid;
-  logic                                 hp0_axi_rready;
-  logic [5:0]                           hp0_axi_rid;
-  logic                                 hp0_axi_rlast;
-  logic [1:0]                           hp0_axi_rresp;
-
-`ifdef AXI_MEM_ENABLE
-  bsg_nonsynth_axi_mem
-    #(.axi_id_width_p(6)
-      ,.axi_addr_width_p(C_HP0_AXI_ADDR_WIDTH)
-      ,.axi_data_width_p(C_HP0_AXI_DATA_WIDTH)
-      ,.axi_len_width_p(8)
-      ,.mem_els_p((2**C_HP0_AXI_ADDR_WIDTH)/C_HP0_AXI_DATA_WIDTH)
-      ,.init_data_p('0)
-    )
-  axi_mem
-    (.clk_i(aclk)
-     ,.reset_i(~aresetn)
-
-     ,.axi_awid_i(hp0_axi_awid)
-     ,.axi_awaddr_i(hp0_axi_awaddr)
-     ,.axi_awlen_i(hp0_axi_awlen)
-     ,.axi_awburst_i(hp0_axi_awburst)
-     ,.axi_awvalid_i(hp0_axi_awvalid)
-     ,.axi_awready_o(hp0_axi_awready)
-
-     ,.axi_wdata_i(hp0_axi_wdata)
-     ,.axi_wstrb_i(hp0_axi_wstrb)
-     ,.axi_wlast_i(hp0_axi_wlast)
-     ,.axi_wvalid_i(hp0_axi_wvalid)
-     ,.axi_wready_o(hp0_axi_wready)
-
-     ,.axi_bid_o(hp0_axi_bid)
-     ,.axi_bresp_o(hp0_axi_bresp)
-     ,.axi_bvalid_o(hp0_axi_bvalid)
-     ,.axi_bready_i(hp0_axi_bready)
-
-     ,.axi_arid_i(hp0_axi_arid)
-     ,.axi_araddr_i(hp0_axi_araddr)
-     ,.axi_arlen_i(hp0_axi_arlen)
-     ,.axi_arburst_i(hp0_axi_arburst)
-     ,.axi_arvalid_i(hp0_axi_arvalid)
-     ,.axi_arready_o(hp0_axi_arready)
-
-     ,.axi_rid_o(hp0_axi_rid)
-     ,.axi_rdata_o(hp0_axi_rdata)
-     ,.axi_rresp_o(hp0_axi_rresp)
-     ,.axi_rlast_o(hp0_axi_rlast)
-     ,.axi_rvalid_o(hp0_axi_rvalid)
-     ,.axi_rready_i(hp0_axi_rready)
-     );
-`else
+`ifdef IP0_ENABLE
+  logic [C_IP0_AXI_ADDR_WIDTH-1:0] ip0_axi_awaddr;
+  logic ip0_axi_awvalid, ip0_axi_awready;
+  logic [C_IP0_AXI_DATA_WIDTH-1:0] ip0_axi_wdata;
+  logic [C_IP0_AXI_STRB_WIDTH-1:0] ip0_axi_wstrb;
+  logic ip0_axi_wvalid, ip0_axi_wready;
+  logic [1:0] ip0_axi_bresp;
+  logic ip0_axi_bvalid, ip0_axi_bready;
+  logic [C_IP0_AXI_ADDR_WIDTH-1:0] ip0_axi_araddr;
+  logic ip0_axi_arvalid, ip0_axi_arready;
+  logic [C_IP0_AXI_DATA_WIDTH-1:0] ip0_axi_rdata;
+  logic [1:0] ip0_axi_rresp;
+  logic ip0_axi_rvalid, ip0_axi_rready;
   bsg_nonsynth_axil_to_dpi
-   #(.addr_width_p(C_HP0_AXI_ADDR_WIDTH), .data_width_p(C_HP0_AXI_DATA_WIDTH))
+   #(.addr_width_p(C_IP0_AXI_ADDR_WIDTH), .data_width_p(C_IP0_AXI_DATA_WIDTH))
    axil3
     (.aclk_i(aclk)
      ,.aresetn_i(aresetn)
 
-     ,.awaddr_i(hp0_axi_awaddr)
-     ,.awprot_i(hp0_axi_awprot)
-     ,.awvalid_i(hp0_axi_awvalid)
-     ,.awready_o(hp0_axi_awready)
-     ,.wdata_i(hp0_axi_wdata)
-     ,.wstrb_i(hp0_axi_wstrb)
-     ,.wvalid_i(hp0_axi_wvalid)
-     ,.wready_o(hp0_axi_wready)
-     ,.bresp_o(hp0_axi_bresp)
-     ,.bvalid_o(hp0_axi_bvalid)
-     ,.bready_i(hp0_axi_bready)
+     ,.awaddr_i(ip0_axi_awaddr)
+     ,.awvalid_i(ip0_axi_awvalid)
+     ,.awready_o(ip0_axi_awready)
+     ,.wdata_i(ip0_axi_wdata)
+     ,.wstrb_i(ip0_axi_wstrb)
+     ,.wvalid_i(ip0_axi_wvalid)
+     ,.wready_o(ip0_axi_wready)
+     ,.bresp_o(ip0_axi_bresp)
+     ,.bvalid_o(ip0_axi_bvalid)
+     ,.bready_i(ip0_axi_bready)
 
-     ,.araddr_i(hp0_axi_araddr)
-     ,.arprot_i(hp0_axi_arprot)
-     ,.arvalid_i(hp0_axi_arvalid)
-     ,.arready_o(hp0_axi_arready)
-     ,.rdata_o(hp0_axi_rdata)
-     ,.rresp_o(hp0_axi_rresp)
-     ,.rvalid_o(hp0_axi_rvalid)
-     ,.rready_i(hp0_axi_rready)
+     ,.araddr_i(ip0_axi_araddr)
+     ,.arvalid_i(ip0_axi_arvalid)
+     ,.arready_o(ip0_axi_arready)
+     ,.rdata_o(ip0_axi_rdata)
+     ,.rresp_o(ip0_axi_rresp)
+     ,.rvalid_o(ip0_axi_rvalid)
+     ,.rready_i(ip0_axi_rready)
      );
 `endif
-`endif
 
-`ifdef HP1_ENABLE
-  logic [C_HP1_AXI_ADDR_WIDTH-1:0] hp1_axi_awaddr;
-  logic [2:0] hp1_axi_awprot;
-  logic hp1_axi_awvalid, hp1_axi_awready;
-  logic [C_HP1_AXI_DATA_WIDTH-1:0] hp1_axi_wdata;
-  logic [(C_HP1_AXI_DATA_WIDTH/8)-1:0] hp1_axi_wstrb;
-  logic hp1_axi_wvalid, hp1_axi_wready;
-  logic [1:0] hp1_axi_bresp;
-  logic hp1_axi_bvalid, hp1_axi_bready;
-  logic [C_HP1_AXI_ADDR_WIDTH-1:0] hp1_axi_araddr;
-  logic [2:0] hp1_axi_arprot;
-  logic hp1_axi_arvalid, hp1_axi_arready;
-  logic [C_HP1_AXI_DATA_WIDTH-1:0] hp1_axi_rdata;
-  logic [1:0] hp1_axi_rresp;
-  logic hp1_axi_rvalid, hp1_axi_rready;
+`ifdef IP1_ENABLE
+  logic [C_IP1_AXI_ADDR_WIDTH-1:0] ip1_axi_awaddr;
+  logic ip1_axi_awvalid, ip1_axi_awready;
+  logic [C_IP1_AXI_DATA_WIDTH-1:0] ip1_axi_wdata;
+  logic [C_IP1_AXI_STRB_WIDTH-1:0] ip1_axi_wstrb;
+  logic ip1_axi_wvalid, ip1_axi_wready;
+  logic [1:0] ip1_axi_bresp;
+  logic ip1_axi_bvalid, ip1_axi_bready;
+  logic [C_IP1_AXI_ADDR_WIDTH-1:0] ip1_axi_araddr;
+  logic ip1_axi_arvalid, ip1_axi_arready;
+  logic [C_IP1_AXI_DATA_WIDTH-1:0] ip1_axi_rdata;
+  logic [1:0] ip1_axi_rresp;
+  logic ip1_axi_rvalid, ip1_axi_rready;
   bsg_nonsynth_axil_to_dpi
-   #(.addr_width_p(C_HP1_AXI_ADDR_WIDTH), .data_width_p(C_HP1_AXI_DATA_WIDTH))
+   #(.addr_width_p(C_IP1_AXI_ADDR_WIDTH), .data_width_p(C_IP1_AXI_DATA_WIDTH))
    axil4
     (.aclk_i(aclk)
      ,.aresetn_i(aresetn)
 
-     ,.awaddr_i(hp1_axi_awaddr)
-     ,.awprot_i(hp1_axi_awprot)
-     ,.awvalid_i(hp1_axi_awvalid)
-     ,.awready_o(hp1_axi_awready)
-     ,.wdata_i(hp1_axi_wdata)
-     ,.wstrb_i(hp1_axi_wstrb)
-     ,.wvalid_i(hp1_axi_wvalid)
-     ,.wready_o(hp1_axi_wready)
-     ,.bresp_o(hp1_axi_bresp)
-     ,.bvalid_o(hp1_axi_bvalid)
-     ,.bready_i(hp1_axi_bready)
+     ,.awaddr_i(ip1_axi_awaddr)
+     ,.awvalid_i(ip1_axi_awvalid)
+     ,.awready_o(ip1_axi_awready)
+     ,.wdata_i(ip1_axi_wdata)
+     ,.wstrb_i(ip1_axi_wstrb)
+     ,.wvalid_i(ip1_axi_wvalid)
+     ,.wready_o(ip1_axi_wready)
+     ,.bresp_o(ip1_axi_bresp)
+     ,.bvalid_o(ip1_axi_bvalid)
+     ,.bready_i(ip1_axi_bready)
 
-     ,.araddr_i(hp1_axi_araddr)
-     ,.arprot_i(hp1_axi_arprot)
-     ,.arvalid_i(hp1_axi_arvalid)
-     ,.arready_o(hp1_axi_arready)
-     ,.rdata_o(hp1_axi_rdata)
-     ,.rresp_o(hp1_axi_rresp)
-     ,.rvalid_o(hp1_axi_rvalid)
-     ,.rready_i(hp1_axi_rready)
+     ,.araddr_i(ip1_axi_araddr)
+     ,.arvalid_i(ip1_axi_arvalid)
+     ,.arready_o(ip1_axi_arready)
+     ,.rdata_o(ip1_axi_rdata)
+     ,.rresp_o(ip1_axi_rresp)
+     ,.rvalid_o(ip1_axi_rvalid)
+     ,.rready_i(ip1_axi_rready)
      );
 `endif
 
-`ifdef HP2_ENABLE
-  logic [C_HP2_AXI_ADDR_WIDTH-1:0] hp2_axi_awaddr;
-  logic [2:0] hp2_axi_awprot;
-  logic hp2_axi_awvalid, hp2_axi_awready;
-  logic [C_HP2_AXI_DATA_WIDTH-1:0] hp2_axi_wdata;
-  logic [(C_HP2_AXI_DATA_WIDTH/8)-1:0] hp2_axi_wstrb;
-  logic hp2_axi_wvalid, hp2_axi_wready;
-  logic [1:0] hp2_axi_bresp;
-  logic hp2_axi_bvalid, hp2_axi_bready;
-  logic [C_HP2_AXI_ADDR_WIDTH-1:0] hp2_axi_araddr;
-  logic [2:0] hp2_axi_arprot;
-  logic hp2_axi_arvalid, hp2_axi_arready;
-  logic [C_HP2_AXI_DATA_WIDTH-1:0] hp2_axi_rdata;
-  logic [1:0] hp2_axi_rresp;
-  logic hp2_axi_rvalid, hp2_axi_rready;
+`ifdef IP2_ENABLE
+  logic [C_IP2_AXI_ADDR_WIDTH-1:0] ip2_axi_awaddr;
+  logic ip2_axi_awvalid, ip2_axi_awready;
+  logic [C_IP2_AXI_DATA_WIDTH-1:0] ip2_axi_wdata;
+  logic [C_IP2_AXI_STRB_WIDTH-1:0] ip2_axi_wstrb;
+  logic ip2_axi_wvalid, ip2_axi_wready;
+  logic [1:0] ip2_axi_bresp;
+  logic ip2_axi_bvalid, ip2_axi_bready;
+  logic [C_IP2_AXI_ADDR_WIDTH-1:0] ip2_axi_araddr;
+  logic ip2_axi_arvalid, ip2_axi_arready;
+  logic [C_IP2_AXI_DATA_WIDTH-1:0] ip2_axi_rdata;
+  logic [1:0] ip2_axi_rresp;
+  logic ip2_axi_rvalid, ip2_axi_rready;
   bsg_nonsynth_axil_to_dpi
-   #(.addr_width_p(C_HP2_AXI_ADDR_WIDTH), .data_width_p(C_HP2_AXI_DATA_WIDTH))
+   #(.addr_width_p(C_IP2_AXI_ADDR_WIDTH), .data_width_p(C_IP2_AXI_DATA_WIDTH))
    axil5
     (.aclk_i(aclk)
      ,.aresetn_i(aresetn)
 
+     ,.awaddr_i(ip2_axi_awaddr)
+     ,.awvalid_i(ip2_axi_awvalid)
+     ,.awready_o(ip2_axi_awready)
+     ,.wdata_i(ip2_axi_wdata)
+     ,.wstrb_i(ip2_axi_wstrb)
+     ,.wvalid_i(ip2_axi_wvalid)
+     ,.wready_o(ip2_axi_wready)
+     ,.bresp_o(ip2_axi_bresp)
+     ,.bvalid_o(ip2_axi_bvalid)
+     ,.bready_i(ip2_axi_bready)
+
+     ,.araddr_i(ip2_axi_araddr)
+     ,.arvalid_i(ip2_axi_arvalid)
+     ,.arready_o(ip2_axi_arready)
+     ,.rdata_o(ip2_axi_rdata)
+     ,.rresp_o(ip2_axi_rresp)
+     ,.rvalid_o(ip2_axi_rvalid)
+     ,.rready_i(ip2_axi_rready)
+     );
+`endif
+
+`ifdef BP0_ENABLE
+  logic [C_BP0_AXI_ADDR_WIDTH-1:0]      bp0_axi_awaddr;
+  logic [1:0]                           bp0_axi_awburst;
+  logic [7:0]                           bp0_axi_awlen;
+  logic                                 bp0_axi_awvalid;
+  logic                                 bp0_axi_awready;
+
+  logic [C_BP0_AXI_DATA_WIDTH-1:0]      bp0_axi_wdata;
+  logic [C_BP0_AXI_STRB_WIDTH-1:0]      bp0_axi_wstrb;
+  logic                                 bp0_axi_wlast;
+  logic                                 bp0_axi_wvalid;
+  logic                                 bp0_axi_wready;
+
+  logic                                 bp0_axi_bvalid;
+  logic                                 bp0_axi_bready;
+  logic [0:0]                           bp0_axi_bid;
+  logic [1:0]                           bp0_axi_bresp;
+
+  logic [C_BP0_AXI_ADDR_WIDTH-1:0]      bp0_axi_araddr;
+  logic [1:0]                           bp0_axi_arburst;
+  logic [7:0]                           bp0_axi_arlen;
+  logic                                 bp0_axi_arvalid;
+  logic                                 bp0_axi_arready;
+  logic [0:0]                           bp0_axi_arid;
+
+  logic [C_BP0_AXI_DATA_WIDTH-1:0]      bp0_axi_rdata;
+  logic                                 bp0_axi_rlast;
+  logic                                 bp0_axi_rvalid;
+  logic                                 bp0_axi_rready;
+  logic [0:0]                           bp0_axi_rid;
+  logic [1:0]                           bp0_axi_rresp;
+
+  bsg_nonsynth_dpi_to_axi4
+   #(.addr_width_p(C_BP0_AXI_ADDR_WIDTH), .data_width_p(C_BP0_AXI_DATA_WIDTH))
+   axi6
+    (.aclk_i(aclk)
+     ,.aresetn_i(aresetn)
+
+     ,.awaddr_i(bp0_axi_awaddr)
+     ,.awburst_i(bp0_axi_awburst)
+     ,.awlen_i(bp0_axi_awlen)
+     ,.awvalid_i(bp0_axi_awvalid)
+     ,.awready_o(bp0_axi_awready)
+     ,.awid_i(bp0_axi_awid)
+
+     ,.wdata_i(bp0_axi_wdata)
+     ,.wstrb_i(bp0_axi_wstrb)
+     ,.wlast_i(bp0_axi_wlast)
+     ,.wvalid_i(bp0_axi_wvalid)
+     ,.wready_o(bp0_axi_wready)
+
+     ,.bvalid_o(bp0_axi_bvalid)
+     ,.bready_i(bp0_axi_bready)
+     ,.bid_o(bp0_axi_bid)
+     ,.bresp_o(bp0_axi_bresp)
+
+     ,.araddr_i(bp0_axi_araddr)
+     ,.arburst_i(bp0_axi_arburst)
+     ,.arlen_i(bp0_axi_arlen)
+     ,.arvalid_i(bp0_axi_arvalid)
+     ,.arready_o(bp0_axi_arready)
+     ,.arid_i(bp0_axi_arid)
+
+     ,.rdata_o(bp0_axi_rdata)
+     ,.rlast_o(bp0_axi_rlast)
+     ,.rvalid_o(bp0_axi_rvalid)
+     ,.rready_i(bp0_axi_rready)
+     ,.rid_o(bp0_axi_rid)
+     ,.rresp_o(bp0_axi_rresp)
+     );
+`endif
+
+`ifdef BP1_ENABLE
+  logic [C_BP1_AXI_ADDR_WIDTH-1:0]      bp1_axi_awaddr;
+  logic [1:0]                           bp1_axi_awburst;
+  logic [7:0]                           bp1_axi_awlen;
+  logic                                 bp1_axi_awvalid;
+  logic                                 bp1_axi_awready;
+  logic [0:0]                           bp1_axi_awid;
+
+  logic [C_BP1_AXI_DATA_WIDTH-1:0]      bp1_axi_wdata;
+  logic [C_BP1_AXI_STRB_WIDTH-1:0]      bp1_axi_wstrb;
+  logic                                 bp1_axi_wlast;
+  logic                                 bp1_axi_wvalid;
+  logic                                 bp1_axi_wready;
+
+  logic                                 bp1_axi_bvalid;
+  logic                                 bp1_axi_bready;
+  logic [0:0]                           bp1_axi_bid;
+  logic [1:0]                           bp1_axi_bresp;
+
+  logic [C_BP1_AXI_ADDR_WIDTH-1:0]      bp1_axi_araddr;
+  logic [1:0]                           bp1_axi_arburst;
+  logic [7:0]                           bp1_axi_arlen;
+  logic                                 bp1_axi_arvalid;
+  logic                                 bp1_axi_arready;
+  logic [0:0]                           bp1_axi_arid;
+
+  logic [C_BP1_AXI_DATA_WIDTH-1:0]      bp1_axi_rdata;
+  logic                                 bp1_axi_rlast;
+  logic                                 bp1_axi_rvalid;
+  logic                                 bp1_axi_rready;
+  logic [0:0]                           bp1_axi_rid;
+  logic [1:0]                           bp1_axi_rresp;
+
+  bsg_nonsynth_dpi_to_axi4
+   #(.addr_width_p(C_BP1_AXI_ADDR_WIDTH), .data_width_p(C_BP1_AXI_DATA_WIDTH))
+   axi7
+    (.aclk_i(aclk)
+     ,.aresetn_i(aresetn)
+
+     ,.awaddr_i(bp1_axi_awaddr)
+     ,.awburst_i(bp1_axi_awburst)
+     ,.awlen_i(bp1_axi_awlen)
+     ,.awvalid_i(bp1_axi_awvalid)
+     ,.awready_o(bp1_axi_awready)
+     ,.awid_i(bp1_axi_awid)
+
+     ,.wdata_i(bp1_axi_wdata)
+     ,.wstrb_i(bp1_axi_wstrb)
+     ,.wlast_i(bp1_axi_wlast)
+     ,.wvalid_i(bp1_axi_wvalid)
+     ,.wready_o(bp1_axi_wready)
+
+     ,.bvalid_o(bp1_axi_bvalid)
+     ,.bready_i(bp1_axi_bready)
+     ,.bid_o(bp1_axi_bid)
+     ,.bresp_o(bp1_axi_bresp)
+
+     ,.araddr_i(bp1_axi_araddr)
+     ,.arburst_i(bp1_axi_arburst)
+     ,.arlen_i(bp1_axi_arlen)
+     ,.arvalid_i(bp1_axi_arvalid)
+     ,.arready_o(bp1_axi_arready)
+     ,.arid_i(bp1_axi_arid)
+
+     ,.rdata_o(bp1_axi_rdata)
+     ,.rlast_o(bp1_axi_rlast)
+     ,.rvalid_o(bp1_axi_rvalid)
+     ,.rready_i(bp1_axi_rready)
+     ,.rid_o(bp1_axi_rid)
+     ,.rresp_o(bp1_axi_rresp)
+     );
+`endif
+
+`ifdef BP2_ENABLE
+  logic [C_BP2_AXI_ADDR_WIDTH-1:0]      bp2_axi_awaddr;
+  logic [1:0]                           bp2_axi_awburst;
+  logic [7:0]                           bp2_axi_awlen;
+  logic                                 bp2_axi_awvalid;
+  logic                                 bp2_axi_awready;
+  logic [0:0]                           bp2_axi_awid;
+
+  logic [C_BP2_AXI_DATA_WIDTH-1:0]      bp2_axi_wdata;
+  logic [C_BP2_AXI_STRB_WIDTH-1:0]      bp2_axi_wstrb;
+  logic                                 bp2_axi_wlast;
+  logic                                 bp2_axi_wvalid;
+  logic                                 bp2_axi_wready;
+
+  logic                                 bp2_axi_bvalid;
+  logic                                 bp2_axi_bready;
+  logic [0:0]                           bp2_axi_bid;
+  logic [1:0]                           bp2_axi_bresp;
+
+  logic [C_BP2_AXI_ADDR_WIDTH-1:0]      bp2_axi_araddr;
+  logic [1:0]                           bp2_axi_arburst;
+  logic [7:0]                           bp2_axi_arlen;
+  logic                                 bp2_axi_arvalid;
+  logic                                 bp2_axi_arready;
+  logic [0:0]                           bp2_axi_arid;
+
+  logic [C_BP2_AXI_DATA_WIDTH-1:0]      bp2_axi_rdata;
+  logic                                 bp2_axi_rlast;
+  logic                                 bp2_axi_rvalid;
+  logic                                 bp2_axi_rready;
+  logic [0:0]                           bp2_axi_rid;
+  logic [1:0]                           bp2_axi_rresp;
+
+  bsg_nonsynth_dpi_to_axi4
+   #(.addr_width_p(C_BP2_AXI_ADDR_WIDTH), .data_width_p(C_BP2_AXI_DATA_WIDTH))
+   axi8
+    (.aclk_i(aclk)
+     ,.aresetn_i(aresetn)
+
+     ,.awaddr_i(bp2_axi_awaddr)
+     ,.awburst_i(bp2_axi_awburst)
+     ,.awlen_i(bp2_axi_awlen)
+     ,.awvalid_i(bp2_axi_awvalid)
+     ,.awready_o(bp2_axi_awready)
+     ,.awid_i(bp2_axi_awid)
+
+     ,.wdata_i(bp2_axi_wdata)
+     ,.wstrb_i(bp2_axi_wstrb)
+     ,.wlast_i(bp2_axi_wlast)
+     ,.wvalid_i(bp2_axi_wvalid)
+     ,.wready_o(bp2_axi_wready)
+
+     ,.bvalid_o(bp2_axi_bvalid)
+     ,.bready_i(bp2_axi_bready)
+     ,.bid_o(bp2_axi_bid)
+     ,.bresp_o(bp2_axi_bresp)
+
+     ,.araddr_i(bp2_axi_araddr)
+     ,.arburst_i(bp2_axi_arburst)
+     ,.arlen_i(bp2_axi_arlen)
+     ,.arvalid_i(bp2_axi_arvalid)
+     ,.arready_o(bp2_axi_arready)
+     ,.arid_i(bp2_axi_arid)
+
+     ,.rdata_o(bp2_axi_rdata)
+     ,.rlast_o(bp2_axi_rlast)
+     ,.rvalid_o(bp2_axi_rvalid)
+     ,.rready_i(bp2_axi_rready)
+     ,.rid_o(bp2_axi_rid)
+     ,.rresp_o(bp2_axi_rresp)
+     );
+`endif
+
+`ifdef HP0_ENABLE
+  logic [C_HP0_AXI_ADDR_WIDTH-1:0]      hp0_axi_awaddr;
+  logic [1:0]                           hp0_axi_awburst;
+  logic [7:0]                           hp0_axi_awlen;
+  logic                                 hp0_axi_awvalid;
+  logic                                 hp0_axi_awready;
+  logic [0:0]                           hp0_axi_awid;
+
+  logic [C_HP0_AXI_DATA_WIDTH-1:0]      hp0_axi_wdata;
+  logic [C_HP0_AXI_STRB_WIDTH-1:0]      hp0_axi_wstrb;
+  logic                                 hp0_axi_wlast;
+  logic                                 hp0_axi_wvalid;
+  logic                                 hp0_axi_wready;
+
+  logic                                 hp0_axi_bvalid;
+  logic                                 hp0_axi_bready;
+  logic [0:0]                           hp0_axi_bid;
+  logic [1:0]                           hp0_axi_bresp;
+
+  logic [C_HP0_AXI_ADDR_WIDTH-1:0]      hp0_axi_araddr;
+  logic [1:0]                           hp0_axi_arburst;
+  logic [7:0]                           hp0_axi_arlen;
+  logic                                 hp0_axi_arvalid;
+  logic                                 hp0_axi_arready;
+  logic [0:0]                           hp0_axi_arid;
+
+  logic [C_HP0_AXI_DATA_WIDTH-1:0]      hp0_axi_rdata;
+  logic                                 hp0_axi_rlast;
+  logic                                 hp0_axi_rvalid;
+  logic                                 hp0_axi_rready;
+  logic [0:0]                           hp0_axi_rid;
+  logic [1:0]                           hp0_axi_rresp;
+
+  bsg_nonsynth_axi4_to_dpi
+   #(.addr_width_p(C_HP0_AXI_ADDR_WIDTH), .data_width_p(C_HP0_AXI_DATA_WIDTH))
+   axi9
+    (.aclk_i(aclk)
+     ,.aresetn_i(aresetn)
+
+     ,.awaddr_i(hp0_axi_awaddr)
+     ,.awburst_i(hp0_axi_awburst)
+     ,.awlen_i(hp0_axi_awlen)
+     ,.awvalid_i(hp0_axi_awvalid)
+     ,.awready_o(hp0_axi_awready)
+     ,.awid_i(hp0_axi_awid)
+
+     ,.wdata_i(hp0_axi_wdata)
+     ,.wstrb_i(hp0_axi_wstrb)
+     ,.wlast_i(hp0_axi_wlast)
+     ,.wvalid_i(hp0_axi_wvalid)
+     ,.wready_o(hp0_axi_wready)
+
+     ,.bvalid_o(hp0_axi_bvalid)
+     ,.bready_i(hp0_axi_bready)
+     ,.bid_o(hp0_axi_bid)
+     ,.bresp_o(hp0_axi_bresp)
+
+     ,.araddr_i(hp0_axi_araddr)
+     ,.arburst_i(hp0_axi_arburst)
+     ,.arlen_i(hp0_axi_arlen)
+     ,.arvalid_i(hp0_axi_arvalid)
+     ,.arready_o(hp0_axi_arready)
+     ,.arid_i(hp0_axi_arid)
+
+     ,.rdata_o(hp0_axi_rdata)
+     ,.rlast_o(hp0_axi_rlast)
+     ,.rvalid_o(hp0_axi_rvalid)
+     ,.rready_i(hp0_axi_rready)
+     ,.rid_o(hp0_axi_rid)
+     ,.rresp_o(hp0_axi_rresp)
+     );
+`endif
+
+`ifdef HP1_ENABLE
+  logic [C_HP1_AXI_ADDR_WIDTH-1:0]      hp1_axi_awaddr;
+  logic [1:0]                           hp1_axi_awburst;
+  logic [7:0]                           hp1_axi_awlen;
+  logic                                 hp1_axi_awvalid;
+  logic                                 hp1_axi_awready;
+  logic [0:0]                           hp1_axi_awid;
+
+  logic [C_HP1_AXI_DATA_WIDTH-1:0]      hp1_axi_wdata;
+  logic [C_HP1_AXI_STRB_WIDTH-1:0]      hp1_axi_wstrb;
+  logic                                 hp1_axi_wlast;
+  logic                                 hp1_axi_wvalid;
+  logic                                 hp1_axi_wready;
+
+  logic                                 hp1_axi_bvalid;
+  logic                                 hp1_axi_bready;
+  logic [0:0]                           hp1_axi_bid;
+  logic [1:0]                           hp1_axi_bresp;
+
+  logic [C_HP1_AXI_ADDR_WIDTH-1:0]      hp1_axi_araddr;
+  logic [1:0]                           hp1_axi_arburst;
+  logic [7:0]                           hp1_axi_arlen;
+  logic                                 hp1_axi_arvalid;
+  logic                                 hp1_axi_arready;
+  logic [0:0]                           hp1_axi_arid;
+
+  logic [C_HP1_AXI_DATA_WIDTH-1:0]      hp1_axi_rdata;
+  logic                                 hp1_axi_rlast;
+  logic                                 hp1_axi_rvalid;
+  logic                                 hp1_axi_rready;
+  logic [0:0]                           hp1_axi_rid;
+  logic [1:0]                           hp1_axi_rresp;
+
+  bsg_nonsynth_axi4_to_dpi
+   #(.addr_width_p(C_HP1_AXI_ADDR_WIDTH), .data_width_p(C_HP1_AXI_DATA_WIDTH))
+   axi10
+    (.aclk_i(aclk)
+     ,.aresetn_i(aresetn)
+
+     ,.awaddr_i(hp1_axi_awaddr)
+     ,.awburst_i(hp1_axi_awburst)
+     ,.awlen_i(hp1_axi_awlen)
+     ,.awvalid_i(hp1_axi_awvalid)
+     ,.awready_o(hp1_axi_awready)
+     ,.awid_i(hp1_axi_awid)
+
+     ,.wdata_i(hp1_axi_wdata)
+     ,.wstrb_i(hp1_axi_wstrb)
+     ,.wlast_i(hp1_axi_wlast)
+     ,.wvalid_i(hp1_axi_wvalid)
+     ,.wready_o(hp1_axi_wready)
+
+     ,.bvalid_o(hp1_axi_bvalid)
+     ,.bready_i(hp1_axi_bready)
+     ,.bid_o(hp1_axi_bid)
+     ,.bresp_o(hp1_axi_bresp)
+
+     ,.araddr_i(hp1_axi_araddr)
+     ,.arburst_i(hp1_axi_arburst)
+     ,.arlen_i(hp1_axi_arlen)
+     ,.arvalid_i(hp1_axi_arvalid)
+     ,.arready_o(hp1_axi_arready)
+     ,.arid_i(hp1_axi_arid)
+
+     ,.rdata_o(hp1_axi_rdata)
+     ,.rlast_o(hp1_axi_rlast)
+     ,.rvalid_o(hp1_axi_rvalid)
+     ,.rready_i(hp1_axi_rready)
+     ,.rid_o(hp1_axi_rid)
+     ,.rresp_o(hp1_axi_rresp)
+     );
+`endif
+
+`ifdef HP2_ENABLE
+  logic [C_HP2_AXI_ADDR_WIDTH-1:0]      hp2_axi_awaddr;
+  logic [1:0]                           hp2_axi_awburst;
+  logic [7:0]                           hp2_axi_awlen;
+  logic                                 hp2_axi_awvalid;
+  logic                                 hp2_axi_awready;
+  logic [0:0]                           hp2_axi_awid;
+
+  logic [C_HP2_AXI_DATA_WIDTH-1:0]      hp2_axi_wdata;
+  logic [C_HP2_AXI_STRB_WIDTH-1:0]      hp2_axi_wstrb;
+  logic                                 hp2_axi_wlast;
+  logic                                 hp2_axi_wvalid;
+  logic                                 hp2_axi_wready;
+
+  logic                                 hp2_axi_bvalid;
+  logic                                 hp2_axi_bready;
+  logic [0:0]                           hp2_axi_bid;
+  logic [1:0]                           hp2_axi_bresp;
+
+  logic [C_HP2_AXI_ADDR_WIDTH-1:0]      hp2_axi_araddr;
+  logic [1:0]                           hp2_axi_arburst;
+  logic [7:0]                           hp2_axi_arlen;
+  logic                                 hp2_axi_arvalid;
+  logic                                 hp2_axi_arready;
+  logic [0:0]                           hp2_axi_arid;
+
+  logic [C_HP2_AXI_DATA_WIDTH-1:0]      hp2_axi_rdata;
+  logic                                 hp2_axi_rlast;
+  logic                                 hp2_axi_rvalid;
+  logic                                 hp2_axi_rready;
+  logic [0:0]                           hp2_axi_rid;
+  logic [1:0]                           hp2_axi_rresp;
+
+  bsg_nonsynth_axi4_to_dpi
+   #(.addr_width_p(C_HP2_AXI_ADDR_WIDTH), .data_width_p(C_HP2_AXI_DATA_WIDTH))
+   axi11
+    (.aclk_i(aclk)
+     ,.aresetn_i(aresetn)
+
      ,.awaddr_i(hp2_axi_awaddr)
-     ,.awprot_i(hp2_axi_awprot)
+     ,.awburst_i(hp2_axi_awburst)
+     ,.awlen_i(hp2_axi_awlen)
      ,.awvalid_i(hp2_axi_awvalid)
      ,.awready_o(hp2_axi_awready)
+     ,.awid_i(hp2_axi_awid)
+
      ,.wdata_i(hp2_axi_wdata)
      ,.wstrb_i(hp2_axi_wstrb)
+     ,.wlast_i(hp2_axi_wlast)
      ,.wvalid_i(hp2_axi_wvalid)
      ,.wready_o(hp2_axi_wready)
-     ,.bresp_o(hp2_axi_bresp)
+
      ,.bvalid_o(hp2_axi_bvalid)
      ,.bready_i(hp2_axi_bready)
+     ,.bid_o(hp2_axi_bid)
+     ,.bresp_o(hp2_axi_bresp)
 
      ,.araddr_i(hp2_axi_araddr)
-     ,.arprot_i(hp2_axi_arprot)
+     ,.arburst_i(hp2_axi_arburst)
+     ,.arlen_i(hp2_axi_arlen)
      ,.arvalid_i(hp2_axi_arvalid)
      ,.arready_o(hp2_axi_arready)
+     ,.arid_i(hp2_axi_arid)
+
      ,.rdata_o(hp2_axi_rdata)
-     ,.rresp_o(hp2_axi_rresp)
+     ,.rlast_o(hp2_axi_rlast)
      ,.rvalid_o(hp2_axi_rvalid)
      ,.rready_i(hp2_axi_rready)
+     ,.rid_o(hp2_axi_rid)
+     ,.rresp_o(hp2_axi_rresp)
      );
 `endif
 
 `ifdef SP0_ENABLE
   logic sp0_axi_tvalid, sp0_axi_tready;
   logic [C_SP0_AXI_DATA_WIDTH-1:0] sp0_axi_tdata;
-  logic [(C_SP0_AXI_DATA_WIDTH/8)-1:0] sp0_axi_tkeep;
   logic sp0_axi_tlast;
   bsg_nonsynth_dpi_to_axis
    #(.data_width_p(C_SP0_AXI_DATA_WIDTH))
-   axis6
+   axis12
     (.aclk_i(aclk)
      ,.aresetn_i(aresetn)
 
      ,.tdata_o(sp0_axi_tdata)
      ,.tvalid_o(sp0_axi_tvalid)
-     ,.tkeep_o(sp0_axi_tkeep)
      ,.tlast_o(sp0_axi_tlast)
      ,.tready_i(sp0_axi_tready)
      );
@@ -442,17 +819,15 @@ module bsg_nonsynth_zynq_testbench;
 `ifdef SP1_ENABLE
   logic sp1_axi_tvalid, sp1_axi_tready;
   logic [C_SP1_AXI_DATA_WIDTH-1:0] sp1_axi_tdata;
-  logic [(C_SP1_AXI_DATA_WIDTH/8)-1:0] sp1_axi_tkeep;
   logic sp1_axi_tlast;
   bsg_nonsynth_dpi_to_axis
    #(.data_width_p(C_SP1_AXI_DATA_WIDTH))
-   axis7
+   axis13
     (.aclk_i(aclk)
      ,.aresetn_i(aresetn)
 
      ,.tdata_o(sp1_axi_tdata)
      ,.tvalid_o(sp1_axi_tvalid)
-     ,.tkeep_o(sp1_axi_tkeep)
      ,.tlast_o(sp1_axi_tlast)
      ,.tready_i(sp1_axi_tready)
      );
@@ -461,17 +836,15 @@ module bsg_nonsynth_zynq_testbench;
 `ifdef SP2_ENABLE
   logic sp2_axi_tvalid, sp2_axi_tready;
   logic [C_SP2_AXI_DATA_WIDTH-1:0] sp2_axi_tdata;
-  logic [(C_SP2_AXI_DATA_WIDTH/8)-1:0] sp2_axi_tkeep;
   logic sp2_axi_tlast;
   bsg_nonsynth_dpi_to_axis
    #(.data_width_p(C_SP2_AXI_DATA_WIDTH))
-   axis8
+   axis14
     (.aclk_i(aclk)
      ,.aresetn_i(aresetn)
 
      ,.tdata_o(sp2_axi_tdata)
      ,.tvalid_o(sp2_axi_tvalid)
-     ,.tkeep_o(sp2_axi_tkeep)
      ,.tlast_o(sp2_axi_tlast)
      ,.tready_i(sp2_axi_tready)
      );
@@ -480,17 +853,15 @@ module bsg_nonsynth_zynq_testbench;
 `ifdef MP0_ENABLE
   logic mp0_axi_tvalid, mp0_axi_tready;
   logic [C_MP0_AXI_DATA_WIDTH-1:0] mp0_axi_tdata;
-  logic [(C_MP0_AXI_DATA_WIDTH/8)-1:0] mp0_axi_tkeep;
   logic mp0_axi_tlast;
   bsg_nonsynth_axis_to_dpi
    #(.data_width_p(C_MP0_AXI_DATA_WIDTH))
-   axis9
+   axis15
     (.aclk_i(aclk)
      ,.aresetn_i(aresetn)
 
      ,.tdata_i(mp0_axi_tdata)
      ,.tvalid_i(mp0_axi_tvalid)
-     ,.tkeep_i(mp0_axi_tkeep)
      ,.tready_o(mp0_axi_tready)
      ,.tlast_i(mp0_axi_tlast)
      );
@@ -499,17 +870,15 @@ module bsg_nonsynth_zynq_testbench;
 `ifdef MP1_ENABLE
   logic mp1_axi_tvalid, mp1_axi_tready;
   logic [C_MP1_AXI_DATA_WIDTH-1:0] mp1_axi_tdata;
-  logic [(C_MP1_AXI_DATA_WIDTH/8)-1:0] mp1_axi_tkeep;
   logic mp1_axi_tlast;
   bsg_nonsynth_axis_to_dpi
    #(.data_width_p(C_MP1_AXI_DATA_WIDTH))
-   axis10
+   axis16
     (.aclk_i(aclk)
      ,.aresetn_i(aresetn)
 
      ,.tdata_i(mp1_axi_tdata)
      ,.tvalid_i(mp1_axi_tvalid)
-     ,.tkeep_i(mp1_axi_tkeep)
      ,.tready_o(mp1_axi_tready)
      ,.tlast_i(mp1_axi_tlast)
      );
@@ -518,17 +887,15 @@ module bsg_nonsynth_zynq_testbench;
 `ifdef MP2_ENABLE
   logic mp2_axi_tvalid, mp2_axi_tready;
   logic [C_MP2_AXI_DATA_WIDTH-1:0] mp2_axi_tdata;
-  logic [(C_MP2_AXI_DATA_WIDTH/8)-1:0] mp2_axi_tkeep;
   logic mp2_axi_tlast;
   bsg_nonsynth_axis_to_dpi
    #(.data_width_p(C_MP2_AXI_DATA_WIDTH))
-   axis11
+   axis17
     (.aclk_i(aclk)
      ,.aresetn_i(aresetn)
 
      ,.tdata_i(mp2_axi_tdata)
      ,.tvalid_i(mp2_axi_tvalid)
-     ,.tkeep_i(mp2_axi_tkeep)
      ,.tready_o(mp2_axi_tready)
      ,.tlast_i(mp2_axi_tlast)
      );
@@ -546,6 +913,30 @@ module bsg_nonsynth_zynq_testbench;
 `ifdef GP2_ENABLE
      .C_GP2_AXI_DATA_WIDTH(C_GP2_AXI_DATA_WIDTH),
      .C_GP2_AXI_ADDR_WIDTH(C_GP2_AXI_ADDR_WIDTH),
+`endif
+`ifdef IP0_ENABLE
+     .C_IP0_AXI_DATA_WIDTH(C_IP0_AXI_DATA_WIDTH),
+     .C_IP0_AXI_ADDR_WIDTH(C_IP0_AXI_ADDR_WIDTH),
+`endif
+`ifdef IP1_ENABLE
+     .C_IP1_AXI_DATA_WIDTH(C_IP1_AXI_DATA_WIDTH),
+     .C_IP1_AXI_ADDR_WIDTH(C_IP1_AXI_ADDR_WIDTH),
+`endif
+`ifdef IP2_ENABLE
+     .C_IP2_AXI_DATA_WIDTH(C_IP2_AXI_DATA_WIDTH),
+     .C_IP2_AXI_ADDR_WIDTH(C_IP2_AXI_ADDR_WIDTH),
+`endif
+`ifdef BP0_ENABLE
+     .C_BP0_AXI_DATA_WIDTH(C_BP0_AXI_DATA_WIDTH),
+     .C_BP0_AXI_ADDR_WIDTH(C_BP0_AXI_ADDR_WIDTH),
+`endif
+`ifdef BP1_ENABLE
+     .C_BP1_AXI_DATA_WIDTH(C_BP1_AXI_DATA_WIDTH),
+     .C_BP1_AXI_ADDR_WIDTH(C_BP1_AXI_ADDR_WIDTH),
+`endif
+`ifdef BP2_ENABLE
+     .C_BP2_AXI_DATA_WIDTH(C_BP2_AXI_DATA_WIDTH),
+     .C_BP2_AXI_ADDR_WIDTH(C_BP2_AXI_ADDR_WIDTH),
 `endif
 `ifdef HP0_ENABLE
      .C_HP0_AXI_DATA_WIDTH(C_HP0_AXI_DATA_WIDTH),
@@ -616,15 +1007,6 @@ module bsg_nonsynth_zynq_testbench;
            $display("[%0t] Tracing to vcdplus.vpd...\n", $time);
            $vcdpluson();
            $vcdplusautoflushon();
-         end
-     `endif
-   `endif
-   `ifdef XCELIUM
-     `ifdef SHMPLUSON
-       if ($test$plusargs("bsg_trace"))
-         begin
-           $shm_open("dump.shm");
-           $shm_probe("ASM");
          end
      `endif
    `endif

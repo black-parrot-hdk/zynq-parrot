@@ -75,7 +75,6 @@ package bp_common_pkg;
                               | (1 << e_cfg_amo_fetch_logic)
                               | (1 << e_cfg_amo_fetch_arithmetic)
       ,l2_features          : (1 << e_cfg_enabled) | (1 << e_cfg_writeback)
-                              | (1 << e_cfg_word_tracking)
 
       ,l2_data_width: 64
       ,l2_fill_width: 64

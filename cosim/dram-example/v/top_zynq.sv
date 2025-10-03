@@ -39,43 +39,38 @@ module top_zynq
    , output wire [C_HP0_AXI_ADDR_WIDTH-1:0]      hp0_axi_awaddr
    , output wire                                 hp0_axi_awvalid
    , input wire                                  hp0_axi_awready
-   , output wire [5:0]                           hp0_axi_awid
+   , output wire [0:0]                           hp0_axi_awid
    , output wire                                 hp0_axi_awlock
-   , output wire [3:0]                           hp0_axi_awcache
    , output wire [2:0]                           hp0_axi_awprot
    , output wire [7:0]                           hp0_axi_awlen
    , output wire [2:0]                           hp0_axi_awsize
    , output wire [1:0]                           hp0_axi_awburst
-   , output wire [3:0]                           hp0_axi_awqos
 
    , output wire [C_HP0_AXI_DATA_WIDTH-1:0]      hp0_axi_wdata
    , output wire                                 hp0_axi_wvalid
    , input wire                                  hp0_axi_wready
-   , output wire [5:0]                           hp0_axi_wid
    , output wire                                 hp0_axi_wlast
    , output wire [(C_HP0_AXI_DATA_WIDTH/8)-1:0]  hp0_axi_wstrb
 
    , input wire                                  hp0_axi_bvalid
    , output wire                                 hp0_axi_bready
-   , input wire [5:0]                            hp0_axi_bid
+   , input wire [0:0]                            hp0_axi_bid
    , input wire [1:0]                            hp0_axi_bresp
 
    , output wire [C_HP0_AXI_ADDR_WIDTH-1:0]      hp0_axi_araddr
    , output wire                                 hp0_axi_arvalid
    , input wire                                  hp0_axi_arready
-   , output wire [5:0]                           hp0_axi_arid
+   , output wire [0:0]                           hp0_axi_arid
    , output wire                                 hp0_axi_arlock
-   , output wire [3:0]                           hp0_axi_arcache
    , output wire [2:0]                           hp0_axi_arprot
    , output wire [7:0]                           hp0_axi_arlen
    , output wire [2:0]                           hp0_axi_arsize
    , output wire [1:0]                           hp0_axi_arburst
-   , output wire [3:0]                           hp0_axi_arqos
 
    , input wire [C_HP0_AXI_DATA_WIDTH-1:0]       hp0_axi_rdata
    , input wire                                  hp0_axi_rvalid
    , output wire                                 hp0_axi_rready
-   , input wire [5:0]                            hp0_axi_rid
+   , input wire [0:0]                            hp0_axi_rid
    , input wire                                  hp0_axi_rlast
    , input wire [1:0]                            hp0_axi_rresp
    );
@@ -113,7 +108,7 @@ module top_zynq
    ///////////////////////////////////////////////////////////////////////////////////////
    // ps_to_pl_fifo_data_lo:
    //
-   // 0: DRAM request TYPE (0 = write, 1 = read)
+   // 0: DRAM request TYPE (0 = read, 1 = write)
    // 4: DRAM request ADDR
    // 8: DRAM request DATA
    logic [num_fifos_ps_to_pl_lp-1:0][C_GP0_AXI_DATA_WIDTH-1:0] ps_to_pl_fifo_data_lo;
@@ -256,17 +251,14 @@ module top_zynq
    assign m_axil_awready = hp0_axi_awready;
    assign hp0_axi_awid = '0;
    assign hp0_axi_awlock = '0;
-   assign hp0_axi_awcache = '0;
    assign hp0_axi_awprot = '0;
    assign hp0_axi_awlen = '0;
    assign hp0_axi_awsize = 3'b010; // 32b
    assign hp0_axi_awburst = 2'b01; // incr
-   assign hp0_axi_awqos = '0;
 
    assign hp0_axi_wdata = m_axil_wdata;
    assign hp0_axi_wvalid = m_axil_wvalid;
    assign m_axil_wready = hp0_axi_wready;
-   assign hp0_axi_wid = '0;
    assign hp0_axi_wlast = 1'b1;
    assign hp0_axi_wstrb = m_axil_wstrb;
 
@@ -279,12 +271,10 @@ module top_zynq
    assign m_axil_arready = hp0_axi_arready;
    assign hp0_axi_arid = '0;
    assign hp0_axi_arlock = '0;
-   assign hp0_axi_arcache = '0;
    assign hp0_axi_arprot = '0;
    assign hp0_axi_arlen = '0;
    assign hp0_axi_arsize = 3'b010; // 32b
    assign hp0_axi_arburst = 2'b01; // incr
-   assign hp0_axi_arqos = '0;
 
    assign m_axil_rdata = hp0_axi_rdata;
    assign m_axil_rresp = hp0_axi_rresp;

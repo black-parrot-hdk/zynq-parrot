@@ -64,10 +64,6 @@ module bsg_zynq_pl_shell #
     input wire                                                    S_AXI_ARESETN,
                 // Write address (issued by master, acceped by Slave)
     input wire [C_S_AXI_ADDR_WIDTH-1 : 0]                         S_AXI_AWADDR,
-                // Write channel Protection type. This signal indicates the
-                // privilege and security level of the transaction, and whether
-                // the transaction is a data access or an instruction access.
-    input wire [2 : 0]                                            S_AXI_AWPROT,
                 // Write address valid. This signal indicates that the master signaling
                 // valid write address and control information.
     input wire                                                    S_AXI_AWVALID,
@@ -100,9 +96,6 @@ module bsg_zynq_pl_shell #
                 // Protection type. This signal indicates the privilege
                 // and security level of the transaction, and whether the
                 // transaction is a data access or an instruction access.
-    input wire [2 : 0]                                            S_AXI_ARPROT,
-                // Read address valid. This signal indicates that the channel
-                // is signaling valid read address and control information.
     input wire                                                    S_AXI_ARVALID,
                 // Read address ready. This signal indicates that the slave is
                 // ready to accept an address and associated control signals.

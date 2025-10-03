@@ -24,7 +24,6 @@
         input wire  aresetn,
 
         input wire [C_GP0_AXI_ADDR_WIDTH-1:0] gp0_axi_awaddr,
-        input wire [2:0] gp0_axi_awprot,
         input wire  gp0_axi_awvalid,
         output wire  gp0_axi_awready,
         input wire [C_GP0_AXI_DATA_WIDTH-1:0] gp0_axi_wdata,
@@ -35,7 +34,6 @@
         output wire  gp0_axi_bvalid,
         input wire  gp0_axi_bready,
         input wire [C_GP0_AXI_ADDR_WIDTH-1:0] gp0_axi_araddr,
-        input wire [2:0] gp0_axi_arprot,
         input wire  gp0_axi_arvalid,
         output wire  gp0_axi_arready,
         output wire [C_GP0_AXI_DATA_WIDTH-1:0] gp0_axi_rdata,
@@ -53,7 +51,6 @@
        ,.aresetn(aresetn)
 
        ,.gp0_axi_awaddr(gp0_axi_awaddr)
-       ,.gp0_axi_awprot(gp0_axi_awprot)
        ,.gp0_axi_awvalid(gp0_axi_awvalid)
        ,.gp0_axi_awready(gp0_axi_awready)
 
@@ -67,7 +64,6 @@
        ,.gp0_axi_bready(gp0_axi_bready)
 
        ,.gp0_axi_araddr(gp0_axi_araddr)
-       ,.gp0_axi_arprot(gp0_axi_arprot)
        ,.gp0_axi_arvalid(gp0_axi_arvalid)
        ,.gp0_axi_arready(gp0_axi_arready)
 

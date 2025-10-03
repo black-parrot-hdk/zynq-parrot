@@ -23,10 +23,6 @@
 #define ZYNQ_AXI_TIMEOUT 1000
 #endif
 
-extern "C" {
-int bsg_dpi_time();
-}
-
 typedef boost::coroutines2::coroutine<void>::pull_type coro_t;
 typedef boost::coroutines2::coroutine<void>::push_type yield_t;
 
@@ -50,7 +46,6 @@ template <unsigned int D> class saxis {
     pin<1> p_tready;
     pin<1> p_tvalid;
     pin<D> p_tdata;
-    pin<D / 8> p_tkeep;
     pin<1> p_tlast;
 
     // We use a boolean instead of true mutex so that we can check it
@@ -75,7 +70,6 @@ template <unsigned int D> class saxis {
           p_tready(string(base) + string(".tready_gpio")),
           p_tvalid(string(base) + string(".tvalid_gpio")),
           p_tdata(string(base) + string(".tdata_gpio")),
-          p_tkeep(string(base) + string(".tkeep_gpio")),
           p_tlast(string(base) + string(".tlast_gpio")) {
         std::cout << "Instantiating SAXIS at " << base << std::endl;
     }
@@ -142,7 +136,6 @@ template <unsigned int D> class maxis {
     pin<1> p_tready;
     pin<1> p_tvalid;
     pin<D> p_tdata;
-    pin<D / 8> p_tkeep;
     pin<1> p_tlast;
 
     // We use a boolean instead of true mutex so that we can check it
@@ -167,7 +160,6 @@ template <unsigned int D> class maxis {
           p_tready(string(base) + string(".tready_gpio")),
           p_tvalid(string(base) + string(".tvalid_gpio")),
           p_tdata(string(base) + string(".tdata_gpio")),
-          p_tkeep(string(base) + string(".tkeep_gpio")),
           p_tlast(string(base) + string(".tlast_gpio")) {
         std::cout << "Instantiating MAXIS at " << base << std::endl;
     }
@@ -191,7 +183,6 @@ template <unsigned int D> class maxis {
         this->p_tvalid = 1;
         this->p_tdata = tdata;
         this->p_tlast = tlast;
-        this->p_tkeep = 0xf; // Do not support tkeep for now
         do {
             // check timeout
             if (timeout_counter++ == ZYNQ_AXI_TIMEOUT) {

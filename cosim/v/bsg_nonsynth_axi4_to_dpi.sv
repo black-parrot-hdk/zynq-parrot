@@ -1,7 +1,7 @@
 
 `include "bsg_defines.sv"
 
-module bsg_nonsynth_axil_to_dpi
+module bsg_nonsynth_axi4_to_dpi
  #(parameter `BSG_INV_PARAM(addr_width_p)
    , parameter `BSG_INV_PARAM(data_width_p)
    , localparam strb_width_lp = data_width_p >> 3
@@ -10,25 +10,35 @@ module bsg_nonsynth_axil_to_dpi
    , input                           aresetn_i
 
    , input [addr_width_p-1:0]        awaddr_i
+   , input [1:0]                     awburst_i
+   , input [7:0]                     awlen_i
    , input                           awvalid_i
    , output logic                    awready_o
+   , input [0:0]                     awid_i
 
    , input [data_width_p-1:0]        wdata_i
    , input [strb_width_lp-1:0]       wstrb_i
+   , input                           wlast_i
    , input                           wvalid_i
    , output logic                    wready_o
 
    , output logic                    bvalid_o
    , input                           bready_i
+   , output logic [0:0]              bid_o
    , output logic [1:0]              bresp_o
 
    , input [addr_width_p-1:0]        araddr_i
+   , input [1:0]                     arburst_i
+   , input [7:0]                     arlen_i
    , input                           arvalid_i
    , output logic                    arready_o
+   , input [0:0]                     arid_i
 
    , output logic [data_width_p-1:0] rdata_o
+   , output logic                    rlast_o
    , output logic                    rvalid_o
    , input                           rready_i
+   , output logic [0:0]              rid_o
    , output logic [1:0]              rresp_o
    );
 
@@ -48,6 +58,16 @@ module bsg_nonsynth_axil_to_dpi
     (.gpio_i(awaddr_i), .gpio_o());
 
   bsg_nonsynth_dpi_gpio
+   #(.width_p(8), .use_input_p(1))
+   awlen_gpio
+    (.gpio_i(awlen_i), .gpio_o());
+
+  bsg_nonsynth_dpi_gpio
+   #(.width_p(2), .use_input_p(1))
+   awburst_gpio
+    (.gpio_i(awburst_i), .gpio_o());
+
+  bsg_nonsynth_dpi_gpio
    #(.width_p(1), .use_input_p(1))
    awvalid_gpio
     (.gpio_i(awvalid_i), .gpio_o());
@@ -56,6 +76,11 @@ module bsg_nonsynth_axil_to_dpi
    #(.width_p(1), .use_output_p(1))
    awready_gpio
     (.gpio_i(), .gpio_o(awready_o));
+
+  bsg_nonsynth_dpi_gpio
+   #(.width_p(1), .use_input_p(1))
+   awid_gpio
+    (.gpio_i(awid_i), .gpio_o());
 
   bsg_nonsynth_dpi_gpio
    #(.width_p(data_width_p), .use_input_p(1))
@@ -69,6 +94,11 @@ module bsg_nonsynth_axil_to_dpi
 
   bsg_nonsynth_dpi_gpio
    #(.width_p(1), .use_input_p(1))
+   wlast_gpio
+    (.gpio_i(wlast_i), .gpio_o());
+
+  bsg_nonsynth_dpi_gpio
+   #(.width_p(1), .use_input_p(1))
    wvalid_gpio
     (.gpio_i(wvalid_i), .gpio_o());
 
@@ -76,11 +106,6 @@ module bsg_nonsynth_axil_to_dpi
    #(.width_p(1), .use_output_p(1))
    wready_gpio
     (.gpio_i(), .gpio_o(wready_o));
-
-  bsg_nonsynth_dpi_gpio
-   #(.width_p(2), .use_output_p(1))
-   bresp_gpio
-    (.gpio_i(), .gpio_o(bresp_o));
 
   bsg_nonsynth_dpi_gpio
    #(.width_p(1), .use_output_p(1))
@@ -93,9 +118,29 @@ module bsg_nonsynth_axil_to_dpi
     (.gpio_i(bready_i), .gpio_o());
 
   bsg_nonsynth_dpi_gpio
+   #(.width_p(1), .use_output_p(1))
+   bid_gpio
+    (.gpio_i(), .gpio_o(bid_o));
+
+  bsg_nonsynth_dpi_gpio
+   #(.width_p(2), .use_output_p(1))
+   bresp_gpio
+    (.gpio_i(), .gpio_o(bresp_o));
+
+  bsg_nonsynth_dpi_gpio
    #(.width_p(addr_width_p), .use_input_p(1))
    araddr_gpio
     (.gpio_i(araddr_i), .gpio_o());
+
+  bsg_nonsynth_dpi_gpio
+   #(.width_p(2), .use_input_p(1))
+   arburst_gpio
+    (.gpio_i(arburst_i), .gpio_o());
+
+  bsg_nonsynth_dpi_gpio
+   #(.width_p(8), .use_input_p(1))
+   arlen_gpio
+    (.gpio_i(arlen_i), .gpio_o());
 
   bsg_nonsynth_dpi_gpio
    #(.width_p(1), .use_input_p(1))
@@ -108,14 +153,24 @@ module bsg_nonsynth_axil_to_dpi
     (.gpio_i(), .gpio_o(arready_o));
 
   bsg_nonsynth_dpi_gpio
+   #(.width_p(1), .use_input_p(1))
+   arid_gpio
+    (.gpio_i(arid_i), .gpio_o());
+
+  bsg_nonsynth_dpi_gpio
    #(.width_p(data_width_p), .use_output_p(1))
    rdata_gpio
     (.gpio_i(), .gpio_o(rdata_o));
 
   bsg_nonsynth_dpi_gpio
-   #(.width_p(2), .use_output_p(1))
-   rresp_gpio
-    (.gpio_i(), .gpio_o(rresp_o));
+   #(.width_p(1), .use_output_p(1))
+   rlast_gpio
+    (.gpio_i(), .gpio_o(rlast_o));
+
+  bsg_nonsynth_dpi_gpio
+   #(.width_p(1), .use_input_p(1))
+   rready_gpio
+    (.gpio_i(rready_i), .gpio_o());
 
   bsg_nonsynth_dpi_gpio
    #(.width_p(1), .use_output_p(1))
@@ -123,11 +178,14 @@ module bsg_nonsynth_axil_to_dpi
     (.gpio_i(), .gpio_o(rvalid_o));
 
   bsg_nonsynth_dpi_gpio
-   #(.width_p(1), .use_input_p(1))
-   rready_gpio
-    (.gpio_i(rready_i), .gpio_o());
+   #(.width_p(1), .use_output_p(1))
+   rid_gpio
+    (.gpio_i(), .gpio_o(rid_o));
+
+  bsg_nonsynth_dpi_gpio
+   #(.width_p(2), .use_output_p(1))
+   rresp_gpio
+    (.gpio_i(), .gpio_o(rresp_o));
 
 endmodule
-
-`BSG_ABSTRACT_MODULE(bsg_nonsynth_axil_to_dpi)
 

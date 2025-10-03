@@ -12,7 +12,6 @@ module top_zynq
    , input                                       aresetn
 
    , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     gp0_axi_awaddr
-   , input wire [2 : 0]                          gp0_axi_awprot
    , input wire                                  gp0_axi_awvalid
    , output wire                                 gp0_axi_awready
    , input wire [C_GP0_AXI_DATA_WIDTH-1 : 0]     gp0_axi_wdata
@@ -23,7 +22,6 @@ module top_zynq
    , output wire                                 gp0_axi_bvalid
    , input wire                                  gp0_axi_bready
    , input wire [C_GP0_AXI_ADDR_WIDTH-1 : 0]     gp0_axi_araddr
-   , input wire [2 : 0]                          gp0_axi_arprot
    , input wire                                  gp0_axi_arvalid
    , output wire                                 gp0_axi_arready
    , output wire [C_GP0_AXI_DATA_WIDTH-1 : 0]    gp0_axi_rdata
@@ -72,7 +70,6 @@ module top_zynq
         ,.S_AXI_ACLK   (aclk           )
         ,.S_AXI_ARESETN(aresetn        )
         ,.S_AXI_AWADDR (gp0_axi_awaddr )
-        ,.S_AXI_AWPROT (gp0_axi_awprot )
         ,.S_AXI_AWVALID(gp0_axi_awvalid)
         ,.S_AXI_AWREADY(gp0_axi_awready)
         ,.S_AXI_WDATA  (gp0_axi_wdata  )
@@ -83,7 +80,6 @@ module top_zynq
         ,.S_AXI_BVALID (gp0_axi_bvalid )
         ,.S_AXI_BREADY (gp0_axi_bready )
         ,.S_AXI_ARADDR (gp0_axi_araddr )
-        ,.S_AXI_ARPROT (gp0_axi_arprot )
         ,.S_AXI_ARVALID(gp0_axi_arvalid)
         ,.S_AXI_ARREADY(gp0_axi_arready)
         ,.S_AXI_RDATA  (gp0_axi_rdata  )
