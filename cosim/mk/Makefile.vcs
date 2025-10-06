@@ -33,7 +33,8 @@ RUN_ARGS += +bsg_trace
 RUN_ARGS += +vpdfilesize+512
 endif
 run: ## runs the simv executable, TRACE=1 to trace
-run: simv $(RUN_COLLATERAL)
+run: | $(RUN_COLLATERAL)
+run: simv
 	@./$< $(VCS_RUN_OPTS) $(RUN_ARGS) 2>&1 | $(TEE_I) run.log
 
 view: ## views the dump with DVE
@@ -46,6 +47,7 @@ BUILD_ARGS += +define+VCDPLUSON
 endif
 build: ## builds the simv executable
 build: simv
-simv: $(BUILD_COLLATERAL)
-	@$(VCS) $(VCS_BUILD_OPTS) $(BUILD_ARGS) 2>&1 | $(TEE_I) build.log
+simv: | $(BUILD_COLLATERAL)
+simv: $(VPACKAGES) $(VSOURCES) $(CSOURCES)
+	@$(VCS) $(VCS_BUILD_OPTS) $(BUILD_ARGS) $^ 2>&1 | $(TEE_I) build.log
 

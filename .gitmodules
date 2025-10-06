@@ -1,15 +1,18 @@
 [submodule "import/black-parrot"]
     path = import/black-parrot
     url = https://github.com/black-parrot/black-parrot.git
-    branch = dev
+    branch = master
+    ignore = dirty
 [submodule "import/black-parrot-subsystems"]
     path = import/black-parrot-subsystems
     url = https://github.com/black-parrot-hdk/black-parrot-subsystems
     branch = main
+    ignore = dirty
 [submodule "import/bsg_manycore"]
     path = import/bsg_manycore
     url = https://github.com/bespoke-silicon-group/bsg_manycore
-    branch = master
+    branch = ci_update_2025
+    ignore = dirty
 [submodule "import/black-parrot-tools"]
     path = import/black-parrot-tools
     url = https://github.com/black-parrot/black-parrot-tools
@@ -24,4 +27,14 @@
     path = import/bsg_replicant
     url = https://github.com/bespoke-silicon-group/bsg_replicant
     branch = main
+    ignore = dirty
+[submodule "import/HardFloat"]
+    path = import/HardFloat
+    url = https://github.com/bsg-external/HardFloat
+    branch = master
+    ignore = dirty
+[submodule "basejump_stl"]
+    path = import/basejump_stl
+    url = https://github.com/bespoke-silicon-group/basejump_stl
+    branch = master
     ignore = dirty

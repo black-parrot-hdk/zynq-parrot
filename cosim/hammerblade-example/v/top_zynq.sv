@@ -258,7 +258,7 @@ module top_zynq
   localparam lg_wh_ruche_factor_lp = `BSG_SAFE_CLOG2(bsg_machine_wh_ruche_factor_gp);
   
   localparam num_vcaches_per_link_lp = (2*bsg_machine_pods_x_gp*bsg_machine_pod_tiles_x_gp)/bsg_machine_wh_ruche_factor_gp/2;
-  localparam num_dma_lp = 2*bsg_machine_pods_y_gp*2*bsg_machine_pod_llcache_rows_gp*bsg_machine_wh_ruche_factor_gp*num_vcaches_per_link_lp;
+  localparam num_dma_lp = 2*bsg_machine_pods_y_gp*2*bsg_machine_wh_ruche_factor_gp*num_vcaches_per_link_lp;
   localparam lg_num_vcaches_per_link_lp = `BSG_SAFE_CLOG2(num_vcaches_per_link_lp);
   localparam lg_num_dma_lp = `BSG_SAFE_CLOG2(num_dma_lp);
 
@@ -266,7 +266,7 @@ module top_zynq
   `declare_bsg_manycore_ruche_x_link_sif_s(bsg_machine_noc_epa_width_gp,bsg_machine_noc_data_width_gp,bsg_machine_noc_coord_x_width_gp,bsg_machine_noc_coord_y_width_gp);
   `declare_bsg_ready_and_link_sif_s(bsg_machine_wh_flit_width_lp, wh_link_sif_s);
   bsg_manycore_link_sif_s io_link_sif_li, io_link_sif_lo;
-  wh_link_sif_s [E:W][S:N][bsg_machine_pod_llcache_rows_gp-1:0][bsg_machine_wh_ruche_factor_gp-1:0] wh_link_sif_li, wh_link_sif_lo;
+  wh_link_sif_s [E:W][S:N][bsg_machine_wh_ruche_factor_gp-1:0] wh_link_sif_li, wh_link_sif_lo;
 ; 
 
   // BSG TAG MASTER
@@ -541,80 +541,77 @@ module top_zynq
   // WH to cache dma
   `declare_bsg_cache_dma_pkt_s(bsg_machine_llcache_addr_width_lp, bsg_machine_llcache_line_words_gp);
 
-  bsg_cache_dma_pkt_s [E:W][S:N][bsg_machine_pod_llcache_rows_gp-1:0][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0] dma_pkt_lo;
-  logic [E:W][S:N][bsg_machine_pod_llcache_rows_gp-1:0][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0] dma_pkt_v_lo;
-  logic [E:W][S:N][bsg_machine_pod_llcache_rows_gp-1:0][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0] dma_pkt_yumi_li;
+  bsg_cache_dma_pkt_s [E:W][S:N][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0] dma_pkt_lo;
+  logic [E:W][S:N][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0] dma_pkt_v_lo;
+  logic [E:W][S:N][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0] dma_pkt_yumi_li;
 
-  logic [E:W][S:N][bsg_machine_pod_llcache_rows_gp-1:0][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0][bsg_machine_llcache_channel_width_gp-1:0] dma_data_li;
-  logic [E:W][S:N][bsg_machine_pod_llcache_rows_gp-1:0][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0] dma_data_v_li;
-  logic [E:W][S:N][bsg_machine_pod_llcache_rows_gp-1:0][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0] dma_data_ready_lo;
+  logic [E:W][S:N][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0][bsg_machine_llcache_channel_width_gp-1:0] dma_data_li;
+  logic [E:W][S:N][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0] dma_data_v_li;
+  logic [E:W][S:N][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0] dma_data_ready_lo;
 
-  logic [E:W][S:N][bsg_machine_pod_llcache_rows_gp-1:0][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0][bsg_machine_llcache_channel_width_gp-1:0] dma_data_lo;
-  logic [E:W][S:N][bsg_machine_pod_llcache_rows_gp-1:0][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0] dma_data_v_lo;
-  logic [E:W][S:N][bsg_machine_pod_llcache_rows_gp-1:0][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0] dma_data_yumi_li;
+  logic [E:W][S:N][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0][bsg_machine_llcache_channel_width_gp-1:0] dma_data_lo;
+  logic [E:W][S:N][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0] dma_data_v_lo;
+  logic [E:W][S:N][bsg_machine_wh_ruche_factor_gp-1:0][num_vcaches_per_link_lp-1:0] dma_data_yumi_li;
 
-  wh_link_sif_s [E:W][S:N][bsg_machine_pod_llcache_rows_gp-1:0][bsg_machine_wh_ruche_factor_gp-1:0] buffered_wh_link_sif_li;
-  wh_link_sif_s [E:W][S:N][bsg_machine_pod_llcache_rows_gp-1:0][bsg_machine_wh_ruche_factor_gp-1:0] buffered_wh_link_sif_lo;
+  wh_link_sif_s [E:W][S:N][bsg_machine_wh_ruche_factor_gp-1:0] buffered_wh_link_sif_li;
+  wh_link_sif_s [E:W][S:N][bsg_machine_wh_ruche_factor_gp-1:0] buffered_wh_link_sif_lo;
 
   `declare_bsg_cache_wh_header_flit_s(bsg_machine_wh_flit_width_lp, bsg_machine_wh_cord_width_lp, bsg_machine_wh_len_width_lp, bsg_machine_wh_cid_width_lp);
   for (genvar i = W; i <= E; i++)
     begin : hs
       for (genvar k = N; k <= S; k++)
         begin : py
-          for (genvar n = 0; n < bsg_machine_pod_llcache_rows_gp; n++)
-            begin : row
-              for (genvar r = 0; r < bsg_machine_wh_ruche_factor_gp; r++)
-                begin : rf
-                  if (r == 0)
-                    begin : ninvert
-                      assign wh_link_sif_li[i][k][n][r] = buffered_wh_link_sif_li[i][k][n][r];
-                      assign buffered_wh_link_sif_lo[i][k][n][r] = wh_link_sif_lo[i][k][n][r];
-                    end
-                  else
-                    begin : invert
-                      assign wh_link_sif_li[i][k][n][r] = ~buffered_wh_link_sif_li[i][k][n][r];
-                      assign buffered_wh_link_sif_lo[i][k][n][r] = ~wh_link_sif_lo[i][k][n][r];
-                    end
-
-                  bsg_cache_wh_header_flit_s header_flit_in;
-                  assign header_flit_in = buffered_wh_link_sif_lo[i][k][n][r].data;
-
-                  wire [lg_num_vcaches_per_link_lp-1:0] dma_id_li = (num_vcaches_per_link_lp == 1)
-                    ? 1'b0
-                    : header_flit_in.src_cord[lg_wh_ruche_factor_lp+:lg_num_vcaches_per_link_lp];
-
-                  bsg_wormhole_to_cache_dma_fanout
-                   #(.num_dma_p(num_vcaches_per_link_lp)
-                     ,.dma_addr_width_p(bsg_machine_llcache_addr_width_lp)
-                     ,.dma_mask_width_p(bsg_machine_llcache_line_words_gp)
-                     ,.dma_burst_len_p(bsg_machine_llcache_line_words_gp*bsg_machine_llcache_data_width_lp/bsg_machine_llcache_channel_width_gp)
-
-                     ,.wh_flit_width_p(bsg_machine_wh_flit_width_lp)
-                     ,.wh_cid_width_p(bsg_machine_wh_cid_width_lp)
-                     ,.wh_len_width_p(bsg_machine_wh_len_width_lp)
-                     ,.wh_cord_width_p(bsg_machine_wh_cord_width_lp)
-                     )
-                   wh_to_dma
-                    (.clk_i(aclk)
-                     ,.reset_i(reset_r)
-  
-                     ,.wh_link_sif_i(buffered_wh_link_sif_lo[i][k][n][r])
-                     ,.wh_dma_id_i(dma_id_li)
-                     ,.wh_link_sif_o(buffered_wh_link_sif_li[i][k][n][r])
-
-                     ,.dma_pkt_o(dma_pkt_lo[i][k][n][r])
-                     ,.dma_pkt_v_o(dma_pkt_v_lo[i][k][n][r])
-                     ,.dma_pkt_yumi_i(dma_pkt_yumi_li[i][k][n][r])
-
-                     ,.dma_data_i(dma_data_li[i][k][n][r])
-                     ,.dma_data_v_i(dma_data_v_li[i][k][n][r])
-                     ,.dma_data_ready_and_o(dma_data_ready_lo[i][k][n][r])
-
-                     ,.dma_data_o(dma_data_lo[i][k][n][r])
-                     ,.dma_data_v_o(dma_data_v_lo[i][k][n][r])
-                     ,.dma_data_yumi_i(dma_data_yumi_li[i][k][n][r])
-                     );
+          for (genvar r = 0; r < bsg_machine_wh_ruche_factor_gp; r++)
+            begin : rf
+              if (r == 0)
+                begin : ninvert
+                  assign wh_link_sif_li[i][k][r] = buffered_wh_link_sif_li[i][k][r];
+                  assign buffered_wh_link_sif_lo[i][k][r] = wh_link_sif_lo[i][k][r];
                 end
+              else
+                begin : invert
+                  assign wh_link_sif_li[i][k][r] = ~buffered_wh_link_sif_li[i][k][r];
+                  assign buffered_wh_link_sif_lo[i][k][r] = ~wh_link_sif_lo[i][k][r];
+                end
+
+              bsg_cache_wh_header_flit_s header_flit_in;
+              assign header_flit_in = buffered_wh_link_sif_lo[i][k][r].data;
+
+              wire [lg_num_vcaches_per_link_lp-1:0] dma_id_li = (num_vcaches_per_link_lp == 1)
+                ? 1'b0
+                : header_flit_in.src_cord[lg_wh_ruche_factor_lp+:lg_num_vcaches_per_link_lp];
+
+              bsg_wormhole_to_cache_dma_fanout
+               #(.num_dma_p(num_vcaches_per_link_lp)
+                 ,.dma_addr_width_p(bsg_machine_llcache_addr_width_lp)
+                 ,.dma_mask_width_p(bsg_machine_llcache_line_words_gp)
+                 ,.dma_burst_len_p(bsg_machine_llcache_line_words_gp*bsg_machine_llcache_data_width_lp/bsg_machine_llcache_channel_width_gp)
+
+                 ,.wh_flit_width_p(bsg_machine_wh_flit_width_lp)
+                 ,.wh_cid_width_p(bsg_machine_wh_cid_width_lp)
+                 ,.wh_len_width_p(bsg_machine_wh_len_width_lp)
+                 ,.wh_cord_width_p(bsg_machine_wh_cord_width_lp)
+                 )
+               wh_to_dma
+                (.clk_i(aclk)
+                 ,.reset_i(reset_r)
+  
+                 ,.wh_link_sif_i(buffered_wh_link_sif_lo[i][k][r])
+                 ,.wh_dma_id_i(dma_id_li)
+                 ,.wh_link_sif_o(buffered_wh_link_sif_li[i][k][r])
+
+                 ,.dma_pkt_o(dma_pkt_lo[i][k][r])
+                 ,.dma_pkt_v_o(dma_pkt_v_lo[i][k][r])
+                 ,.dma_pkt_yumi_i(dma_pkt_yumi_li[i][k][r])
+
+                 ,.dma_data_i(dma_data_li[i][k][r])
+                 ,.dma_data_v_i(dma_data_v_li[i][k][r])
+                 ,.dma_data_ready_and_o(dma_data_ready_lo[i][k][r])
+
+                 ,.dma_data_o(dma_data_lo[i][k][r])
+                 ,.dma_data_v_o(dma_data_v_lo[i][k][r])
+                 ,.dma_data_yumi_i(dma_data_yumi_li[i][k][r])
+                 );
             end
         end
     end

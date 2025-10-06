@@ -1,10 +1,23 @@
 
+DESIGN_DIR           = $(abspath $(CURDIR)/..)
+DESIGN_VSRC_DIR      = $(DESIGN_DIR)/v
+DESIGN_CSRC_DIR      = $(DESIGN_DIR)/src
+DESIGN_INCLUDE_DIR   = $(DESIGN_DIR)/include
+DESIGN_TCL_DIR       = $(DESIGN_DIR)/tcl
+DESIGN_BRIDGE_DIR    = $(DESIGN_DIR)/bridge
+DESIGN_VCS_DIR       = $(DESIGN_DIR)/vcs
+DESIGN_VERILATOR_DIR = $(DESIGN_DIR)/verilator
+DESIGN_VIVADO_DIR    = $(DESIGN_DIR)/vivado
+DESIGN_XCELIUM_DIR   = $(DESIGN_DIR)/xcelium
+DESIGN_ZYNQ_DIR      = $(DESIGN_DIR)/zynq
 
 #############################
 # Common variables
 #############################
-DEFINES   += $(call bsg_fn_upper,$(TOOL))
-DEFINES   += $(call bsg_fn_upper,HOST_$(HOST))
+TOOL := $(shell basename $(CURDIR))
+
+DEFINES   += $(call bsg_var_upper,$(TOOL))
+DEFINES   += $(call bsg_var_upper,HOST_$(HOST))
 ifeq ($(ZYNQ_PL_DEBUG),1)
 DEFINES   += ZYNQ_PL_DEBUG
 endif
@@ -28,7 +41,7 @@ VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_misc
 VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_noc
 VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_tag
 VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_test
-VINCLUDES += $(ZP_BP_SUB_DIR)/manycore/v
+VINCLUDES += $(BP_SUB_DIR)/manycore/v
 
 CSOURCES  += $(MAIN_PROGRAM)
 CSOURCES  += $(HOST_PROGRAM)
@@ -51,8 +64,8 @@ RUN_ARGS   +=
 # Common targets
 #############################
 
-clean: ## cleans the working directory
-clean:
+clean:: ## cleans the working directory
+clean::
 	@$(RMRF) obj_dir
 	@$(RMRF) trace.fst
 	@$(RMRF) *.log

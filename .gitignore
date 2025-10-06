@@ -55,3 +55,6 @@ zynq_pkgdef.svh
 novas.*
 verdiLog
 ci_eval/
+work/
+install/
+riscv/

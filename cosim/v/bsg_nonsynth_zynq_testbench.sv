@@ -262,7 +262,7 @@ module bsg_nonsynth_zynq_testbench;
       ,.axi_addr_width_p(C_HP0_AXI_ADDR_WIDTH)
       ,.axi_data_width_p(C_HP0_AXI_DATA_WIDTH)
       ,.axi_len_width_p(8)
-      ,.mem_els_p((2**C_HP0_AXI_ADDR_WIDTH)/C_HP0_AXI_DATA_WIDTH)
+      ,.mem_els_p(2**28)
       ,.init_data_p('0)
     )
   axi_mem

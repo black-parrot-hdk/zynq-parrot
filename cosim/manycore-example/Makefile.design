@@ -35,26 +35,24 @@ DEFINES += NUM_FINISH=1
 #############################
 # Build Collateral
 #############################
-BSG_MACHINE_PATH ?= $(BSG_REPLICANT_DIR)/machines/pod_X1Y1_mesh_X2Y2_hbm_one_pseudo_channel
+export BSG_MACHINE        ?= pod_X1Y1_mesh_X2Y2_hbm_one_pseudo_channel
+export BSG_MACHINE_PATH   ?= $(BSG_REPLICANT_DIR)/machines/$(BSG_MACHINE)
+export RISCV_INSTALL_DIR  ?= $(ZP_INSTALL_DIR)
+export RISCV_BIN_DIR      ?= $(RISCV_INSTALL_DIR)/bin
+export BSG_F1_DIR         ?= $(BSG_REPLICANT_DIR)
+
 %/bsg_bladerunner_pkg.sv:
-	BSG_MACHINE_PATH=$(BSG_MACHINE_PATH) \
-	BSG_F1_DIR=$(BSG_REPLICANT_DIR) \
-		$(MAKE) -C $(BSG_REPLICANT_DIR)/hardware $(BSG_MACHINE_PATH)/$(@F)
+	@$(MAKE) -C $(BSG_REPLICANT_DIR)/hardware $(BSG_MACHINE_PATH)/$(@F)
 	@$(MV) $(BSG_MACHINE_PATH)/$(@F) $@
 
 %/bsg_bladerunner_configuration.sv:
-	@$(eval ASCII_TO_ROM_PY := $(BASEJUMP_STL_DIR)/bsg_mem/bsg_ascii_to_rom.py)
 	@$(eval ROM_NAME := $(subst .sv,.rom,$(@F)))
-	BSG_MACHINE_PATH=$(BSG_MACHINE_PATH) \
-	BSG_F1_DIR=$(BSG_REPLICANT_DIR) \
-		$(MAKE) -C $(BSG_REPLICANT_DIR)/hardware $(BSG_MACHINE_PATH)/$(ROM_NAME)
+	@$(MAKE) -C $(BSG_REPLICANT_DIR)/hardware $(BSG_MACHINE_PATH)/$(ROM_NAME)
 	@$(PYTHON2) $(ASCII_TO_ROM_PY) $(BSG_MACHINE_PATH)/$(ROM_NAME) bsg_bladerunner_configuration > $@
 	@$(SED) -i "/parameter int bsg_machine_hetero_type_vec_gp/d" $@
 
 %/bsg_manycore_machine.h:
-	BSG_MACHINE_PATH=$(BSG_MACHINE_PATH) \
-	BSG_F1_DIR=$(BSG_REPLICANT_DIR) \
-		$(MAKE) -C $(BSG_REPLICANT_DIR)/hardware $(BSG_MACHINE_PATH)/$(@F)
+	@$(MAKE) -C $(BSG_REPLICANT_DIR)/hardware $(BSG_MACHINE_PATH)/$(@F)
 	@$(CP) $(BSG_MACHINE_PATH)/$(@F) $@
 
 BUILD_COLLATERAL += $(DESIGN_VSRC_DIR)/bsg_bladerunner_pkg.sv
@@ -65,8 +63,7 @@ BUILD_COLLATERAL += $(DESIGN_DIR)/bsg_manycore_machine.h
 # Run Collateral
 #############################
 %.riscv32:
-	BSG_MACHINE_PATH=$(BSG_MACHINE_PATH) \
-		$(MAKE) -C $(BSG_MANYCORE_SOFTWARE_DIR)/spmd/$* clean main.riscv
+	@$(MAKE) -C $(BSG_MANYCORE_SOFTWARE_DIR)/spmd/$* clean main.riscv
 	@$(MV) $(BSG_MANYCORE_SOFTWARE_DIR)/spmd/$*/main.riscv $@
 
 # Vary per program
@@ -80,11 +77,9 @@ bsg_elf_off_chip_mem       ?= 1
 skip_dram_instruction_load ?= 0
 skip_zeros                 ?= 1
 ipoly_hashing              ?= 0
-
 NBF_SCRIPT ?= $(BSG_MANYCORE_DIR)/software/py/nbf.py
 %.nbf: %.riscv32
-	$(eval include $(BSG_MACHINE_PATH)/Makefile.machine.include)
-	$(eval export RISCV_BIN_DIR=$(RISCV_INSTALL_DIR)/bin)
+	@$(eval include $(BSG_MACHINE_PATH)/Makefile.machine.include)
 	@$(PYTHON2) $(NBF_SCRIPT) \
 		$< \
 		$(BSG_MACHINE_GLOBAL_X) $(BSG_MACHINE_GLOBAL_Y) \

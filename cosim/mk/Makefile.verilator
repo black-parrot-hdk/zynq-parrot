@@ -1,20 +1,18 @@
 
 VV_BUILD_OPTS += --cc --sv
 VV_BUILD_OPTS += --no-timing --build --exe
+#VV_BUILD_OPTS += --binary
 VV_BUILD_OPTS += -Wno-fatal -Wall
 VV_BUILD_OPTS += -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTEMPTY -Wno-UNUSED -Wno-GENUNNAMED
 VV_BUILD_OPTS += -top-module $(TB_MODULE)
 VV_BUILD_OPTS += $(addprefix +define+,$(filter-out VERILATOR,$(DEFINES)))
 VV_BUILD_OPTS += $(addprefix +incdir+,$(VINCLUDES))
-VV_BUILD_OPTS += $(call bsg_fn_uniq,$(VPACKAGES))
-VV_BUILD_OPTS += $(call bsg_fn_uniq,$(VSOURCES))
 VV_BUILD_OPTS += -CFLAGS "$(CFLAGS)"
 VV_BUILD_OPTS += -CFLAGS "$(addprefix -D,$(DEFINES))"
 VV_BUILD_OPTS += -CFLAGS "$(addprefix -I,$(CINCLUDES))"
 VV_BUILD_OPTS += -LDFLAGS "$(addprefix -L,$(CLIBDIRS))"
 VV_BUILD_OPTS += -LDFLAGS "$(addprefix -Wl$(bsg_var_comma)-rpath=,$(CLIBDIRS))"
 VV_BUILD_OPTS += -LDFLAGS "$(addprefix -l,$(CLIBS))"
-VV_BUILD_OPTS += $(call bsg_fn_uniq,$(CSOURCES))
 
 VV_RUN_OPTS +=
 
@@ -23,7 +21,8 @@ RUN_ARGS += +bsg_trace
 endif
 
 run: ## runs the verilated executable
-run: obj_dir/V$(TB_MODULE) $(RUN_COLLATERAL)
+run: | $(RUN_COLLATERAL)
+run: obj_dir/V$(TB_MODULE)
 	./$< $(VV_RUN_OPTS) $(RUN_ARGS) 2>&1 | $(TEE_I) run.log
 
 ifneq (,$(TRACE))
@@ -32,8 +31,9 @@ BUILD_ARGS += +define+FSTON
 endif
 build: ## builds the verilated executable
 build: %/V$(TB_MODULE)
-%/V$(TB_MODULE): $(BUILD_COLLATERAL)
-	@$(VERILATOR) $(VV_BUILD_OPTS) $(BUILD_ARGS) 2>&1 | $(TEE_I) build.log
+%/V$(TB_MODULE): | $(BUILD_COLLATERAL)
+%/V$(TB_MODULE): $(VPACKAGES) $(VSOURCES) $(CSOURCES)
+	@$(VERILATOR) $(VV_BUILD_OPTS) $(BUILD_ARGS) $^ 2>&1 | $(TEE_I) build.log
 
 view: ## View the dump with GTKwave
 view:

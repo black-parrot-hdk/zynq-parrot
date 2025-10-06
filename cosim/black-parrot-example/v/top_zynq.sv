@@ -379,7 +379,7 @@ module top_zynq
  `declare_bp_be_if(vaddr_width_p, paddr_width_p, asid_width_p, branch_metadata_fwd_width_p, fetch_ptr_p, issue_ptr_p);
   bp_be_commit_pkt_s commit_pkt;
 
-  assign commit_pkt = blackparrot.processor.u.unicore.unicore_lite.core_minimal.be.calculator.      pipe_sys.csr.commit_pkt_cast_o;
+  assign commit_pkt = blackparrot.processor.u.unicore.unicore_lite.core_minimal.be.calculator.pipe_sys.csr.commit_pkt_cast_o;
 
   bsg_bootrom
    #(.width_p(bootrom_data_lp), .addr_width_p(bootrom_addr_lp))

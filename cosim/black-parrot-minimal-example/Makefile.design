@@ -39,7 +39,7 @@ DEFINES += RTCLK_MHZ=8
 #############################
 # Build Collateral
 #############################
-RISCV_OBJCOPY ?= riscv64-unknown-elf-dramfs-objcopy
+RISCV_OBJCOPY ?= riscv64-unknown-elf-objcopy
 ASCII_TO_ROM ?= $(BASEJUMP_STL_DIR)/bsg_mem/bsg_ascii_to_rom.py
 
 CFG ?= e_bp_unicore_zynqparrot_cfg
@@ -53,7 +53,7 @@ $(DESIGN_VSRC_DIR)/bsg_blackparrot_pkg.sv:
 	echo "endpackage" >> $@
 	echo >> $@
 
-%/bsg_bootrom.bin: $(ZP_BP_SDK_DIR)/install/riscv/prog/bootrom/bootrom.riscv
+%/bsg_bootrom.bin: $(ZP_RISCV_DIR)/bootrom/bootrom.none.riscv
 	$(RISCV_OBJCOPY) -O binary $< $@
 
 %/bsg_bootrom.rom: %/bsg_bootrom.bin
@@ -69,14 +69,14 @@ BUILD_COLLATERAL += $(DESIGN_VSRC_DIR)/bsg_bootrom.sv
 # Run Collateral
 #############################
 
-VPATH := $(wildcard $(ZP_BP_SDK_DIR)/install/riscv/prog/*)
+VPATH := $(wildcard $(ZP_RISCV_DIR)/*)
 %.mem: %.riscv
 	# Cosim file must be called prog.riscv
 	@$(CP) $< prog.riscv
 	@$(RISCV_OBJCOPY) -O verilog $< $@
 	@$(SED) -i "s/@8/@0/g" $@
 
-BP_NBF_SCRIPT ?= $(ZP_BP_RTL_DIR)/bp_common/software/py/nbf.py
+BP_NBF_SCRIPT ?= $(BP_RTL_DIR)/bp_common/software/py/nbf.py
 %.nbf: %.mem
 	@$(PYTHON) $(BP_NBF_SCRIPT) \
 		--skip_zeros --mem $*.mem --ncpus $(BP_NCPUS) > $@
