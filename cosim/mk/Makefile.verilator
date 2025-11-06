@@ -1,18 +1,26 @@
 
+include $(COSIM_MK_DIR)/Makefile.sim
+
+VV_VFLAGS += $(addprefix +define+,$(filter-out VERILATOR,$(DEFINES)))
+VV_VFLAGS += $(addprefix +incdir+,$(VINCLUDES))
+
+VV_CFLAGS += $(CFLAGS)
+VV_CFLAGS += $(addprefix -D,$(filter-out VERILATOR,$(DEFINES)))
+VV_CFLAGS += $(addprefix -I,$(CINCLUDES))
+VV_CFLAGS += $(addprefix -L,$(CLIBDIRS))
+
+VV_LDFLAGS += $(LDFLAGS)
+VV_LDFLAGS += $(addprefix -L,$(CLIBDIRS))
+VV_LDFLAGS += $(addprefix -l,$(CLIBS))
+
 VV_BUILD_OPTS += --cc --sv
 VV_BUILD_OPTS += --no-timing --build --exe
-#VV_BUILD_OPTS += --binary
 VV_BUILD_OPTS += -Wno-fatal -Wall
 VV_BUILD_OPTS += -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTEMPTY -Wno-UNUSED -Wno-GENUNNAMED
 VV_BUILD_OPTS += -top-module $(TB_MODULE)
-VV_BUILD_OPTS += $(addprefix +define+,$(filter-out VERILATOR,$(DEFINES)))
-VV_BUILD_OPTS += $(addprefix +incdir+,$(VINCLUDES))
-VV_BUILD_OPTS += -CFLAGS "$(CFLAGS)"
-VV_BUILD_OPTS += -CFLAGS "$(addprefix -D,$(DEFINES))"
-VV_BUILD_OPTS += -CFLAGS "$(addprefix -I,$(CINCLUDES))"
-VV_BUILD_OPTS += -LDFLAGS "$(addprefix -L,$(CLIBDIRS))"
-VV_BUILD_OPTS += -LDFLAGS "$(addprefix -Wl$(bsg_var_comma)-rpath=,$(CLIBDIRS))"
-VV_BUILD_OPTS += -LDFLAGS "$(addprefix -l,$(CLIBS))"
+VV_BUILD_OPTS += -CFLAGS "$(VV_CFLAGS)"
+VV_BUILD_OPTS += -LDFLAGS "$(VV_LDFLAGS)"
+VV_BUILD_OPTS += $(VV_VFLAGS)
 
 VV_RUN_OPTS +=
 
@@ -21,21 +29,20 @@ RUN_ARGS += +bsg_trace
 endif
 
 run: ## runs the verilated executable
-run: | $(RUN_COLLATERAL)
-run: obj_dir/V$(TB_MODULE)
-	./$< $(VV_RUN_OPTS) $(RUN_ARGS) 2>&1 | $(TEE_I) run.log
+run: obj_dir/V$(TB_MODULE) | $(RUN_COLLATERAL)
+	@./$< $(VV_RUN_OPTS) $(RUN_ARGS) 2>&1 | $(TEE_I) run.log
 
+.PRECIOUS: $(BUILD_COLLATERAL)
 ifneq (,$(TRACE))
 BUILD_ARGS += --trace-fst --trace-structs
 BUILD_ARGS += +define+FSTON
 endif
 build: ## builds the verilated executable
 build: %/V$(TB_MODULE)
-%/V$(TB_MODULE): | $(BUILD_COLLATERAL)
-%/V$(TB_MODULE): $(VPACKAGES) $(VSOURCES) $(CSOURCES)
+%/V$(TB_MODULE): $(VPACKAGES) $(VSOURCES) $(CSOURCES) | $(BUILD_COLLATERAL)
 	@$(VERILATOR) $(VV_BUILD_OPTS) $(BUILD_ARGS) $^ 2>&1 | $(TEE_I) build.log
 
 view: ## View the dump with GTKwave
-view:
-	@$(GTKWAVE) -f dump.fst
+view: dump.fst
+	@$(GTKWAVE) -f $<
 

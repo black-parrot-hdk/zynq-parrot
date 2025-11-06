@@ -1,0 +1,29 @@
+
+VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_tag/bsg_tag_pkg.sv
+VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_axi/bsg_axi_pkg.sv
+VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_cache/bsg_cache_pkg.sv
+VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_dmc/bsg_dmc_pkg.sv
+VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_link/bsg_link_pkg.sv
+VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_noc/bsg_mesh_router_pkg.sv
+VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_noc/bsg_noc_pkg.sv
+VPACKAGES += $(BASEJUMP_STL_DIR)/bsg_noc/bsg_wormhole_router_pkg.sv
+
+VINCLUDES += $(CURDIR)
+VINCLUDES += $(COSIM_INCLUDE_DIR)/$(TOOL)
+VINCLUDES += $(DESIGN_VSRC_DIR)
+VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_async
+VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_misc
+VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_noc
+VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_tag
+VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_test
+VINCLUDES += $(BP_SUB_DIR)/manycore/v
+
+DEFINES   += $(call bsg_var_upper,$(TOOL))
+DEFINES   += $(call bsg_var_upper,HOST_$(HOST))
+ifeq ($(ZYNQ_PL_DEBUG),1)
+DEFINES   += ZYNQ_PL_DEBUG
+endif
+ifeq ($(ZYNQ_PS_DEBUG),1)
+DEFINES   += ZYNQ_PS_DEBUG
+endif
+

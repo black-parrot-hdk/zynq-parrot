@@ -3,10 +3,11 @@
 # Common variables
 #############################
 
-DEFINES +=
+DEFINES += BSG_NO_TIMESCALE
 
 VPACKAGES +=
 
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_cycle_counter.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_clock_gen.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_reset_gen.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.sv
@@ -14,7 +15,6 @@ VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_cycle_counter.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_from_fifo.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_to_fifo.sv
-VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_rom.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_rom.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_axi_mem.sv
 VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axil.sv
@@ -25,21 +25,33 @@ VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv
 
 VINCLUDES +=
 
-CSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp
+CSOURCES  += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_clock_gen.cpp
+CSOURCES  += $(MAIN_PROGRAM)
+CSOURCES  += $(HOST_PROGRAM)
 
-CINCLUDES +=
+CINCLUDES += $(CURDIR)
+CINCLUDES += $(COSIM_INCLUDE_DIR)/common
+CINCLUDES += $(COSIM_INCLUDE_DIR)/$(TOOL)
 CINCLUDES += $(ZP_INSTALL_DIR)/include
+CINCLUDES += $(BASEJUMP_STL_DIR)/bsg_mem
+CINCLUDES += $(BP_SUB_DIR)/blackparrot/src
+CINCLUDES += $(BSG_REPLICANT_DIR)/libraries
 CINCLUDES += $(BASEJUMP_STL_DIR)/bsg_test
 
 CFLAGS += -D_DEFAULT_SOURCE -D_BSD_SOURCE
 
 CLIBDIRS += $(ZP_INSTALL_DIR)/lib
 
-CLIBS += dramsim3
 CLIBS += boost_coroutine
 CLIBS += boost_context
 CLIBS += boost_system
-CLIBS += dromajo_cosim
 
 LDFLAGS +=
 
+clean::
+ifneq (,$(BUILD_COLLATERAL))
+	@$(RMRF) $(BUILD_COLLATERAL)
+endif
+ifneq (,$(RUN_COLLATERAL))
+	@$(RMRF) $(RUN_COLLATERAL)
+endif

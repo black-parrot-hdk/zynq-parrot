@@ -17,14 +17,13 @@
 #include <boost/coroutine2/all.hpp>
 
 #include "bsg_nonsynth_dpi_gpio.hpp"
+#include "bsg_axi.h"
 #include "bsg_pin.h"
 #include "bsg_printing.h"
 
 #ifndef ZYNQ_AXI_TIMEOUT
 #define ZYNQ_AXI_TIMEOUT 1000
 #endif
-
-using std::string;
 
 extern "C" {
 int bsg_dpi_time();
@@ -37,28 +36,27 @@ class s_axil_device {
   public:
     virtual bool is_read(uintptr_t address) = 0;
     virtual bool can_read(uintptr_t address) = 0;
-    virtual int32_t read(uintptr_t address) = 0;
+    virtual long read(uintptr_t address) = 0;
 
     virtual bool is_write(uintptr_t address) = 0;
     virtual bool can_write(uintptr_t address) = 0;
-    virtual void write(uintptr_t address, int32_t data) = 0;
+    virtual void write(uintptr_t address, long data) = 0;
 };
 
 class m_axil_device {
   public:
     virtual bool pending_read(uintptr_t *address) = 0;
-    virtual void return_read(int32_t data) = 0;
+    virtual void return_read(long data) = 0;
 
-    virtual bool pending_write(uintptr_t *address, int32_t *data,
-                               uint8_t *wmask) = 0;
+    virtual bool pending_write(uintptr_t *address, long *data,
+                               long *wmask) = 0;
     virtual void return_write() = 0;
 };
 
-// A = axil address width
-// D = axil data width
-template <unsigned int A, unsigned int D> class maxil {
-  private:
-    string base;
+template <unsigned int A, unsigned int D>
+class axil : public axi_defaults<A, D> {
+  protected:
+    std::string base;
 
     pin<1> p_aclk;
     pin<1> p_aresetn;
@@ -87,6 +85,10 @@ template <unsigned int A, unsigned int D> class maxil {
     // We use a boolean instead of true mutex so that we can check it
     bool mutex = 0;
 
+    bool try_lock() {
+        return !mutex;
+    }
+
     void lock(yield_t &yield) {
         do {
             yield();
@@ -99,32 +101,32 @@ template <unsigned int A, unsigned int D> class maxil {
         mutex = 0;
     }
 
-  public:
-    maxil(const string &base)
-        : base(base), p_aclk(string(base) + string(".aclk_gpio")),
-          p_aresetn(string(base) + string(".aresetn_gpio")),
-          p_awaddr(string(base) + string(".awaddr_gpio")),
-          p_awprot(string(base) + string(".awprot_gpio")),
-          p_awvalid(string(base) + string(".awvalid_gpio")),
-          p_awready(string(base) + string(".awready_gpio")),
-          p_wdata(string(base) + string(".wdata_gpio")),
-          p_wstrb(string(base) + string(".wstrb_gpio")),
-          p_wvalid(string(base) + string(".wvalid_gpio")),
-          p_wready(string(base) + string(".wready_gpio")),
-          p_bresp(string(base) + string(".bresp_gpio")),
-          p_bvalid(string(base) + string(".bvalid_gpio")),
-          p_bready(string(base) + string(".bready_gpio")),
-          p_araddr(string(base) + string(".araddr_gpio")),
-          p_arprot(string(base) + string(".arprot_gpio")),
-          p_arvalid(string(base) + string(".arvalid_gpio")),
-          p_arready(string(base) + string(".arready_gpio")),
-          p_rdata(string(base) + string(".rdata_gpio")),
-          p_rresp(string(base) + string(".rresp_gpio")),
-          p_rvalid(string(base) + string(".rvalid_gpio")),
-          p_rready(string(base) + string(".rready_gpio")), mutex(0) {
-        std::cout << "Instantiating AXIL at " << base << std::endl;
+    axil(const std::string &base)
+        : base(base), p_aclk(std::string(base) + std::string(".aclk_gpio")),
+          p_aresetn(std::string(base) + std::string(".aresetn_gpio")),
+          p_awaddr(std::string(base) + std::string(".awaddr_gpio")),
+          p_awprot(std::string(base) + std::string(".awprot_gpio")),
+          p_awvalid(std::string(base) + std::string(".awvalid_gpio")),
+          p_awready(std::string(base) + std::string(".awready_gpio")),
+          p_wdata(std::string(base) + std::string(".wdata_gpio")),
+          p_wstrb(std::string(base) + std::string(".wstrb_gpio")),
+          p_wvalid(std::string(base) + std::string(".wvalid_gpio")),
+          p_wready(std::string(base) + std::string(".wready_gpio")),
+          p_bresp(std::string(base) + std::string(".bresp_gpio")),
+          p_bvalid(std::string(base) + std::string(".bvalid_gpio")),
+          p_bready(std::string(base) + std::string(".bready_gpio")),
+          p_araddr(std::string(base) + std::string(".araddr_gpio")),
+          p_arprot(std::string(base) + std::string(".arprot_gpio")),
+          p_arvalid(std::string(base) + std::string(".arvalid_gpio")),
+          p_arready(std::string(base) + std::string(".arready_gpio")),
+          p_rdata(std::string(base) + std::string(".rdata_gpio")),
+          p_rresp(std::string(base) + std::string(".rresp_gpio")),
+          p_rvalid(std::string(base) + std::string(".rvalid_gpio")),
+          p_rready(std::string(base) + std::string(".rready_gpio")), mutex(0) {
+        std::cout << "Instantiating AXIL at " << base;
     }
 
+public:
     // Wait for (low true) reset to be asserted by the testbench
     void reset(yield_t &yield) {
         printf("bsg_zynq_pl: Entering reset\n");
@@ -135,8 +137,26 @@ template <unsigned int A, unsigned int D> class maxil {
         unlock(yield);
         printf("bsg_zynq_pl: Exiting reset\n");
     }
+};
 
-    int32_t axil_read_helper(uintptr_t address, yield_t &yield) {
+// A = axil address width
+// D = axil data width
+template <unsigned int A, unsigned int D>
+class maxil : public axil<A, D> {
+  protected:
+    using axil<A, D>::base;
+    using axil<A, D>::mutex;
+    using axil<A, D>::lock;
+    using axil<A, D>::unlock;
+    using addr_t = typename axi_defaults<A, D>::addr_t;
+    using data_t = typename axi_defaults<A, D>::data_t;
+
+  public:
+    maxil(const std::string &base) : axil<A, D>(base) {
+      std::cout << " as a master AXIL port" << std::endl;
+    }
+
+    data_t axil_read_helper(addr_t address, yield_t &yield) {
         lock(yield);
         int timeout_counter = 0;
 
@@ -190,7 +210,7 @@ template <unsigned int A, unsigned int D> class maxil {
         return rdata;
     }
 
-    void axil_write_helper(uintptr_t address, int32_t data, uint8_t wstrb,
+    void axil_write_helper(addr_t address, data_t data, uint8_t wstrb,
                            yield_t &yield) {
         lock(yield);
         int timeout_counter = 0;
@@ -261,95 +281,31 @@ template <unsigned int A, unsigned int D> class maxil {
 
 // A = axil address width
 // D = axil data width
-template <unsigned int A, unsigned int D> class saxil {
-  private:
-    pin<1> p_aclk;
-    pin<1> p_aresetn;
-
-    pin<A> p_awaddr;
-    pin<3> p_awprot;
-    pin<1> p_awvalid;
-    pin<1> p_awready;
-    pin<D> p_wdata;
-    pin<D / 8> p_wstrb;
-    pin<1> p_wvalid;
-    pin<1> p_wready;
-    pin<2> p_bresp;
-    pin<1> p_bvalid;
-    pin<1> p_bready;
-
-    pin<A> p_araddr;
-    pin<3> p_arprot;
-    pin<1> p_arvalid;
-    pin<1> p_arready;
-    pin<D> p_rdata;
-    pin<2> p_rresp;
-    pin<1> p_rvalid;
-    pin<1> p_rready;
-
-    // We use a boolean instead of true mutex so that we can check it
-    bool mutex = 0;
-
-    void lock(yield_t &yield) {
-        do {
-            yield();
-        } while (mutex);
-        mutex = 1;
-    }
-
-    void unlock(yield_t &yield) {
-        yield();
-        mutex = 0;
-    }
-
+template <unsigned int A, unsigned int D>
+class saxil : public axil<A, D> {
+  protected:
+    using axil<A, D>::base;
+    using axil<A, D>::lock;
+    using axil<A, D>::unlock;
+    using axil<A, D>::try_lock;
+    using addr_t = typename axi_defaults<A, D>::addr_t;
+    using data_t = typename axi_defaults<A, D>::data_t;
   public:
-    saxil(const string &base)
-        : p_aclk(string(base) + string(".aclk_gpio")),
-          p_aresetn(string(base) + string(".aresetn_gpio")),
-          p_awaddr(string(base) + string(".awaddr_gpio")),
-          p_awprot(string(base) + string(".awprot_gpio")),
-          p_awvalid(string(base) + string(".awvalid_gpio")),
-          p_awready(string(base) + string(".awready_gpio")),
-          p_wdata(string(base) + string(".wdata_gpio")),
-          p_wstrb(string(base) + string(".wstrb_gpio")),
-          p_wvalid(string(base) + string(".wvalid_gpio")),
-          p_wready(string(base) + string(".wready_gpio")),
-          p_bresp(string(base) + string(".bresp_gpio")),
-          p_bvalid(string(base) + string(".bvalid_gpio")),
-          p_bready(string(base) + string(".bready_gpio")),
-          p_araddr(string(base) + string(".araddr_gpio")),
-          p_arprot(string(base) + string(".arprot_gpio")),
-          p_arvalid(string(base) + string(".arvalid_gpio")),
-          p_arready(string(base) + string(".arready_gpio")),
-          p_rdata(string(base) + string(".rdata_gpio")),
-          p_rresp(string(base) + string(".rresp_gpio")),
-          p_rvalid(string(base) + string(".rvalid_gpio")),
-          p_rready(string(base) + string(".rready_gpio")) {
-        std::cout << "Instantiating AXIL at " << base << std::endl;
+    saxil(const std::string &base) : axil<A, D>(base) { 
+      std::cout << " as a client AXIL port" << std::endl;
     }
 
-    // Wait for (low true) reset to be asserted by the testbench
-    void reset(yield_t &yield) {
-        printf("bsg_zynq_pl: Entering reset\n");
-        lock(yield);
-        while (this->p_aresetn == 0) {
-            yield();
-        }
-        unlock(yield);
-        printf("bsg_zynq_pl: Exiting reset\n");
-    }
-
-    bool axil_has_write(uintptr_t *address) {
+    bool axil_has_write(addr_t *address) {
         bool awv = this->p_awvalid;
         bool wv = this->p_wvalid;
         *address = this->p_awaddr;
-        return awv && wv && !mutex;
+        return awv && wv && try_lock();
     }
 
-    bool axil_has_read(uintptr_t *address) {
+    bool axil_has_read(addr_t *address) {
         bool arv = this->p_arvalid;
         *address = this->p_araddr;
-        return arv && !mutex;
+        return arv && try_lock();
     }
 
     void axil_read_helper(s_axil_device *p, yield_t &yield) {

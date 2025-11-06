@@ -16,6 +16,7 @@
 #include <boost/coroutine2/all.hpp>
 
 #include "bsg_nonsynth_dpi_gpio.hpp"
+#include "bsg_axi.h"
 #include "bsg_pin.h"
 #include "bsg_printing.h"
 
@@ -32,29 +33,35 @@ typedef boost::coroutines2::coroutine<void>::push_type yield_t;
 
 class s_axis_device {
   public:
-    virtual bool can_write(uint8_t last) = 0;
-    virtual void write(int32_t data, uint8_t last) = 0;
+    virtual bool can_write() = 0;
+    virtual void write(long data, bool last) = 0;
 };
 
 class m_axis_device {
   public:
-    virtual bool pending_write(int32_t *data, uint8_t *last) = 0;
+    virtual bool pending_write(long *data, bool *last) = 0;
 };
 
-// D = axis data width
-template <unsigned int D> class saxis {
-  private:
+template <unsigned int D>
+class axis : public axi_defaults<0, D> {
+  protected:
+    using addr_t = typename axi_defaults<0, D>::addr_t;
+    using data_t = typename axi_defaults<0, D>::data_t;
+  protected:
     pin<1> p_aclk;
     pin<1> p_aresetn;
 
     pin<1> p_tready;
     pin<1> p_tvalid;
     pin<D> p_tdata;
-    pin<D / 8> p_tkeep;
-    pin<1> p_tlast;
+    pin<1> p_tlast; 
 
     // We use a boolean instead of true mutex so that we can check it
     bool mutex = 0;
+
+    bool try_lock() {
+        return !mutex;
+    }
 
     void lock(yield_t &yield) {
         do {
@@ -68,38 +75,49 @@ template <unsigned int D> class saxis {
         mutex = 0;
     }
 
-  public:
-    saxis(const string &base)
-        : p_aclk(string(base) + string(".aclk_gpio")),
-          p_aresetn(string(base) + string(".aresetn_gpio")),
-          p_tready(string(base) + string(".tready_gpio")),
-          p_tvalid(string(base) + string(".tvalid_gpio")),
-          p_tdata(string(base) + string(".tdata_gpio")),
-          p_tkeep(string(base) + string(".tkeep_gpio")),
-          p_tlast(string(base) + string(".tlast_gpio")) {
-        std::cout << "Instantiating SAXIS at " << base << std::endl;
+    axis(const std::string &base)
+        : p_aclk(std::string(base) + std::string(".aclk_gpio")),
+          p_aresetn(std::string(base) + std::string(".aresetn_gpio")),
+          p_tready(std::string(base) + std::string(".tready_gpio")),
+          p_tvalid(std::string(base) + std::string(".tvalid_gpio")),
+          p_tdata(std::string(base) + std::string(".tdata_gpio")),
+          p_tlast(std::string(base) + std::string(".tlast_gpio")) {
+        std::cout << "Instantiating SAXIS at " << base;
     }
 
+  public:
     // Wait for (low true) reset to be asserted by the testbench
     void reset(yield_t &yield) {
         printf("bsg_zynq_pl: Entering reset\n");
-        lock(yield);
+        this->lock(yield);
         while (this->p_aresetn == 0) {
             yield();
         }
-        unlock(yield);
+        this->unlock(yield);
         printf("bsg_zynq_pl: Exiting reset\n");
+    }
+};
+
+// D = axis data width
+template <unsigned int D>
+class saxis : public axis<D> {
+  protected:
+    using addr_t = typename axi_defaults<0, D>::addr_t;
+    using data_t = typename axi_defaults<0, D>::data_t;
+  public:
+    saxis(const std::string &base) : axis<D>(base) {
+      std::cout << " as a client AXIS port" << std::endl;
     }
 
     bool axis_has_write(uint8_t *last) {
         bool tv = this->p_tvalid;
         *last = this->p_tlast;
 
-        return tv && !mutex;
+        return tv && this->try_lock();
     }
 
     void axis_write_helper(s_axis_device *p, yield_t &yield) {
-        lock(yield);
+        this->lock(yield);
         int timeout_counter = 0;
 
         bool t_done = false;
@@ -128,70 +146,30 @@ template <unsigned int D> class saxis {
             }
         } while (!t_done);
 
-        unlock(yield);
+        this->unlock(yield);
         return;
     }
 };
 
 // D = axis data width
-template <unsigned int D> class maxis {
-  private:
-    pin<1> p_aclk;
-    pin<1> p_aresetn;
-
-    pin<1> p_tready;
-    pin<1> p_tvalid;
-    pin<D> p_tdata;
-    pin<D / 8> p_tkeep;
-    pin<1> p_tlast;
-
-    // We use a boolean instead of true mutex so that we can check it
-    bool mutex = 0;
-
-    void lock(yield_t &yield) {
-        do {
-            yield();
-        } while (mutex);
-        mutex = 1;
-    }
-
-    void unlock(yield_t &yield) {
-        yield();
-        mutex = 0;
-    }
-
+template <unsigned int D>
+class maxis : public axis<D> {
+  protected:
+    using addr_t = typename axi_defaults<0, D>::addr_t;
+    using data_t = typename axi_defaults<0, D>::data_t;
   public:
-    maxis(const string &base)
-        : p_aclk(string(base) + string(".aclk_gpio")),
-          p_aresetn(string(base) + string(".aresetn_gpio")),
-          p_tready(string(base) + string(".tready_gpio")),
-          p_tvalid(string(base) + string(".tvalid_gpio")),
-          p_tdata(string(base) + string(".tdata_gpio")),
-          p_tkeep(string(base) + string(".tkeep_gpio")),
-          p_tlast(string(base) + string(".tlast_gpio")) {
-        std::cout << "Instantiating MAXIS at " << base << std::endl;
+    maxis(const std::string &base) : axis<D>(base) {
+      std::cout << " as a master AXIM port" << std::endl;
     }
 
-    // Wait for (low true) reset to be asserted by the testbench
-    void reset(yield_t &yield) {
-        printf("bsg_zynq_pl: Entering reset\n");
-        lock(yield);
-        while (this->p_aresetn == 0) {
-            yield();
-        }
-        unlock(yield);
-        printf("bsg_zynq_pl: Exiting reset\n");
-    }
-
-    void axis_write_helper(int32_t tdata, int32_t tlast, yield_t &yield) {
-        lock(yield);
+    void axis_write_helper(data_t tdata, bool tlast, yield_t &yield) {
+        this->lock(yield);
         int timeout_counter = 0;
 
         bool t_done = false;
         this->p_tvalid = 1;
         this->p_tdata = tdata;
         this->p_tlast = tlast;
-        this->p_tkeep = 0xf; // Do not support tkeep for now
         do {
             // check timeout
             if (timeout_counter++ == ZYNQ_AXI_TIMEOUT) {
@@ -210,7 +188,7 @@ template <unsigned int D> class maxis {
             }
         } while (!t_done);
 
-        unlock(yield);
+        this->unlock(yield);
         return;
     }
 };

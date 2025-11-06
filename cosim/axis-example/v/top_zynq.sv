@@ -36,13 +36,11 @@ module top_zynq
 
    , input wire [C_SP0_AXI_DATA_WIDTH-1:0]       sp0_axi_tdata
    , input wire                                  sp0_axi_tvalid
-   , input wire [(C_SP0_AXI_DATA_WIDTH/8)-1:0]   sp0_axi_tkeep
    , input wire                                  sp0_axi_tlast
    , output wire                                 sp0_axi_tready
 
    , output wire [C_MP0_AXI_DATA_WIDTH-1:0]      mp0_axi_tdata
    , output wire                                 mp0_axi_tvalid
-   , output wire [(C_MP0_AXI_DATA_WIDTH/8)-1:0]  mp0_axi_tkeep
    , output wire                                 mp0_axi_tlast
    , input wire                                  mp0_axi_tready
    );
@@ -121,19 +119,16 @@ module top_zynq
 
    logic [C_SP0_AXI_DATA_WIDTH-1:0] tdata_lo;
    logic tready_li, tvalid_lo, tlast_lo;
-   logic [(C_SP0_AXI_DATA_WIDTH/8)-1:0] tkeep_lo;
    logic [`BSG_WIDTH(txn_size_lp)-1:0] tx_tcount_lo, rx_tcount_lo;
    logic rx_success_lo;
 
    logic [C_SP0_AXI_DATA_WIDTH-1:0] tdata_li;
    logic tready_lo, tvalid_li, tlast_li;
-   logic [(C_SP0_AXI_DATA_WIDTH/8)-1:0] tkeep_li;
 
    logic tinit_lo, tstatus_r;
 
    assign tdata_lo = ps_to_pl_fifo_data_lo[0];
    assign tvalid_lo = ps_to_pl_fifo_v_lo[0];
-   assign tkeep_lo = '1;
    assign ps_to_pl_fifo_yumi_li[0] = tready_li & tvalid_lo;
    assign tinit_lo = csr_data_new_lo[0];
 
@@ -145,13 +140,11 @@ module top_zynq
 
    assign mp0_axi_tdata = tdata_lo;
    assign mp0_axi_tvalid = tvalid_lo;
-   assign mp0_axi_tkeep = tkeep_lo;
    assign mp0_axi_tlast = tlast_lo;
    assign tready_li = mp0_axi_tready;
 
    assign tdata_li = sp0_axi_tdata;
    assign tvalid_li = sp0_axi_tvalid;
-   assign tkeep_li = sp0_axi_tkeep;
    assign tlast_li = sp0_axi_tlast;
    assign sp0_axi_tready = tready_lo;
 

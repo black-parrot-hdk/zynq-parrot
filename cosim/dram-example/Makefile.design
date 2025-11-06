@@ -1,10 +1,3 @@
-TOP ?= $(shell git rev-parse --show-toplevel)
-include $(TOP)/Makefile.common
-include $(TOP)/Makefile.env
-
-include $(COSIM_MK_DIR)/Makefile.common
-include $(COSIM_MK_DIR)/Makefile.env
-include $(DESIGN_DIR)/Makefile.hardware
 
 #############################
 # Design Settings
@@ -24,9 +17,10 @@ ZYNQ_PS_DEBUG ?= 0
 DEFINES += GP0_ENABLE=1
 DEFINES += GP0_ADDR_WIDTH=10 GP0_DATA_WIDTH=32
 DEFINES += HP0_ENABLE=1
-DEFINES += HP0_ADDR_WIDTH=28 HP0_DATA_WIDTH=32
+DEFINES += HP0_ADDR_WIDTH=32 HP0_DATA_WIDTH=32
 DEFINES += ACLK_MHZ=55
 DEFINES += RTCLK_MHZ=8
+DEFINES += DRAM_ENABLE
 
-include $(COSIM_MK_DIR)/Makefile.$(TOOL)
+include $(DESIGN_DIR)/Makefile.hardware
 

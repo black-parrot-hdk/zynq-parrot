@@ -1,0 +1,222 @@
+
+spec:
+  inputs:
+    do_build_image:
+    bp_rtl_branch:
+    bp_sdk_branch:
+    bp_tools_branch:
+    mc_branch:
+---
+
+###################################################
+## image setup
+###################################################
+
+build-image:
+  extends: [.docker_mixin]
+  before_script: !reference [.docker_anchors, docker_prefetch]
+  script:
+    - docker build docker -f docker/Dockerfile.${DOCKER_PLATFORM}
+        --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ${CONTAINER_IMAGE}
+        --build-arg USER_NAME="${BSG_CI_USER_NAME}"
+        --build-arg USER_ID="${BSG_CI_USER_ID}"
+        --build-arg GROUP_NAME="${BSG_CI_GROUP_NAME}"
+        --build-arg GROUP_ID="${BSG_CI_GROUP_ID}"
+        --build-arg OTHER_GROUPS="${BSG_CI_OTHER_GROUPS}"
+        -t ${CONTAINER_IMAGE}
+  after_script: !reference [.docker_anchors, docker_push]
+  rules:
+    - if: '"$[[ inputs.do_build_image ]]" =~ "/on_success/"'
+    - if: '"$[[ inputs.do_build_image ]]" =~ "/on_event/"'
+      changes:
+        paths:
+          - docker/Dockerfile.$DOCKER_PLATFORM
+          - docker/entrypoint.$DOCKER_PLATFORM.sh
+          - docker/requirements.txt
+
+###################################################
+## project definition
+###################################################
+
+.project_template:
+  extends: [.job_template]
+  image: $CONTAINER_IMAGE
+  variables:
+    LIBS_PACKAGE: "libs-${DOCKER_PLATFORM}"
+    LIBS_PACKAGE_VER: "$[[ inputs.bp_rtl_branch ]]"
+    LIBS_PROJECT_ID: "42106150"
+    TOOLS_PACKAGE: "tools-${DOCKER_PLATFORM}"
+    TOOLS_PACKAGE_VER: "$[[ inputs.bp_tools_branch ]]"
+    TOOLS_PROJECT_ID: "66229211"
+    RISCV_PACKAGE: "riscv"
+    RISCV_PACKAGE_VER: "$[[ inputs.bp_sdk_branch ]]"
+    RISCV_PROJECT_ID: "27392985"
+    SDK_PACKAGE: "tools-${DOCKER_PLATFORM}"
+    SDK_PACKAGE_VER: "$[[ inputs.bp_sdk_branch ]]"
+    SDK_PROJECT_ID: "27392985"
+    MC_PACKAGE: "riscv-install-${DOCKER_PLATFORM}"
+    MC_PACKAGE_VER: "$[[ inputs.mc_branch ]]"
+    MC_PROJECT_ID: "14940225"
+    # exported to make sure things go in the right place
+    ZP_WORK_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/zp-work"
+    ZP_INSTALL_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/zp-install"
+    ZP_RISCV_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/zp-riscv"
+  before_script:
+    - !reference [.job_template, before_script]
+    - COMMON_INSTALL_DIR="${JOB_COMMON_ROOT}/$(basename ${ZP_INSTALL_DIR})"
+    - COMMON_RISCV_DIR="${JOB_COMMON_ROOT}/$(basename ${ZP_RISCV_DIR})"
+    - if [ -d "${COMMON_INSTALL_DIR}" ]; then
+        ln -nsf "${COMMON_INSTALL_DIR}" "${ZP_INSTALL_DIR}";
+      fi
+    - if [ -d "${COMMON_RISCV_DIR}" ]; then
+        ln -nsf "${COMMON_RISCV_DIR}" "${ZP_RISCV_DIR}";
+      fi
+
+###################################################
+## job templates
+###################################################
+
+.gather_libs_job:
+  extends: [.project_template, .api_mixin]
+  variables:
+    # template variables
+    API_PACKAGE_NAME: "${LIBS_PACKAGE}"
+    API_PACKAGE_VER: "${LIBS_PACKAGE_VER}"
+    API_PROJECT_ID: "${LIBS_PROJECT_ID}"
+  script:
+    - echo "[CI] scattering outputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
+    - !reference [.api_anchors, api_download]
+    - mkdir -p ${COMMON_INSTALL_DIR}
+    - rsync -a --remove-source-files ${API_DOWNLOAD_ROOT}/ ${COMMON_INSTALL_DIR}
+
+.gather_tools_job:
+  extends: [.project_template, .api_mixin]
+  variables:
+    # template variables
+    API_PACKAGE_NAME: "${TOOLS_PACKAGE}"
+    API_PACKAGE_VER: "${TOOLS_PACKAGE_VER}"
+    API_PROJECT_ID: "${TOOLS_PROJECT_ID}"
+  script:
+    - echo "[CI] scattering outputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
+    - !reference [.api_anchors, api_download]
+    - mkdir -p ${COMMON_INSTALL_DIR}
+    - rsync -a --remove-source-files ${API_DOWNLOAD_ROOT}/ ${COMMON_INSTALL_DIR}
+
+.gather_sdk_job:
+  extends: [.project_template, .api_mixin]
+  variables:
+    # template variables
+    API_PACKAGE_NAME: "${SDK_PACKAGE}"
+    API_PACKAGE_VER: "${SDK_PACKAGE_VER}"
+    API_PROJECT_ID: "${SDK_PROJECT_ID}"
+  script:
+    - echo "[CI] scattering outputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
+    - !reference [.api_anchors, api_download]
+    - mkdir -p ${COMMON_INSTALL_DIR}
+    - rsync -a --remove-source-files ${API_DOWNLOAD_ROOT}/ ${COMMON_INSTALL_DIR}
+
+.gather_riscv_job:
+  extends: [.project_template, .api_mixin]
+  variables:
+    # template variables
+    API_PACKAGE_NAME: "${RISCV_PACKAGE}"
+    API_PACKAGE_VER: "${RISCV_PACKAGE_VER}"
+    API_PROJECT_ID: "${RISCV_PROJECT_ID}"
+  script:
+    - echo "[CI] scattering outputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
+    - !reference [.api_anchors, api_download]
+    - mkdir -p ${COMMON_RISCV_DIR}
+    - rsync -a --remove-source-files ${API_DOWNLOAD_ROOT}/ ${COMMON_RISCV_DIR}
+
+.gather_mc_job:
+  extends: [.project_template, .api_mixin]
+  variables:
+    # template variables
+    API_PACKAGE_NAME: "${MC_PACKAGE}"
+    API_PACKAGE_VER: "${MC_PACKAGE_VER}"
+    API_PROJECT_ID: "${MC_PROJECT_ID}"
+  script:
+    - echo "[CI] scattering outputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
+    - !reference [.api_anchors, api_download]
+    - mkdir -p ${COMMON_INSTALL_DIR}
+    - rsync -a --remove-source-files ${API_DOWNLOAD_ROOT}/ ${COMMON_INSTALL_DIR}
+
+.smoke_job:
+  extends: [.project_template]
+  script:
+    - echo "[CI] checking installation" | tee -a ${JOB_LOG}
+    - ls $COMMON_INSTALL_DIR && ls $COMMON_INSTALL_DIR/* | tee -a ${JOB_LOG}
+    - ls $COMMON_RISCV_DIR && ls $COMMON_RISCV_DIR/* | tee -a ${JOB_LOG}
+    - echo "[CI] checking symlinks" | tee -a ${JOB_LOG}
+    - ls $ZP_INSTALL_DIR && ls $ZP_INSTALL_DIR/* | tee -a ${JOB_LOG}
+    - ls $ZP_RISCV_DIR && ls $ZP_RISCV_DIR/* | tee -a ${JOB_LOG}
+
+.sim_job:
+  extends: [.project_template]
+  variables:
+    TOOL: "setme"
+    EXAMPLE: "setme"
+    RUN_SCRIPT: "./ci/common/run-ci.sh"
+    SIM_SCRIPT: "./ci/sim-example.sh"
+  script:
+    - echo "[CI] Checking out submodules" | tee -a ${JOB_LOG}
+    - git submodule update --init --recursive import/basejump_stl
+    - git submodule update --init --recursive import/black-parrot
+    - git submodule update --init --recursive import/black-parrot-subsystems
+    - git submodule update --init --recursive import/bsg_manycore
+    - git submodule update --init             import/bsg_replicant
+    - echo "[CI] Simulating $EXAMPLE with $TOOL"
+    - ${RUN_SCRIPT} ${SIM_SCRIPT} ${TOOL} ${EXAMPLE}
+
+###################################################
+## Actual Jobs
+###################################################
+
+gather-libs:
+  extends: [.gather_libs_job]
+  needs: [{job: build-image, optional: true}]
+
+gather-tools:
+  extends: [.gather_tools_job]
+  needs: [{job: build-image, optional: true}]
+
+gather-sdk:
+  extends: [.gather_sdk_job]
+  needs: [{job: build-image, optional: true}]
+
+gather-riscv:
+  extends: [.gather_riscv_job]
+  needs: [{job: build-image, optional: true}]
+
+gather-mc:
+  extends: [.gather_mc_job]
+  needs: [{job: build-image, optional: true}]
+
+smoke:
+  extends: [.smoke_job]
+  needs: [gather-libs, gather-tools, gather-sdk, gather-riscv, gather-mc]
+
+sim-basic:
+  extends: [.sim_job]
+  parallel:
+    matrix:
+      - TOOL: ["vcs", "verilator"]
+        EXAMPLE: ["simple", "dram", "axis", "shell", "double-shell"]
+  needs: [smoke]
+
+sim-bp:
+  extends: [.sim_job]
+  parallel:
+    matrix:
+      - TOOL: ["vcs", "verilator"]
+        EXAMPLE: ["black-parrot-minimal", "black-parrot"]
+  needs: [smoke]
+         
+sim-mc:
+  extends: [.sim_job]
+  parallel:
+    matrix:
+      - TOOL: ["vcs", "verilator"]
+        EXAMPLE: ["manycore", "hammerblade"]
+  needs: [smoke]
+         

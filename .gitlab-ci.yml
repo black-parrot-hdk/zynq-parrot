@@ -1,0 +1,66 @@
+
+spec:
+  inputs:
+    # global
+    platforms:
+      type: array
+        #      default: ["centos7", "ubuntu24.04"]
+      default: ["centos7"]
+    # passthrough
+    do_clean_run:
+      type: boolean
+      default: false
+    # passthrough
+    do_build_image:
+      type: string
+      options: ["never", "on_event", "on_success"]
+      default: "on_success"
+    bp_rtl_branch:
+      type: string
+      default: "master"
+    bp_tools_branch:
+      type: string
+      default: "master"
+    bp_sdk_branch:
+      type: string
+      default: "master"
+    mc_branch:
+      type: string
+      default: "ci_update_2025" # temp until https://github.com/bespoke-silicon-group/bsg_manycore/pull/765
+---
+
+###################################################
+## trigger child pipelines
+###################################################
+trigger_job:
+  interruptible: true
+  variables:
+    DOCKER_PLATFORM: "$DOCKER_PLATFORM"
+    CONTAINER_IMAGE: "$CI_REGISTRY_IMAGE:$DOCKER_PLATFORM"
+  trigger:
+    strategy: depend
+    include:
+      - local: .gitlab-ci.common.yml
+        inputs:
+          do_clean_run  : $[[ inputs.do_clean_run   ]]
+      - local: .gitlab-ci.local.yml
+        inputs:
+          do_build_image : $[[ inputs.do_build_image ]]
+          bp_rtl_branch : $[[ inputs.bp_rtl_branch ]]
+          bp_sdk_branch : $[[ inputs.bp_sdk_branch ]]
+          bp_tools_branch : $[[ inputs.bp_tools_branch ]]
+          mc_branch : $[[ inputs.mc_branch ]]
+  parallel:
+    matrix:
+      - DOCKER_PLATFORM: $[[ inputs.platforms ]]
+
+###################################################
+## workflow
+###################################################
+workflow:
+  auto_cancel:
+    on_new_commit: interruptible
+    on_job_failure: all
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ "/^ci_.*$|master|main/"'
+

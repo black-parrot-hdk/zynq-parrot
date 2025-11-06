@@ -9,7 +9,6 @@ module bsg_nonsynth_dpi_to_axis
    , input                               tready_i
    , output logic                        tvalid_o
    , output logic [data_width_p-1:0]     tdata_o
-   , output logic [(data_width_p/8)-1:0] tkeep_o
    , output logic                        tlast_o
    );
 
@@ -37,11 +36,6 @@ module bsg_nonsynth_dpi_to_axis
      #(.width_p(data_width_p), .use_output_p(1))
      tdata_gpio
       (.gpio_i(), .gpio_o(tdata_o));
-
-    bsg_nonsynth_dpi_gpio
-     #(.width_p(data_width_p/8), .use_output_p(1))
-     tkeep_gpio
-      (.gpio_i(), .gpio_o(tkeep_o));
 
     bsg_nonsynth_dpi_gpio
      #(.width_p(1), .use_output_p(1))
