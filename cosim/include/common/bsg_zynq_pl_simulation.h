@@ -308,7 +308,7 @@ class bsg_zynq_pl_simulation {
         if (!axi_mp0.get() || !axi_mp0->axis_has_write(&last)) {
 
         } else if (buffer.get()) {
-            if (buffer->can_write(last)) {
+            if (buffer->can_write()) {
                 co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
                     axi_mp0->axis_write_helper((s_axis_device *)buffer.get(),
                                                yield);
@@ -322,9 +322,9 @@ class bsg_zynq_pl_simulation {
 
     void pollm_helper() {
         uintptr_t addr;
-        int32_t data;
-        uint8_t wstrb;
-        uint8_t last;
+        long data;
+        long wstrb;
+        bool last;
         if (!axi_gp2.get()) {
         } else if (watchdog.get() &&
                    watchdog->pending_write(&addr, &data, &wstrb)) {
@@ -423,7 +423,7 @@ class bsg_zynq_pl_simulation {
                     std::function<void()> callback) {
         uint64_t uart_pkt = 0;
         uintptr_t word = addr >> 2;
-        int rdwr = 1;
+        bool rdwr = 1;
 
         uart_pkt |= (data & 0xffffffff) << 8;
         uart_pkt |= (word & 0x0000003f) << 2;
@@ -445,8 +445,8 @@ class bsg_zynq_pl_simulation {
                    std::function<void(int32_t)> callback) {
         uint64_t uart_pkt = 0;
         uintptr_t word = addr >> 2;
-        int32_t data = 0;
-        int rdwr = 0;
+        long data = 0;
+        bool rdwr = 0;
 
         uart_pkt |= (data & 0xffffffff) << 8;
         uart_pkt |= (word & 0x0000003f) << 2;
@@ -455,14 +455,14 @@ class bsg_zynq_pl_simulation {
 
         co_list.push_back(std::make_unique<coro_t>([=](yield_t &yield) {
             for (int i = 0; i < 40; i += 8) {
-                uint8_t b = (uart_pkt >> i) & 0xff;
+                char b = (uart_pkt >> i) & 0xff;
                 do {
                     yield();
                 } while (!uart->tx_helper(b));
             }
 
-            int32_t data = 0;
-            uint8_t d;
+            long data = 0;
+            char d;
             for (int i = 0; i < 32; i += 8) {
                 do {
                     yield();

@@ -423,7 +423,6 @@ module bsg_nonsynth_zynq_testbench;
 `ifdef SP0_ENABLE
   logic sp0_axi_tvalid, sp0_axi_tready;
   logic [C_SP0_AXI_DATA_WIDTH-1:0] sp0_axi_tdata;
-  logic [(C_SP0_AXI_DATA_WIDTH/8)-1:0] sp0_axi_tkeep;
   logic sp0_axi_tlast;
   bsg_nonsynth_dpi_to_axis
    #(.data_width_p(C_SP0_AXI_DATA_WIDTH))
@@ -433,7 +432,6 @@ module bsg_nonsynth_zynq_testbench;
 
      ,.tdata_o(sp0_axi_tdata)
      ,.tvalid_o(sp0_axi_tvalid)
-     ,.tkeep_o(sp0_axi_tkeep)
      ,.tlast_o(sp0_axi_tlast)
      ,.tready_i(sp0_axi_tready)
      );
@@ -442,7 +440,6 @@ module bsg_nonsynth_zynq_testbench;
 `ifdef SP1_ENABLE
   logic sp1_axi_tvalid, sp1_axi_tready;
   logic [C_SP1_AXI_DATA_WIDTH-1:0] sp1_axi_tdata;
-  logic [(C_SP1_AXI_DATA_WIDTH/8)-1:0] sp1_axi_tkeep;
   logic sp1_axi_tlast;
   bsg_nonsynth_dpi_to_axis
    #(.data_width_p(C_SP1_AXI_DATA_WIDTH))
@@ -452,7 +449,6 @@ module bsg_nonsynth_zynq_testbench;
 
      ,.tdata_o(sp1_axi_tdata)
      ,.tvalid_o(sp1_axi_tvalid)
-     ,.tkeep_o(sp1_axi_tkeep)
      ,.tlast_o(sp1_axi_tlast)
      ,.tready_i(sp1_axi_tready)
      );
@@ -461,7 +457,6 @@ module bsg_nonsynth_zynq_testbench;
 `ifdef SP2_ENABLE
   logic sp2_axi_tvalid, sp2_axi_tready;
   logic [C_SP2_AXI_DATA_WIDTH-1:0] sp2_axi_tdata;
-  logic [(C_SP2_AXI_DATA_WIDTH/8)-1:0] sp2_axi_tkeep;
   logic sp2_axi_tlast;
   bsg_nonsynth_dpi_to_axis
    #(.data_width_p(C_SP2_AXI_DATA_WIDTH))
@@ -471,7 +466,6 @@ module bsg_nonsynth_zynq_testbench;
 
      ,.tdata_o(sp2_axi_tdata)
      ,.tvalid_o(sp2_axi_tvalid)
-     ,.tkeep_o(sp2_axi_tkeep)
      ,.tlast_o(sp2_axi_tlast)
      ,.tready_i(sp2_axi_tready)
      );
@@ -480,7 +474,6 @@ module bsg_nonsynth_zynq_testbench;
 `ifdef MP0_ENABLE
   logic mp0_axi_tvalid, mp0_axi_tready;
   logic [C_MP0_AXI_DATA_WIDTH-1:0] mp0_axi_tdata;
-  logic [(C_MP0_AXI_DATA_WIDTH/8)-1:0] mp0_axi_tkeep;
   logic mp0_axi_tlast;
   bsg_nonsynth_axis_to_dpi
    #(.data_width_p(C_MP0_AXI_DATA_WIDTH))
@@ -490,7 +483,6 @@ module bsg_nonsynth_zynq_testbench;
 
      ,.tdata_i(mp0_axi_tdata)
      ,.tvalid_i(mp0_axi_tvalid)
-     ,.tkeep_i(mp0_axi_tkeep)
      ,.tready_o(mp0_axi_tready)
      ,.tlast_i(mp0_axi_tlast)
      );
@@ -499,7 +491,6 @@ module bsg_nonsynth_zynq_testbench;
 `ifdef MP1_ENABLE
   logic mp1_axi_tvalid, mp1_axi_tready;
   logic [C_MP1_AXI_DATA_WIDTH-1:0] mp1_axi_tdata;
-  logic [(C_MP1_AXI_DATA_WIDTH/8)-1:0] mp1_axi_tkeep;
   logic mp1_axi_tlast;
   bsg_nonsynth_axis_to_dpi
    #(.data_width_p(C_MP1_AXI_DATA_WIDTH))
@@ -509,7 +500,6 @@ module bsg_nonsynth_zynq_testbench;
 
      ,.tdata_i(mp1_axi_tdata)
      ,.tvalid_i(mp1_axi_tvalid)
-     ,.tkeep_i(mp1_axi_tkeep)
      ,.tready_o(mp1_axi_tready)
      ,.tlast_i(mp1_axi_tlast)
      );
@@ -518,7 +508,6 @@ module bsg_nonsynth_zynq_testbench;
 `ifdef MP2_ENABLE
   logic mp2_axi_tvalid, mp2_axi_tready;
   logic [C_MP2_AXI_DATA_WIDTH-1:0] mp2_axi_tdata;
-  logic [(C_MP2_AXI_DATA_WIDTH/8)-1:0] mp2_axi_tkeep;
   logic mp2_axi_tlast;
   bsg_nonsynth_axis_to_dpi
    #(.data_width_p(C_MP2_AXI_DATA_WIDTH))
@@ -528,7 +517,6 @@ module bsg_nonsynth_zynq_testbench;
 
      ,.tdata_i(mp2_axi_tdata)
      ,.tvalid_i(mp2_axi_tvalid)
-     ,.tkeep_i(mp2_axi_tkeep)
      ,.tready_o(mp2_axi_tready)
      ,.tlast_i(mp2_axi_tlast)
      );

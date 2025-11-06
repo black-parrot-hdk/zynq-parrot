@@ -1,10 +1,3 @@
-TOP ?= $(shell git rev-parse --show-toplevel)
-include $(TOP)/Makefile.common
-include $(TOP)/Makefile.env
-
-include $(COSIM_MK_DIR)/Makefile.common
-include $(COSIM_MK_DIR)/Makefile.env
-include $(DESIGN_DIR)/Makefile.hardware
 
 #############################
 # Design Settings
@@ -28,5 +21,5 @@ DEFINES += GP0_SHELL_PL2PS_REGS=1
 DEFINES += GP0_SHELL_PS2PL_FIFO=1
 DEFINES += GP0_SHELL_PL2PS_FIFO=1
 
-include $(COSIM_MK_DIR)/Makefile.$(TOOL)
+include $(DESIGN_DIR)/Makefile.hardware
 

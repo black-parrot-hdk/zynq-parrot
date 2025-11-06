@@ -1,9 +1,9 @@
 
 ifneq ($(ARM),1)
-$(warning ZYNQ code should execute on ARM, not X86!)
+$(warning ZYNQ code should execute on ARM, not X86! )
 endif
 
-DEFINES += GP2_ADDR_BASE=0 HP1_ADDR_BASE=0 
+DEFINES += GP2_ADDR_BASE=0 HP1_ADDR_BASE=0
 
 CFLAGS += -O2
 CFLAGS += -std=c++14

@@ -380,9 +380,9 @@ std::uint32_t rotl(std::uint32_t v, std::int32_t shift) {
 }
 
 void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
-    string nbf_command;
-    string tmp;
-    string delimiter = "_";
+    std::string nbf_command;
+    std::string tmp;
+    std::string delimiter = "_";
 
     long long int nbf[3];
     int pos = 0;
