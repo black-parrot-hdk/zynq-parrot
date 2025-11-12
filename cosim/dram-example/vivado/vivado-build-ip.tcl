@@ -1,7 +1,4 @@
 
-source $::env(COSIM_TCL_DIR)/vivado-utils.tcl
-source $::env(COSIM_TCL_DIR)/bsg-utils.tcl
-
 set boardname   $::env(BOARDNAME)
 set ip_script   $::env(DESIGN_TCL_DIR)/bd.tcl
 set ip_name     top

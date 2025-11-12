@@ -16,12 +16,11 @@ run-%: build-%
 	@$(eval CONTAINER_NAME := $(notdir $(TOP)))
 	@$(eval CONTAINER_NAME := $(notdir $(TOP)))
 	@$(eval DOCKER_WORKMNT := $(TOP):/work/$(CONTAINER_NAME))
-	@$(eval DOCKER_CADMNT  := $(CAD):/cad)
 	@$(eval DOCKER_WORKVOL := --volume=$(DOCKER_WORKMNT))
-	@$(eval DOCKER_CADVOL  := --volume=$(DOCKER_CADMNT))
 	@$(eval DOCKER_RUNARGS += $(if $(USE_LOCAL_CREDENTIALS),--volume=$(DOCKER_WORKMNT),))
 	@$(eval DOCKER_RUNARGS += $(if $(USE_LOCAL_CREDENTIALS),--network=host,))
-	@$(eval DOCKER_RUNARGS += $(if $(USE_LOCAL_CREDENTIALS),--volume=$(DOCKER_CADMNT),))
+	@$(eval DOCKER_RUNARGS += $(if $(USE_LOCAL_CREDENTIALS),--volume=/gro/cad:/cad,))
+	@$(eval DOCKER_RUNARGS += $(if $(USE_LOCAL_CREDENTIALS),--volume=/tools/Xilinx:/cad/Xilinx,))
 	@docker run $(DOCKER_RUNARGS) -it $(CONTAINER_NAME)
 
 docker-build: ## creates a docker image

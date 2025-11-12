@@ -15,9 +15,13 @@ BUILD_COLLATERAL += $(BASENAME)_bd_1.bit
 BUILD_COLLATERAL += $(BASENAME)_bd_1.hwh
 BUILD_COLLATERAL += $(BASENAME)_bd_1.map
 
-run: ## runs the control program on the PS
-run: control-program $(RUN_COLLATERAL)
-	@$(SUDO) ./$< $(RUN_ARGS) | tee run.log
+unpack_bitstream: ## Unpacks the bitstream
+unpack_bitstream:
+	$(BASE64) -d ../$(BASENAME)_bd_1.$(HOST).$(BOARDNAME).tar.xz.b64 | $(TAR) xvJ
+
+load_bitstream: ## Loads the bitstream using the pynq api
+load_bitstream: $(BASENAME)_bd_1.bit
+	@$(ECHO) 'import pprint; from pynq import PL; PL.reset(); from pynq import Overlay; overlay=Overlay("$<"); print (overlay.__doc__); pprint.pprint(overlay.ip_dict,width=1); pprint.pprint(overlay.clock_dict,width=1);' | sudo -E $(PYTHON3)
 
 build: ## builds the control program
 build: control-program
@@ -26,13 +30,9 @@ control-program: $(BUILD_COLLATERAL)
 	@$(eval LDFLAGS += -lcma -lpthread)
 	$(CXX) $(CFLAGS) $(CSOURCES) -o $@ $(LDFLAGS) 2>&1 | tee build.log
 
-unpack_bitstream: ## Unpacks the bitstream
-unpack_bitstream:
-	$(BASE64) -d ../$(BASENAME)_bd_1.$(HOST).$(BOARDNAME).tar.xz.b64 | $(TAR) xvJ
-
-load_bitstream: ## Loads the bitstream using the pynq api
-load_bitstream: $(BASENAME)_bd_1.bit
-	@$(ECHO) 'import pprint; from pynq import PL; PL.reset(); from pynq import Overlay; overlay=Overlay("$<"); print (overlay.__doc__); pprint.pprint(overlay.ip_dict,width=1); pprint.pprint(overlay.clock_dict,width=1);' | sudo -E $(PYTHON3)
+run: ## runs the control program on the PS
+run: control-program $(RUN_COLLATERAL)
+	@$(SUDO) ./$< $(RUN_ARGS) | tee run.log
 
 ###################
 # Miscellaneous (Unmaintained) Targets

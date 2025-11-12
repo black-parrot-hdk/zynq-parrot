@@ -4,14 +4,21 @@ spec:
     # global
     platforms:
       type: array
-        #      default: ["centos7", "ubuntu24.04"]
-      default: ["centos7"]
+      default: ["centos7", "ubuntu24.04"]
     # passthrough
     do_clean_run:
       type: boolean
       default: false
     # passthrough
     do_build_image:
+      type: string
+      options: ["never", "on_event", "on_success"]
+      default: "on_event"
+    do_sim:
+      type: string
+      options: ["never", "on_event", "on_success"]
+      default: "on_success"
+    do_synth:
       type: string
       options: ["never", "on_event", "on_success"]
       default: "on_success"
@@ -21,6 +28,9 @@ spec:
     bp_tools_branch:
       type: string
       default: "master"
+    bp_sub_branch:
+      type: string
+      default: "main"
     bp_sdk_branch:
       type: string
       default: "master"
@@ -45,11 +55,14 @@ trigger_job:
           do_clean_run  : $[[ inputs.do_clean_run   ]]
       - local: .gitlab-ci.local.yml
         inputs:
-          do_build_image : $[[ inputs.do_build_image ]]
-          bp_rtl_branch : $[[ inputs.bp_rtl_branch ]]
-          bp_sdk_branch : $[[ inputs.bp_sdk_branch ]]
+          do_build_image  : $[[ inputs.do_build_image ]]
+          do_sim          : $[[ inputs.do_sim ]]
+          do_synth        : $[[ inputs.do_synth ]]
+          bp_rtl_branch   : $[[ inputs.bp_rtl_branch ]]
+          bp_sdk_branch   : $[[ inputs.bp_sdk_branch ]]
           bp_tools_branch : $[[ inputs.bp_tools_branch ]]
-          mc_branch : $[[ inputs.mc_branch ]]
+          bp_sub_branch   : $[[ inputs.bp_sub_branch ]]
+          mc_branch       : $[[ inputs.mc_branch ]]
   parallel:
     matrix:
       - DOCKER_PLATFORM: $[[ inputs.platforms ]]
@@ -58,9 +71,9 @@ trigger_job:
 ## workflow
 ###################################################
 workflow:
-  auto_cancel:
-    on_new_commit: interruptible
-    on_job_failure: all
+  #  auto_cancel:
+  #    on_new_commit: interruptible
+  #    on_job_failure: all
   rules:
     - if: '$CI_COMMIT_BRANCH =~ "/^ci_.*$|master|main/"'
 

@@ -9,5 +9,9 @@ else
 	$(ECHO) "-DGP0_ADDR_BASE=0xA0000000" >> simple_bd_1.map
 endif
 
-include ../Makefile.design
+#############################
+# Accelerator Software Settings
+#############################
+include $(DESIGN_DIR)/Makefile.design
+#include $(COSIM_MK_DIR)/Makefile.vivado
 

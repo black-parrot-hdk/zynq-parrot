@@ -144,7 +144,7 @@ spec:
     # https://gitlab.com/gitlab-org/gitlab-runner/-/issues/3688
     CI_BUILDS_DIR: "/builds/$CI_PROJECT_NAME"
     GIT_CLONE_PATH: "$CI_BUILDS_DIR/$CI_PIPELINE_ID/$CI_CONCURRENT_ID"
-  tags: [bsg]
+  tags: [bsg, $DOCKER_PLATFORM]
   interruptible: true
   hooks:
     pre_get_sources_script:

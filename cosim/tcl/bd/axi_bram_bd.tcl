@@ -1,7 +1,4 @@
 
-source $::env(COSIM_TCL_DIR)/vivado-utils.tcl
-source $::env(COSIM_TCL_DIR)/bsg-utils.tcl
-
 proc init { cellpath otherInfo } {
 
 }

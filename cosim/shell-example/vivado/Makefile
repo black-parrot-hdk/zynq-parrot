@@ -5,5 +5,6 @@ include $(TOP)/Makefile.env
 #############################
 # Accelerator Software Settings
 #############################
-include ../Makefile.design
+include $(DESIGN_DIR)/Makefile.design
+include $(COSIM_MK_DIR)/Makefile.vivado
 

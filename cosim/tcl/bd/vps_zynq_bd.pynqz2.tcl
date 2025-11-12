@@ -1,5 +1,3 @@
-source $::env(COSIM_TCL_DIR)/vivado-utils.tcl
-source $::env(COSIM_TCL_DIR)/bsg-utils.tcl
 
 # Vivado hook for BD initialization
 proc init { cellpath otherInfo } {

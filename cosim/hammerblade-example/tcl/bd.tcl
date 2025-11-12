@@ -1,5 +1,11 @@
-source $::env(COSIM_TCL_DIR)/vivado-utils.tcl
-source $::env(COSIM_TCL_DIR)/bsg-utils.tcl
+
+proc init { cellpath otherInfo } {
+
+}
+
+proc post_propagate { cellpath otherInfo } {
+    # standard parameter propagation here
+}
 
 proc vivado_create_ip { args } {
 
@@ -12,7 +18,7 @@ proc vivado_create_ip { args } {
     set aclk_freq_hz [expr round(${aclk_freq_mhz}*1e6)]
     set rtclk_freq_hz [expr round(${rtclk_freq_mhz}*1e6)]
 
-    vivado_parse_flist flist.vcs
+    vivado_create_design ${vpackages} ${vsources} ${vincludes}
     create_bd_cell -type module -reference top -name top
 
     create_bd_port -dir I -type clk -freq_hz ${aclk_freq_hz} aclk
@@ -34,12 +40,12 @@ proc vivado_create_ip { args } {
     connect_bd_net [get_bd_pins top/aresetn] [get_bd_ports aresetn]
 
     set hp0_seg_offset 0x0
-    set hp0_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_ports top/hp0_axi]]
+    set hp0_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_intf_pins top/hp0_axi]]
     set hp0_seg_size [expr 1 << ${hp0_addr_width}]
     assign_bd_address -target_address_space [get_bd_addr_spaces top/hp0_axi] [get_bd_addr_segs hp0*] -range ${hp0_seg_size} -offset ${hp0_seg_offset}
 
     set hp1_seg_offset 0x0
-    set hp1_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_ports top/hp1_axi]]
+    set hp1_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_intf_pins top/hp1_axi]]
     set hp1_seg_size [expr 1 << ${hp1_addr_width}]
     assign_bd_address -target_address_space [get_bd_addr_spaces top/hp1_axi] [get_bd_addr_segs hp1*] -range ${hp1_seg_size} -offset ${hp1_seg_offset}
 
