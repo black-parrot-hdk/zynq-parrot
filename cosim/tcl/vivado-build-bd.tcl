@@ -1,7 +1,4 @@
 
-source $::env(COSIM_TCL_DIR)/vivado-utils.tcl
-source $::env(COSIM_TCL_DIR)/bsg-utils.tcl
-
 set ip_name      $::env(BASENAME)
 set ip_script    vivado-create-block.tcl
 set proj_name    ${ip_name}_bd_proj

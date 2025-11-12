@@ -1,54 +1,81 @@
 
-# Guides
-** Note: These guides are written for old versions of ZynqParrot. Please raise issues with updates! **
-See [Tynqer with PYNQ](https://docs.google.com/document/d/1U9XIxLkjbI1vQR5hxjk8SzqqQ3sM2hCMUXfoK3tGwBU/edit#heading=h.souq55b38m0y) for an introduction to using Zynq and Vivado. We highly suggest that you use the ethernet connection to the board.
+# ZynqParrot Examples
 
-See [The ZynqParrot Co-simulation Development Flow](https://docs.google.com/document/d/1mBLb9BgQSIv25p59MPj0a4c-TfvwlfqXeuFlZFBVzAY/edit) for the architecture of the BSG ZynqParrot shell and how it is integrated with BlackParrot.
+Examples have a standard structure designed to click into the ZynqParrot build system.
+They are provided to demonstrate various ZynqParrot features such as AXI-lite connections or DRAM.
 
-All of the FPGA versions here build automatically from script (except simple-example), and do not require any other repos except the submodules above.
-
-# Example Designs
-
-Design have a standard structure designed to click into the ZynqParrot build system. To add a new design, copy shell-example and modify.
+To add a new design, copy shell-example and modify it for your IP.
 
 ## Collateral
 
-- README.md: Description of the design
-- Makefile.design: Design-specific settings and configurations for all backends
-- Makefile.hardware: Design-specific verilog files for compiling the design
-- ps.cpp: Co-simulation code that runs on PS on FPGA or in simulation to control the accelerator
-- flist.vcs: SystemVerilog files used to build the design
-- v/: Source files for this specific design
-- tcl/: TCL scripts used to synthesize the design
+- Makefile.design: Design-specific settings and configurations for all backends.
+- Makefile.hardware: Design-specific verilog files for compiling the design.
+- ps.cpp: Co-simulation code that runs on PS on FPGA or in simulation to control the accelerator.
+- ps.hpp: PL/PS register map definitions.
+- v/: Source files for this specific example.
+- tcl/: TCL scripts used to synthesize the example.
+- xdc/: XDC constraints used to synthesize the example.
 
 ## Backends
 
-Designs can run in hardware or co-simulation by entering the appropriate backend directory
+Examples can run in hardware or co-simulation by entering the appropriate backend directory.
 
-"make help" displays the possible targets for a given backend
+"make help" displays targets for a given backend and "make clean" removes temporary build files.
 
-** Note: Not all backends are supported for all targets and should error out with an explicit message. **
+- verilator / vcs
+  - build: Creates an simulation executable.
+  - run: Runs the simulation executable (TRACE=1 to trace).
+  - view: Opens the simulation waveform with GTKWave or DVE.
+- vivado
+  - ip\_package: Packages the IP before synthesis.
+  - fpga\_build: Creates an FPGA bitstream.
+  - pack\_bitstream: Packs the build outputs to a single file.
+  - open: Opens the toplevel block diagram of the project.
+  - open\_ip.%: Opens the block diagram for a specific IP project.
+- zynq
+  - unpack\_bitstream: Unpacks the bitstream on target.
+  - load\_bitstream: Loads the bitstream to the target using pynq API.
+  - build: Builds the control program for the co-emulation.
+  - run: Runs the control program on the PS.
 
-### Simulation Backends
+** Note: Not all backends are supported for all targets. **
 
-- verilator: FOSS SystemVerilog simulator https://github.com/verilator/verilator
-- vcs: Synopsys SystemVerilog simulator
-- xcelium: Cadence SystemVerilog simulator
+## Provided Examples
 
-### Hardware Backends
+### Simple Example
 
-- zynq: Runs PS code on ARM PS of Zynq chips
+Demonstrates how to use the Vivado GUI, Zynq board, etc.
+Useful to know for getting unstuck with the other directories. =)
 
-# Provided Examples
+### Shell Example
 
-- **simple-example**: demonstrates how to use the Vivado GUI, Zynq board, etc. Useful to know for getting unstuck with the other directories. =)
-- **shell-example**: basic example of the BSG Zynq Shell.
-- **double-shell-example**: two shells that talk to each other, demonstrating both ports on the Zynq chip.
-- **dram-example**: tests the software running on ARM that allocates DRAM space out of the ARM Linux available memory for the PL.
-- **axi3-example**: tests the speedup achieved by using AXI3 directly instead of converting to AXI4.
-- **axis-example**: Demonstration of AXIS interface for high performance PS communication.
-- **blackparrot-minimal-example**: working example of BlackParrot using a non-blocking FIFO interface for I/O.
-- **blackparrot-example**: working example of BlackParrot using blocking interfaces on I/O.
-- **manycore-example**: example of a small manycore driven by the zynq shell
-- **hammerblade-example**: example of a BlackParrot+Manycore system driven by the Zynq Shell
+Shows how to use the basic P-Shell.
+
+### Double Shell Example
+
+Shows two P-Shells that talk to each other, demonstrating both ports on the Zynq chip.
+
+### DRAM Example
+
+Shows software running on ARM that allocates DRAM space out of the Zynq PS and communicates with the Zynq PL.
+
+### AXIS Example
+
+Shows an AXI-Stream interface for high performance PS communication.
+
+### BlackParrot Minimal Example
+
+Shows control of an instantiated BlackParrot core driven by the P-Shell interface.
+
+### BlackParrot Full Example
+
+Shows control of an instantiated BlackParrot core using direct MMIO.
+
+### Manycore Example
+
+Shows control of an instantiated manycore driven by the P-Shell interface.
+
+### HammerBlade Example
+
+Shows control of an instantiated BlackParrot+Manycore driven by the P-Shell interface.
 

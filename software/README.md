@@ -1,4 +1,6 @@
-# ZynqParrot Software Support
+# Pardon Our Dust: Under Construction
+
+# ZynqParrot Software Environments
 
 This directory is used to cross-compile software support for ZynqParrot hosts. Currently supported are x86, Zynq 7000 and Zynq UltraScale+. By running the setup here, users will be able to use their host x86 system and compile programs that run on Zynq. As a proof of concept, Verilator is provided as a cross-compiled example.
 

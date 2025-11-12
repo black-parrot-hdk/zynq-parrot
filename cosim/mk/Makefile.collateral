@@ -1,0 +1,8 @@
+
+export BUILD_COLLATERAL
+export RUN_COLLATERAL
+
+clean::
+	@if [ -n "$$BUILD_COLLATERAL" ]; then $(RMRF) $$BUILD_COLLATERAL; fi
+	@if [ -n "$$RUN_COLLATERAL"   ]; then $(RMRF) $$RUN_COLLATERAL  ; fi
+

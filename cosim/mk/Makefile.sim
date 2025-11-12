@@ -1,4 +1,6 @@
 
+include $(COSIM_MK_DIR)/Makefile.collateral
+
 #############################
 # Common variables
 #############################
@@ -48,10 +50,3 @@ CLIBS += boost_system
 
 LDFLAGS +=
 
-clean::
-ifneq (,$(BUILD_COLLATERAL))
-	@$(RMRF) $(BUILD_COLLATERAL)
-endif
-ifneq (,$(RUN_COLLATERAL))
-	@$(RMRF) $(RUN_COLLATERAL)
-endif

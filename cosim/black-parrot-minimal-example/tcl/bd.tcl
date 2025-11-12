@@ -1,7 +1,4 @@
 
-source $::env(COSIM_TCL_DIR)/vivado-utils.tcl
-source $::env(COSIM_TCL_DIR)/bsg-utils.tcl
-
 proc vivado_create_ip { args } {
 
     set vpackages [lindex [lindex ${args} 0] 0]

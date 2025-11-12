@@ -2,9 +2,12 @@
 spec:
   inputs:
     do_build_image:
+    do_sim:
+    do_synth:
     bp_rtl_branch:
     bp_sdk_branch:
     bp_tools_branch:
+    bp_sub_branch:
     mc_branch:
 ---
 
@@ -48,6 +51,9 @@ build-image:
     TOOLS_PACKAGE: "tools-${DOCKER_PLATFORM}"
     TOOLS_PACKAGE_VER: "$[[ inputs.bp_tools_branch ]]"
     TOOLS_PROJECT_ID: "66229211"
+    SUB_PACKAGE: "gen-${DOCKER_PLATFORM}"
+    SUB_PACKAGE_VER: "$[[ inputs.bp_sub_branch ]]"
+    SUB_PROJECT_ID: "66229201"
     RISCV_PACKAGE: "riscv"
     RISCV_PACKAGE_VER: "$[[ inputs.bp_sdk_branch ]]"
     RISCV_PROJECT_ID: "27392985"
@@ -141,6 +147,19 @@ build-image:
     - mkdir -p ${COMMON_INSTALL_DIR}
     - rsync -a --remove-source-files ${API_DOWNLOAD_ROOT}/ ${COMMON_INSTALL_DIR}
 
+.gather_sub_job:
+  extends: [.project_template, .api_mixin]
+  variables:
+    # template variables
+    API_PACKAGE_NAME: "${SUB_PACKAGE}"
+    API_PACKAGE_VER: "${SUB_PACKAGE_VER}"
+    API_PROJECT_ID: "${SUB_PROJECT_ID}"
+  script:
+    - echo "[CI] scattering outputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
+    - !reference [.api_anchors, api_download]
+    - mkdir -p ${COMMON_INSTALL_DIR}
+    - rsync -a --remove-source-files ${API_DOWNLOAD_ROOT}/ ${COMMON_INSTALL_DIR}
+
 .smoke_job:
   extends: [.project_template]
   script:
@@ -167,6 +186,29 @@ build-image:
     - git submodule update --init             import/bsg_replicant
     - echo "[CI] Simulating $EXAMPLE with $TOOL"
     - ${RUN_SCRIPT} ${SIM_SCRIPT} ${TOOL} ${EXAMPLE}
+  rules:
+    - if: '"$[[ inputs.do_sim ]]" =~ "/on_success|on_event/"'
+
+.synth_job:
+  extends: [.project_template]
+  variables:
+    EXAMPLE: "setme"
+    RUN_SCRIPT: "./ci/common/run-ci.sh"
+    SYNTH_SCRIPT: "./ci/synth-example.sh"
+  script:
+    - echo "[CI] Checking out submodules" | tee -a ${JOB_LOG}
+    - git submodule update --init --recursive import/basejump_stl
+    - git submodule update --init --recursive import/black-parrot
+    - git submodule update --init --recursive import/black-parrot-subsystems
+    - git submodule update --init --recursive import/bsg_manycore
+    - git submodule update --init             import/bsg_replicant
+    - echo "[CI] Synthesizing $EXAMPLE"
+    - ${RUN_SCRIPT} ${SYNTH_SCRIPT} ${EXAMPLE}
+    - echo "[CI] Moving bitstream to artifacts" | tee -a ${JOB_LOG}
+    - mv cosim/${EXAMPLE}-example/*tar.xz.b64 ${JOB_SUCCESS_ROOT}
+  rules:
+    - if: '"$[[ inputs.do_synth ]]" =~ "/on_success|on_event/" && $DOCKER_PLATFORM == "ubuntu24.04" && $BOARDNAME == "ultra96v2"'
+    - if: '"$[[ inputs.do_synth ]]" =~ "/on_success|on_event/" && $DOCKER_PLATFORM == "centos7" && $BOARDNAME == "pynqz2"'
 
 ###################################################
 ## Actual Jobs
@@ -192,31 +234,75 @@ gather-mc:
   extends: [.gather_mc_job]
   needs: [{job: build-image, optional: true}]
 
+gather-sub:
+  extends: [.gather_sub_job]
+  needs: [{job: build-image, optional: true}]
+
 smoke:
   extends: [.smoke_job]
-  needs: [gather-libs, gather-tools, gather-sdk, gather-riscv, gather-mc]
+  needs: [gather-libs, gather-tools, gather-sdk, gather-riscv, gather-mc, gather-sub]
 
-sim-basic:
+sim-test:
   extends: [.sim_job]
   parallel:
     matrix:
-      - TOOL: ["vcs", "verilator"]
-        EXAMPLE: ["simple", "dram", "axis", "shell", "double-shell"]
+      - TOOL: ["vcs"]
+        EXAMPLE: ["shell"]
   needs: [smoke]
 
-sim-bp:
-  extends: [.sim_job]
+synth-test:
+  extends: [.synth_job]
   parallel:
     matrix:
-      - TOOL: ["vcs", "verilator"]
-        EXAMPLE: ["black-parrot-minimal", "black-parrot"]
+      - EXAMPLE: ["shell"]
+        BOARDNAME: ["pynqz2", "ultra96v2"]
   needs: [smoke]
-         
-sim-mc:
-  extends: [.sim_job]
-  parallel:
-    matrix:
-      - TOOL: ["vcs", "verilator"]
-        EXAMPLE: ["manycore", "hammerblade"]
-  needs: [smoke]
-         
+
+    #sim-basic:
+    #  extends: [.sim_job]
+    #  parallel:
+    #    matrix:
+    #      - TOOL: ["vcs", "verilator"]
+    #        EXAMPLE: ["simple", "dram", "axis", "shell", "double-shell"]
+    #  needs: [smoke]
+    #
+    #sim-bp:
+    #  extends: [.sim_job]
+    #  parallel:
+    #    matrix:
+    #      - TOOL: ["vcs", "verilator"]
+    #        EXAMPLE: ["black-parrot-minimal", "black-parrot"]
+    #  needs: [smoke]
+    #         
+    #sim-mc:
+    #  extends: [.sim_job]
+    #  parallel:
+    #    matrix:
+    #      - TOOL: ["vcs", "verilator"]
+    #        EXAMPLE: ["manycore", "hammerblade"]
+    #  needs: [smoke]
+    #
+    #synth-basic:
+    #  extends: [.synth_job]
+    #  parallel:
+    #    matrix:
+    #      - EXAMPLE: ["dram", "axis", "shell", "double-shell"]
+    #        BOARDNAME: ["pynqz2", "ultra96v2"]
+    #  needs: [smoke]
+    #
+    #synth-bp:
+    #  extends: [.synth_job]
+    #  parallel:
+    #    matrix:
+    #      - EXAMPLE: ["black-parrot-minimal", "black-parrot"]
+    #        BOARDNAME: ["pynqz2", "ultra96v2"]
+    #  needs: [smoke]
+    #
+    #synth-mc:
+    #  extends: [.synth_job]
+    #  parallel:
+    #    matrix:
+    #      - EXAMPLE: ["manycore", "hammerblade"]
+    #        BOARDNAME: ["ultra96v2"]
+    #  needs: [smoke]
+

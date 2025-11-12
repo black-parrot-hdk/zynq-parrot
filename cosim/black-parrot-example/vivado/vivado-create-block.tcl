@@ -1,6 +1,3 @@
-source $::env(COSIM_TCL_DIR)/vivado-utils.tcl
-source $::env(COSIM_TCL_DIR)/bsg-utils.tcl
-
 
 proc vivado_create_ip { args } {
     create_bd_cell -type ip -vlnv user.org:user:top:1.0 top_0
