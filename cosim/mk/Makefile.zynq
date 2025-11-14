@@ -5,9 +5,22 @@ endif
 
 DEFINES += GP2_ADDR_BASE=0 HP1_ADDR_BASE=0
 
+CSOURCES += $(MAIN_PROGRAM)
+CSOURCES += $(HOST_PROGRAM)
+
+CINCLUDES += $(CURDIR)
+CINCLUDES += $(COSIM_INCLUDE_DIR)/common
+CINCLUDES += $(COSIM_INCLUDE_DIR)/$(TOOL)
+CINCLUDES += $(ZP_INSTALL_DIR)/include
+CINCLUDES += $(BASEJUMP_STL_DIR)/bsg_mem
+CINCLUDES += $(BP_SUB_DIR)/blackparrot/src
+CINCLUDES += $(BSG_REPLICANT_DIR)/libraries
+CINCLUDES += $(BASEJUMP_STL_DIR)/bsg_test
+CINCLUDES += /usr/include/xrt
+
 CFLAGS += -O2
 CFLAGS += -std=c++14
-CFLAGS += -D_BSD_SOURCE -D_DEFAULT_SOURCE)
+CFLAGS += -D_BSD_SOURCE -D_DEFAULT_SOURCE
 CFLAGS += $(addprefix -I,$(CINCLUDES))
 CFLAGS += $(addprefix -D,$(DEFINES))
 
@@ -16,18 +29,19 @@ BUILD_COLLATERAL += $(BASENAME)_bd_1.hwh
 BUILD_COLLATERAL += $(BASENAME)_bd_1.map
 
 unpack_bitstream: ## Unpacks the bitstream
-unpack_bitstream:
+unpack_bitstream: $(BUILD_COLLATERAL)
+$(BUILD_COLLATERAL):
 	$(BASE64) -d ../$(BASENAME)_bd_1.$(HOST).$(BOARDNAME).tar.xz.b64 | $(TAR) xvJ
 
 load_bitstream: ## Loads the bitstream using the pynq api
-load_bitstream: $(BASENAME)_bd_1.bit
+load_bitstream: $(BUILD_COLLATERAL) 
 	@$(ECHO) 'import pprint; from pynq import PL; PL.reset(); from pynq import Overlay; overlay=Overlay("$<"); print (overlay.__doc__); pprint.pprint(overlay.ip_dict,width=1); pprint.pprint(overlay.clock_dict,width=1);' | sudo -E $(PYTHON3)
 
 build: ## builds the control program
 build: control-program
 control-program: $(BUILD_COLLATERAL)
 	@$(eval CFLAGS += $(shell cat $(BASENAME)_bd_1.map))
-	@$(eval LDFLAGS += -lcma -lpthread)
+	@$(eval LDFLAGS += -lpthread -lxrt_coreutil)
 	$(CXX) $(CFLAGS) $(CSOURCES) -o $@ $(LDFLAGS) 2>&1 | tee build.log
 
 run: ## runs the control program on the PS

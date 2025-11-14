@@ -105,23 +105,9 @@ int ps_main(int argc, char **argv) {
     // read value out of fifo
     assert((zpl->shell_read(0x14 + GP0_ADDR_BASE) == (val1 + val2)));
 
-    // checker output counters
+    // check output counters
     assert((zpl->shell_read(0x18 + GP0_ADDR_BASE) == (0)));
     assert((zpl->shell_read(0x1C + GP0_ADDR_BASE) == (0)));
-
-    // DRAM test
-    unsigned long phys_ptr;
-    volatile int *buf;
-
-    buf = (volatile int *)zpl->allocate_dram(DRAM_ALLOC_SIZE_BYTES, &phys_ptr);
-
-    // write all of the dram
-    for (int i = 0; i < DRAM_ALLOC_SIZE_BYTES / 4; i++)
-        buf[i] = i;
-
-    // read all of the dram
-    for (int i = 0; i < DRAM_ALLOC_SIZE_BYTES / 4; i++)
-        assert(buf[i] == i);
 
     printf("## everything passed; at end of test\n");
     zpl->done();

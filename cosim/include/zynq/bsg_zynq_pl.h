@@ -24,11 +24,6 @@
 // note: cat /proc/meminfo gives information about the CMA
 //
 
-extern "C" {
-#include "/usr/include/libxlnk_cma.h"
-void _xlnk_reset();
-};
-
 #include "bsg_argparse.h"
 #include "bsg_printing.h"
 #include "zynq_headers.h"
@@ -47,12 +42,21 @@ void _xlnk_reset();
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <xrt.h>
+#include <xrt/xrt_device.h>
+#include <xrt/xrt_bo.h>
+
 #include "bsg_zynq_pl_hardware.h"
 
 class bsg_zynq_pl : public bsg_zynq_pl_hardware {
+  private:
+    std::unique_ptr<xrt::device> xrt_device;
+    std::unique_ptr<xrt::bo> xrt_dram;
+
   public:
     bsg_zynq_pl(int argc, char *argv[]) {
         printf("// bsg_zynq_pl: be sure to run as root\n");
+        xrt_device = std::make_unique<xrt::device>(0);
         init();
     }
 
@@ -73,17 +77,15 @@ class bsg_zynq_pl : public bsg_zynq_pl_hardware {
     void *allocate_dram(unsigned long len_in_bytes,
                         unsigned long *physical_ptr) override {
 
-        // resets all CMA buffers across system (eek!)
-        _xlnk_reset();
-
         // for now, we do uncacheable to keep things simple, memory accesses go
         // straight to DRAM and
         // thus would be coherent with the PL
 
-        void *virtual_ptr =
-            cma_alloc(len_in_bytes, 0); // 1 = cacheable, 0 = uncacheable
-        assert(virtual_ptr != NULL);
-        *physical_ptr = cma_get_phy_addr(virtual_ptr);
+        // resets all CMA buffers across system (eek!)
+        xrt_dram = std::make_unique<xrt::bo>(xrt_device.get(), len_in_bytes, xrt::bo::flags::normal, 0);
+        void *virtual_ptr = xrt_dram->map<void*>();
+        *physical_ptr = xrt_dram->address();
+
         printf("bsg_zynq_pl: allocate_dram() called with size %ld bytes --> "
                "virtual "
                "ptr=%p, physical ptr=0x%8.8lx\n",
@@ -94,7 +96,8 @@ class bsg_zynq_pl : public bsg_zynq_pl_hardware {
     void free_dram(void *virtual_ptr) override {
         printf("bsg_zynq_pl: free_dram() called on virtual ptr=%p\n",
                virtual_ptr);
-        cma_free(virtual_ptr);
+        xrt_dram.reset(nullptr);
+        //cma_free(virtual_ptr);
     }
 
     int32_t shell_read(uintptr_t addr) override { return axil_read(addr); }

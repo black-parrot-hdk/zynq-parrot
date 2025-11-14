@@ -10,5 +10,6 @@ CFLAGS += -mfpu=neon
 DEFINES += GP0_ADDR_SIZE_BYTES=4096
 DEFINES += NEON
 
-include ../Makefile.design
+include $(DESIGN_DIR)/Makefile.design
+include $(COSIM_MK_DIR)/Makefile.zynq
 

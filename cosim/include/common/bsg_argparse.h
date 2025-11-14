@@ -31,7 +31,7 @@ static void get_argv(char *args, char **argv) {
     // with an extra null character for safety
     static char path[1025] = {'\0'};
 
-    readlink("/proc/self/exe", path, sizeof(path) - 1);
+    (void)!readlink("/proc/self/exe", path, sizeof(path) - 1);
     argv[0] = path;
     count++;
 
