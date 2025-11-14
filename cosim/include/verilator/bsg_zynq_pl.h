@@ -22,7 +22,7 @@
 #include "verilated.h"
 
 extern "C" {
-    int bsg_dpi_time();
+int bsg_dpi_time();
 }
 
 class bsg_zynq_pl : public bsg_zynq_pl_simulation {
@@ -37,7 +37,7 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
 
         // Set debug level, 0 is off, 9 is highest presently used
         contextp->debug(0);
-        
+
         // Randomization reset policy
         contextp->randReset(2);
 
@@ -48,8 +48,8 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
         contextp->commandArgs(argc, argv);
 
         // Create the TB pointer
-        tb = std::make_unique<Vbsg_nonsynth_zynq_testbench>(contextp.get(), "TOP");
-
+        tb = std::make_unique<Vbsg_nonsynth_zynq_testbench>(contextp.get(),
+                                                            "TOP");
         tick();
         init();
     }
@@ -68,9 +68,10 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
         bsg_nonsynth_dpi::bsg_timekeeper::next();
     }
 
-    void done(void) override {
+    void done(char *reason) override {
         printf("bsg_zynq_pl: done() called, exiting\n");
         contextp->statsPrintSummary();
+        bsg_dpi_finish(reason);
     }
 
     void *allocate_dram(unsigned long len_in_bytes,

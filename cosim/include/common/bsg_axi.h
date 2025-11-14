@@ -15,4 +15,3 @@ template <unsigned int A, unsigned int D> class axi_defaults {
 };
 
 #endif
-

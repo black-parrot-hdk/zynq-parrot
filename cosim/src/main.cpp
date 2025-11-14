@@ -1,16 +1,16 @@
 
 #include "bsg_argparse.h"
-#include "zynq_headers.h"
+#include "bsg_zynq_pl.h"
 
 #include <stdio.h>
 #include <string>
 
-extern int ps_main(int argc, char **argv);
+extern int ps_main (bsg_zynq_pl *zpl, int argc, char **argv);
 
 #ifdef HAS_COSIM_MAIN
-extern "C" int cosim_main(char *argstr) {
+extern "C" void cosim_main(char *argstr) {
 #else
-int main(int argc, char **argv) {
+void main(int argc, char **argv) {
     char argstr[1025] = {0};
     get_argstr(argstr, argc, argv);
 #endif
@@ -23,5 +23,11 @@ int main(int argc, char **argv) {
     // so that we can see what is happening in real time
     setvbuf(stdout, NULL, _IOLBF, 0);
 
-    return ps_main(ps_argc, ps_argv);
+    // need to call finish after ZPL is destructed...
+    // for now, pl and ps get the same arguments, but we could split them
+    bsg_zynq_pl zpl(ps_argc, ps_argv);
+    int rc = ps_main(&zpl, ps_argc, ps_argv);
+    printf("PS main returned with rc: %x\n", rc);
+    zpl.done();
+    __builtin_unreachable();
 }

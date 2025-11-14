@@ -32,7 +32,7 @@ class bsg_zynq_pl_hardware {
     virtual void start(void) = 0;
     virtual void stop(void) = 0;
     virtual void tick(void) = 0;
-    virtual void done(void) = 0;
+    virtual void done(char *reason) = 0;
     virtual void *allocate_dram(unsigned long len_in_bytes,
                                 unsigned long *physical_ptr) = 0;
     virtual void free_dram(void *virtual_ptr) = 0;
@@ -136,8 +136,6 @@ class bsg_zynq_pl_hardware {
         // Only aligned 32B reads are currently supported
         assert(alignof(address) >= 4);
 
-        // We use unsigned here because the data is sign extended from the AXI
-        // bus
         volatile int32_t *ptr32 = axil_get_ptr32(address);
         int32_t data = *ptr32;
         bsg_pr_dbg_pl("  bsg_zynq_pl: AXI reading [%" PRIxPTR "]->%8.8x\n",
@@ -220,26 +218,6 @@ class bsg_zynq_pl_hardware {
         return read_buf;
     }
 #endif
-
-  public:
-    virtual int32_t shell_read(uintptr_t addr) = 0;
-    virtual void shell_write(uintptr_t addr, int32_t data, uint8_t wmask) = 0;
-
-    virtual void shell_read4(uintptr_t addr, int32_t *data0, int32_t *data1,
-                             int32_t *data2, int32_t *data3) {
-        *data0 = shell_read(addr + 0);
-        *data1 = shell_read(addr + 4);
-        *data2 = shell_read(addr + 8);
-        *data3 = shell_read(addr + 12);
-    }
-
-    virtual void shell_write4(uintptr_t addr, int32_t data0, int32_t data1,
-                              int32_t data2, int32_t data3) {
-        shell_write(addr + 0, data0, 0xf);
-        shell_write(addr + 4, data1, 0xf);
-        shell_write(addr + 8, data2, 0xf);
-        shell_write(addr + 12, data3, 0xf);
-    }
 };
 
 #endif

@@ -570,19 +570,24 @@ module bsg_nonsynth_zynq_testbench;
    dut
     (.*);
 
-`ifdef VERILATOR
-   initial
-     begin
-   `ifdef FSTON
-     if ($test$plusargs("bsg_trace") != 0)
-       begin
-         $display("[%0t] Tracing to dump.fst...\n", $time);
-         $dumpfile("dump.fst");
-         $dumpvars();
-       end
-   `endif
-     end
+  wire waveform_en_li = 1'b1;
+  bsg_nonsynth_waveform_tracer
+   #(.trace_str_p("bsg_trace"))
+   tracer
+    (.clk_i(bsg_nonsynth_zynq_testbench.aclk)
+     ,.reset_i(~bsg_nonsynth_zynq_testbench.aresetn)
+     ,.en_i(bsg_nonsynth_zynq_testbench.waveform_en_li)
+     );
 
+  wire assert_en_li = 1'b1;
+  bsg_nonsynth_assert
+   _assert
+    (.clk_i(bsg_nonsynth_zynq_testbench.aclk)
+     ,.reset_i(~bsg_nonsynth_zynq_testbench.aresetn)
+     ,.en_i(bsg_nonsynth_zynq_testbench.assert_en_li)
+     );
+
+`ifdef VERILATOR
    export "DPI-C" task bsg_dpi_next;
    task bsg_dpi_next();
      $error("BSG-ERROR: bsg_dpi_next should not be called from Verilator");
@@ -593,35 +598,11 @@ module bsg_nonsynth_zynq_testbench;
    string c_args;
    initial
      begin
-       $assertoff();
-       @(posedge aclk);
-       @(posedge aresetn);
-       $asserton();
-   `ifdef VCS
-     `ifdef VCDPLUSON
-       if ($test$plusargs("bsg_trace"))
-         begin
-           $display("[%0t] Tracing to vcdplus.vpd...\n", $time);
-           $vcdpluson();
-           $vcdplusautoflushon();
-         end
-     `endif
-   `endif
-   `ifdef XCELIUM
-     `ifdef SHMPLUSON
-       if ($test$plusargs("bsg_trace"))
-         begin
-           $shm_open("dump.shm");
-           $shm_probe("ASM");
-         end
-     `endif
-   `endif
        if ($test$plusargs("c_args"))
          begin
            $value$plusargs("c_args=%s", c_args);
          end
        cosim_main(c_args);
-       bsg_dpi_finish("cosim_main return");
      end
 
    // Evaluate the simulation, until the next clk_i positive edge.
@@ -649,7 +630,6 @@ module bsg_nonsynth_zynq_testbench;
      $display("[BSG-INFO]: Finish called for reason: %s", reason);
      $finish;
    endfunction
-
 
 endmodule
 

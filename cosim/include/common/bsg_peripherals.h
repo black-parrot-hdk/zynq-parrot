@@ -34,8 +34,8 @@ class zynq_scratchpad : public s_axil_device {
     long read(uintptr_t address) override {
         uintptr_t final_addr =
             ((address - SCRATCHPAD_BASE) + SCRATCHPAD_SIZE) % SCRATCHPAD_SIZE;
-        bsg_pr_dbg_pl("  bsg_zynq_pl: scratchpad read [%" PRIxPTR "] == %x\n", final_addr,
-                      mem.at(final_addr));
+        bsg_pr_dbg_pl("  bsg_zynq_pl: scratchpad read [%" PRIxPTR "] == %x\n",
+                      final_addr, mem.at(final_addr));
         return mem.at(final_addr);
     }
 
@@ -87,11 +87,12 @@ class zynq_uart : public s_axil_device {
             retval = ((1 & tx_fifo.empty()) << 2)     // TX empty
                      | ((1 & !rx_fifo.empty()) << 0); // RX valid
         } else {
-            bsg_pr_info("  bsg_zynq_pl: errant uart read: [%" PRIxPTR "]\n", final_addr);
+            bsg_pr_info("  bsg_zynq_pl: errant uart read: [%" PRIxPTR "]\n",
+                        final_addr);
         }
 
-        bsg_pr_dbg_pl("  bsg_zynq_pl: uart read [%" PRIxPTR "] == %x\n", final_addr,
-                      retval);
+        bsg_pr_dbg_pl("  bsg_zynq_pl: uart read [%" PRIxPTR "] == %x\n",
+                      final_addr, retval);
         return retval;
     }
 
@@ -164,8 +165,7 @@ class zynq_watchdog : public m_axil_device {
 
     void return_write() { bsg_pr_dbg_pl("  bsg_zynq_pl: watchdog return\n"); }
 
-    void return_read(long data) { /* Unimp */
-    }
+    void return_read(long data) { /* Unimp */ }
 };
 
 // Buffer
@@ -249,8 +249,7 @@ class zynq_debug : public s_axil_device, m_axil_device {
 
     void return_write() { bsg_pr_dbg_pl("  bsg_zynq_pl: debug return\n"); }
 
-    void return_read(long data) { /* Unimp */
-    }
+    void return_read(long data) { /* Unimp */ }
 
     // USER Functions
 };
@@ -310,8 +309,7 @@ class zynq_plic : public s_axil_device, m_axil_device {
 
     void return_write() { bsg_pr_dbg_pl("  bsg_zynq_pl: plic return\n"); }
 
-    void return_read(long data) { /* Unimp */
-    }
+    void return_read(long data) { /* Unimp */ }
 
     // USER Functions
 
@@ -366,8 +364,7 @@ class zynq_dma : public s_axil_device, m_axil_device {
 
     void return_write() { bsg_pr_dbg_pl("  bsg_zynq_pl: debug return\n"); }
 
-    void return_read(long data) { /* Unimp */
-    }
+    void return_read(long data) { /* Unimp */ }
 
     // USER Functions
 };

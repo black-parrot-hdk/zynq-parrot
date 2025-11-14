@@ -29,21 +29,18 @@
 #include "bsg_axil.h"
 #include "bsg_axis.h"
 
+#include "bsg_zynq_pl_base.h"
 #include "bsg_peripherals.h"
 #include "bsg_printing.h"
 #include "zynq_headers.h"
 
-// Copy this to C++14 so we don't have to upgrade
-// https://stackoverflow.com/questions/3424962/where-is-erase-if
-// for std::vector
-namespace std {
-template <class T, class A, class Predicate>
-void erase_if(vector<T, A> &c, Predicate pred) {
-    c.erase(remove_if(c.begin(), c.end(), pred), c.end());
+extern "C" {
+void bsg_dpi_finish(char*);
+void bsg_dpi_next();
+int bsg_dpi_time();
 }
-} // namespace std
 
-class bsg_zynq_pl_simulation {
+class bsg_zynq_pl_simulation : bsg_zynq_pl_base {
   public:
     virtual void start(void) { create_peripherals(); }
     virtual void stop(void) { destroy_peripherals(); }
@@ -259,8 +256,10 @@ class bsg_zynq_pl_simulation {
                 }));
             }
         } else {
-            bsg_pr_err("  bsg_zynq_pl: Unsupported AXI device read at [%" PRIxPTR "]\n",
-                       addr);
+            bsg_pr_err(
+                "  bsg_zynq_pl: Unsupported AXI device read at [%" PRIxPTR
+                "]\n",
+                addr);
         }
 
         if (!axi_hp1.get() || !axi_hp1->axil_has_write(&addr)) {
@@ -301,8 +300,10 @@ class bsg_zynq_pl_simulation {
                 }));
             }
         } else {
-            bsg_pr_err("  bsg_zynq_pl: Unsupported AXI device write at [%" PRIxPTR "]\n",
-                       addr);
+            bsg_pr_err(
+                "  bsg_zynq_pl: Unsupported AXI device write at [%" PRIxPTR
+                "]\n",
+                addr);
         }
 
         if (!axi_mp0.get() || !axi_mp0->axis_has_write(&last)) {
@@ -315,8 +316,10 @@ class bsg_zynq_pl_simulation {
                 }));
             }
         } else {
-            bsg_pr_err("  bsg_zynq_pl: Unsupported AXI device write at [%" PRIxPTR "]\n",
-                       addr);
+            bsg_pr_err(
+                "  bsg_zynq_pl: Unsupported AXI device write at [%" PRIxPTR
+                "]\n",
+                addr);
         }
     }
 
@@ -493,7 +496,9 @@ class bsg_zynq_pl_simulation {
             port = 1;
             addr = addr - GP1_ADDR_BASE;
         } else {
-            bsg_pr_err("  bsg_zynq_pl: unsupported AXIL address: [%" PRIxPTR "]\n", addr);
+            bsg_pr_err("  bsg_zynq_pl: unsupported AXIL address: [%" PRIxPTR
+                       "]\n",
+                       addr);
             return -1;
         }
 
@@ -503,7 +508,8 @@ class bsg_zynq_pl_simulation {
             next();
         } while (!done);
 
-        bsg_pr_dbg_pl("  bsg_zynq_pl: AXI reading port %d [%" PRIxPTR "] -> %8.8x\n",
+        bsg_pr_dbg_pl("  bsg_zynq_pl: AXI reading port %d [%" PRIxPTR
+                      "] -> %8.8x\n",
                       port, addr, rdata);
 
         return rdata;
@@ -523,7 +529,8 @@ class bsg_zynq_pl_simulation {
             next();
         } while (!done);
 
-        bsg_pr_dbg_pl("  bsg_zynq_pl: UART reading port %d [%" PRIxPTR "] -> %8.8x\n",
+        bsg_pr_dbg_pl("  bsg_zynq_pl: UART reading port %d [%" PRIxPTR
+                      "] -> %8.8x\n",
                       port, addr, rdata);
 
         return rdata;
@@ -545,7 +552,9 @@ class bsg_zynq_pl_simulation {
             port = 1;
             addr = addr - GP1_ADDR_BASE;
         } else {
-            bsg_pr_err("  bsg_zynq_pl: unsupported AXIL address: [%" PRIxPTR "]\n", addr);
+            bsg_pr_err("  bsg_zynq_pl: unsupported AXIL address: [%" PRIxPTR
+                       "]\n",
+                       addr);
             return;
         }
 
@@ -554,8 +563,9 @@ class bsg_zynq_pl_simulation {
             next();
         } while (!done);
 
-        bsg_pr_dbg_pl("  bsg_zynq_pl: AXI writing port %d, [%" PRIxPTR "]<-%8.8x\n", port,
-                      addr, data);
+        bsg_pr_dbg_pl("  bsg_zynq_pl: AXI writing port %d, [%" PRIxPTR
+                      "]<-%8.8x\n",
+                      port, addr, data);
 
         return;
     }
@@ -570,8 +580,9 @@ class bsg_zynq_pl_simulation {
             next();
         } while (!done);
 
-        bsg_pr_dbg_pl("  bsg_zynq_pl: AXI writing port %d, [%" PRIxPTR "]<-%8.8x\n", port,
-                      addr, data);
+        bsg_pr_dbg_pl("  bsg_zynq_pl: AXI writing port %d, [%" PRIxPTR
+                      "]<-%8.8x\n",
+                      port, addr, data);
 
         return;
     }
@@ -582,22 +593,6 @@ class bsg_zynq_pl_simulation {
     }
 
     int32_t shell_read(uintptr_t addr) { return shell_read_fn(addr); }
-
-    void shell_read4(uintptr_t addr, int32_t *data0, int32_t *data1,
-                     int32_t *data2, int32_t *data3) {
-        *data0 = shell_read(addr + 0);
-        *data1 = shell_read(addr + 4);
-        *data2 = shell_read(addr + 8);
-        *data3 = shell_read(addr + 12);
-    }
-
-    void shell_write4(uintptr_t addr, int32_t data0, int32_t data1,
-                      int32_t data2, int32_t data3) {
-        shell_write(addr + 0, data0, 0xf);
-        shell_write(addr + 4, data1, 0xf);
-        shell_write(addr + 8, data2, 0xf);
-        shell_write(addr + 12, data3, 0xf);
-    }
 };
 
 #endif

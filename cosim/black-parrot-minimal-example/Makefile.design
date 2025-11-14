@@ -56,7 +56,7 @@ bsg_bootrom.rom: bsg_bootrom.bin
 	$(XXD) -b -g4 -c4 $< | $(AWK) '{print $$2}' > $@
 
 bsg_bootrom.sv: bsg_bootrom.rom
-	$(PYTHON2) $(ASCII_TO_ROM) $< bsg_bootrom zero > $@
+	$(PYTHON) $(ASCII_TO_ROM) $< bsg_bootrom zero > $@
 
 BUILD_COLLATERAL  = bsg_blackparrot_pkg.sv
 BUILD_COLLATERAL += bsg_bootrom.sv

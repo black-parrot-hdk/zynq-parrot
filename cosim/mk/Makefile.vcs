@@ -52,5 +52,5 @@ simv: $(VPACKAGES) $(VSOURCES) $(CSOURCES) | $(BUILD_COLLATERAL)
 
 view: ## views the dump with DVE
 view: vcdplus.vpd
-	@$(_DVE) -full64 -vpd $< &
+	@$(DVE) -full64 -vpd $< &
 

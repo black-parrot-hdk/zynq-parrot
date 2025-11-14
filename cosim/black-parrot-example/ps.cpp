@@ -6,7 +6,6 @@
 
 #include <bitset>
 #include <locale.h>
-#include <pthread.h>
 #include <queue>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,7 +14,9 @@
 
 #include "ps.hpp"
 
+#include "bsg_host.h"
 #include "bsg_printing.h"
+#include "bsg_utils.h"
 #include "bsg_tag_bitbang.h"
 #include "bsg_zynq_pl.h"
 
@@ -42,38 +43,6 @@
 
 // Helper functions
 void nbf_load(bsg_zynq_pl *zpl, char *filename);
-bool decode_bp_output(bsg_zynq_pl *zpl, long data);
-
-// Globals
-std::queue<int> getchar_queue;
-std::bitset<BP_NCPUS> done_vec;
-
-void *monitor(void *vargp) {
-    char c;
-    while (1) {
-        c = getchar();
-        if (c != -1)
-            getchar_queue.push(c);
-    }
-    bsg_pr_info("Exiting from pthread\n");
-
-    return NULL;
-}
-
-inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr) {
-    uint64_t val;
-    do {
-        uint64_t val_hi = zpl->shell_read(addr + 4);
-        uint64_t val_lo = zpl->shell_read(addr + 0);
-        uint64_t val_hi2 = zpl->shell_read(addr + 4);
-        if (val_hi == val_hi2) {
-            val = val_hi << 32;
-            val += val_lo;
-            return val;
-        } else
-            bsg_pr_err("ps.cpp: timer wrapover!\n");
-    } while (1);
-}
 
 int ps_main(int argc, char **argv) {
 
@@ -114,6 +83,8 @@ int ps_main(int argc, char **argv) {
     bsg_tag_client *wd_reset_client =
         new bsg_tag_client(TAG_CLIENT_WD_RESET_ID, TAG_CLIENT_WD_RESET_WIDTH);
 
+    bsg_host *host = new bsg_host(zpl, GP0_RD_PL2PS_FIFO_DATA);
+
     // Reset the bsg tag master
     btb->reset_master();
     // Reset bsg client0
@@ -153,8 +124,6 @@ int ps_main(int argc, char **argv) {
                     zpl->shell_read(GP0_RD_CSR_DRAM_BASE));
     }
 
-    int outer = 1024 / 4;
-
     if (argc == 1) {
         bsg_pr_warn(
             "No nbf file specified, sleeping for 2^31 seconds (this will hold "
@@ -184,8 +153,8 @@ int ps_main(int argc, char **argv) {
     bsg_pr_info("ps.cpp: reading mtimecmp\n");
     assert(zpl->shell_read(GP1_CSR_BASE_ADDR + 0x304000) == y + 1);
 
+    int outer = 1024 / 4;
 #ifdef DRAM_TEST
-
     long num_times = DRAM_ALLOCATE_SIZE / 32768;
     bsg_pr_info(
         "ps.cpp: attempting to write L2 %ld times over %ld MB (testing ARM GP1 "
@@ -243,9 +212,10 @@ int ps_main(int argc, char **argv) {
         bsg_pr_info("ps.cpp: Zero-ing DRAM (%d bytes)\n",
                     (int)DRAM_ALLOCATE_SIZE);
         for (int i = 0; i < DRAM_ALLOCATE_SIZE; i += 4) {
-            //if (i % (1024 * 1024) == 0)
+            // if (i % (1024 * 1024) == 0)
             if (i % (1024) == 0)
-                bsg_pr_info("ps.cpp: (%d) zero-d %d MB\n", i, i / (1024 * 1024));
+                bsg_pr_info("ps.cpp: (%d) zero-d %d MB\n", i,
+                            i / (1024 * 1024));
             zpl->shell_write(gp1_addr_base + i, 0x0, mask1);
         }
     }
@@ -266,20 +236,15 @@ int ps_main(int argc, char **argv) {
     btb->idle(50);
     zpl->start();
 
-    bsg_pr_info("ps.cpp: Starting scan thread\n");
-    pthread_create(&thread_id, NULL, monitor, NULL);
-
-    bsg_pr_info("ps.cpp: Starting i/o polling thread\n");
-    while (1) {
-        // keep reading as long as there is data
-        if (zpl->shell_read(GP0_RD_PL2PS_FIFO_CTRS) != 0) {
-            decode_bp_output(zpl, zpl->shell_read(GP0_RD_PL2PS_FIFO_DATA));
-        }
-        // break loop when all cores done
-        if (done_vec.all()) {
-            break;
-        }
+    while(1) {
+        host->next();
+        if (host->is_finished()) break;
     }
+
+    zpl->stop();
+    zpl->done();
+    delete zpl;
+    return 0;
 
     // Set bsg client1 to 1 (assert WD reset)
     btb->set_client(wd_reset_client, 0x1);
@@ -288,60 +253,60 @@ int ps_main(int argc, char **argv) {
     btb->idle(50);
     zpl->stop();
 
-    unsigned long long minstret_stop = get_counter_64(zpl, GP0_RD_MINSTRET);
-    unsigned long long mtime_stop =
-        get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
-    // test delay for reading counter
-    unsigned long long counter_data = get_counter_64(zpl, GP0_RD_MINSTRET);
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    setlocale(LC_NUMERIC, "");
-    bsg_pr_info("ps.cpp: end polling i/o\n");
-    bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
-                minstret_start, minstret_start);
-    bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
-                minstret_stop, minstret_stop);
-    unsigned long long minstret_delta = minstret_stop - minstret_start;
-    bsg_pr_info("ps.cpp: minstret delta:                  %'16llu (%16llx)\n",
-                minstret_delta, minstret_delta);
-    bsg_pr_info("ps.cpp: MTIME start:                     %'16llu (%16llx)\n",
-                mtime_start, mtime_start);
-    bsg_pr_info("ps.cpp: MTIME stop:                      %'16llu (%16llx)\n",
-                mtime_stop, mtime_stop);
-    unsigned long long mtime_delta = mtime_stop - mtime_start;
-    bsg_pr_info("ps.cpp: MTIME delta (=1/8 BP cycles):    %'16llu (%16llx)\n",
-                mtime_delta, mtime_delta);
-    bsg_pr_info("ps.cpp: IPC        :                     %'16f\n",
-                ((double)minstret_delta) / ((double)(mtime_delta)) / 8.0);
-    bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
-                counter_data, counter_data);
-    unsigned long long diff_ns =
-        1000LL * 1000LL * 1000LL *
-            ((unsigned long long)(end.tv_sec - start.tv_sec)) +
-        (end.tv_nsec - start.tv_nsec);
-    bsg_pr_info(
-        "ps.cpp: wall clock time                : %'16llu (%16llx) ns\n",
-        diff_ns, diff_ns);
-    bsg_pr_info("ps.cpp: sim/emul speed                 : %'16.2f BP cycles "
-                "per minute\n",
-                mtime_delta * 8 /
-                    ((double)(diff_ns) / (60.0 * 1000.0 * 1000.0 * 1000.0)));
+    ////unsigned long long minstret_stop = get_counter_64(zpl, GP0_RD_MINSTRET);
+    ////unsigned long long mtime_stop =
+    ////    get_counter_64(zpl, GP1_CSR_BASE_ADDR + 0x30bff8);
+    ////// test delay for reading counter
+    ////unsigned long long counter_data = get_counter_64(zpl, GP0_RD_MINSTRET);
+    ////clock_gettime(CLOCK_MONOTONIC, &end);
+    ////setlocale(LC_NUMERIC, "");
+    ////bsg_pr_info("ps.cpp: end polling i/o\n");
+    ////bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
+    ////            minstret_start, minstret_start);
+    ////bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
+    ////            minstret_stop, minstret_stop);
+    ////unsigned long long minstret_delta = minstret_stop - minstret_start;
+    ////bsg_pr_info("ps.cpp: minstret delta:                  %'16llu (%16llx)\n",
+    ////            minstret_delta, minstret_delta);
+    ////bsg_pr_info("ps.cpp: MTIME start:                     %'16llu (%16llx)\n",
+    ////            mtime_start, mtime_start);
+    ////bsg_pr_info("ps.cpp: MTIME stop:                      %'16llu (%16llx)\n",
+    ////            mtime_stop, mtime_stop);
+    ////unsigned long long mtime_delta = mtime_stop - mtime_start;
+    ////bsg_pr_info("ps.cpp: MTIME delta (=1/8 BP cycles):    %'16llu (%16llx)\n",
+    ////            mtime_delta, mtime_delta);
+    ////bsg_pr_info("ps.cpp: IPC        :                     %'16f\n",
+    ////            ((double)minstret_delta) / ((double)(mtime_delta)) / 8.0);
+    ////bsg_pr_info("ps.cpp: minstret (instructions retired): %'16llu (%16llx)\n",
+    ////            counter_data, counter_data);
+    ////unsigned long long diff_ns =
+    ////    1000LL * 1000LL * 1000LL *
+    ////        ((unsigned long long)(end.tv_sec - start.tv_sec)) +
+    ////    (end.tv_nsec - start.tv_nsec);
+    ////bsg_pr_info(
+    ////    "ps.cpp: wall clock time                : %'16llu (%16llx) ns\n",
+    ////    diff_ns, diff_ns);
+    ////bsg_pr_info("ps.cpp: sim/emul speed                 : %'16.2f BP cycles "
+    ////            "per minute\n",
+    ////            mtime_delta * 8 /
+    ////                ((double)(diff_ns) / (60.0 * 1000.0 * 1000.0 * 1000.0)));
 
-    bsg_pr_info(
-        "ps.cpp: BP DRAM USAGE MASK (each bit is 8 MB): "
-        "%-8.8d%-8.8d%-8.8d%-8.8d\n",
-        zpl->shell_read(GP0_RD_MEM_PROF_3), zpl->shell_read(GP0_RD_MEM_PROF_2),
-        zpl->shell_read(GP0_RD_MEM_PROF_1), zpl->shell_read(GP0_RD_MEM_PROF_0));
-    // in general we do not want to free the dram; the Xilinx allocator has a
-    // tendency to
-    // fail after many allocate/fail cycle. instead we keep a pointer to the
-    // dram in a CSR in the accelerator, and if we reload the bitstream, we copy
-    // the pointer back in.
+    ////bsg_pr_info(
+    ////    "ps.cpp: BP DRAM USAGE MASK (each bit is 8 MB): "
+    ////    "%-8.8d%-8.8d%-8.8d%-8.8d\n",
+    ////    zpl->shell_read(GP0_RD_MEM_PROF_3), zpl->shell_read(GP0_RD_MEM_PROF_2),
+    ////    zpl->shell_read(GP0_RD_MEM_PROF_1), zpl->shell_read(GP0_RD_MEM_PROF_0));
+    ////// in general we do not want to free the dram; the Xilinx allocator has a
+    ////// tendency to
+    ////// fail after many allocate/fail cycle. instead we keep a pointer to the
+    ////// dram in a CSR in the accelerator, and if we reload the bitstream, we copy
+    ////// the pointer back in.
 
-    if (FREE_DRAM) {
-        bsg_pr_info("ps.cpp: freeing DRAM buffer\n");
-        zpl->free_dram((void *)buf);
-        zpl->shell_write(GP0_WR_CSR_DRAM_INITED, 0x0, mask2);
-    }
+    ////if (FREE_DRAM) {
+    ////    bsg_pr_info("ps.cpp: freeing DRAM buffer\n");
+    ////    zpl->free_dram((void *)buf);
+    ////    zpl->shell_write(GP0_WR_CSR_DRAM_INITED, 0x0, mask2);
+    ////}
 
     zpl->done();
     delete zpl;
@@ -431,65 +396,3 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
     bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
 }
 
-bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
-    long rd_wr = data >> 31;
-    long address = (data >> 8) & 0x7FFFFC;
-    char print_data = data & 0xFF;
-    char core = (address - 0x102000) >> 3;
-    // write from BP
-    if (rd_wr) {
-        if (address == 0x101000) {
-            printf("%c", print_data);
-            fflush(stdout);
-        } else if (address >= 0x102000 && address < 0x103000) {
-            done_vec[core] = true;
-            if (print_data == 0) {
-                bsg_pr_info("CORE[%d] PASS\n", core);
-            } else {
-                bsg_pr_info("CORE[%d] FAIL\n", core);
-            }
-        } else if (address == 0x103000) {
-            bsg_pr_dbg_ps("ps.cpp: Watchdog tick\n");
-        } else {
-            bsg_pr_err("ps.cpp: Errant write to %lx\n", address);
-            return false;
-        }
-    }
-    // read from BP
-    else {
-        // getchar
-        if (address == 0x100000) {
-            if (getchar_queue.empty()) {
-                zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, -1, 0xf);
-            } else {
-                zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, getchar_queue.front(),
-                                 0xf);
-                getchar_queue.pop();
-            }
-        }
-        // parameter ROM, only partially implemented
-        else if (address >= 0x120000 && address <= 0x120128) {
-            bsg_pr_dbg_ps("ps.cpp: PARAM ROM read from (%lx)\n", address);
-            int offset = address - 0x120000;
-            // CC_X_DIM, return number of cores
-            if (offset == 0x0) {
-                zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, BP_NCPUS, 0xf);
-            }
-            // CC_Y_DIM, just return 1 so X*Y == number of cores
-            else if (offset == 0x4) {
-                zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, 1, 0xf);
-            }
-        } else if (address >= 0x110000 && address < 0x111000) {
-            int bootrom_addr = (address >> 2) & 0xfff;
-            zpl->shell_write(GP0_WR_CSR_BOOTROM_ADDR, bootrom_addr, 0xf);
-            int bootrom_data = zpl->shell_read(GP0_RD_BOOTROM_DATA);
-            zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, bootrom_data, 0xf);
-            // if not implemented, print error
-        } else {
-            bsg_pr_err("ps.cpp: Errant read from (%lx)\n", address);
-            return false;
-        }
-    }
-
-    return true;
-}

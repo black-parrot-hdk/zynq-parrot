@@ -67,7 +67,7 @@ bsg_bladerunner_configuration.sv:
 	BSG_MACHINE=$(BSG_MACHINE) \
 	BSG_F1_DIR=$(BSG_REPLICANT_DIR) \
 		$(MAKE) -C $(BSG_REPLICANT_DIR)/hardware $(BSG_MACHINE_PATH)/$(ROM_NAME)
-	@$(PYTHON2) $(ASCII_TO_ROM_PY) $(BSG_MACHINE_PATH)/$(ROM_NAME) bsg_bladerunner_configuration > $@
+	@$(PYTHON) $(ASCII_TO_ROM_PY) $(BSG_MACHINE_PATH)/$(ROM_NAME) bsg_bladerunner_configuration > $@
 	@$(SED) -i "/parameter int bsg_machine_hetero_type_vec_gp/d" $@
 
 bsg_manycore_machine.h:
@@ -130,7 +130,7 @@ ipoly_hashing              ?= 0
 NBF_SCRIPT ?= $(BSG_MANYCORE_DIR)/software/py/nbf.py
 %.nbf: $(COMBINED_PROG)
 	$(eval include $(BSG_MACHINE_PATH)/Makefile.machine.include)
-	@$(PYTHON2) $(NBF_SCRIPT) \
+	@$(PYTHON) $(NBF_SCRIPT) \
 		$< \
 		$(BSG_MACHINE_GLOBAL_X) $(BSG_MACHINE_GLOBAL_Y) \
 		$(BSG_MACHINE_VCACHE_WAY) $(BSG_MACHINE_VCACHE_SET) \
