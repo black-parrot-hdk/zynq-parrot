@@ -10,20 +10,6 @@
 // that runs on the real Zynq chip.
 //
 
-// memory management hooks (corresponds to allocate function in python)
-//
-// this is where all of the memory management functions are stored
-// talks through /usr/lib/libcma.so
-
-// look at this header file for cma_mmap, cma_alloc, cma_get_phy_addr, cma_free,
-// cma_pages_available
-// cma_flush_cache, cma_invalidate_cache
-//
-// see /usr/local/lib/python3.6/dist-packages/pynq for usage of _xlnk_reset()
-//
-// note: cat /proc/meminfo gives information about the CMA
-//
-
 #include "bsg_argparse.h"
 #include "bsg_printing.h"
 #include "zynq_headers.h"
@@ -46,7 +32,15 @@
 #include <xrt/xrt_device.h>
 #include <xrt/xrt_bo.h>
 
+#include <cstdlib>
+
+#include <pybind11/pybind11.h>
+#include <pybind11/embed.h>
+namespace py = pybind11;
+
 #include "bsg_zynq_pl_hardware.h"
+
+#define BITSTREAM_STRING STRINGIFY(BITSTREAM_FILE)
 
 class bsg_zynq_pl : public bsg_zynq_pl_hardware {
   private:
@@ -55,8 +49,11 @@ class bsg_zynq_pl : public bsg_zynq_pl_hardware {
 
   public:
     bsg_zynq_pl(int argc, char *argv[]) {
+	py::scoped_interpreter guard{};
         printf("// bsg_zynq_pl: be sure to run as root\n");
-        xrt_device = std::make_unique<xrt::device>(0);
+
+	py::module_ pynq = py::module_::import("pynq");
+	py::object overlay = pynq.attr("Overlay")(BITSTREAM_STRING);
         init();
     }
 
@@ -80,8 +77,6 @@ class bsg_zynq_pl : public bsg_zynq_pl_hardware {
         // for now, we do uncacheable to keep things simple, memory accesses go
         // straight to DRAM and
         // thus would be coherent with the PL
-
-        // resets all CMA buffers across system (eek!)
         xrt_dram = std::make_unique<xrt::bo>(xrt_device.get(), len_in_bytes, xrt::bo::flags::normal, 0);
         void *virtual_ptr = xrt_dram->map<void*>();
         *physical_ptr = xrt_dram->address();
@@ -97,7 +92,6 @@ class bsg_zynq_pl : public bsg_zynq_pl_hardware {
         printf("bsg_zynq_pl: free_dram() called on virtual ptr=%p\n",
                virtual_ptr);
         xrt_dram.reset(nullptr);
-        //cma_free(virtual_ptr);
     }
 
     int32_t shell_read(uintptr_t addr) override { return axil_read(addr); }
