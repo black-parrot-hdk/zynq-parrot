@@ -8,7 +8,9 @@ endif
 CINCLUDES += $(XILINX_XRT)/include/xrt
 
 CFLAGS += $(shell python-config --includes)
+ifeq ($(BOARDNAME),pynqz2)
 CFLAGS += -mfpu=neon
+endif
 
 CLDFLAGS += $(shell python-config --libs --embed)
 CLDFLAGS += -lxrt_coreutil
