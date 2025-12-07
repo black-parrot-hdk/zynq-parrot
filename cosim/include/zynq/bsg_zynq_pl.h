@@ -20,6 +20,7 @@
 #include <fstream>
 #include <inttypes.h>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,14 +29,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <xrt.h>
-#include <xrt/xrt_device.h>
-#include <xrt/xrt_bo.h>
-
-#include <cstdlib>
-
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
+#include <pybind11/numpy.h>
 namespace py = pybind11;
 
 #include "bsg_zynq_pl_hardware.h"
@@ -44,20 +40,36 @@ namespace py = pybind11;
 
 class bsg_zynq_pl : public bsg_zynq_pl_hardware {
   private:
-    std::unique_ptr<xrt::device> xrt_device;
-    std::unique_ptr<xrt::bo> xrt_dram;
+    void* _dram_map_storage;
+    using DramMap = std::map<void*, py::object>;
+    DramMap* get_dram_map() {
+	return static_cast<DramMap*>(_dram_map_storage);
+    }
+
+    bool load_bitstream(const char *bitstream) {
+        py::module_ pynq = py::module_::import("pynq");
+        py::object overlay = pynq.attr("Overlay")(bitstream);
+
+	return true;
+    }
 
   public:
     bsg_zynq_pl(int argc, char *argv[]) {
-	py::scoped_interpreter guard{};
+        static py::scoped_interpreter guard{};
         printf("// bsg_zynq_pl: be sure to run as root\n");
 
-	py::module_ pynq = py::module_::import("pynq");
-	py::object overlay = pynq.attr("Overlay")(BITSTREAM_STRING);
+	load_bitstream(BITSTREAM_STRING);
+	_dram_map_storage = new DramMap();
+
         init();
     }
 
-    ~bsg_zynq_pl(void) { deinit(); }
+    ~bsg_zynq_pl(void) {
+        py::gil_scoped_acquire acquire;
+	deinit();
+	DramMap* dram_map = get_dram_map();
+	delete dram_map;
+    }
 
     void tick(void) override { /* Does nothing on PS */
     }
@@ -73,25 +85,42 @@ class bsg_zynq_pl : public bsg_zynq_pl_hardware {
     // returns virtual pointer, writes physical parameter into arguments
     void *allocate_dram(unsigned long len_in_bytes,
                         unsigned long *physical_ptr) override {
+        py::gil_scoped_acquire acquire;
 
         // for now, we do uncacheable to keep things simple, memory accesses go
         // straight to DRAM and
         // thus would be coherent with the PL
-        xrt_dram = std::make_unique<xrt::bo>(xrt_device.get(), len_in_bytes, xrt::bo::flags::normal, 0);
-        void *virtual_ptr = xrt_dram->map<void*>();
-        *physical_ptr = xrt_dram->address();
+        py::module_ pynq = py::module_::import("pynq");
+        py::object buffer = pynq.attr("allocate")(
+                py::arg("shape") = py::make_tuple(len_in_bytes),
+                py::arg("dtype") = "u1"
+        );
 
-        printf("bsg_zynq_pl: allocate_dram() called with size %ld bytes --> "
-               "virtual "
-               "ptr=%p, physical ptr=0x%8.8lx\n",
-               len_in_bytes, virtual_ptr, *physical_ptr);
+        *physical_ptr = buffer.attr("physical_address").cast<unsigned long>();
+
+        auto array = buffer.cast<py::array_t<uint8_t>>();
+        py::buffer_info info = array.request();
+        void* virtual_ptr = info.ptr;
+
+	DramMap* dram_map = get_dram_map();
+        (*dram_map)[virtual_ptr] = buffer;
+
         return virtual_ptr;
     }
 
     void free_dram(void *virtual_ptr) override {
-        printf("bsg_zynq_pl: free_dram() called on virtual ptr=%p\n",
+
+	DramMap* dram_map = get_dram_map();
+        auto it = dram_map->find(virtual_ptr);
+
+        if (it != dram_map->end()) {
+            printf("bsg_zynq_pl: free_dram() called on virtual ptr=%p\n",
                virtual_ptr);
-        xrt_dram.reset(nullptr);
+            dram_map->erase(it);                
+        } else {
+            printf("bsg_zynq_pl: free_dram() called on unknown ptr=%p\n",
+               virtual_ptr);
+        }
     }
 
     int32_t shell_read(uintptr_t addr) override { return axil_read(addr); }

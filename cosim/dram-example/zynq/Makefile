@@ -1,3 +1,6 @@
+TOP ?= $(shell git rev-parse --show-toplevel)
+include $(TOP)/Makefile.common
+include $(TOP)/Makefile.env
 
 #############################
 # Accelerator Software Settings
@@ -5,5 +8,6 @@
 DEFINES += GP0_ADDR_SIZE_BYTES=4096
 DEFINES += GP1_ADDR_SIZE_BYTES=0x30000000
 
-include ../Makefile.design
+include $(DESIGN_DIR)/Makefile.design
+include $(COSIM_MK_DIR)/Makefile.zynq
 
