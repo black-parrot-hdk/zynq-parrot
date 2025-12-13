@@ -67,6 +67,7 @@ class bsg_zynq_pl : public bsg_zynq_pl_hardware {
     ~bsg_zynq_pl(void) {
         py::gil_scoped_acquire acquire;
         deinit();
+        // can I delete _dram_map_storage directly?
         DramMap *dram_map = get_dram_map();
         delete dram_map;
     }

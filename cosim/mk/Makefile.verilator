@@ -1,6 +1,8 @@
 
 include $(COSIM_MK_DIR)/Makefile.sim
 
+DEFINES += SIMULATION
+
 VV_VFLAGS += $(addprefix +define+,$(filter-out VERILATOR,$(DEFINES)))
 VV_VFLAGS += $(addprefix +incdir+,$(VINCLUDES))
 

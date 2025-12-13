@@ -11,21 +11,6 @@
 #define ZYNQ_PL_DEBUG 0
 #endif
 
-#ifndef ZYNQ
-#ifndef BRIDGE
-#ifndef VIVADO
-#define SIMULATION
-#endif
-#endif
-#endif
-
-#ifdef VCS
-#define HAS_COSIM_MAIN
-#endif
-#ifdef XCELIUM
-#define HAS_COSIM_MAIN
-#endif
-
 #ifdef NEON
 #include "arm_neon.h"
 #else

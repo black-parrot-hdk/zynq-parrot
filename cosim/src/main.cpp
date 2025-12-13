@@ -5,12 +5,12 @@
 #include <stdio.h>
 #include <string>
 
-extern int ps_main (bsg_zynq_pl *zpl, int argc, char **argv);
+extern int ps_main(bsg_zynq_pl *zpl, int argc, char **argv);
 
 #ifdef HAS_COSIM_MAIN
-extern "C" void cosim_main(char *argstr) {
+extern "C" int cosim_main(char *argstr) {
 #else
-void main(int argc, char **argv) {
+int main(int argc, char **argv) {
     char argstr[1025] = {0};
     get_argstr(argstr, argc, argv);
 #endif
@@ -23,11 +23,16 @@ void main(int argc, char **argv) {
     // so that we can see what is happening in real time
     setvbuf(stdout, NULL, _IOLBF, 0);
 
-    // need to call finish after ZPL is destructed...
-    // for now, pl and ps get the same arguments, but we could split them
+    // call the main PS program
+    // for now, use the same argc/argv but we could separate out PS and ZPL arguments
     bsg_zynq_pl zpl(ps_argc, ps_argv);
     int rc = ps_main(&zpl, ps_argc, ps_argv);
-    printf("PS main returned with rc: %x\n", rc);
-    zpl.done();
-    __builtin_unreachable();
+    bsg_pr_info("Returning from ps_main with RC: %x\n", rc);
+    if (!rc) {
+        bsg_pr_info("BSG PASS\n");
+    } else {
+        bsg_pr_info("BSG FAIL\n");
+    }
+
+    return rc;
 }

@@ -18,6 +18,11 @@
 
 #include "bsg_zynq_pl_simulation.h"
 
+extern "C" {
+void bsg_dpi_next(void);
+int bsg_dpi_time(void);
+}
+
 class bsg_zynq_pl : public bsg_zynq_pl_simulation {
   public:
     bsg_zynq_pl(int argc, char *argv[]) {
@@ -30,7 +35,7 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
     void tick(void) override { bsg_dpi_next(); }
 
     void done(void) override {
-        bsg_dpi_finish("bsg_zynq_pl: done() called\n");
+        printf("bsg_zynq_pl: done() called, exiting\n");
     }
 
     void *allocate_dram(unsigned long len_in_bytes,

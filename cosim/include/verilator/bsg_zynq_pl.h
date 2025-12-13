@@ -22,7 +22,8 @@
 #include "verilated.h"
 
 extern "C" {
-int bsg_dpi_time();
+void bsg_dpi_next(void);
+int bsg_dpi_time(void);
 }
 
 class bsg_zynq_pl : public bsg_zynq_pl_simulation {
@@ -54,7 +55,12 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
         init();
     }
 
-    ~bsg_zynq_pl(void) {}
+    ~bsg_zynq_pl(void) {
+      //printf("clearing context\n");
+      //contextp.reset();
+      //printf("clearing tb\n");
+      //tb.reset();
+    }
 
     // Each bsg_timekeeper::next() moves to the next clock edge
     //   so we need 2 to perform one full clock cycle.
@@ -68,10 +74,9 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
         bsg_nonsynth_dpi::bsg_timekeeper::next();
     }
 
-    void done(char *reason) override {
-        printf("bsg_zynq_pl: done() called, exiting\n");
+    void done(void) override {
+        bsg_pr_info("  bsg_zynq_pl: done() called, exiting\n");
         contextp->statsPrintSummary();
-        bsg_dpi_finish(reason);
     }
 
     void *allocate_dram(unsigned long len_in_bytes,
@@ -84,7 +89,7 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
     }
 
     void free_dram(void *virtual_ptr) {
-        printf("bsg_zynq_pl: Freeing dummy DRAM\n");
+        bsg_pr_info("  bsg_zynq_pl: Freeing dummy DRAM\n");
         free(virtual_ptr);
     }
 };

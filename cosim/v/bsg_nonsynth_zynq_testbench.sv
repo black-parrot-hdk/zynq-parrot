@@ -587,49 +587,38 @@ module bsg_nonsynth_zynq_testbench;
      ,.en_i(bsg_nonsynth_zynq_testbench.assert_en_li)
      );
 
-`ifdef VERILATOR
-   export "DPI-C" task bsg_dpi_next;
-   task bsg_dpi_next();
-     $error("BSG-ERROR: bsg_dpi_next should not be called from Verilator");
-     bsg_dpi_finish("verilator next call");
-   endtask
-`else
-   import "DPI-C" context task cosim_main(string c_args);
-   string c_args;
-   initial
-     begin
-       if ($test$plusargs("c_args"))
-         begin
-           $value$plusargs("c_args=%s", c_args);
-         end
-       cosim_main(c_args);
-     end
-
-   // Evaluate the simulation, until the next clk_i positive edge.
-   //
-   // Call bsg_dpi_next in simulators where the C testbench does not
-   // control the progression of time (i.e. NOT Verilator).
-   //
-   // The #1 statement guarantees that the positive edge has been
-   // evaluated, which is necessary for ordering in all of the DPI
-   // functions.
-   export "DPI-C" task bsg_dpi_next;
-   task bsg_dpi_next();
-     @(posedge aclk);
-     #1;
-   endtask
+`ifdef HAS_COSIM_MAIN
+  import "DPI-C" context task cosim_main(string c_args);
+  string c_args;
+  initial
+    begin
+      if ($test$plusargs("c_args"))
+        begin
+          $value$plusargs("c_args=%s", c_args);
+        end
+      cosim_main(c_args);
+      $finish;
+    end
+  // Evaluate the simulation, until the next clk_i positive edge.
+  //
+  // Call bsg_dpi_next in simulators where the C testbench does not
+  // control the progression of time (i.e. NOT Verilator).
+  //
+  // The #1 statement guarantees that the positive edge has been
+  // evaluated, which is necessary for ordering in all of the DPI
+  // functions.
+  export "DPI-C" task bsg_dpi_next;
+  task bsg_dpi_next();
+    @(posedge aclk);
+    #1;
+  endtask
 `endif
 
-   export "DPI-C" function bsg_dpi_time;
-   function int bsg_dpi_time();
-     return int'($time);
-   endfunction
-
-   export "DPI-C" function bsg_dpi_finish;
-   function void bsg_dpi_finish(string reason);
-     $display("[BSG-INFO]: Finish called for reason: %s", reason);
-     $finish;
-   endfunction
+  // Other useful DPI functions
+  export "DPI-C" function bsg_dpi_time;
+  function int bsg_dpi_time();
+    return int'($time);
+  endfunction
 
 endmodule
 

@@ -35,7 +35,6 @@
 #include "zynq_headers.h"
 
 extern "C" {
-void bsg_dpi_finish(char*);
 void bsg_dpi_next();
 int bsg_dpi_time();
 }
