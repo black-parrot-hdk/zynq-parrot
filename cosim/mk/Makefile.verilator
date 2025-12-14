@@ -16,7 +16,7 @@ VV_LDFLAGS += $(addprefix -L,$(CLIBDIRS))
 VV_LDFLAGS += $(addprefix -l,$(CLIBS))
 
 VV_BUILD_OPTS += --cc --sv
-VV_BUILD_OPTS += --no-timing --build --exe
+VV_BUILD_OPTS += --exe --build
 VV_BUILD_OPTS += -Wno-fatal -Wall
 VV_BUILD_OPTS += -Wno-timescalemod -Wno-DECLFILENAME -Wno-PINCONNECTEMPTY -Wno-UNUSED -Wno-GENUNNAMED
 VV_BUILD_OPTS += -top-module $(TB_MODULE)

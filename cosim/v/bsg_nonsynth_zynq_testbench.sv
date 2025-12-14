@@ -612,6 +612,11 @@ module bsg_nonsynth_zynq_testbench;
     @(posedge aclk);
     #1;
   endtask
+`else
+  export "DPI-C" function bsg_dpi_finish;
+  function int bsg_dpi_finish();
+    $finish;
+  endfunction
 `endif
 
   // Other useful DPI functions

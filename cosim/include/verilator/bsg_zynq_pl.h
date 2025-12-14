@@ -22,7 +22,7 @@
 #include "verilated.h"
 
 extern "C" {
-void bsg_dpi_next(void);
+void bsg_dpi_finish(void);
 int bsg_dpi_time(void);
 }
 
@@ -55,12 +55,7 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
         init();
     }
 
-    ~bsg_zynq_pl(void) {
-      //printf("clearing context\n");
-      //contextp.reset();
-      //printf("clearing tb\n");
-      //tb.reset();
-    }
+    ~bsg_zynq_pl(void) { }
 
     // Each bsg_timekeeper::next() moves to the next clock edge
     //   so we need 2 to perform one full clock cycle.
@@ -77,6 +72,8 @@ class bsg_zynq_pl : public bsg_zynq_pl_simulation {
     void done(void) override {
         bsg_pr_info("  bsg_zynq_pl: done() called, exiting\n");
         contextp->statsPrintSummary();
+        //contextp->final();
+        bsg_dpi_finish();
     }
 
     void *allocate_dram(unsigned long len_in_bytes,
