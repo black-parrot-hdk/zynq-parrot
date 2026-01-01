@@ -1,4 +1,8 @@
 
+TOP ?= ../../..
+include $(TOP)/Makefile.common
+include $(TOP)/Makefile.env
+
 all: simple_bd_1.map
 	$(VIVADO) &
 
@@ -13,5 +17,5 @@ endif
 # Accelerator Software Settings
 #############################
 include $(DESIGN_DIR)/Makefile.design
-#include $(COSIM_MK_DIR)/Makefile.vivado
+include $(COSIM_MK_DIR)/Makefile.vivado
 
