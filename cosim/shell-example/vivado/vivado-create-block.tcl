@@ -1,8 +1,12 @@
 
 proc vivado_create_ip { args } {
 
-    create_bd_cell -type ip -vlnv user.org:user:top:1.0 top_0
-    create_bd_cell -type ip -vlnv user.org:user:vps:1.0 vps_0
+    set top_0 [create_bd_cell -type ip -vlnv user.org:user:top:1.0 top_0]
+    set vps_0 [create_bd_cell -type ip -vlnv user.org:user:vps:1.0 vps_0]
+
+    set_property -dict [list \
+        CONFIG.GP0_ENABLE {1} \
+    ] $vps_0
 
     connect_bd_net [get_bd_pins vps_0/aclk] [get_bd_pins top_0/aclk]
     connect_bd_net [get_bd_pins vps_0/aresetn] [get_bd_pins top_0/aresetn]
@@ -12,4 +16,3 @@ proc vivado_create_ip { args } {
 proc vivado_constrain_ip { args } {
 
 }
-

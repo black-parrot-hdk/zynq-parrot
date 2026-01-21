@@ -421,7 +421,7 @@ class bsg_zynq_pl_simulation : public bsg_zynq_pl_base {
     //     typedef struct packed
     //     {
     //       logic [31:0] data;
-    //       logic [5:0]  addr7to2;
+    //       logic [29:0] addr30to2;
     //       logic        wr_not_rd;
     //       logic        port;
     //     } bsg_uart_pkt_s;

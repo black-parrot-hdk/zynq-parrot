@@ -5,6 +5,7 @@ PACKED_RUN ?= ../$(BASENAME)_run_1.$(HOST).$(BOARDNAME).tar.xz.b64
 BITSTREAM_FILES ?= $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.map $(BASENAME)_bd_1.hwh
 COMPONENT_FILES ?= ip_repo/top/component.xml
 
+DEFINES += BOARDNAME=$(BOARDNAME)
 DEFINES += $(call bsg_var_upper,$(TOOL))
 DEFINES += $(call bsg_var_upper,HOST_$(HOST))
 ifdef ZYNQ_PL_DEBUG

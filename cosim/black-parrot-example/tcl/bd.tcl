@@ -12,17 +12,12 @@ proc vivado_create_ip { args } {
     set vpackages [lindex [lindex ${args} 0] 0]
     set vsources [lindex [lindex ${args} 0] 1]
     set vincludes [lindex [lindex ${args} 0] 2]
-    set aclk_freq_mhz [lindex [lindex ${args} 0] 3]
-    set rtclk_freq_mhz [lindex [lindex ${args} 0] 4]
-
-    set aclk_freq_hz [expr round(${aclk_freq_mhz}*1e6)]
-    set rtclk_freq_hz [expr round(${rtclk_freq_mhz}*1e6)]
 
     vivado_create_design ${vpackages} ${vsources} ${vincludes}
     create_bd_cell -type module -reference top -name top
 
-    create_bd_port -dir I -type clk -freq_hz ${aclk_freq_hz} aclk
-    create_bd_port -dir I -type clk -freq_hz ${rtclk_freq_hz} rt_clk
+    create_bd_port -dir I -type clk -freq_hz 100000000 aclk
+    create_bd_port -dir I -type clk -freq_hz 10000000 rt_clk
     create_bd_port -dir I -type rst aresetn
     create_bd_port -dir O -type rst sys_resetn
     create_bd_port -dir O -type data tag_ck
@@ -48,18 +43,6 @@ proc vivado_create_ip { args } {
     connect_bd_net [get_bd_pins top/tag_ck] [get_bd_ports tag_ck]
     connect_bd_net [get_bd_pins top/tag_data] [get_bd_ports tag_data]
     connect_bd_net [get_bd_pins top/sys_resetn] [get_bd_ports sys_resetn]
-
-    set hp0_seg_offset 0x0
-    set hp0_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_intf_ports hp0_axi]]
-    set hp0_seg_size [expr 1 << ${hp0_addr_width}]
-    assign_bd_address -target_address_space [get_bd_addr_spaces top/hp0_axi] [get_bd_addr_segs hp0*] -offset ${hp0_seg_offset} -range ${hp0_seg_size}
-
-    set hp1_seg_offset 0x0
-    set hp1_addr_width [get_property CONFIG.ADDR_WIDTH [get_bd_intf_ports hp1_axi]]
-    set hp1_seg_size [expr 1 << ${hp1_addr_width}]
-    assign_bd_address -target_address_space [get_bd_addr_spaces top/hp1_axi] [get_bd_addr_segs hp1*] -offset ${hp1_seg_offset} -range ${hp1_seg_size}
-
-    assign_bd_address
 }
 
 proc vivado_ipx_customize { args } {

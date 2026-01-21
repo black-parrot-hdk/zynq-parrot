@@ -1,0 +1,24 @@
+TOP ?= $(shell git rev-parse --show-toplevel)
+include $(TOP)/Makefile.common
+include $(TOP)/Makefile.env
+
+#############################
+# Design Settings
+#############################
+TB_MODULE  ?= bsg_nonsynth_zynq_testbench
+BASENAME   ?= ubridge
+
+MAIN_PROGRAM ?= $(COSIM_CSRC_DIR)/main.cpp
+HOST_PROGRAM ?= $(DESIGN_DIR)/ps.cpp
+
+#############################
+# Design Defines
+#############################
+DEFINES += ACLK_MHZ=55
+DEFINES += INTC0_ENABLE
+DEFINES += HP1_ENABLE
+DEFINES += HP1_ADDR_WIDTH=6 HP1_DATA_WIDTH=32
+DEFINES += UART_ENABLE
+
+include $(COSIM_MK_DIR)/Makefile.master
+

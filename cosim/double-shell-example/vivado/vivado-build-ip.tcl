@@ -8,17 +8,16 @@ set part        $::env(PART)
 set vpackages   $::env(VPACKAGES)
 set vsources    $::env(VSOURCES)
 set vincludes   $::env(VINCLUDES)
-set aclk_mhz    $::env(ACLK_MHZ)
 vivado_create_ip_proj ${proj_name} ${proj_bd} ${ip_name} ${part} ${ip_script} \
     ${vpackages} \
     ${vsources} \
-    ${vincludes} \
-    ${aclk_mhz}
+    ${vincludes}
 vivado_package_ip ${proj_bd} ${ip_name} ${ip_script}
 vivado_customize_ip ${proj_bd} ${ip_name} ${ip_script}
 
 set boardname   $::env(BOARDNAME)
-set ip_script   $::env(COSIM_TCL_DIR)/bd/vps_zynq_bd.${boardname}.tcl
+set host        $::env(HOST)
+set ip_script   $::env(COSIM_TCL_DIR)/bd/vps_${host}_bd.${boardname}.tcl
 set ip_name     vps
 set proj_name   ${ip_name}_ip_proj
 set proj_bd     ${ip_name}_bd_1
@@ -35,19 +34,21 @@ set gp1_addr_width [vivado_env_default GP1_ADDR_WIDTH 32]
 set hp0_enable     [vivado_env_default HP0_ENABLE 0]
 set hp0_data_width [vivado_env_default HP0_DATA_WIDTH 32]
 set hp0_addr_width [vivado_env_default HP0_ADDR_WIDTH 32]
+set rtclk_enable   [vivado_env_default RTCLK_ENABLE 0]
 
 vivado_create_ip_proj ${proj_name} ${proj_bd} ${ip_name} ${part} ${ip_script} \
     ${aclk_mhz} \
     ${rtclk_mhz} \
-    ${gp0_enable} \
     ${gp0_data_width} \
     ${gp0_addr_width} \
-    ${gp1_enable} \
     ${gp1_data_width} \
     ${gp1_addr_width} \
-    ${hp0_enable} \
     ${hp0_data_width} \
     ${hp0_addr_width}
 vivado_package_ip ${proj_bd} ${ip_name} ${ip_script}
-vivado_customize_ip ${proj_bd} ${ip_name} ${ip_script}
+vivado_customize_ip ${proj_bd} ${ip_name} ${ip_script} \
+    ${gp0_enable} \
+    ${gp1_enable} \
+    ${hp0_enable} \
+    ${rtclk_enable}
 

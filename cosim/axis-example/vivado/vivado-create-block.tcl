@@ -13,8 +13,6 @@ proc vivado_create_ip { args } {
     connect_bd_net [get_bd_pins fifo_0/aresetn] [get_bd_pins top_0/aresetn]
 	connect_bd_intf_net [get_bd_intf_pins top_0/mp0_axi] [get_bd_intf_pins fifo_0/S_AXIS]
 	connect_bd_intf_net [get_bd_intf_pins top_0/sp0_axi] [get_bd_intf_pins fifo_0/M_AXIS]
-
-    assign_bd_address
 }
 
 proc vivado_constrain_ip { args } {

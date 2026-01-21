@@ -30,6 +30,8 @@
 
 class bsg_zynq_pl_hardware : public bsg_zynq_pl_base {
   public:
+    virtual void init(void) = 0;
+    virtual void deinit(void) = 0;
     virtual void start(void) = 0;
     virtual void stop(void) = 0;
     virtual void tick(void) = 0;
@@ -39,7 +41,6 @@ class bsg_zynq_pl_hardware : public bsg_zynq_pl_base {
     virtual void free_dram(void *virtual_ptr) = 0;
 
   protected:
-    int serial_port;
     uintptr_t gp0_base_offset = 0;
     uintptr_t gp1_base_offset = 0;
 
@@ -64,72 +65,6 @@ class bsg_zynq_pl_hardware : public bsg_zynq_pl_base {
 
     inline volatile int8_t *axil_get_ptr8(uintptr_t address) {
         return (int8_t *)axil_get_ptr(address);
-    }
-
-    void init(void) {
-        // open memory device
-        int fd = open("/dev/mem", O_RDWR | O_SYNC);
-        assert(fd != 0);
-#ifdef GP0_ENABLE
-        // map in first PLAXI region of physical addresses to virtual addresses
-        uintptr_t ptr0 = (uintptr_t)mmap(
-            (void *)gp0_addr_base, gp0_addr_size_bytes, PROT_READ | PROT_WRITE,
-            MAP_SHARED, fd, gp0_addr_base);
-        assert((uintptr_t)ptr0 == (uintptr_t)gp0_addr_base);
-
-        printf("// bsg_zynq_pl: mmap returned %" PRIxPTR " (offset %" PRIxPTR
-               ") errno=%x\n",
-               ptr0, gp0_base_offset, errno);
-#endif
-
-#ifdef GP1_ENABLE
-        // map in second PLAXI region of physical addresses to virtual addresses
-        uintptr_t ptr1 = (uintptr_t)mmap(
-            (void *)gp1_addr_base, gp1_addr_size_bytes, PROT_READ | PROT_WRITE,
-            MAP_SHARED, fd, gp1_addr_base);
-        assert((uintptr_t)ptr1 == (uintptr_t)gp1_addr_base);
-
-        printf("// bsg_zynq_pl: mmap returned %" PRIxPTR " (offset %" PRIxPTR
-               ") errno=%x\n",
-               ptr1, gp1_base_offset, errno);
-#endif
-        close(fd);
-
-#ifdef UART_ENABLE
-        serial_port = open(UART_DEV_STR, O_RDWR | O_NOCTTY);
-
-        struct termios tty;
-        assert(!tcgetattr(serial_port, &tty));
-
-        tty.c_cflag &= ~PARENB;
-        tty.c_cflag &= ~CSTOPB;
-        tty.c_cflag &= ~CSIZE;
-        tty.c_cflag |= CS8;
-        tty.c_cflag &= ~CRTSCTS;
-        tty.c_cflag |= (CREAD | CLOCAL);
-
-        tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHONL | ISIG);
-
-        tty.c_iflag &= ~(IXON | IXOFF | IXANY);
-        tty.c_iflag &=
-            ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL);
-
-        tty.c_oflag &= ~OPOST;
-        tty.c_oflag &= ~ONLCR;
-
-        tty.c_cc[VTIME] = 0;
-        tty.c_cc[VMIN] = 4;
-
-        cfsetspeed(&tty, UART_BAUD_ENUM);
-
-        assert(!tcsetattr(serial_port, TCSANOW, &tty));
-#endif
-    }
-
-    void deinit(void) {
-#ifdef UART_ENABLE
-        close(serial_port);
-#endif
     }
 
 #ifdef AXIL_ENABLE
@@ -165,58 +100,6 @@ class bsg_zynq_pl_hardware : public bsg_zynq_pl_base {
         } else {
             assert(false); // Illegal write strobe
         }
-    }
-#endif
-
-#ifdef UART_ENABLE
-    // Must sync to verilog
-    //     typedef struct packed
-    //     {
-    //       logic [31:0] data;
-    //       logic [5:0]  addr7to2;
-    //       logic        wr_not_rd;
-    //       logic        port;
-    //     } bsg_uart_pkt_s;
-
-    void uart_write(uintptr_t addr, int32_t data, uint8_t wmask) {
-        int count;
-
-        uint64_t uart_pkt = 0;
-        uintptr_t word = addr >> 2;
-        int rdwr = 1;
-
-        uart_pkt |= (data & 0xffffffff) << 8;
-        uart_pkt |= (word & 0x0000003f) << 2;
-        uart_pkt |= (rdwr & 0x00000001) << 1;
-        uart_pkt |= (port & 0x00000001) << 0;
-
-        count = write(serial_port, &uart_pkt, 5);
-        bsg_pr_dbg_ps("uart tx write: %x bytes\n", count);
-    }
-
-    int32_t uart_read(uintptr_t addr) {
-        int count;
-        uint64_t uart_pkt = 0;
-        uintptr_t word = addr >> 2;
-
-        uint64_t uart_pkt = 0;
-        uintptr_t word = addr >> 2;
-        int32_t data = 0;
-        int rdwr = 0;
-
-        uart_pkt |= (data & 0xffffffff) << 8;
-        uart_pkt |= (word & 0x0000003f) << 2;
-        uart_pkt |= (rdwr & 0x00000001) << 1;
-        uart_pkt |= (port & 0x00000001) << 0;
-
-        count = write(serial_port, &uart_pkt, 5);
-        bsg_pr_dbg_ps("uart rx write: %x bytes\n", count);
-
-        int32_t read_buf;
-        count = read(serial_port, &read_buf, 4);
-        bsg_pr_dbg_ps("uart rx read: %x\n", read_buf, count);
-
-        return read_buf;
     }
 #endif
 };

@@ -45,6 +45,7 @@ $(VIVADO_TCL):
 	@$(ECHO) "set ::env(DESIGN_TCL_DIR) {$(DESIGN_TCL_DIR)}"              >> $@
 	@$(ECHO) "## DESIGN variables ##"                                     >> $@
 	@$(ECHO) "set ::env(BOARDNAME) {$(BOARDNAME)}"                        >> $@
+	@$(ECHO) "set ::env(HOST) {$(HOST)}"                                  >> $@
 	@$(ECHO) "set ::env(BASENAME) {$(BASENAME)}"                          >> $@
 	@$(ECHO) "set ::env(PART) {$(PART)}"                                  >> $@
 	@$(ECHO) "set ::env(VPACKAGES) [list \\"                              >> $@
@@ -95,8 +96,12 @@ $(BITSTREAM_FILES): $(COMPONENT_FILES)
 
 open: ## opens the block diagram for the toplevel project
 open: $(BASENAME)_bd_proj.xpr
-	@$(VIVADO_RUN) $< &
+	@$(VIVADO) $< &
 
 open_ip.%: ## opens the block diagram for a specific IP project
-	@$(VIVADO_RUN) $*_ip_proj.xpr &
+open_ip.%:
+	@$(VIVADO) $*_ip_proj.xpr &
 
+clean::
+	@$(RMRF) vivado_pid*.str
+	@$(RMRF) config.tcl

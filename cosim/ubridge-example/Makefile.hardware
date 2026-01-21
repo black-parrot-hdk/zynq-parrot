@@ -1,0 +1,48 @@
+
+VPACKAGES += $(DESIGN_VSRC_DIR)/zynq_pkg.sv
+
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_fifo_1r1w_small.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_fifo_1r1w_small_hardened.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_fifo_1r1w_small_unhardened.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_fifo_tracker.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_flow_counter.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_two_fifo.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_circular_ptr.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_counter_up_down.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_decode.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_decode_with_v.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_dff_reset_en.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_mux_one_hot.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_mem/bsg_mem_1r1w.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_mem/bsg_mem_1r1w_synth.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_one_fifo.sv
+
+VSOURCES += $(BP_SUB_DIR)/axi/v/bsg_axil_fifo_master.sv
+VSOURCES += $(BP_SUB_DIR)/axi/v/bsg_axil_fifo_client.sv
+VSOURCES += $(BP_SUB_DIR)/zynq/v/bsg_axil_uart_bridge.sv
+
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_serial_in_parallel_out.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_dff.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_dff_reset_en.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_round_robin_n_to_1.sv
+VSOURCES += $(BP_SUB_DIR)/axi/v/bsg_axil_fifo_master.sv
+VSOURCES += $(BP_SUB_DIR)/zynq/v/bsg_axil_uart_bridge.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_circular_ptr.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_counter_clear_up.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_dff_en.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_dff_reset.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_mux.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_mem/bsg_mem_1r1w_synth.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_mem/bsg_mem_1r1w.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_one_fifo.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_parallel_in_serial_out.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_round_robin_1_to_n.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_serial_in_parallel_out_full.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_two_fifo.sv
+
+VINCLUDES +=
+
+VSOURCES  += $(COSIM_VSRC_DIR)/bsg_zynq_pl_shell.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top_zynq.sv
+VSOURCES  += $(DESIGN_VSRC_DIR)/top.v
+

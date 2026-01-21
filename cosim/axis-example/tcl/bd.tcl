@@ -12,14 +12,11 @@ proc vivado_create_ip { args } {
     set vpackages [lindex [lindex ${args} 0] 0]
     set vsources [lindex [lindex ${args} 0] 1]
     set vincludes [lindex [lindex ${args} 0] 2]
-    set aclk_freq_mhz [lindex [lindex ${args} 0] 3]
-
-    set aclk_freq_hz [expr round(${aclk_freq_mhz}*1e6)]
 
     vivado_create_design ${vpackages} ${vsources} ${vincludes}
     create_bd_cell -type module -reference top -name top
 
-    create_bd_port -dir I -type clk -freq_hz ${aclk_freq_hz} aclk
+    create_bd_port -dir I -type clk -freq_hz 100000000 aclk
     create_bd_port -dir I -type rst aresetn
     make_bd_intf_pins_external [get_bd_intf_pins top/gp0_axi] -name "gp0_axi"
     set_property CONFIG.ASSOCIATED_BUSIF {gp0_axi} [get_bd_ports aclk]

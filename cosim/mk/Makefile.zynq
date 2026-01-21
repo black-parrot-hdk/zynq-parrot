@@ -9,6 +9,8 @@ CFLAGS += $(shell python-config --includes)
 ifneq ($(AARCH64),1)
 CFLAGS += -mfpu=neon
 endif
+CFLAGS += -DUART_BAUD=$(UART_BAUD)
+CFLAGS += -DUART_DEV=$(UART_DEV)
 
 CLDFLAGS += $(shell python-config --libs --embed)
 CLDFLAGS += -lpthread

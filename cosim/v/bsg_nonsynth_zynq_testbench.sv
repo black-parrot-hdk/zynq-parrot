@@ -526,6 +526,55 @@ module bsg_nonsynth_zynq_testbench;
      );
 `endif
 
+`ifdef INTC0_ENABLE
+  wire intc0;
+  bsg_nonsynth_dpi_gpio
+   #(.width_p(1), .use_input_p(1))
+   intc0_gpio
+    (.gpio_i(intc0), .gpio_o());
+`endif
+
+`ifdef INTC1_ENABLE
+  wire intc1;
+  bsg_nonsynth_dpi_gpio
+   #(.width_p(1), .use_input_p(1))
+   intc1_gpio
+    (.gpio_i(intc1), .gpio_o());
+`endif
+
+`ifdef INTC2_ENABLE
+  wire intc2;
+  bsg_nonsynth_dpi_gpio
+   #(.width_p(1), .use_input_p(1))
+   intc2_gpio
+    (.gpio_i(intc2), .gpio_o());
+`endif
+
+`ifdef INTM0_ENABLE
+  wire intm0;
+  bsg_nonsynth_dpi_gpio
+   #(.width_p(1), .use_output_p(1))
+   intm0_gpio
+    (.gpio_i(), .gpio_o(intm0));
+`endif
+
+`ifdef INTM1_ENABLE
+  wire intm1;
+  bsg_nonsynth_dpi_gpio
+   #(.width_p(1), .use_output_p(1))
+   intm1_gpio
+    (.gpio_i(), .gpio_o(intm1));
+`endif
+
+`ifdef INTM2_ENABLE
+  wire intm2;
+  bsg_nonsynth_dpi_gpio
+   #(.width_p(1), .use_output_p(1))
+   intm2_gpio
+    (.gpio_i(), .gpio_o(intm2));
+`endif
+
+
   top #(
 `ifdef GP0_ENABLE
      .C_GP0_AXI_DATA_WIDTH(C_GP0_AXI_DATA_WIDTH),

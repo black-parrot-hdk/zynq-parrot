@@ -7,11 +7,48 @@ proc vivado_env_default { var def } {
     }
 }
 
+# Constraint ordering from UG903
+# User Constraints marked as EARLY
+# IP Constraints marked as EARLY (default)
+# User Constraints marked as NORMAL
+# IP Constraints marked as LATE (contain clock dependencies)
+# User Constraints marked as LATE
+
 proc vivado_read_xdc { xdc_dir boardname } {
-    set file_name [file normalize "${xdc_dir}/board.${boardname}.xdc"]
-    set file_added [add_files -norecurse -fileset [get_filesets constrs_1] [list "${file_name}"]]
-    set file_obj [get_files -of_objects [get_filesets constrs_1] [list "*${file_name}"]]
-    set_property -name "file_type" -value "XDC" -objects ${file_obj}
+    set early_xdc [file normalize "${xdc_dir}/board.${boardname}.early.xdc"]
+    set norm_xdc  [file normalize "${xdc_dir}/board.${boardname}.xdc"]
+    set late_xdc  [file normalize "${xdc_dir}/board.${boardname}.late.xdc"]
+
+    if {[file exists $early_xdc]} {
+        add_files -norecurse -fileset [get_filesets constrs_1] $early_xdc
+        # Get the specific file object to set properties
+        set file_obj [get_files -of_objects [get_filesets constrs_1] [list "*[file tail $early_xdc]"]]
+        set_property PROCESSING_ORDER EARLY $file_obj
+        set_property file_type "XDC" $file_obj
+        puts "INFO: Loaded EARLY XDC: $early_xdc"
+    } else {
+        puts "INFO: No EARLY XDC found at $early_xdc (Skipping)"
+    }
+
+    if {[file exists $norm_xdc]} {
+        add_files -norecurse -fileset [get_filesets constrs_1] $norm_xdc
+        set file_obj [get_files -of_objects [get_filesets constrs_1] [list "*[file tail $norm_xdc]"]]
+        set_property PROCESSING_ORDER NORMAL $file_obj
+        set_property file_type "XDC" $file_obj
+        puts "INFO: Loaded NORMAL XDC: $norm_xdc"
+    } else {
+        puts "WARNING: Main XDC file not found at $norm_xdc"
+    }
+
+    if {[file exists $late_xdc]} {
+        add_files -norecurse -fileset [get_filesets constrs_1] $late_xdc
+        set file_obj [get_files -of_objects [get_filesets constrs_1] [list "*[file tail $late_xdc]"]]
+        set_property PROCESSING_ORDER LATE $file_obj
+        set_property file_type "XDC" $file_obj
+        puts "INFO: Loaded LATE XDC: $late_xdc"
+    } else {
+        puts "INFO: No LATE XDC found at $late_xdc (Skipping)"
+    }
 }
 
 proc vivado_find_hwh { proj_bd } {
@@ -192,7 +229,10 @@ proc vivado_customize_ip { proj_bd ip_name ip_script args } {
 }
 
 proc vivado_package_ip { proj_bd ip_name ip_script } {
+    # Suppress warning for including .prj files
+    set_msg_config -id "IP_Flow 19-991" -new_severity "INFO"
     ipx::package_project -root_dir ip_repo/${ip_name} -vendor user.org -library user -taxonomy /UserIP -import_files -module ${proj_bd}
+
     set_property display_name ${ip_name}_v1_0 [ipx::current_core]
     set_property description ${ip_name}_v1_0 [ipx::current_core]
     set_property name ${ip_name} [ipx::current_core]
@@ -207,6 +247,16 @@ proc vivado_package_ip { proj_bd ip_name ip_script } {
 
 proc vivado_create_ip_proj { proj_name proj_bd ip_name part ip_script args } {
     create_project -force ${proj_name} [pwd] -part ${part}
+    # TODO: boardname as parameter
+    set boardname $::env(BOARDNAME)
+    if {${boardname} == "artya7"} {
+        set_property board_part digilentinc.com:arty-a7-100:part0:1.1 [current_project]
+    } elseif {${boardname} == "pynqz2"} {
+#        set_property board_part tul.com.tw:pynq-z2:part0:1.0 [current_project]
+    } elseif {${boardname} == "ultra96v2"} {
+#        set_property board_part avnet.com:ultra96v2:part0:1.2 [current_project]
+    }
+
     vivado_create_bd_design ${proj_bd}
     source -verbose ${ip_script}
     vivado_create_ip ${args}

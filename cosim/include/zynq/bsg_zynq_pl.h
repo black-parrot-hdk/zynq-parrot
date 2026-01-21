@@ -46,11 +46,9 @@ class bsg_zynq_pl : public bsg_zynq_pl_hardware {
         return static_cast<DramMap *>(_dram_map_storage);
     }
 
-    bool load_bitstream(const char *bitstream) {
+    void load_bitstream(const char *bitstream) {
         py::module_ pynq = py::module_::import("pynq");
         py::object overlay = pynq.attr("Overlay")(bitstream);
-
-        return true;
     }
 
   public:
@@ -70,6 +68,36 @@ class bsg_zynq_pl : public bsg_zynq_pl_hardware {
         // can I delete _dram_map_storage directly?
         DramMap *dram_map = get_dram_map();
         delete dram_map;
+    }
+
+    void init(void) override {
+        // open memory device
+        int fd = open("/dev/mem", O_RDWR | O_SYNC);
+        assert(fd != 0);
+#ifdef GP0_ENABLE
+        // map in first PLAXI region of physical addresses to virtual addresses
+        uintptr_t ptr0 = (uintptr_t)mmap(
+            (void *)gp0_addr_base, gp0_addr_size_bytes, PROT_READ | PROT_WRITE,
+            MAP_SHARED, fd, gp0_addr_base);
+        assert((uintptr_t)ptr0 == (uintptr_t)gp0_addr_base);
+
+        printf("// bsg_zynq_pl: mmap returned %" PRIxPTR " (offset %" PRIxPTR
+               ") errno=%x\n",
+               ptr0, gp0_base_offset, errno);
+#endif
+
+#ifdef GP1_ENABLE
+        // map in second PLAXI region of physical addresses to virtual addresses
+        uintptr_t ptr1 = (uintptr_t)mmap(
+            (void *)gp1_addr_base, gp1_addr_size_bytes, PROT_READ | PROT_WRITE,
+            MAP_SHARED, fd, gp1_addr_base);
+        assert((uintptr_t)ptr1 == (uintptr_t)gp1_addr_base);
+
+        printf("// bsg_zynq_pl: mmap returned %" PRIxPTR " (offset %" PRIxPTR
+               ") errno=%x\n",
+               ptr1, gp1_base_offset, errno);
+#endif 
+		close(fd);
     }
 
     void tick(void) override { /* Does nothing on PS */ }

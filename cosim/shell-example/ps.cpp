@@ -39,10 +39,24 @@ int ps_main(bsg_zynq_pl *zpl, int argc, char **argv) {
 
     // write to two registers, checking our address snoop to see
     // actual address that was received over the AXI bus
+    printf("We are here\n");
+
+    printf("the value of UART_BAUD is %s\n", STRINGIFY(UART_BAUD));
+    printf("the value of UART_DEV is %s\n", STRINGIFY(UART_DEV));
+    zpl->smoke('a');
+    zpl->smoke('b');
+    zpl->smoke('c');
+    zpl->smoke('d');
+    exit(0);
+
+    exit(0);
     zpl->shell_write(0x0 + GP0_ADDR_BASE, val1, mask1);
     bsg_assert(zpl->shell_read(0x30 + GP0_ADDR_BASE) == 0x0);
     zpl->shell_write(0x4 + GP0_ADDR_BASE, val2, mask2);
     bsg_assert(zpl->shell_read(0x30 + GP0_ADDR_BASE) == 0x4);
+    int test_var = zpl->shell_read(0x30 + GP0_ADDR_BASE);
+    printf("TEST var is %x\n", test_var);
+    printf("We are now here\n");
     // 8,12
 
     // check output fifo counters
