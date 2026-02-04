@@ -6,8 +6,9 @@ They are provided to demonstrate various ZynqParrot features such as AXI-lite co
 
 To add a new design, copy shell-example and modify it for your IP.
 
-## Collateral
+## Directory Structure
 
+- Makefile.collateral: Design-specific collateral needed for runs
 - Makefile.design: Design-specific settings and configurations for all backends.
 - Makefile.hardware: Design-specific verilog files for compiling the design.
 - ps.cpp: Co-simulation code that runs on PS on FPGA or in simulation to control the accelerator.
@@ -30,11 +31,12 @@ Examples can run in hardware or co-simulation by entering the appropriate backen
   - ip\_package: Packages the IP before synthesis.
   - fpga\_build: Creates an FPGA bitstream.
   - pack\_bitstream: Packs the build outputs to a single file.
+  - pack\_run: Packs the run inputs to a single file.
   - open: Opens the toplevel block diagram of the project.
   - open\_ip.%: Opens the block diagram for a specific IP project.
 - zynq
   - unpack\_bitstream: Unpacks the bitstream on target.
-  - load\_bitstream: Loads the bitstream to the target using pynq API.
+  - unpack\_run: Unpacks the run inputs on target.
   - build: Builds the control program for the co-emulation.
   - run: Runs the control program on the PS.
 

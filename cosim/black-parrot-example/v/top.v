@@ -296,59 +296,5 @@ module top
       ,.hp1_axi_rready (hp1_axi_rready)
       );
 
-`ifdef DROMAJO_COSIM
-  logic cosim_clk;
-  bsg_nonsynth_clock_gen
-   #(.cycle_time_p(1000))
-   cosim_clk_gen
-    (.o(cosim_clk));
-
-  logic cosim_reset;
-  bsg_sync_sync
-   #(.width_p(1))
-   bss
-    (.oclk_i(cosim_clk)
-     ,.iclk_data_i(~sys_resetn)
-     ,.oclk_data_o(cosim_reset)
-     );
-
-   bind bp_be_top
-     bp_nonsynth_cosim
-      #(.bp_params_p(bp_params_p))
-      cosim
-       (.clk_i(clk_i)
-        ,.reset_i(reset_i)
-        ,.mhartid_i(calculator.pipe_sys.csr.cfg_bus_cast_i.core_id)
-
-        ,.trace_en_i(1'b1)
-        ,.checkpoint_i(1'b0)
-
-        ,.decode_i(calculator.dispatch_pkt_cast_i.decode)
-
-        ,.is_debug_mode_i(calculator.pipe_sys.csr.is_debug_mode)
-        ,.commit_pkt_i(calculator.commit_pkt_cast_o)
-
-        ,.priv_mode_i(calculator.pipe_sys.csr.priv_mode_r)
-        ,.mstatus_i(calculator.pipe_sys.csr.mstatus_lo)
-        ,.mcause_i(calculator.pipe_sys.csr.mcause_lo)
-        ,.scause_i(calculator.pipe_sys.csr.scause_lo)
-
-        ,.ird_w_v_i(scheduler.iwb_pkt_cast_i.ird_w_v)
-        ,.ird_addr_i(scheduler.iwb_pkt_cast_i.rd_addr)
-        ,.ird_data_i(scheduler.iwb_pkt_cast_i.rd_data)
-
-        ,.frd_w_v_i(scheduler.fwb_pkt_cast_i.frd_w_v)
-        ,.frd_addr_i(scheduler.fwb_pkt_cast_i.rd_addr)
-        ,.frd_data_i(scheduler.fwb_pkt_cast_i.rd_data)
-
-        ,.cache_req_yumi_i(calculator.pipe_mem.dcache.cache_req_yumi_i)
-        ,.cache_req_complete_i(calculator.pipe_mem.dcache.complete_recv)
-        ,.cache_req_nonblocking_i(calculator.pipe_mem.dcache.nonblocking_req)
-
-        ,.cosim_clk_i(top.cosim_clk)
-        ,.cosim_reset_i(top.cosim_reset)
-        );
-`endif
-
 endmodule
 

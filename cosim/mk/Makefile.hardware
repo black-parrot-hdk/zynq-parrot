@@ -18,12 +18,3 @@ VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_tag
 VINCLUDES += $(BASEJUMP_STL_DIR)/bsg_test
 VINCLUDES += $(BP_SUB_DIR)/manycore/v
 
-DEFINES   += $(call bsg_var_upper,$(TOOL))
-DEFINES   += $(call bsg_var_upper,HOST_$(HOST))
-ifeq ($(ZYNQ_PL_DEBUG),1)
-DEFINES   += ZYNQ_PL_DEBUG
-endif
-ifeq ($(ZYNQ_PS_DEBUG),1)
-DEFINES   += ZYNQ_PS_DEBUG
-endif
-

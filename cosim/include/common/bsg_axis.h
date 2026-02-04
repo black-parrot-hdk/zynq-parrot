@@ -15,8 +15,8 @@
 
 #include <boost/coroutine2/all.hpp>
 
-#include "bsg_nonsynth_dpi_gpio.hpp"
 #include "bsg_axi.h"
+#include "bsg_nonsynth_dpi_gpio.hpp"
 #include "bsg_pin.h"
 #include "bsg_printing.h"
 
@@ -42,11 +42,11 @@ class m_axis_device {
     virtual bool pending_write(long *data, bool *last) = 0;
 };
 
-template <unsigned int D>
-class axis : public axi_defaults<0, D> {
+template <unsigned int D> class axis : public axi_defaults<0, D> {
   protected:
     using addr_t = typename axi_defaults<0, D>::addr_t;
     using data_t = typename axi_defaults<0, D>::data_t;
+
   protected:
     pin<1> p_aclk;
     pin<1> p_aresetn;
@@ -54,14 +54,12 @@ class axis : public axi_defaults<0, D> {
     pin<1> p_tready;
     pin<1> p_tvalid;
     pin<D> p_tdata;
-    pin<1> p_tlast; 
+    pin<1> p_tlast;
 
     // We use a boolean instead of true mutex so that we can check it
     bool mutex = 0;
 
-    bool try_lock() {
-        return !mutex;
-    }
+    bool try_lock() { return !mutex; }
 
     void lock(yield_t &yield) {
         do {
@@ -99,14 +97,14 @@ class axis : public axi_defaults<0, D> {
 };
 
 // D = axis data width
-template <unsigned int D>
-class saxis : public axis<D> {
+template <unsigned int D> class saxis : public axis<D> {
   protected:
     using addr_t = typename axi_defaults<0, D>::addr_t;
     using data_t = typename axi_defaults<0, D>::data_t;
+
   public:
     saxis(const std::string &base) : axis<D>(base) {
-      std::cout << " as a client AXIS port" << std::endl;
+        std::cout << " as a client AXIS port" << std::endl;
     }
 
     bool axis_has_write(uint8_t *last) {
@@ -152,14 +150,14 @@ class saxis : public axis<D> {
 };
 
 // D = axis data width
-template <unsigned int D>
-class maxis : public axis<D> {
+template <unsigned int D> class maxis : public axis<D> {
   protected:
     using addr_t = typename axi_defaults<0, D>::addr_t;
     using data_t = typename axi_defaults<0, D>::data_t;
+
   public:
     maxis(const std::string &base) : axis<D>(base) {
-      std::cout << " as a master AXIM port" << std::endl;
+        std::cout << " as a master AXIM port" << std::endl;
     }
 
     void axis_write_helper(data_t tdata, bool tlast, yield_t &yield) {

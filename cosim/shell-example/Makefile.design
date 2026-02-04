@@ -1,3 +1,6 @@
+TOP ?= $(shell git rev-parse --show-toplevel)
+include $(TOP)/Makefile.common
+include $(TOP)/Makefile.env
 
 #############################
 # Design Settings
@@ -8,9 +11,6 @@ BASENAME   ?= shell
 MAIN_PROGRAM ?= $(COSIM_CSRC_DIR)/main.cpp
 HOST_PROGRAM ?= $(DESIGN_DIR)/ps.cpp
 
-ZYNQ_PL_DEBUG ?= 0
-ZYNQ_PS_DEBUG ?= 0
-
 #############################
 # Design Defines
 #############################
@@ -19,5 +19,5 @@ DEFINES += GP0_ADDR_WIDTH=6 GP0_DATA_WIDTH=32
 DEFINES += ACLK_MHZ=55
 DEFINES += RTCLK_MHZ=8
 
-include $(DESIGN_DIR)/Makefile.hardware
+include $(COSIM_MK_DIR)/Makefile.master
 

@@ -1,0 +1,4 @@
+`verilator_config
+lint_off -rule WIDTHEXPAND
+lint_off -rule ASCRANGE    -file "*/bsg_nonsynth_reset_gen.sv" -lines 34
+

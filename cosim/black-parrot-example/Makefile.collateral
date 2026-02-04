@@ -1,0 +1,52 @@
+
+#############################
+# Build Collateral
+#############################
+RISCV_OBJCOPY ?= riscv64-unknown-elf-objcopy
+ASCII_TO_ROM ?= $(BASEJUMP_STL_DIR)/bsg_mem/bsg_ascii_to_rom.py
+
+CFG ?= e_bp_unicore_zynqparrot_cfg
+bsg_blackparrot_pkg.sv:
+	@$(ECHO) "package bsg_blackparrot_pkg;" >> $@
+	@$(ECHO) >> $@
+	@$(ECHO) "import bp_common_pkg::*;" >> $@
+	@$(ECHO) >> $@
+	@$(ECHO) "localparam bp_params_e bp_cfg_gp = $(CFG);" >> $@
+	@$(ECHO) >> $@
+	@$(ECHO) "endpackage" >> $@
+	@$(ECHO) >> $@
+
+bsg_bootrom.bin: $(ZP_RISCV_DIR)/bootrom/bootrom.none.riscv
+	@$(RISCV_OBJCOPY) -O binary $< $@
+
+bsg_bootrom.rom: bsg_bootrom.bin
+	@$(XXD) -b -g4 -c4 $< | $(AWK) '{print $$2}' > $@
+
+ifeq ($(wildcard bsg_bootrom.sv),)
+bsg_bootrom.sv: bsg_bootrom.rom
+	@$(PYTHON) $(ASCII_TO_ROM) $< bsg_bootrom zero > $@
+else
+bsg_bootrom.sv:
+endif
+
+BUILD_COLLATERAL  = bsg_blackparrot_pkg.sv
+BUILD_COLLATERAL += bsg_bootrom.sv
+
+#############################
+# Run Collateral
+#############################
+
+prog.riscv:
+	@$(FIND) -L $(ZP_RISCV_DIR)/ -name $(PROG).riscv -exec cp {} $@ \;
+
+%.mem: %.riscv
+	@$(RISCV_OBJCOPY) -O verilog $< $@
+	@$(SED) -i "s/@8/@0/g" $@
+
+BP_NBF_SCRIPT ?= $(BP_RTL_DIR)/bp_common/software/py/nbf.py
+%.nbf: %.mem
+	@$(PYTHON) $(BP_NBF_SCRIPT) \
+		--skip_zeros --mem $*.mem --ncpus $(BP_NCPUS) > $@
+
+RUN_COLLATERAL = $(NBF_FILE)
+

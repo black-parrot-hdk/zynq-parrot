@@ -5,16 +5,13 @@ proc vivado_create_ip { args } {
     set vsources [lindex [lindex ${args} 0] 1]
     set vincludes [lindex [lindex ${args} 0] 2]
     set aclk_freq_mhz [lindex [lindex ${args} 0] 3]
-    set rtclk_freq_mhz [lindex [lindex ${args} 0] 4]
 
     set aclk_freq_hz [expr round(${aclk_freq_mhz}*1e6)]
-    set rtclk_freq_hz [expr round(${rtclk_freq_mhz}*1e6)]
 
     vivado_create_design ${vpackages} ${vsources} ${vincludes}
     create_bd_cell -type module -reference top -name top
 
     create_bd_port -dir I -type clk -freq_hz ${aclk_freq_hz} aclk
-    create_bd_port -dir I -type clk -freq_hz ${rtclk_freq_hz} rt_clk
     create_bd_port -dir I -type rst aresetn
     make_bd_intf_pins_external [get_bd_intf_pins -hier gp0_axi] -name "gp0_axi"
     make_bd_intf_pins_external [get_bd_intf_pins -hier hp0_axi] -name "hp0_axi"
@@ -24,7 +21,6 @@ proc vivado_create_ip { args } {
     set_property CONFIG.PROTOCOL {AXI4} [get_bd_intf_ports hp0_axi]
 
     connect_bd_net [get_bd_pins top/aclk] [get_bd_ports aclk]
-    connect_bd_net [get_bd_pins top/rt_clk] [get_bd_ports rt_clk]
     connect_bd_net [get_bd_pins top/aresetn] [get_bd_ports aresetn]
 
     set hp0_seg_offset 0x0
@@ -37,6 +33,5 @@ proc vivado_create_ip { args } {
 
 proc vivado_ipx_customize { args } {
 	ipx::remove_bus_parameter FREQ_HZ [ipx::get_bus_interfaces CLK.ACLK -of_objects [ipx::current_core]]
-	ipx::remove_bus_parameter FREQ_HZ [ipx::get_bus_interfaces CLK.RT_CLK -of_objects [ipx::current_core]]
 }
 

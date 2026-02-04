@@ -9,8 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int ps_main(int argc, char **argv) {
-    bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
+int ps_main(bsg_zynq_pl *zpl, int argc, char **argv) {
 
     // the read memory map is essentially
     //
@@ -157,8 +156,5 @@ int ps_main(int argc, char **argv) {
     assert((zpl->shell_read(0x10 + GP0_ADDR_BASE) == 4));
     assert((zpl->shell_read(0x10 + GP1_ADDR_BASE) == 4));
 
-    zpl->done();
-
-    delete zpl;
-    return 0;
+    return zpl->done();
 }

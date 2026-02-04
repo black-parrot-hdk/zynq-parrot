@@ -1,6 +1,4 @@
 
-include $(COSIM_MK_DIR)/Makefile.hardware
-
 VPACKAGES += $(DESIGN_VSRC_DIR)/zynq_pkg.sv
 
 # BlackParrot hardware import

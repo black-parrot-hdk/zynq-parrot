@@ -26,8 +26,8 @@ proc vivado_create_ip { args } {
 }
 
 proc vivado_constrain_ip { args } {
-    set aclk [get_clocks -of_objects [get_pins blackparrot_bd_1_i/vps_0/aclk]]
-    set rt_clk [get_clocks -of_objects [get_pins blackparrot_bd_1_i/vps_0/rt_clk]]
+    set aclk [get_clocks -of_objects [get_pins */vps_0/aclk]]
+    set rt_clk [get_clocks -of_objects [get_pins */vps_0/rt_clk]]
 
     set_clock_groups -logically_exclusive -group ${aclk} -group ${rt_clk}
 

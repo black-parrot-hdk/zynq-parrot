@@ -71,14 +71,18 @@ module bsg_nonsynth_zynq_testbench;
     (.clk_i(aclk), .async_reset_o(areset));
   wire aresetn = ~areset;
 
+`ifdef RT_CLK_ENABLE
   localparam rt_clk_period_lp = 2500000;
   logic rt_clk;
   bsg_nonsynth_clock_gen
    #(.cycle_time_p(rt_clk_period_lp))
    rt_clk_gen
     (.o(rt_clk));
+`endif
 
+`ifdef TAG_ENABLE
   logic tag_ck, tag_data, sys_resetn;
+`endif
 
 `ifdef GP0_ENABLE
   logic [C_GP0_AXI_ADDR_WIDTH-1:0] gp0_axi_awaddr;
@@ -570,86 +574,60 @@ module bsg_nonsynth_zynq_testbench;
    dut
     (.*);
 
-`ifdef VERILATOR
-   initial
-     begin
-   `ifdef FSTON
-     if ($test$plusargs("bsg_trace") != 0)
-       begin
-         $display("[%0t] Tracing to dump.fst...\n", $time);
-         $dumpfile("dump.fst");
-         $dumpvars();
-       end
-   `endif
-     end
+  wire waveform_en_li = 1'b1;
+  bsg_nonsynth_waveform_tracer
+   #(.trace_str_p("bsg_trace"))
+   tracer
+    (.clk_i(bsg_nonsynth_zynq_testbench.aclk)
+     ,.reset_i(~bsg_nonsynth_zynq_testbench.aresetn)
+     ,.en_i(bsg_nonsynth_zynq_testbench.waveform_en_li)
+     );
 
-   export "DPI-C" task bsg_dpi_next;
-   task bsg_dpi_next();
-     $error("BSG-ERROR: bsg_dpi_next should not be called from Verilator");
-     bsg_dpi_finish("verilator next call");
-   endtask
+  wire assert_en_li = 1'b1;
+  bsg_nonsynth_assert
+   _assert
+    (.clk_i(bsg_nonsynth_zynq_testbench.aclk)
+     ,.reset_i(~bsg_nonsynth_zynq_testbench.aresetn)
+     ,.en_i(bsg_nonsynth_zynq_testbench.assert_en_li)
+     );
+
+`ifdef HAS_COSIM_MAIN
+  import "DPI-C" context task cosim_main(string c_args);
+  string c_args;
+  initial
+    begin
+      if ($test$plusargs("c_args"))
+        begin
+          $value$plusargs("c_args=%s", c_args);
+        end
+      cosim_main(c_args);
+      $finish;
+    end
+  // Evaluate the simulation, until the next clk_i positive edge.
+  //
+  // Call bsg_dpi_next in simulators where the C testbench does not
+  // control the progression of time (i.e. NOT Verilator).
+  //
+  // The #1 statement guarantees that the positive edge has been
+  // evaluated, which is necessary for ordering in all of the DPI
+  // functions.
+  export "DPI-C" task bsg_dpi_next;
+  task bsg_dpi_next();
+    @(posedge aclk);
+    #1;
+  endtask
 `else
-   import "DPI-C" context task cosim_main(string c_args);
-   string c_args;
-   initial
-     begin
-       $assertoff();
-       @(posedge aclk);
-       @(posedge aresetn);
-       $asserton();
-   `ifdef VCS
-     `ifdef VCDPLUSON
-       if ($test$plusargs("bsg_trace"))
-         begin
-           $display("[%0t] Tracing to vcdplus.vpd...\n", $time);
-           $vcdpluson();
-           $vcdplusautoflushon();
-         end
-     `endif
-   `endif
-   `ifdef XCELIUM
-     `ifdef SHMPLUSON
-       if ($test$plusargs("bsg_trace"))
-         begin
-           $shm_open("dump.shm");
-           $shm_probe("ASM");
-         end
-     `endif
-   `endif
-       if ($test$plusargs("c_args"))
-         begin
-           $value$plusargs("c_args=%s", c_args);
-         end
-       cosim_main(c_args);
-       bsg_dpi_finish("cosim_main return");
-     end
-
-   // Evaluate the simulation, until the next clk_i positive edge.
-   //
-   // Call bsg_dpi_next in simulators where the C testbench does not
-   // control the progression of time (i.e. NOT Verilator).
-   //
-   // The #1 statement guarantees that the positive edge has been
-   // evaluated, which is necessary for ordering in all of the DPI
-   // functions.
-   export "DPI-C" task bsg_dpi_next;
-   task bsg_dpi_next();
-     @(posedge aclk);
-     #1;
-   endtask
+  export "DPI-C" function bsg_dpi_finish;
+  function int bsg_dpi_finish();
+    $finish;
+  endfunction
 `endif
 
-   export "DPI-C" function bsg_dpi_time;
-   function int bsg_dpi_time();
-     return int'($time);
-   endfunction
-
-   export "DPI-C" function bsg_dpi_finish;
-   function void bsg_dpi_finish(string reason);
-     $display("[BSG-INFO]: Finish called for reason: %s", reason);
-     $finish;
-   endfunction
-
+  // Other useful DPI functions
+  export "DPI-C" function bsg_dpi_time;
+  function int bsg_dpi_time();
+    return int'($time);
+  endfunction
 
 endmodule
 

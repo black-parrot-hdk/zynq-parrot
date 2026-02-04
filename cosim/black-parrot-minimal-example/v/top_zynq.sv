@@ -28,7 +28,6 @@ module top_zynq
    )
   (input wire                                    aclk
    , input wire                                  aresetn
-   , input wire                                  rt_clk
 
    // Ports of Axi Slave Bus Interface S00_AXI
    , input wire [C_GP0_AXI_ADDR_WIDTH-1:0]       gp0_axi_awaddr
@@ -376,7 +375,7 @@ module top_zynq
   bp_cfg_bus_s cfg_bus_li;
   assign cfg_bus_li =
     '{freeze      : freeze_li
-      ,npc        : 32'h0110000
+      ,npc        : 32'h8000_0000
       ,core_id    : '0
       ,icache_id  : '0
       ,icache_mode: e_lce_mode_normal

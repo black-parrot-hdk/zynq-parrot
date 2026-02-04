@@ -10,25 +10,6 @@
 // that runs on the real Zynq chip.
 //
 
-// memory management hooks (corresponds to allocate function in python)
-//
-// this is where all of the memory management functions are stored
-// talks through /usr/lib/libcma.so
-
-// look at this header file for cma_mmap, cma_alloc, cma_get_phy_addr, cma_free,
-// cma_pages_available
-// cma_flush_cache, cma_invalidate_cache
-//
-// see /usr/local/lib/python3.6/dist-packages/pynq for usage of _xlnk_reset()
-//
-// note: cat /proc/meminfo gives information about the CMA
-//
-
-extern "C" {
-#include "/usr/include/libxlnk_cma.h"
-void _xlnk_reset();
-};
-
 #include "bsg_argparse.h"
 #include "bsg_printing.h"
 #include "zynq_headers.h"
@@ -39,6 +20,7 @@ void _xlnk_reset();
 #include <fstream>
 #include <inttypes.h>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,54 +29,98 @@ void _xlnk_reset();
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <pybind11/embed.h>
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+namespace py = pybind11;
+
 #include "bsg_zynq_pl_hardware.h"
 
+#define BITSTREAM_STRING STRINGIFY(BITSTREAM_FILE)
+
 class bsg_zynq_pl : public bsg_zynq_pl_hardware {
+  private:
+    void *_dram_map_storage;
+    using DramMap = std::map<void *, py::object>;
+    DramMap *get_dram_map() {
+        return static_cast<DramMap *>(_dram_map_storage);
+    }
+
+    bool load_bitstream(const char *bitstream) {
+        py::module_ pynq = py::module_::import("pynq");
+        py::object overlay = pynq.attr("Overlay")(bitstream);
+
+        return true;
+    }
+
   public:
     bsg_zynq_pl(int argc, char *argv[]) {
+        static py::scoped_interpreter guard{};
         printf("// bsg_zynq_pl: be sure to run as root\n");
+
+        load_bitstream(BITSTREAM_STRING);
+        _dram_map_storage = new DramMap();
+
         init();
     }
 
-    ~bsg_zynq_pl(void) { deinit(); }
-
-    void tick(void) override { /* Does nothing on PS */
+    ~bsg_zynq_pl(void) {
+        py::gil_scoped_acquire acquire;
+        deinit();
+        // can I delete _dram_map_storage directly?
+        DramMap *dram_map = get_dram_map();
+        delete dram_map;
     }
+
+    void tick(void) override { /* Does nothing on PS */ }
 
     void start(void) override { printf("bsg_zynq_pl: start() called\n"); }
 
     void stop(void) override { printf("bsg_zynq_pl: stop() called\n"); }
 
-    void done(void) override {
+    int done(void) override {
         printf("bsg_zynq_pl: done() called, exiting\n");
+        return (status > 0);
     }
 
     // returns virtual pointer, writes physical parameter into arguments
     void *allocate_dram(unsigned long len_in_bytes,
                         unsigned long *physical_ptr) override {
-
-        // resets all CMA buffers across system (eek!)
-        _xlnk_reset();
+        py::gil_scoped_acquire acquire;
 
         // for now, we do uncacheable to keep things simple, memory accesses go
         // straight to DRAM and
         // thus would be coherent with the PL
+        py::module_ pynq = py::module_::import("pynq");
+        py::object buffer = pynq.attr("allocate")(
+            py::arg("shape") = py::make_tuple(len_in_bytes),
+            py::arg("dtype") = "u1");
 
-        void *virtual_ptr =
-            cma_alloc(len_in_bytes, 0); // 1 = cacheable, 0 = uncacheable
-        assert(virtual_ptr != NULL);
-        *physical_ptr = cma_get_phy_addr(virtual_ptr);
-        printf("bsg_zynq_pl: allocate_dram() called with size %ld bytes --> "
-               "virtual "
-               "ptr=%p, physical ptr=0x%8.8lx\n",
-               len_in_bytes, virtual_ptr, *physical_ptr);
+        *physical_ptr = buffer.attr("physical_address").cast<unsigned long>();
+
+        auto array = buffer.cast<py::array_t<uint8_t>>();
+        py::buffer_info info = array.request();
+        void *virtual_ptr = info.ptr;
+
+        DramMap *dram_map = get_dram_map();
+        (*dram_map)[virtual_ptr] = buffer;
+
         return virtual_ptr;
     }
 
     void free_dram(void *virtual_ptr) override {
-        printf("bsg_zynq_pl: free_dram() called on virtual ptr=%p\n",
-               virtual_ptr);
-        cma_free(virtual_ptr);
+        py::gil_scoped_acquire acquire;
+
+        DramMap *dram_map = get_dram_map();
+        auto it = dram_map->find(virtual_ptr);
+        if (it != dram_map->end()) {
+            printf("bsg_zynq_pl: free_dram() called on virtual ptr=%p\n",
+                   virtual_ptr);
+            dram_map->erase(it);
+        } else {
+            printf("bsg_zynq_pl: free_dram() called on unknown ptr=%p\n",
+                   virtual_ptr);
+        }
     }
 
     int32_t shell_read(uintptr_t addr) override { return axil_read(addr); }

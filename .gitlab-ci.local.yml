@@ -5,9 +5,9 @@ spec:
     do_sim:
     do_synth:
     bp_rtl_branch:
-    bp_sdk_branch:
     bp_tools_branch:
     bp_sub_branch:
+    bp_sdk_branch:
     mc_branch:
 ---
 
@@ -202,10 +202,9 @@ build-image:
     - git submodule update --init --recursive import/black-parrot-subsystems
     - git submodule update --init --recursive import/bsg_manycore
     - git submodule update --init             import/bsg_replicant
-    - echo "[CI] Synthesizing $EXAMPLE"
     - ${RUN_SCRIPT} ${SYNTH_SCRIPT} ${EXAMPLE}
     - echo "[CI] Moving bitstream to artifacts" | tee -a ${JOB_LOG}
-    - mv cosim/${EXAMPLE}-example/*tar.xz.b64 ${JOB_SUCCESS_ROOT}
+    - mv cosim/${EXAMPLE}-example/*.${BOARDNAME}.tar.xz.b64 ${JOB_SUCCESS_ROOT}
   rules:
     - if: '"$[[ inputs.do_synth ]]" =~ "/on_success|on_event/" && $DOCKER_PLATFORM == "ubuntu24.04" && $BOARDNAME == "ultra96v2"'
     - if: '"$[[ inputs.do_synth ]]" =~ "/on_success|on_event/" && $DOCKER_PLATFORM == "centos7" && $BOARDNAME == "pynqz2"'
@@ -246,7 +245,7 @@ sim-test:
   extends: [.sim_job]
   parallel:
     matrix:
-      - TOOL: ["vcs"]
+      - TOOL: ["vcs", "verilator"]
         EXAMPLE: ["shell"]
   needs: [smoke]
 
@@ -258,51 +257,54 @@ synth-test:
         BOARDNAME: ["pynqz2", "ultra96v2"]
   needs: [smoke]
 
-    #sim-basic:
-    #  extends: [.sim_job]
-    #  parallel:
-    #    matrix:
-    #      - TOOL: ["vcs", "verilator"]
-    #        EXAMPLE: ["simple", "dram", "axis", "shell", "double-shell"]
-    #  needs: [smoke]
-    #
-    #sim-bp:
-    #  extends: [.sim_job]
-    #  parallel:
-    #    matrix:
-    #      - TOOL: ["vcs", "verilator"]
-    #        EXAMPLE: ["black-parrot-minimal", "black-parrot"]
-    #  needs: [smoke]
-    #         
-    #sim-mc:
-    #  extends: [.sim_job]
-    #  parallel:
-    #    matrix:
-    #      - TOOL: ["vcs", "verilator"]
-    #        EXAMPLE: ["manycore", "hammerblade"]
-    #  needs: [smoke]
-    #
-    #synth-basic:
-    #  extends: [.synth_job]
-    #  parallel:
-    #    matrix:
-    #      - EXAMPLE: ["dram", "axis", "shell", "double-shell"]
-    #        BOARDNAME: ["pynqz2", "ultra96v2"]
-    #  needs: [smoke]
-    #
-    #synth-bp:
-    #  extends: [.synth_job]
-    #  parallel:
-    #    matrix:
-    #      - EXAMPLE: ["black-parrot-minimal", "black-parrot"]
-    #        BOARDNAME: ["pynqz2", "ultra96v2"]
-    #  needs: [smoke]
-    #
-    #synth-mc:
-    #  extends: [.synth_job]
-    #  parallel:
-    #    matrix:
-    #      - EXAMPLE: ["manycore", "hammerblade"]
-    #        BOARDNAME: ["ultra96v2"]
-    #  needs: [smoke]
+sim-basic:
+  extends: [.sim_job]
+  parallel:
+    matrix:
+      - TOOL: ["vcs", "verilator"]
+        EXAMPLE: ["simple", "dram", "axis", "shell", "double-shell"]
+  needs: [{job: sim-test, optional: true}]
+
+sim-bp:
+  extends: [.sim_job]
+  parallel:
+    matrix:
+      - TOOL: ["vcs", "verilator"]
+        #EXAMPLE: ["black-parrot-minimal", "black-parrot"]
+        EXAMPLE: ["black-parrot-minimal"]
+  needs: [{job: sim-basic, optional: true}]
+
+sim-mc:
+  extends: [.sim_job]
+  parallel:
+    matrix:
+      - TOOL: ["vcs", "verilator"]
+        EXAMPLE: ["manycore", "hammerblade"]
+  needs: [{job: sim-basic, optional: true}]
+
+synth-basic:
+  extends: [.synth_job]
+  parallel:
+    matrix:
+      - EXAMPLE: ["dram", "axis", "shell", "double-shell"]
+        BOARDNAME: ["pynqz2", "ultra96v2"]
+  needs: [{job: synth-test, optional: true}]
+
+synth-bp:
+  extends: [.synth_job]
+  parallel:
+    matrix:
+      #- EXAMPLE: ["black-parrot-minimal", "black-parrot"]
+      - EXAMPLE: ["black-parrot-minimal"]
+        BOARDNAME: ["pynqz2", "ultra96v2"]
+  needs: [{job: synth-basic, optional: true}]
+
+synth-mc:
+  extends: [.synth_job]
+  parallel:
+    matrix:
+      #- EXAMPLE: ["manycore", "hammerblade"] # hammerblade needs larger board
+      - EXAMPLE: ["manycore"]
+        BOARDNAME: ["pynqz2", "ultra96v2"]
+  needs: [{job: synth-basic, optional: true}]
 

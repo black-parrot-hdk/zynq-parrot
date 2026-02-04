@@ -1,6 +1,4 @@
 
-include $(COSIM_MK_DIR)/Makefile.collateral
-
 #############################
 # Common variables
 #############################
@@ -19,11 +17,17 @@ VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_gpio.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_to_fifo.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_dpi_rom.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_test/bsg_nonsynth_axi_mem.sv
+VSOURCES += $(BP_RTL_DIR)/bp_top/test/common/bsg_nonsynth_waveform_tracer.sv
+VSOURCES += $(BP_RTL_DIR)/bp_top/test/common/bsg_nonsynth_assert.sv
 VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axil.sv
 VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_axil_to_dpi.sv
 VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_dpi_to_axis.sv
 VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_axis_to_dpi.sv
 VSOURCES += $(COSIM_VSRC_DIR)/bsg_nonsynth_zynq_testbench.sv
+
+ifeq ($(DROMAJO_COSIM),1)
+VSOURCES += $(BP_RTL_DIR)/bp_top/test/common/bp_nonsynth_cosim.sv
+endif
 
 VINCLUDES +=
 

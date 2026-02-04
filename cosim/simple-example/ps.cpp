@@ -11,9 +11,7 @@
 
 #include "ps.hpp"
 
-int ps_main(int argc, char **argv) {
-    bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
-
+int ps_main(bsg_zynq_pl *zpl, int argc, char **argv) {
     // this program just communicates with a "loopback accelerator"
     // that has 4 control registers that you can read and write
 
@@ -36,8 +34,5 @@ int ps_main(int argc, char **argv) {
     assert(zpl->shell_read(GP0_RD_CSR_2) == val3);
     assert(zpl->shell_read(GP0_RD_CSR_3) == val4);
 
-    zpl->done();
-
-    delete zpl;
-    return 0;
+    return zpl->done();
 }

@@ -1,6 +1,9 @@
 
 include $(COSIM_MK_DIR)/Makefile.sim
 
+DEFINES += HAS_COSIM_MAIN
+DEFINES += SIMULATION
+
 VCS_VFLAGS += $(addprefix +define+,$(DEFINES))
 VCS_VFLAGS += $(addprefix +incdir+,$(VINCLUDES))
 
@@ -33,24 +36,44 @@ VCS_BUILD_OPTS += -o simv
 
 VCS_RUN_OPTS += -no_save
 
+ifeq ($(ENABLE_VERDI),1)
+DUMP_FILE ?= dump.fsdb
+else
+DUMP_FILE ?= dump.vpd
+endif
+
+ifeq ($(ASSERT),1)
+VCS_BUILD_OPTS += +define+BSG_NONSYNTH_ASSERT_ENABLE
+VCS_BUILD_OPTS += -assert svaext # Enable elaboration system tasks
+endif
+
 ifneq (,$(TRACE))
-RUN_ARGS += +bsg_trace
+RUN_ARGS += +bsg_trace=$(DUMP_FILE)
 RUN_ARGS += +vpdfilesize+512
 endif
 run: ## runs the simv executable, TRACE=1 to trace
 run: simv | $(RUN_COLLATERAL)
-	@./$< $(VCS_RUN_OPTS) $(RUN_ARGS) 2>&1 | $(TEE_I) run.log
+	./$< $(VCS_RUN_OPTS) $(RUN_ARGS) 2>&1 | $(TEE_I) run.log
 
+ENABLE_VERDI ?= $(if $(shell which verdi 2> /dev/null),1,0)
 ifneq (,$(TRACE))
-BUILD_ARGS += -debug_acc+pp+dmptf
-BUILD_ARGS += +define+VCDPLUSON
+BUILD_ARGS += -debug_access+r
+BUILD_ARGS += +define+BSG_NONSYNTH_WAVEFORM_TRACER_ENABLE
+BUILD_ARGS += +define+BSG_NONSYNTH_WAVEFORM_TRACER_DEPTH=0
+BUILD_ARGS += +define+BSG_NONSYNTH_WAVEFORM_TRACER_HIER=bsg_nonsynth_zynq_testbench.dut
+ifeq ($(ENABLE_VERDI),1)
+BUILD_ARGS += +define+BSG_NONSYNTH_WAVEFORM_TRACER_FSDB
+else
+BUILD_ARGS += +define+BSG_NONSYNTH_WAVEFORM_TRACER_VPD
 endif
+endif
+
 build: ## builds the simv executable
 build: simv
 simv: $(VPACKAGES) $(VSOURCES) $(CSOURCES) | $(BUILD_COLLATERAL)
-	@$(VCS) $(VCS_BUILD_OPTS) $(BUILD_ARGS) $^ 2>&1 | $(TEE_I) build.log
+	$(VCS) $(VCS_BUILD_OPTS) $(BUILD_ARGS) $^ 2>&1 | $(TEE_I) build.log
 
 view: ## views the dump with DVE
-view: vcdplus.vpd
-	@$(_DVE) -full64 -vpd $< &
+view: $(DUMP_FILE)
+	@$(DVE) -full64 -vpd $< &
 

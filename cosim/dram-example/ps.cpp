@@ -16,10 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define DRAM_ALLOC_SIZE_BYTES 16384
-
-int ps_main(int argc, char **argv) {
-    bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
+int ps_main(bsg_zynq_pl *zpl, int argc, char **argv) {
 
     int mask1 = 0xf;
     unsigned long phys_ptr;
@@ -41,8 +38,5 @@ int ps_main(int argc, char **argv) {
     if (argc == 1)
         zpl->free_dram((void *)buf);
 
-    zpl->done();
-
-    delete zpl;
-    exit(EXIT_SUCCESS);
+    return zpl->done();
 }

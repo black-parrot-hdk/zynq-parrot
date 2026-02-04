@@ -1,11 +1,11 @@
 
 #include "bsg_argparse.h"
-#include "zynq_headers.h"
+#include "bsg_zynq_pl.h"
 
 #include <stdio.h>
 #include <string>
 
-extern int ps_main(int argc, char **argv);
+extern int ps_main(bsg_zynq_pl *zpl, int argc, char **argv);
 
 #ifdef HAS_COSIM_MAIN
 extern "C" int cosim_main(char *argstr) {
@@ -23,5 +23,16 @@ int main(int argc, char **argv) {
     // so that we can see what is happening in real time
     setvbuf(stdout, NULL, _IOLBF, 0);
 
-    return ps_main(ps_argc, ps_argv);
+    // call the main PS program
+    // for now, use the same argc/argv but we could separate out PS and ZPL arguments
+    bsg_zynq_pl zpl(ps_argc, ps_argv);
+    int rc = ps_main(&zpl, ps_argc, ps_argv);
+    bsg_pr_info("Returning from ps_main with RC: %x\n", rc);
+    if (!rc) {
+        bsg_pr_info("BSG PASS\n");
+    } else {
+        bsg_pr_info("BSG FAIL\n");
+    }
+
+    return rc;
 }

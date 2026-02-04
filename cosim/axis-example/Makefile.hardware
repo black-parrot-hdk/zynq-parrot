@@ -1,6 +1,4 @@
 
-include $(COSIM_MK_DIR)/Makefile.hardware
-
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_defines.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_fifo_1r1w_small.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_dataflow/bsg_fifo_1r1w_small_hardened.sv

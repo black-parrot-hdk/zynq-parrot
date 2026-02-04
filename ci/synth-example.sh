@@ -10,6 +10,7 @@ bsg_sentinel_cont "  IP Catalog is up to date"
 bsg_run_task "Generating the bitstream" make -C $syndir fpga_build
 bsg_sentinel_cont " for timing report"
 bsg_run_task "Packing the bitstream" make -C $syndir pack_bitstream
+bsg_run_task "Packing the run collateral" make -C $syndir pack_run
 
 bsg_pass $(basename $0)
 

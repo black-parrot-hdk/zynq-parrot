@@ -2,3 +2,7 @@ riscv/
 install/
 bsg_cadenv/
 *.swp
+.gitlab-ci-local/
+artifacts/
+logs/
+reports/

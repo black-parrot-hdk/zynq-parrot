@@ -1,8 +1,31 @@
 
-export BUILD_COLLATERAL
-export RUN_COLLATERAL
+RUNINFO ?= run.info
+$(RUNINFO):
+	@$(ECHO) "This is runinfo for future-proofing, ensuring there is collateral" > $@
+BUILD_COLLATERAL += $(RUNINFO)
+
+pack_bitstream: ## packs up bitstream collateral
+pack_bitstream: $(BITSTREAM_FILES)
+	@$(TAR) -Jc $(BITSTREAM_FILES) | $(BASE64) > $(PACKED_BIT)
+
+unpack_bitstream: ## unpacks the bitstream from a base64 file
+unpack_bitstream:
+	@$(BASE64) -d $(PACKED_BIT) | $(TAR) xvJ
+
+pack_run: ## packs up run collateral
+pack_run: $(BUILD_COLLATERAL) $(RUN_COLLATERAL)
+	@$(TAR) -Jc $^ | $(BASE64) > $(PACKED_RUN)
+
+unpack_run: ## unpacks the run from a base64 file
+unpack_run:
+	@$(BASE64) -d $(PACKED_RUN) | $(TAR) xvJ
 
 clean::
-	@if [ -n "$$BUILD_COLLATERAL" ]; then $(RMRF) $$BUILD_COLLATERAL; fi
-	@if [ -n "$$RUN_COLLATERAL"   ]; then $(RMRF) $$RUN_COLLATERAL  ; fi
+	@if [ -n "$(BUILD_COLLATERAL)" ]; then $(RMRF) $(BUILD_COLLATERAL); fi
+	@if [ -n "$(RUN_COLLATERAL)"   ]; then $(RMRF) $(RUN_COLLATERAL)  ; fi
+	@$(RMRF) bsg_bootrom.bin
+	@$(RMRF) bsg_bootrom.rom
+	@$(RMRF) prog.mem
+	@$(RMRF) signature.txt
+	@$(RMRF) main_dram.mem main_dmem.mem
 

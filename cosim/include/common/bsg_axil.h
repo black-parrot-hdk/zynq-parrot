@@ -16,8 +16,8 @@
 
 #include <boost/coroutine2/all.hpp>
 
-#include "bsg_nonsynth_dpi_gpio.hpp"
 #include "bsg_axi.h"
+#include "bsg_nonsynth_dpi_gpio.hpp"
 #include "bsg_pin.h"
 #include "bsg_printing.h"
 
@@ -48,8 +48,7 @@ class m_axil_device {
     virtual bool pending_read(uintptr_t *address) = 0;
     virtual void return_read(long data) = 0;
 
-    virtual bool pending_write(uintptr_t *address, long *data,
-                               long *wmask) = 0;
+    virtual bool pending_write(uintptr_t *address, long *data, long *wmask) = 0;
     virtual void return_write() = 0;
 };
 
@@ -85,9 +84,7 @@ class axil : public axi_defaults<A, D> {
     // We use a boolean instead of true mutex so that we can check it
     bool mutex = 0;
 
-    bool try_lock() {
-        return !mutex;
-    }
+    bool try_lock() { return !mutex; }
 
     void lock(yield_t &yield) {
         do {
@@ -126,7 +123,7 @@ class axil : public axi_defaults<A, D> {
         std::cout << "Instantiating AXIL at " << base;
     }
 
-public:
+  public:
     // Wait for (low true) reset to be asserted by the testbench
     void reset(yield_t &yield) {
         printf("bsg_zynq_pl: Entering reset\n");
@@ -141,8 +138,7 @@ public:
 
 // A = axil address width
 // D = axil data width
-template <unsigned int A, unsigned int D>
-class maxil : public axil<A, D> {
+template <unsigned int A, unsigned int D> class maxil : public axil<A, D> {
   protected:
     using axil<A, D>::base;
     using axil<A, D>::mutex;
@@ -153,7 +149,7 @@ class maxil : public axil<A, D> {
 
   public:
     maxil(const std::string &base) : axil<A, D>(base) {
-      std::cout << " as a master AXIL port" << std::endl;
+        std::cout << " as a master AXIL port" << std::endl;
     }
 
     data_t axil_read_helper(addr_t address, yield_t &yield) {
@@ -281,8 +277,7 @@ class maxil : public axil<A, D> {
 
 // A = axil address width
 // D = axil data width
-template <unsigned int A, unsigned int D>
-class saxil : public axil<A, D> {
+template <unsigned int A, unsigned int D> class saxil : public axil<A, D> {
   protected:
     using axil<A, D>::base;
     using axil<A, D>::lock;
@@ -290,9 +285,10 @@ class saxil : public axil<A, D> {
     using axil<A, D>::try_lock;
     using addr_t = typename axi_defaults<A, D>::addr_t;
     using data_t = typename axi_defaults<A, D>::data_t;
+
   public:
-    saxil(const std::string &base) : axil<A, D>(base) { 
-      std::cout << " as a client AXIL port" << std::endl;
+    saxil(const std::string &base) : axil<A, D>(base) {
+        std::cout << " as a client AXIL port" << std::endl;
     }
 
     bool axil_has_write(addr_t *address) {

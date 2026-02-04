@@ -55,3 +55,6 @@ novas.*
 verdiLog
 config.tcl
 vivado.tcl
+*.xclbin
+head.txt
+run.info

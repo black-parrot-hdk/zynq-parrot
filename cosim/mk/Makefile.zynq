@@ -1,58 +1,25 @@
 
+include $(COSIM_MK_DIR)/Makefile.host
+
 ifneq ($(ARM),1)
-$(warning ZYNQ code should execute on ARM, not X86! )
+$(error ZYNQ code should execute on ARM, not X86! )
 endif
 
-DEFINES += GP2_ADDR_BASE=0 HP1_ADDR_BASE=0
+CFLAGS += $(shell python-config --includes)
+CFLAGS += -mfpu=neon
 
-CFLAGS += -O2
-CFLAGS += -std=c++14
-CFLAGS += -D_BSD_SOURCE -D_DEFAULT_SOURCE)
-CFLAGS += $(addprefix -I,$(CINCLUDES))
-CFLAGS += $(addprefix -D,$(DEFINES))
+CLDFLAGS += $(shell python-config --libs --embed)
+CLDFLAGS += -lpthread
 
-BUILD_COLLATERAL += $(BASENAME)_bd_1.bit
-BUILD_COLLATERAL += $(BASENAME)_bd_1.hwh
-BUILD_COLLATERAL += $(BASENAME)_bd_1.map
-
-unpack_bitstream: ## Unpacks the bitstream
-unpack_bitstream:
-	$(BASE64) -d ../$(BASENAME)_bd_1.$(HOST).$(BOARDNAME).tar.xz.b64 | $(TAR) xvJ
-
-load_bitstream: ## Loads the bitstream using the pynq api
-load_bitstream: $(BASENAME)_bd_1.bit
-	@$(ECHO) 'import pprint; from pynq import PL; PL.reset(); from pynq import Overlay; overlay=Overlay("$<"); print (overlay.__doc__); pprint.pprint(overlay.ip_dict,width=1); pprint.pprint(overlay.clock_dict,width=1);' | sudo -E $(PYTHON3)
+DEFINES += BITSTREAM_FILE=$(BASENAME)_bd_1.bit
 
 build: ## builds the control program
 build: control-program
-control-program: $(BUILD_COLLATERAL)
-	@$(eval CFLAGS += $(shell cat $(BASENAME)_bd_1.map))
-	@$(eval LDFLAGS += -lcma -lpthread)
-	$(CXX) $(CFLAGS) $(CSOURCES) -o $@ $(LDFLAGS) 2>&1 | tee build.log
+control-program: $(BASENAME)_bd_1.map
+	@$(eval CFLAGS += $(shell cat $<))
+	@$(CXX) $(CFLAGS) $(CSOURCES) -o $@ $(CLDFLAGS) 2>&1 | tee build.log
 
 run: ## runs the control program on the PS
-run: control-program $(RUN_COLLATERAL)
-	@$(SUDO) ./$< $(RUN_ARGS) | tee run.log
-
-###################
-# Miscellaneous (Unmaintained) Targets
-###################
-
-# Resets the PL using the Pynq API
-reset_pl:
-	$(ECHO) 'from pynq import PL; PL.reset();' | sudo -E $(PYTHON3)
-
-# use this instead if you have already loaded the bitstream this will load the bitstream, but transfer
-# over the physical memory pointer that was written into the accelerator before
-# this way we do not need to reallocate dram on the zynq board
-# note: this rule is only currently necessary and only works with blackparrot, but with standardization
-# of addresses could apply to other DRAM-using accelerators
-reload_bitstream_keep_dram:
-	$(ECHO) 'import pprint; from pynq import Overlay, MMIO; mmio=MMIO(0x40000000,0x1000); val4 = mmio.read(0x4); val8 = mmio.read(0x8);  overlay=Overlay("$(BASENAME)_bd_1.bit"); print("transferring over: ", hex(val4), hex(val8)); mmio.write(0x4,val4); mmio.write(0x8,val8);  print (overlay.__doc__); pprint.pprint(overlay.ip_dict,width=1); pprint.pprint(overlay.clock_dict,width=1)' | sudo -E $(PYTHON3)
-
-print_clocks:
-	$(ECHO) 'from pynq import Clocks; print("PL Clock: ",Clocks.fclk0_mhz,"MHz"); print("PS Clock: ",Clocks.cpu_mhz,"MHz");' | sudo -E $(PYTHON3)
-
-%.set_clock:
-	$(ECHO) 'from pynq import Clocks;  Clocks.fclk0_mhz = $*; print("PL Clock Set To:: ",Clocks.fclk0_mhz,"MHz"); ' | sudo -E $(PYTHON3)
+run: control-program $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.hwh
+	@$(SUDO) -E ./$< $(RUN_ARGS) | tee run.log
 

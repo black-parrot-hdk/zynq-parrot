@@ -16,17 +16,15 @@ proc vivado_create_ip { args } {
     set dir_list [list]
     set file_list [list]
 
+    set ZP_INSTALL_DIR $::env(ZP_INSTALL_DIR)
     set BASEJUMP_STL_DIR $::env(BASEJUMP_STL_DIR)
     set BP_SUB_DIR $::env(BP_SUB_DIR)
     set DESIGN_VSRC_DIR $::env(DESIGN_VSRC_DIR)
     set COSIM_VSRC_DIR $::env(COSIM_VSRC_DIR)
 
     lappend dir_list "${BASEJUMP_STL_DIR}/bsg_misc"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/prim_assert.sv"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/prim_assert_dummy_macros.svh"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/prim_assert_sec_cm.svh"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/prim_flop_macros.sv"
     lappend file_list "${BASEJUMP_STL_DIR}/bsg_misc/bsg_defines.sv"
+    lappend file_list "${ZP_INSTALL_DIR}/gen/v/rv_plic/rtl/rv_plic_reg_pkg.sv"
 
     lappend file_list "${BASEJUMP_STL_DIR}/bsg_axi/bsg_axi_pkg.sv"
     lappend file_list "${BASEJUMP_STL_DIR}/bsg_misc/bsg_buf.sv"
@@ -45,21 +43,9 @@ proc vivado_create_ip { args } {
     lappend file_list "${BP_SUB_DIR}/zynq/v/bsg_irq_to_axil.sv"
 
     lappend file_list "${BASEJUMP_STL_DIR}/bsg_dataflow/bsg_one_fifo.sv"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/top_pkg.sv"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/prim_util_pkg.sv"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/prim_subreg_pkg.sv"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/prim_mubi_pkg.sv"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/prim_reg_we_check.sv"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/prim_subreg.sv"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/prim_subreg_arb.sv"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/prim_subreg_ext.sv"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/prim_max_tree.sv"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/prim_onehot_check.sv"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/rv_plic_reg_pkg.sv"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/rv_plic.sv"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/rv_plic_gateway.sv"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/rv_plic_target.sv"
-    lappend file_list "${BP_INSTALL_DIR}/gen/v/zynq/rv_plic_reg_top.sv"
+    lappend file_list "${ZP_INSTALL_DIR}/gen/v/rv_plic/rtl/rv_plic_gateway.sv"
+    lappend file_list "${ZP_INSTALL_DIR}/gen/v/rv_plic/rtl/rv_plic.sv"
+    lappend file_list "${ZP_INSTALL_DIR}/gen/v/rv_plic/rtl/rv_plic_target.sv"
 
     add_files -norecurse ${file_list}
     set_property file_type SystemVerilog [get_files ${file_list}]

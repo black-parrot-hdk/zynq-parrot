@@ -1,6 +1,3 @@
-TOP ?= $(shell git rev-parse --show-toplevel)
-include $(TOP)/Makefile.common
-include $(TOP)/Makefile.env
 
 #############################
 # Accelerator Software Settings
@@ -12,6 +9,5 @@ DEFINES += SP0_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axis6
 DEFINES += MP0_HIER_BASE=TOP.bsg_nonsynth_zynq_testbench.axis9
 DEFINES += BUFFER_ENABLE
 
-include $(DESIGN_DIR)/Makefile.design
-include $(COSIM_MK_DIR)/Makefile.verilator
+include ../Makefile.design
 

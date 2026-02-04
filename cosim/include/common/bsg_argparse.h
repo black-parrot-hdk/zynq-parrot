@@ -2,9 +2,9 @@
 #ifndef BSG_ARGPARSE_H
 #define BSG_ARGPARSE_H
 
-#include <unistd.h>
-#include <string>
 #include <cstring>
+#include <string>
+#include <unistd.h>
 
 // Given a string, determine the number of space-separated arguments
 static int get_argc(char *args) {
@@ -31,7 +31,7 @@ static void get_argv(char *args, char **argv) {
     // with an extra null character for safety
     static char path[1025] = {'\0'};
 
-    readlink("/proc/self/exe", path, sizeof(path) - 1);
+    (void)!readlink("/proc/self/exe", path, sizeof(path) - 1);
     argv[0] = path;
     count++;
 

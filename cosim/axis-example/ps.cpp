@@ -14,8 +14,7 @@
 
 #include "ps.hpp"
 
-int ps_main(int argc, char **argv) {
-    bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
+int ps_main(bsg_zynq_pl *zpl, int argc, char **argv) {
     zpl->start();
 
     zpl->shell_write(GP0_WR_CSR_TINIT, 0, 0xf);
@@ -41,8 +40,6 @@ int ps_main(int argc, char **argv) {
     for (int i = 0; i < 50; i++)
         zpl->tick();
     zpl->stop();
-    zpl->done();
 
-    delete zpl;
-    return 0;
+    return zpl->done();
 }

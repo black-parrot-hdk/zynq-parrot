@@ -1,0 +1,23 @@
+
+PACKED_BIT ?= ../$(BASENAME)_bd_1.$(HOST).$(BOARDNAME).tar.xz.b64
+PACKED_RUN ?= ../$(BASENAME)_run_1.$(HOST).$(BOARDNAME).tar.xz.b64
+
+BITSTREAM_FILES ?= $(BASENAME)_bd_1.bit $(BASENAME)_bd_1.map $(BASENAME)_bd_1.hwh
+COMPONENT_FILES ?= ip_repo/top/component.xml
+
+DEFINES += $(call bsg_var_upper,$(TOOL))
+DEFINES += $(call bsg_var_upper,HOST_$(HOST))
+ifdef ZYNQ_PL_DEBUG
+DEFINES += ZYNQ_PL_DEBUG
+endif
+ifdef ZYNQ_PS_DEBUG
+DEFINES += ZYNQ_PS_DEBUG
+endif
+
+include $(DESIGN_DIR)/Makefile.collateral
+
+include $(COSIM_MK_DIR)/Makefile.hardware
+include $(DESIGN_DIR)/Makefile.hardware
+include $(COSIM_MK_DIR)/Makefile.$(TOOL)
+include $(COSIM_MK_DIR)/Makefile.collateral
+

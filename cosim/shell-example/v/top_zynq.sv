@@ -121,7 +121,7 @@ module top_zynq
           else
             if (gp0_axi_awvalid & gp0_axi_awready)
               last_write_addr_r <= gp0_axi_awaddr;
-        assign csr_data_li = last_write_addr_r;
+        assign csr_data_li[0] = last_write_addr_r;
 
         // User logic ends
 

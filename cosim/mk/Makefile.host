@@ -1,0 +1,27 @@
+
+#DEFINES += NEON
+
+CSOURCES += $(MAIN_PROGRAM)
+CSOURCES += $(HOST_PROGRAM)
+
+ifeq ($(DROMAJO_COSIM),1)
+CSOURCES += $(BP_RTL_DIR)/bp_top/test/common/dromajo_cosim.cpp
+CSOURCES += $(ZP_INSTALL_DIR)/lib/libdromajo_cosim.a
+endif
+
+CINCLUDES += $(CURDIR)
+CINCLUDES += $(COSIM_INCLUDE_DIR)/common
+CINCLUDES += $(COSIM_INCLUDE_DIR)/$(TOOL)
+CINCLUDES += $(ZP_INSTALL_DIR)/include
+CINCLUDES += $(BASEJUMP_STL_DIR)/bsg_mem
+CINCLUDES += $(BP_SUB_DIR)/blackparrot/src
+CINCLUDES += $(BSG_REPLICANT_DIR)/libraries
+CINCLUDES += $(BASEJUMP_STL_DIR)/bsg_test
+
+CFLAGS += -O2
+CFLAGS += -std=c++14
+CFLAGS += -D_BSD_SOURCE -D_DEFAULT_SOURCE
+CFLAGS += $(addprefix -I,$(CINCLUDES))
+CFLAGS += $(addprefix -D,$(DEFINES))
+#CFLAGS += -mfpu=neon
+

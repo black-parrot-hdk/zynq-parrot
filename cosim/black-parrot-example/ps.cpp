@@ -6,7 +6,6 @@
 
 #include <bitset>
 #include <locale.h>
-#include <pthread.h>
 #include <queue>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,77 +14,27 @@
 
 #include "ps.hpp"
 
+#include "bsg_host.h"
 #include "bsg_printing.h"
+#include "bsg_utils.h"
 #include "bsg_tag_bitbang.h"
 #include "bsg_zynq_pl.h"
-
-#ifndef FREE_DRAM
-#define FREE_DRAM 0
-#endif
-
-#ifndef ZERO_DRAM
-#define ZERO_DRAM 0
-#endif
 
 #ifndef DRAM_ALLOCATE_SIZE_MB
 #define DRAM_ALLOCATE_SIZE_MB 128
 #endif
 #define DRAM_ALLOCATE_SIZE (DRAM_ALLOCATE_SIZE_MB * 1024 * 1024)
 
-#ifndef ZYNQ_PL_DEBUG
-#define ZYNQ_PL_DEBUG 0
-#endif
-
-#ifndef BP_NCPUS
-#define BP_NCPUS 1
-#endif
-
 // Helper functions
 void nbf_load(bsg_zynq_pl *zpl, char *filename);
-bool decode_bp_output(bsg_zynq_pl *zpl, long data);
 
-// Globals
-std::queue<int> getchar_queue;
-std::bitset<BP_NCPUS> done_vec;
-
-void *monitor(void *vargp) {
-    char c;
-    while (1) {
-        c = getchar();
-        if (c != -1)
-            getchar_queue.push(c);
-    }
-    bsg_pr_info("Exiting from pthread\n");
-
-    return NULL;
-}
-
-inline uint64_t get_counter_64(bsg_zynq_pl *zpl, uint64_t addr) {
-    uint64_t val;
-    do {
-        uint64_t val_hi = zpl->shell_read(addr + 4);
-        uint64_t val_lo = zpl->shell_read(addr + 0);
-        uint64_t val_hi2 = zpl->shell_read(addr + 4);
-        if (val_hi == val_hi2) {
-            val = val_hi << 32;
-            val += val_lo;
-            return val;
-        } else
-            bsg_pr_err("ps.cpp: timer wrapover!\n");
-    } while (1);
-}
-
-int ps_main(int argc, char **argv) {
-
-    bsg_zynq_pl *zpl = new bsg_zynq_pl(argc, argv);
+int ps_main(bsg_zynq_pl *zpl, int argc, char **argv) {
 
     long data;
     long val1 = 0x1;
     long val2 = 0x0;
     long mask1 = 0xf;
     long mask2 = 0xf;
-
-    pthread_t thread_id;
 
     int32_t val;
     bsg_pr_info("ps.cpp: reading four base registers\n");
@@ -107,25 +56,23 @@ int ps_main(int argc, char **argv) {
         "ps.cpp: successfully wrote and read registers in bsg_zynq_shell "
         "(verified ARM GP0 connection)\n");
 
-    bsg_tag_bitbang *btb = new bsg_tag_bitbang(zpl, GP0_WR_CSR_TAG_BITBANG,
-                                               TAG_NUM_CLIENTS, TAG_MAX_LEN);
-    bsg_tag_client *pl_reset_client =
-        new bsg_tag_client(TAG_CLIENT_PL_RESET_ID, TAG_CLIENT_PL_RESET_WIDTH);
-    bsg_tag_client *wd_reset_client =
-        new bsg_tag_client(TAG_CLIENT_WD_RESET_ID, TAG_CLIENT_WD_RESET_WIDTH);
+    std::unique_ptr<bsg_tag_bitbang> btb = std::make_unique<bsg_tag_bitbang>(zpl, GP0_WR_CSR_TAG_BITBANG, TAG_NUM_CLIENTS, TAG_MAX_LEN);
+    std::unique_ptr<bsg_host> host = std::make_unique<bsg_host>(zpl, GP0_RD_PL2PS_FIFO_CTRS, GP0_RD_PL2PS_FIFO_DATA);
+    bsg_tag_client pl_reset_client(TAG_CLIENT_PL_RESET_ID, TAG_CLIENT_PL_RESET_WIDTH);
+    bsg_tag_client wd_reset_client(TAG_CLIENT_WD_RESET_ID, TAG_CLIENT_WD_RESET_WIDTH);
 
     // Reset the bsg tag master
     btb->reset_master();
     // Reset bsg client0
-    btb->reset_client(pl_reset_client);
+    btb->reset_client(&pl_reset_client);
     // Reset bsg client1
-    btb->reset_client(wd_reset_client);
+    btb->reset_client(&wd_reset_client);
     // Set bsg client0 to 1 (assert BP reset)
-    btb->set_client(pl_reset_client, 0x1);
+    btb->set_client(&pl_reset_client, 0x1);
     // Set bsg client1 to 1 (assert WD reset)
-    btb->set_client(wd_reset_client, 0x1);
+    btb->set_client(&wd_reset_client, 0x1);
     // Set bsg client0 to 0 (deassert BP reset)
-    btb->set_client(pl_reset_client, 0x0);
+    btb->set_client(&pl_reset_client, 0x0);
 
     // We need some additional toggles for data to propagate through
     btb->idle(50);
@@ -153,14 +100,12 @@ int ps_main(int argc, char **argv) {
                     zpl->shell_read(GP0_RD_CSR_DRAM_BASE));
     }
 
-    int outer = 1024 / 4;
-
     if (argc == 1) {
         bsg_pr_warn(
             "No nbf file specified, sleeping for 2^31 seconds (this will hold "
             "onto allocated DRAM)\n");
         sleep(1U << 31);
-        delete zpl;
+        return -1;
     }
 
     bsg_pr_info("ps.cpp: attempting to read mtime reg in BP CFG space, should "
@@ -184,8 +129,8 @@ int ps_main(int argc, char **argv) {
     bsg_pr_info("ps.cpp: reading mtimecmp\n");
     assert(zpl->shell_read(GP1_CSR_BASE_ADDR + 0x304000) == y + 1);
 
+    int outer = 1024 / 4;
 #ifdef DRAM_TEST
-
     long num_times = DRAM_ALLOCATE_SIZE / 32768;
     bsg_pr_info(
         "ps.cpp: attempting to write L2 %ld times over %ld MB (testing ARM GP1 "
@@ -239,19 +184,29 @@ int ps_main(int argc, char **argv) {
 
     // Must zero DRAM for FPGA Linux boot, because opensbi payload mode
     //   obliterates the section names of the payload (Linux)
-    if (ZERO_DRAM) {
-        bsg_pr_info("ps.cpp: Zero-ing DRAM (%d bytes)\n",
-                    (int)DRAM_ALLOCATE_SIZE);
-        for (int i = 0; i < DRAM_ALLOCATE_SIZE; i += 4) {
-            //if (i % (1024 * 1024) == 0)
-            if (i % (1024) == 0)
-                bsg_pr_info("ps.cpp: (%d) zero-d %d MB\n", i, i / (1024 * 1024));
-            zpl->shell_write(gp1_addr_base + i, 0x0, mask1);
-        }
+#ifdef ZERO_DRAM
+    bsg_pr_info("ps.cpp: Zero-ing DRAM (%d bytes)\n",
+                (int)DRAM_ALLOCATE_SIZE);
+    for (int i = 0; i < DRAM_ALLOCATE_SIZE; i += 4) {
+        // if (i % (1024 * 1024) == 0)
+        if (i % (1024) == 0)
+            bsg_pr_info("ps.cpp: (%d) zero-d %d MB\n", i,
+                        i / (1024 * 1024));
+        zpl->shell_write(gp1_addr_base + i, 0x0, mask1);
     }
+#endif // ZERO_DRAM
+
+    bsg_pr_info("ps.cpp: beginning config\n");
+    uintptr_t base_addr = GP1_CSR_BASE_ADDR;
+    zpl->shell_write(base_addr + 0x200008, 1, 0xff); // freeze
+    zpl->shell_write(base_addr + 0x200010, 0x80000000, 0xff); // npc
+    zpl->shell_write(base_addr + 0x200208, 1, 0xff); // icache mode
+    zpl->shell_write(base_addr + 0x200408, 1, 0xff); // dcache mode
+    zpl->shell_write(base_addr + 0x200608, 1, 0xff); // cce mode
 
     bsg_pr_info("ps.cpp: beginning nbf load\n");
     nbf_load(zpl, argv[1]);
+    zpl->shell_write(0x200008, 0, 0xff); // unfreeze
     struct timespec start, end;
     clock_gettime(CLOCK_MONOTONIC, &start);
     unsigned long long minstret_start = get_counter_64(zpl, GP0_RD_MINSTRET);
@@ -260,29 +215,23 @@ int ps_main(int argc, char **argv) {
     bsg_pr_info("ps.cpp: finished nbf load\n");
 
     // Set bsg client1 to 0 (deassert WD reset)
-    btb->set_client(wd_reset_client, 0x1);
+    btb->set_client(&wd_reset_client, 0x1);
     bsg_pr_info("ps.cpp: starting watchdog\n");
     // We need some additional toggles for data to propagate through
     btb->idle(50);
     zpl->start();
 
-    bsg_pr_info("ps.cpp: Starting scan thread\n");
-    pthread_create(&thread_id, NULL, monitor, NULL);
-
-    bsg_pr_info("ps.cpp: Starting i/o polling thread\n");
-    while (1) {
-        // keep reading as long as there is data
-        if (zpl->shell_read(GP0_RD_PL2PS_FIFO_CTRS) != 0) {
-            decode_bp_output(zpl, zpl->shell_read(GP0_RD_PL2PS_FIFO_DATA));
+    bsg_spack_t spack;
+    do {
+        if (host->get_next_packet(&spack)) {
+            host->process_spack(&spack);
+        } else {
+            for (int i = 0; i < 10; i++) zpl->tick();
         }
-        // break loop when all cores done
-        if (done_vec.all()) {
-            break;
-        }
-    }
+    } while (!host->is_finished());
 
     // Set bsg client1 to 1 (assert WD reset)
-    btb->set_client(wd_reset_client, 0x1);
+    btb->set_client(&wd_reset_client, 0x1);
     bsg_pr_info("ps.cpp: stopping watchdog\n");
     // We need some additional toggles for data to propagate through
     btb->idle(50);
@@ -337,20 +286,13 @@ int ps_main(int argc, char **argv) {
     // dram in a CSR in the accelerator, and if we reload the bitstream, we copy
     // the pointer back in.
 
-    if (FREE_DRAM) {
-        bsg_pr_info("ps.cpp: freeing DRAM buffer\n");
-        zpl->free_dram((void *)buf);
-        zpl->shell_write(GP0_WR_CSR_DRAM_INITED, 0x0, mask2);
-    }
+#ifdef FREE_DRAM
+    bsg_pr_info("ps.cpp: freeing DRAM buffer\n");
+    zpl->free_dram((void *)buf);
+    zpl->shell_write(GP0_WR_CSR_DRAM_INITED, 0x0, mask2);
+#endif // FREE_DRAM
 
-    zpl->done();
-    delete zpl;
-    return 0;
-}
-
-std::uint32_t rotl(std::uint32_t v, std::int32_t shift) {
-    std::int32_t s = shift >= 0 ? shift % 32 : -((-shift) % 32);
-    return (v << s) | (v >> (32 - s));
+    return zpl->done();
 }
 
 void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
@@ -366,7 +308,6 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
 
     if (!nbf_file.is_open()) {
         bsg_pr_err("ps.cpp: error opening nbf file.\n");
-        delete zpl;
         return;
     }
 
@@ -431,65 +372,3 @@ void nbf_load(bsg_zynq_pl *zpl, char *nbf_filename) {
     bsg_pr_dbg_ps("ps.cpp: finished loading %d lines of nbf.\n", line_count);
 }
 
-bool decode_bp_output(bsg_zynq_pl *zpl, long data) {
-    long rd_wr = data >> 31;
-    long address = (data >> 8) & 0x7FFFFC;
-    char print_data = data & 0xFF;
-    char core = (address - 0x102000) >> 3;
-    // write from BP
-    if (rd_wr) {
-        if (address == 0x101000) {
-            printf("%c", print_data);
-            fflush(stdout);
-        } else if (address >= 0x102000 && address < 0x103000) {
-            done_vec[core] = true;
-            if (print_data == 0) {
-                bsg_pr_info("CORE[%d] PASS\n", core);
-            } else {
-                bsg_pr_info("CORE[%d] FAIL\n", core);
-            }
-        } else if (address == 0x103000) {
-            bsg_pr_dbg_ps("ps.cpp: Watchdog tick\n");
-        } else {
-            bsg_pr_err("ps.cpp: Errant write to %lx\n", address);
-            return false;
-        }
-    }
-    // read from BP
-    else {
-        // getchar
-        if (address == 0x100000) {
-            if (getchar_queue.empty()) {
-                zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, -1, 0xf);
-            } else {
-                zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, getchar_queue.front(),
-                                 0xf);
-                getchar_queue.pop();
-            }
-        }
-        // parameter ROM, only partially implemented
-        else if (address >= 0x120000 && address <= 0x120128) {
-            bsg_pr_dbg_ps("ps.cpp: PARAM ROM read from (%lx)\n", address);
-            int offset = address - 0x120000;
-            // CC_X_DIM, return number of cores
-            if (offset == 0x0) {
-                zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, BP_NCPUS, 0xf);
-            }
-            // CC_Y_DIM, just return 1 so X*Y == number of cores
-            else if (offset == 0x4) {
-                zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, 1, 0xf);
-            }
-        } else if (address >= 0x110000 && address < 0x111000) {
-            int bootrom_addr = (address >> 2) & 0xfff;
-            zpl->shell_write(GP0_WR_CSR_BOOTROM_ADDR, bootrom_addr, 0xf);
-            int bootrom_data = zpl->shell_read(GP0_RD_BOOTROM_DATA);
-            zpl->shell_write(GP0_WR_PS2PL_FIFO_DATA, bootrom_data, 0xf);
-            // if not implemented, print error
-        } else {
-            bsg_pr_err("ps.cpp: Errant read from (%lx)\n", address);
-            return false;
-        }
-    }
-
-    return true;
-}
