@@ -315,8 +315,10 @@ LM_LICENSE_FILE ?=
 export VCS_ARCH_OVERRIDE=linux
 
 ifneq (,$(filter-out bleach_all help ,$(MAKECMDGOALS)))
+ifneq (1,$(IGNORE_CADENV))
 BSG_CADENV_DIR ?= $(TOP)/bsg_cadenv
 include $(BSG_CADENV_DIR)/cadenv.mk
+endif
 endif
 
 # Saves initial values so that we can filter them later
