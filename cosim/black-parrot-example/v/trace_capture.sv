@@ -20,4 +20,7 @@ module trace_capture
   assign trace_v_o  = commit_v_i;
   assign trace_pc_o = pc_i;
 
+  // Intended to connect to bp_be_commit_pkt_s in bp_be_top.sv
+  // This is a minimal stub for future trace encoding
+
 endmodule
