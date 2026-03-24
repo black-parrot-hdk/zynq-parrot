@@ -198,15 +198,15 @@ int ps_main(bsg_zynq_pl *zpl, int argc, char **argv) {
 
     bsg_pr_info("ps.cpp: beginning config\n");
     uintptr_t base_addr = GP1_CSR_BASE_ADDR;
-    zpl->shell_write(base_addr + 0x200008, 1, 0xff); // freeze
-    zpl->shell_write(base_addr + 0x200010, 0x80000000, 0xff); // npc
-    zpl->shell_write(base_addr + 0x200208, 1, 0xff); // icache mode
-    zpl->shell_write(base_addr + 0x200408, 1, 0xff); // dcache mode
-    zpl->shell_write(base_addr + 0x200608, 1, 0xff); // cce mode
+    zpl->shell_write(base_addr + 0x200008, 1, mask1); // freeze
+    zpl->shell_write(base_addr + 0x200010, 0x80000000, mask1); // npc
+    zpl->shell_write(base_addr + 0x200208, 1, mask1); // icache mode
+    zpl->shell_write(base_addr + 0x200408, 1, mask1); // dcache mode
+    zpl->shell_write(base_addr + 0x200608, 1, mask1); // cce mode
 
     bsg_pr_info("ps.cpp: beginning nbf load\n");
     nbf_load(zpl, argv[1]);
-    zpl->shell_write(0x200008, 0, 0xff); // unfreeze
+    zpl->shell_write(base_addr + 0x200008, 0, mask1); // unfreeze
     struct timespec start, end;
     clock_gettime(CLOCK_MONOTONIC, &start);
     unsigned long long minstret_start = get_counter_64(zpl, GP0_RD_MINSTRET);

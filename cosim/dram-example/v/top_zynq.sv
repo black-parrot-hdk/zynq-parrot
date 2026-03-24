@@ -98,7 +98,7 @@ module top_zynq
    ///////////////////////////////////////////////////////////////////////////////////////
    // csr_data_li:
    //
-   // 0 : NULL
+   // 0: write_in_progress
    //
    logic [num_regs_pl_to_ps_lp-1:0][C_GP0_AXI_DATA_WIDTH-1:0] csr_data_li;
 
@@ -113,7 +113,7 @@ module top_zynq
    ///////////////////////////////////////////////////////////////////////////////////////
    // ps_to_pl_fifo_data_lo:
    //
-   // 0: DRAM request TYPE (0 = write, 1 = read)
+   // 0: DRAM request TYPE (0 = read, 1 = write)
    // 4: DRAM request ADDR
    // 8: DRAM request DATA
    logic [num_fifos_ps_to_pl_lp-1:0][C_GP0_AXI_DATA_WIDTH-1:0] ps_to_pl_fifo_data_lo;
@@ -178,8 +178,10 @@ module top_zynq
    logic [C_HP0_AXI_DATA_WIDTH-1:0] data_lo;
    logic v_lo, ready_and_li;  
 
+   logic write_tracker_lo;
+
    assign dram_base_li = csr_data_lo[0];
-   assign csr_data_li[0] = '0;
+   assign csr_data_li[0] = (write_tracker_lo == 1'b0) ? hp0_axi_awaddr : 32'h0;
 
    assign data_li = ps_to_pl_fifo_data_lo[2];
    assign addr_li = ps_to_pl_fifo_data_lo[1];
@@ -290,6 +292,17 @@ module top_zynq
    assign m_axil_rresp = hp0_axi_rresp;
    assign m_axil_rvalid = hp0_axi_rvalid;
    assign hp0_axi_rready = m_axil_rvalid;
+   
+   bsg_dff_reset_set_clear
+    #(.width_p(1))
+    write_tracker
+     (.clk_i(aclk)
+     ,.reset_i(~aresetn)
+     
+     ,.set_i(hp0_axi_awvalid & hp0_axi_awready)
+     ,.clear_i(hp0_axi_bvalid & hp0_axi_bready)
+     ,.data_o(write_tracker_lo)
+    );
 
 endmodule
 
