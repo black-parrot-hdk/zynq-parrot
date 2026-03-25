@@ -33,6 +33,11 @@ ARG OTHER_GROUPS
 ARG WORKDIR=/work
 ENV DOCKERFILE_PLATFORM="ubuntu24.04"
 
+# Only delete the 'ubuntu' user if its UID (1000) matches the one we need to create
+RUN if [ "$USER_ID" = "1000" ]; then \
+		touch /var/mail/ubuntu && chown ubuntu /var/mail/ubuntu && userdel -r ubuntu || true; \
+	fi
+
 # Only create the group if it doesn't exist
 RUN getent group $GROUP_ID || groupadd --gid $GROUP_ID $GROUP_NAME
 
@@ -41,9 +46,15 @@ RUN useradd --no-log-init --uid $USER_ID --gid $GROUP_ID --home-dir $WORKDIR $US
 
 # Add the user to other groups
 RUN for gid in ${OTHER_GROUPS}; do \
-        echo "group$gid"; \
-        groupadd -g $gid "group$gid" || true; \
-        usermod -aG "group$gid" $USER_NAME; \
+		# Check if a group with this GID already exists in the container
+		# Then add user accordingly
+		EXISTING_NAME=$(getent group $gid | cut -d: -f1); \
+		if [ -n "$EXISTING_NAME" ]; then \
+			usermod -aG "$EXISTING_NAME" $USER_NAME; \
+		else \
+			groupadd -g $gid "group$gid" && \
+			usermod -aG "group$gid" $USER_NAME; \
+		fi; \
     done
 
 # Create directory for extra installation
