@@ -29,6 +29,15 @@ extern "C" {
 int bsg_dpi_time();
 }
 
+inline int bsg_dpi_time_safe() {
+    svScope prev = svGetScope();
+    svScope s    = svGetScopeFromName("TOP.bsg_nonsynth_zynq_testbench");
+    svSetScope(s);
+    int t = bsg_dpi_time();
+    svSetScope(prev);
+    return t;
+}
+
 typedef boost::coroutines2::coroutine<void>::pull_type coro_t;
 typedef boost::coroutines2::coroutine<void>::push_type yield_t;
 
@@ -254,9 +263,9 @@ template <unsigned int A, unsigned int D> class maxil : public axil<A, D> {
         yield();
         this->p_bready = 1;
         do {
-            if (timeout_counter++ == ZYNQ_AXI_TIMEOUT) {
-                bsg_pr_err("bsg_zynq_pl: %s, AXI M bvalid timeout at %d\n,",
-                           base.c_str(), bsg_dpi_time());
+           if (timeout_counter++ == ZYNQ_AXI_TIMEOUT) {
+                bsg_pr_err("bsg_zynq_pl: %s, AXI M bvalid timeout at %d\n",
+                base.c_str(), bsg_dpi_time_safe());
             }
 
             if (this->p_bvalid == 1) {

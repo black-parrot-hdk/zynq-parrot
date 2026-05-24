@@ -53,9 +53,8 @@ RUN useradd --no-log-init --uid $USER_ID --gid $GROUP_ID --home-dir $WORKDIR $US
 
 # Add the user to other groups
 RUN for gid in ${OTHER_GROUPS}; do \
-        echo "group$gid"; \
-        groupadd -g $gid "group$gid" || true; \
-        usermod -aG "group$gid" $USER_NAME; \
+		groupadd -g $gid "group$gid" || true; \
+		usermod -aG "$(getent group $gid | cut -d: -f1)" "$USER_NAME"; \
     done
 
 # Create directory for extra installation

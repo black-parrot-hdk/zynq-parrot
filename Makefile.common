@@ -212,6 +212,23 @@ help: ## prints this target
 		| grep -Ev "$(HELPFILTER)" \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m  %-30s\033[0m %s\n", $$1, $$2}'
 
+# stub bsg_cadenv
+%/cadenv.mk:
+	@# BSG users leverage a machine-specific cadenv
+	@#   Here, we add sourcing to get these variables as well
+	@$(eval export CADENV_URL := git@github.com:bespoke-silicon-group/bsg_cadenv)
+	@# Recursive make to include the new fragment
+	@if [ -f "$(BSG_CADENV_DIR)/cadenv.mk" ]; then \
+		echo "bsg_cadenv already exists"; \
+	elif [[ ! -z $$(git ls-remote --exit-code $${CADENV_URL} HEAD 2> /dev/null) ]]; then \
+		git clone --recurse-submodules $${CADENV_URL} $(@D); \
+	else \
+		echo "bsg_cadenv not found"; \
+		mkdir -p $(@D); \
+		touch $@; \
+	fi
+	@echo "Successfully built $@!"
+
 ifeq ($(IS_TOP),1)
 # global reset
 .PHONY: bleach_all
@@ -249,23 +266,6 @@ bleach:: ## deinitializes submodules
 # global submodule bleach
 .PHONY: clean
 clean:: ## cleans submodules
-
-# stub bsg_cadenv
-%/cadenv.mk:
-	@# BSG users leverage a machine-specific cadenv
-	@#   Here, we add sourcing to get these variables as well
-	@$(eval export CADENV_URL := git@github.com:bespoke-silicon-group/bsg_cadenv)
-	@# Recursive make to include the new fragment
-	@if [ -f "$(BSG_CADENV_DIR)/cadenv.mk" ]; then \
-		echo "bsg_cadenv already exists"; \
-	elif [[ ! -z $$(git ls-remote --exit-code $${CADENV_URL} HEAD 2> /dev/null) ]]; then \
-		git clone --recurse-submodules $${CADENV_URL} $(@D); \
-	else \
-		echo "bsg_cadenv not found"; \
-		mkdir -p $(@D); \
-		touch $@; \
-	fi
-	@echo "Successfully built $@!"
 
 endif
 

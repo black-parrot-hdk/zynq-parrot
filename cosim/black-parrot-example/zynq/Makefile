@@ -9,6 +9,8 @@ ifeq ($(BOARDNAME),pynqz2)
 DEFINES += DRAM_ALLOCATE_SIZE_MB=64
 else ifeq ($(BOARDNAME),ultra96v2)
 DEFINES += DRAM_ALLOCATE_SIZE_MB=200
+else ifeq ($(BOARDNAME),mercuryxu1)
+DEFINES += DRAM_ALLOCATE_SIZE_MB=200
 endif
 
 include ../Makefile.design

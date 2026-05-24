@@ -14,6 +14,7 @@ VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_decode.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_dff_en.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_dff_reset.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_dff_reset_en.sv
+VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_dff_reset_set_clear.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_misc/bsg_mux_one_hot.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_mem/bsg_mem_1r1w.sv
 VSOURCES += $(BASEJUMP_STL_DIR)/bsg_mem/bsg_mem_1r1w_synth.sv

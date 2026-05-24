@@ -6,8 +6,19 @@ USE_LOCAL_CREDENTIALS ?=
 
 # Supported platforms
 ALL_PLATFORMS := $(subst Dockerfile.,,$(wildcard Dockerfile.*))
+# Check if DOCKER_PLATFORM is empty
+ifeq ($(DOCKER_PLATFORM),)
+$(error DOCKER_PLATFORM is empty. Allowed values: $(ALL_PLATFORMS))
+endif
+# Check if DOCKER_PLATFORM is correct
 ifneq ($(filter $(DOCKER_PLATFORM),$(ALL_PLATFORMS)),$(DOCKER_PLATFORM))
-$(error DOCKER_PLATFORM "$(DOCKER_PLATFORM)" is invalid. Allowed values: $(ALL_PLATFORMS)")
+$(error DOCKER_PLATFORM "$(DOCKER_PLATFORM)" is invalid. Allowed values: $(ALL_PLATFORMS))
+endif
+
+# User Guidance
+ifeq ($(USE_LOCAL_CREDENTIALS),)
+$(warning [WARNING] Building/Running WITHOUT local credentials.)
+$(warning [WARNING] For local development, set USE_LOCAL_CREDENTIALS otherwise the content WON'T be mounted)
 endif
 
 docker-run: ## mounts as a docker container

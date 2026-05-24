@@ -33,6 +33,9 @@ ARG OTHER_GROUPS
 ARG WORKDIR=/work
 ENV DOCKERFILE_PLATFORM="ubuntu24.04"
 
+# Delete default ubuntu user
+RUN userdel -r ubuntu || true;
+
 # Only create the group if it doesn't exist
 RUN getent group $GROUP_ID || groupadd --gid $GROUP_ID $GROUP_NAME
 
@@ -41,9 +44,8 @@ RUN useradd --no-log-init --uid $USER_ID --gid $GROUP_ID --home-dir $WORKDIR $US
 
 # Add the user to other groups
 RUN for gid in ${OTHER_GROUPS}; do \
-        echo "group$gid"; \
-        groupadd -g $gid "group$gid" || true; \
-        usermod -aG "group$gid" $USER_NAME; \
+		groupadd -g $gid "group$gid" || true; \
+		usermod -aG "$(getent group $gid | cut -d: -f1)" "$USER_NAME"; \
     done
 
 # Create directory for extra installation
