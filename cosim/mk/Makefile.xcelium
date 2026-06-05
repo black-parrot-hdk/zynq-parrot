@@ -1,0 +1,81 @@
+
+include $(COSIM_MK_DIR)/Makefile.sim
+
+DEFINES += HAS_COSIM_MAIN
+DEFINES += SIMULATION
+
+XCELIUM_VFLAGS += $(addprefix +define+,$(DEFINES))
+XCELIUM_VFLAGS += $(addprefix -D,$(DEFINES))
+XCELIUM_VFLAGS += $(addprefix +incdir+,$(VINCLUDES))
+
+XCELIUM_CFLAGS += $(CFLAGS)
+XCELIUM_CFLAGS += -fPIC -std=c++14
+XCELIUM_CFLAGS += $(addprefix -D,$(DEFINES))
+XCELIUM_CFLAGS += $(addprefix -I,$(CINCLUDES))
+XCELIUM_CFLAGS += $(addprefix -L,$(CLIBDIRS))
+
+XCELIUM_LDFLAGS += $(LDFLAGS)
+XCELIUM_LDFLAGS += -lpthread
+XCELIUM_LDFLAGS += $(addprefix -L,$(CLIBDIRS))
+XCELIUM_LDFLAGS += $(addprefix -l,$(CLIBS))
+
+XCELIUM_BUILD_OPTS += -64bit
+XCELIUM_BUILD_OPTS += -verbose
+XCELIUM_BUILD_OPTS += +v2k -sv
+XCELIUM_BUILD_OPTS += +lint=TFIPC-L
+XCELIUM_BUILD_OPTS += -access +rwc
+XCELIUM_BUILD_OPTS += +noportcoerce
+XCELIUM_BUILD_OPTS += -licqueue
+XCELIUM_BUILD_OPTS += -ccargs "$(XCELIUM_CFLAGS)"
+XCELIUM_BUILD_OPTS += $(addprefix -I,$(CINCLUDES))
+XCELIUM_BUILD_OPTS += $(XCELIUM_LDFLAGS)
+XCELIUM_BUILD_OPTS += $(XCELIUM_VFLAGS)
+XCELIUM_BUILD_OPTS += -ALLOWREDEFINITION
+
+# Only needed for using simulation libraries
+ifneq (,$(CDSLIB))
+XCELIUM_BUILD_OPTS += -cdslib $(CDSLIB)
+endif
+
+ifneq (,$(HDLVAR))
+XCELIUM_BUILD_OPTS += -hdlvar $(HDLVAR)
+endif
+
+XCELIUM_BUILD_OPTS += -top $(TB_MODULE)
+XCELIUM_BUILD_OPTS += -snapshot xbuild
+XCELIUM_BUILD_OPTS += -elaborate -xmsc_msgs on
+
+ifeq ($(ASSERT),1)
+XCELIUM_BUILD_OPTS += +define+BSG_NONSYNTH_ASSERT_ENABLE
+XCELIUM_BUILD_OPTS += -assert # Enable elaboration system tasks
+endif
+
+ENABLE_SIMVISION ?= $(if $(shell which simvision 2> /dev/null),1,0)
+ifeq ($(ENABLE_SIMVISION), 1)
+DUMP_FILE ?= dump.shm
+endif
+
+ifneq (,$(TRACE))
+RUN_ARGS += -input $(COSIM_TCL_DIR)/dump-shm.tcl
+endif
+
+run: ## runs the xbuild snapshot, TRACE=1 to trace
+run: xbuild | $(RUN_COLLATERAL)
+	$(XRUN) -R -snapshot $< $(XCELIUM_RUN_OPTS) $(RUN_ARGS) 2>&1 | $(TEE_I) run.log
+
+ifneq (,$(TRACE))
+BUILD_ARGS += -debug_access+r
+BUILD_ARGS += +define+BSG_NONSYNTH_WAVEFORM_TRACER_ENABLE
+BUILD_ARGS += +define+BSG_NONSYNTH_WAVEFORM_TRACER_DEPTH=0
+BUILD_ARGS += +define+BSG_NONSYNTH_WAVEFORM_TRACER_HIER=bsg_nonsynth_zynq_testbench.dut
+endif
+
+build: ## builds the xsim snapshot
+build: xbuild
+xbuild: $(VPACKAGES) $(VSOURCES) $(CSOURCES) | $(BUILD_COLLATERAL)
+	$(XRUN) $(XCELIUM_BUILD_OPTS) $(BUILD_ARGS) $^ 2>&1 | $(TEE_I) build.log
+
+view: ## views the dump with simvision
+view: $(DUMP_FILE)
+	@$(SIMVISION) -64bit -waves $< &
+
