@@ -318,6 +318,10 @@ VSOURCES += $(BP_RTL_DIR)/bp_top/src/v/bp_unicore.sv
 VSOURCES += $(BP_RTL_DIR)/bp_top/src/v/bp_unicore_lite.sv
 VSOURCES += $(BP_RTL_DIR)/bp_top/src/v/bp_core_tile.sv
 VSOURCES += $(BP_RTL_DIR)/bp_top/src/v/bp_core_tile_node.sv
+
+VSOURCES += ../rtl/trace_encoder/bp_trace_encoder.sv
+VSOURCES += ../rtl/trace_encoder/bp_trace_bind.sv
+
 VSOURCES += $(BP_RTL_DIR)/bp_top/src/v/bp_processor.sv
 
 VSOURCES += $(BP_RTL_DIR)/bp_common/src/v/bsg_async_noc_link.sv
